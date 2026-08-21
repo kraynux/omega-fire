@@ -380,7 +380,14 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
     signal.signal(signal.SIGWINCH, handle_resize)
 
     os.write(out_fd, (ALT_SCREEN_ON + HIDE_CURSOR).encode())
-    did_initial_draw = False
+    # Nombre de redraws complets à faire au démarrage avant de basculer sur
+    # le diff_redraw léger habituel : au tout premier affichage, lnav n'a
+    # souvent rendu qu'un état transitoire (indexation du fichier pas
+    # terminée) -- baseline_bg calculé à ce moment-là peut être faux et
+    # resterait figé indéfiniment côté diff_redraw sinon (constaté : menu
+    # 8.6 qui démarre en monochrome et ne redevient coloré qu'après un
+    # redimensionnement, qui force justement un nouveau full_redraw).
+    settle_redraws_remaining = 5
 
     try:
         while True:
@@ -452,9 +459,9 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
                 if not got_data:
                     break  # pty fermé (lnav a quitté)
 
-                if not did_initial_draw:
+                if settle_redraws_remaining > 0:
                     full_redraw(term_cols, term_rows)
-                    did_initial_draw = True
+                    settle_redraws_remaining -= 1
                 else:
                     diff_redraw(term_cols)
     finally:
