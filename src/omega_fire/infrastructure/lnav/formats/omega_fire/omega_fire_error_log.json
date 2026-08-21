@@ -1,0 +1,42 @@
+{
+    "$schema": "https://lnav.org/schemas/format-v1.schema.json",
+    "omega_fire_error_log": {
+        "title": "Omega-Fire — Lighttpd error log",
+        "description": "Format d'error log par défaut de lighttpd : horodatage, fichier source + numéro de ligne entre parenthèses, message libre.",
+        "multiline": false,
+        "regex": {
+            "std": {
+                "pattern": "^(?<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}): \\((?<source_ref>[^)]++)\\) (?<error_message>.*)"
+            }
+        },
+        "level-field": "error_message",
+        "level": {
+            "warning": ".*WARNING:.*|.*password doesn.t match.*|.*No such file or directory.*|.*invalid character in URI.*",
+            "error": ".*parsed error in.*|.*parser failed.*|.*opening configfile.*failed.*|.*Permission denied.*",
+            "notice": ".*server started.*|.*server stopped.*|.*reducing server\\..*",
+            "debug": ".*=== start of condition block ===.*|^rqst:.*"
+        },
+        "value": {
+            "source_ref": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Fichier source lighttpd et numéro de ligne à l'origine du message (ex: server.c.1971)"
+            },
+            "error_message": {
+                "kind": "string",
+                "description": "Message libre"
+            }
+        },
+        "sample": [
+            {
+                "line": "2026-03-24 18:40:18: (../lighttpd1.4/src/server.c.1971) server started (lighttpd/1.4.82)"
+            },
+            {
+                "line": "2026-03-24 18:41:30: (../lighttpd1.4/src/mod_auth.c.862) password doesn't match for /hpc-109/ username: kraynux IP: 127.0.0.1"
+            },
+            {
+                "line": "2026-08-18 11:46:14: (../lighttpd1.4/src/response.c.133) -- : No such file or directory"
+            }
+        ]
+    }
+}

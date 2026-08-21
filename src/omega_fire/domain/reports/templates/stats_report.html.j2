@@ -1,0 +1,281 @@
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block terminal_title %}omega-fire -- rapport-statistiques{% endblock %}
+
+{% block extra_style %}
+        section { padding: 1.6rem 0; border-bottom: 1px dashed var(--border-footer); }
+        section:first-of-type { padding-top: 0; }
+        section:last-of-type { border-bottom: none; }
+
+        /* --- KPI cards --- */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        .kpi-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 4px;
+            padding: 1.1rem 1.3rem;
+        }
+        .kpi-card .value { font-size: 1.5rem; color: #e8a33d; font-weight: 600; }
+        .kpi-card .label { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+        /* --- Distribution horaire (barres verticales) --- */
+        .hourly-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 120px;
+            padding: 0 0.2rem;
+        }
+        .hourly-chart .bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .hourly-chart .bar {
+            width: 100%;
+            background-color: #2a6f9e;
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+        }
+        .hourly-chart .bar.peak { background-color: var(--status-danger-text); }
+        .hourly-chart .hour-label {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+        }
+
+        /* --- Tendance journalière (barres horizontales) --- */
+        .trend-row { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; }
+        .trend-row .trend-label { width: 90px; font-size: 0.82rem; color: var(--text-muted); flex-shrink: 0; }
+        .trend-row .trend-bar-track { flex: 1; background-color: var(--bg-header); border-radius: 3px; height: 16px; overflow: hidden; }
+        .trend-row .trend-bar-fill { height: 100%; background-color: #3a8fc2; }
+        .trend-row .trend-value { width: 45px; text-align: right; font-size: 0.82rem; color: var(--text-body); }
+
+        .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .status-active { color: var(--status-success-text); }
+        .status-inactive { color: var(--text-muted); }
+
+        /* --- Panneau de gestion --- */
+        .mgmt-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem; margin-bottom: 1.2rem;
+        }
+        .mgmt-stat .value { font-size: 1.3rem; color: var(--text-subheading); }
+        .mgmt-stat .label { font-size: 0.78rem; color: var(--text-muted); }
+        .success-rate { font-size: 1.1rem; }
+        .success-rate.good { color: var(--status-success-text); }
+        .success-rate.warn { color: var(--status-warning-text); }
+        .success-rate.bad { color: var(--status-danger-text); }
+        .recent-list { list-style: none; margin-top: 1rem; }
+        .recent-list li {
+            padding: 0.4rem 0; border-bottom: 1px solid var(--bg-header);
+            font-size: 0.83rem; display: flex; gap: 0.6rem;
+        }
+        .recent-list .ok { color: var(--status-success-text); }
+        .recent-list .fail { color: var(--status-danger-text); }
+        .recent-list .time { color: var(--text-dim); width: 90px; flex-shrink: 0; }
+
+        /* --- Évolution des règles --- */
+        .evo-note { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem; font-style: italic; }
+        .evo-empty { color: var(--text-dim); font-style: italic; }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ title }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[STATS]</span> Généré le {{ generated_at[:19] | replace("T", " à ") }}
+            </div>
+
+        {% for section in sections %}
+
+            {% if section.name == "KPI" %}
+                <section>
+                    <h2>Synthèse — {{ section.content.period_label }}</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="value">{{ section.content.total_events }}</div>
+                            <div class="label">Événements scannés ({{ section.content.data_source }})</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="value">{{ section.content.total_bans }}</div>
+                            <div class="label">Adresses IP bloquées</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="value">{{ section.content.top_jail_name }}</div>
+                            <div class="label">Service le plus ciblé</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="value">{{ section.content.peak_hour }}</div>
+                            <div class="label">Heure de pointe ({{ section.content.peak_count }} évts)</div>
+                        </div>
+                    </div>
+                </section>
+
+            {% elif section.name == "Distribution Horaire" %}
+                {% set hs = section.content.hourly_series %}
+                {% set max_val = hs|max if hs and hs|max > 0 else 1 %}
+                <section>
+                    <h2>Distribution Horaire (24h)</h2>
+                    <div class="hourly-chart">
+                        {% for val in hs %}
+                            <div class="bar-col">
+                                <div class="bar {% if val == max_val and val > 0 %}peak{% endif %}"
+                                     style="height: {{ (val / max_val * 100)|round(0) }}%;"
+                                     title="{{ '%02d'|format(loop.index0) }}h — {{ val }} évt(s)"></div>
+                                {% if loop.index0 % 2 == 0 %}
+                                    <div class="hour-label">{{ '%02d'|format(loop.index0) }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+            {% elif section.name == "Tendance Journalière" %}
+                {% set trend = section.content.trend %}
+                {% set max_t = (trend|map(attribute=1)|list)|max if trend else 1 %}
+                {% set max_t = max_t if max_t > 0 else 1 %}
+                <section>
+                    <h2>Tendance Journalière</h2>
+                    {% if trend %}
+                        {% for item in trend %}
+                            <div class="trend-row">
+                                <div class="trend-label">{{ item[0] }}</div>
+                                <div class="trend-bar-track">
+                                    <div class="trend-bar-fill" style="width: {{ (item[1] / max_t * 100)|round(0) }}%;"></div>
+                                </div>
+                                <div class="trend-value">{{ item[1] }}</div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="evo-empty">Aucune donnée disponible pour cette période.</p>
+                    {% endif %}
+                </section>
+
+            {% elif section.name == "Top IPs" %}
+                <section>
+                    <h2>Top Adresses IP Ciblées</h2>
+                    <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>#</th><th>Adresse IP</th><th>Bans</th><th>Dernier Ban</th></tr></thead>
+                        <tbody>
+                            {% if section.content.ips %}
+                                {% for ip_stat in section.content.ips %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ ip_stat.ip }}</td>
+                                        <td>{{ ip_stat.total_bans }}</td>
+                                        <td>{{ ip_stat.last_ban }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="4">Aucune donnée</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    </div>
+                </section>
+
+            {% elif section.name == "Top Jails" %}
+                <section>
+                    <h2>Activité par Service (Jail)</h2>
+                    <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Jail / Service</th><th>Statut</th><th>Bans</th><th>Part</th></tr></thead>
+                        <tbody>
+                            {% if section.content.jails %}
+                                {% for jail in section.content.jails %}
+                                    <tr>
+                                        <td>{{ jail.name }}</td>
+                                        <td class="{{ 'status-active' if jail.is_active else 'status-inactive' }}">
+                                            {{ '● Actif' if jail.is_active else '○ Archivé' }}
+                                        </td>
+                                        <td>{{ jail.total_bans }}</td>
+                                        <td>{{ jail.percentage }}%</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="4">Aucune donnée</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    </div>
+                </section>
+
+            {% elif section.name == "Gestion" %}
+                <section>
+                    <h2>Gestion &amp; Administration</h2>
+                    <div class="mgmt-grid">
+                        <div class="mgmt-stat">
+                            <div class="value">{{ section.content.rule_changes }}</div>
+                            <div class="label">Changements de profil / règles</div>
+                        </div>
+                        <div class="mgmt-stat">
+                            <div class="value">{{ section.content.backups }}</div>
+                            <div class="label">Sauvegardes effectuées</div>
+                        </div>
+                        <div class="mgmt-stat">
+                            <div class="value">{{ section.content.restores }}</div>
+                            <div class="label">Restaurations effectuées</div>
+                        </div>
+                        <div class="mgmt-stat">
+                            {% set rate = section.content.success_rate %}
+                            <div class="value success-rate {{ 'good' if rate >= 95 else ('warn' if rate >= 80 else 'bad') }}">
+                                {{ "%.1f"|format(rate) }}%
+                            </div>
+                            <div class="label">Taux de succès ({{ section.content.total_actions }} action(s))</div>
+                        </div>
+                    </div>
+                    {% if section.content.recent_entries %}
+                        <ul class="recent-list">
+                            {% for entry in section.content.recent_entries %}
+                                <li>
+                                    <span class="time">{{ entry[0] }}</span>
+                                    <span class="{{ 'ok' if entry[2] else 'fail' }}">{{ '✔' if entry[2] else '✗' }}</span>
+                                    <span>{{ entry[1] }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </section>
+
+            {% elif section.name == "Évolution des Règles" %}
+                <section>
+                    <h2>Évolution des Règles &amp; IPs Bannies</h2>
+                    {% set points = section.content.points %}
+                    {% if points %}
+                        <p class="evo-note">{{ points|length }} point(s) de mesure sur la période — reflète les sauvegardes disponibles, pas un suivi continu.</p>
+                        <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Date</th><th>Règles Actives</th><th>IPs Bannies</th></tr></thead>
+                            <tbody>
+                                {% for point in points %}
+                                    <tr>
+                                        <td>{{ point[0] }}</td>
+                                        <td>{{ point[1] }}</td>
+                                        <td>{{ point[2] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>
+                    {% else %}
+                        <p class="evo-empty">Aucun snapshot disponible sur cette période.</p>
+                    {% endif %}
+                </section>
+            {% endif %}
+
+        {% endfor %}
+
+            <div class="footer-note">
+                Omega-Fire — Rapport Statistique Périodique
+            </div>
+{% endblock %}

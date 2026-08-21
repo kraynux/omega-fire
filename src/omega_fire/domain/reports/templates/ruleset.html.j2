@@ -1,0 +1,135 @@
+{% extends "_base.html.j2" %}
+
+{% block title %}Export des règles - Omega-Fire{% endblock %}
+{% block terminal_title %}omega-fire -- export-ruleset-synthese{% endblock %}
+
+{% block extra_style %}
+        .reco-grid { grid-template-columns: 1fr 1fr 1fr; margin-top: 1.2rem; }
+        .table-wrapper { margin: 1.8rem 0 2.2rem 0; }
+        table { font-size: 0.85rem; }
+        th { padding: 0.8rem 1rem; }
+        td { padding: 0.8rem 1rem; }
+        .badge-omega { background-color: var(--status-success-bg); color: var(--status-success-text); border: 1px solid var(--status-success-border); }
+        .badge-systeme { background-color: var(--status-warning-bg); color: var(--status-warning-text); border: 1px solid var(--status-warning-border); }
+        .badge-mixte { background-color: var(--status-info-bg); color: var(--status-info-text); border: 1px solid var(--status-info-border); }
+        .badge-actif { background-color: var(--status-success-bg); color: var(--status-success-text); border: 1px solid var(--status-success-border); }
+        .badge-inactif { background-color: var(--status-neutral-bg); color: var(--status-neutral-text); border: 1px solid var(--status-neutral-border); }
+        .action-drop, .action-reject { color: var(--status-danger-text); font-weight: 600; }
+        .action-accept { color: var(--status-success-text); font-weight: 600; }
+        .occurrence-count {
+            display: inline-block;
+            margin-left: 0.5rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 10px;
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-header);
+            color: var(--text-accent);
+            font-size: 0.75rem;
+        }
+        .rule-names {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+        .empty-state { padding: 3rem 1rem; font-size: 0.95rem; }
+{% endblock %}
+
+{% block content %}
+            <h1>Synthèse des règles firewall<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                Rapport généré le {{ generated_at }} — Filtre appliqué : {{ filter_label }}
+            </div>
+
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">Règles totales</span>
+                    <span class="value">{{ total_rules }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Entrées distinctes</span>
+                    <span class="value">{{ total_groups }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Périmètre</span>
+                    <span class="value" style="color: var(--status-success-text);">nftables / iptables</span>
+                </div>
+            </div>
+
+            {% if groups %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Backend</th>
+                            <th>Origine</th>
+                            <th>Chaîne</th>
+                            <th>Action</th>
+                            <th>Protocole</th>
+                            <th>Port</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>État</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for group in groups %}
+                        <tr>
+                            <td>{{ group.backend }}</td>
+                            <td>
+                                {% if group.origins|length > 1 %}
+                                <span class="badge badge-mixte">MIXTE</span>
+                                {% elif group.origins[0] == "OMEGA" %}
+                                <span class="badge badge-omega">OMEGA</span>
+                                {% else %}
+                                <span class="badge badge-systeme">SYSTÈME</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ group.chain }}</td>
+                            <td>
+                                {% if group.action in ("DROP", "REJECT") %}
+                                <span class="action-drop">{{ group.action }}</span>
+                                {% else %}
+                                <span class="action-accept">{{ group.action }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ group.protocol }}</td>
+                            <td>{{ group.port }}</td>
+                            <td>{{ group.source }}</td>
+                            <td>{{ group.destination }}</td>
+                            <td>
+                                {% if group.state == "ACTIF" %}
+                                <span class="badge badge-actif">ACTIF</span>
+                                {% else %}
+                                <span class="badge badge-inactif">INACTIF</span>
+                                {% endif %}
+                                {% if group.count > 1 %}
+                                <span class="occurrence-count">×{{ group.count }}</span>
+                                {% endif %}
+                                {% if group.names %}
+                                <div class="rule-names">
+                                    {% for name in group.names[:5] %}
+                                    <div>• {{ name }}</div>
+                                    {% endfor %}
+                                    {% if group.names|length > 5 %}
+                                    <div>… et {{ group.names|length - 5 }} autre(s)</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                Aucune règle ne correspond aux critères sélectionnés.
+            </div>
+            {% endif %}
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Synthèse d'export des règles (vue regroupée, best-effort).
+                Pour un export exhaustif et réutilisable, voir les formats JSON / TXT.
+            </div>
+{% endblock %}

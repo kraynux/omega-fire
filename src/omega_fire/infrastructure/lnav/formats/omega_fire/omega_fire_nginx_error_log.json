@@ -1,0 +1,51 @@
+{
+    "$schema": "https://lnav.org/schemas/format-v1.schema.json",
+    "omega_fire_nginx_error_log": {
+        "title": "Omega-Fire — Nginx error log",
+        "description": "Format d'error log par défaut de Nginx : horodatage, niveau entre crochets, pid#tid, id de connexion optionnel, message libre.",
+        "multiline": false,
+        "regex": {
+            "std": {
+                "pattern": "^(?<timestamp>\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}) \\[(?<level>\\w++)\\] (?<pid>\\d++)#(?<tid>\\d++): (?:\\*(?<cid>\\d++) )?(?<error_message>.*)"
+            }
+        },
+        "level-field": "level",
+        "level": {
+            "error": "^(?:error|crit|alert|emerg)$",
+            "warning": "^warn$",
+            "info": "^(?:info|notice)$",
+            "debug": "^debug$"
+        },
+        "value": {
+            "pid": {
+                "kind": "integer",
+                "identifier": true,
+                "description": "PID du worker Nginx"
+            },
+            "tid": {
+                "kind": "integer",
+                "identifier": true,
+                "description": "Identifiant de thread"
+            },
+            "cid": {
+                "kind": "integer",
+                "identifier": true,
+                "description": "Identifiant de connexion (optionnel, absent sur les messages globaux)"
+            },
+            "error_message": {
+                "kind": "string",
+                "description": "Message libre"
+            }
+        },
+        "sample": [
+            {
+                "line": "2026/02/12 10:15:23 [error] 12345#0: *67 open() \"/var/www/html/missing.html\" failed (2: No such file or directory), client: 10.0.0.5, server: example.com, request: \"GET /missing.html HTTP/1.1\", host: \"example.com\"",
+                "level": "error"
+            },
+            {
+                "line": "2026/02/12 10:00:00 [notice] 1#1: nginx/1.25.3",
+                "level": "info"
+            }
+        ]
+    }
+}

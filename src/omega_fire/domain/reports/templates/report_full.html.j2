@@ -1,0 +1,64 @@
+{# Rapport d'état système générique (menu 1.7 — export_report.py).
+
+Contexte attendu (à plat, PAS sous un objet "report" — voir
+application/commands/export_report.py::_generate_report) :
+  title, generated_at, summary (dict avec status/total_capabilities),
+  capability_rows (liste de dicts name/value/status_class/status_label
+  — la classification statut -> badge est faite côté Python, pas ici).
+#}
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block terminal_title %}omega-fire -- export-report{% endblock %}
+
+{% block extra_style %}
+        .cap-name { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; color: var(--text-heading); font-weight: 600; }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ title }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM LOG]</span> Rapport d'état système généré le {{ generated_at }}.
+            </div>
+
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">Statut Global</span>
+                    <span class="value" style="color: var(--status-success-text);">● {{ summary.status }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Capacités Actives</span>
+                    <span class="value">{{ summary.total_capabilities }}</span>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">Capacité / Module</th>
+                            <th style="width: 20%;">Statut</th>
+                            <th>Spécifications / Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if capability_rows %}
+                            {% for row in capability_rows %}
+                            <tr>
+                                <td class="cap-name">{{ row.name }}</td>
+                                <td><span class="badge badge-{{ row.status_class }}">{{ row.status_label }}</span></td>
+                                <td style="font-size: 0.85rem;">{{ row.value }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="3" style="color: var(--text-dim);">Aucune donnée enregistrée.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Document de Diagnostic Système
+            </div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{
+    "$schema": "https://lnav.org/schemas/format-v1.schema.json",
+    "omega_fire_access_log": {
+        "title": "Omega-Fire — Access log (vhost + chemin fichier)",
+        "description": "Variante du combined log format observée sur ce serveur lighttpd : IP, vhost (Host), utilisateur, horodatage, requête, statut, taille, referer, user-agent, puis chemin fichier physique servi en champ additionnel.",
+        "multiline": false,
+        "regex": {
+            "std-ip-first-vhost": {
+                "pattern": "^(?<c_ip>[\\w.:\\-]++)\\s++(?<cs_host>[\\w.\\-]++)\\s++(?:-|(?<cs_username>\\S++))\\s++\\[(?<timestamp>[^\\]]++)\\] \"(?:\\-|(?<cs_method>\\w++) (?<cs_uri_stem>[^ \\?\"]++)(?:\\?(?<cs_uri_query>[^ ]*+))?(?: (?<cs_version>[\\w/.]++))?)\" (?<sc_status>\\d++) (?<sc_bytes>\\d++|-)(?: \"(?:-|(?<cs_referer>[^\"]*+))\" \"(?:-|(?<cs_user_agent>[^\"]*+))\")?(?: \"(?<filesystem_path>[^\"]*+)\")?\\s*+$"
+            }
+        },
+        "level-field": "sc_status",
+        "level": {
+            "error": "^[^123].*"
+        },
+        "value": {
+            "c_ip": {
+                "kind": "string",
+                "collate": "ipaddress",
+                "identifier": true,
+                "description": "Adresse IP du client"
+            },
+            "cs_host": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Vhost / en-tête Host de la requête"
+            },
+            "cs_username": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Utilisateur authentifié (auth basique), absent la plupart du temps"
+            },
+            "cs_method": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Méthode HTTP"
+            },
+            "cs_uri_stem": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Chemin de la requête"
+            },
+            "cs_uri_query": {
+                "kind": "string",
+                "description": "Paramètres de requête"
+            },
+            "cs_version": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Version HTTP du client"
+            },
+            "sc_status": {
+                "kind": "integer",
+                "foreign-key": true,
+                "rewriter": ";SELECT :sc_status || ' (' || (SELECT message FROM http_status_codes WHERE status = :sc_status) || ') '",
+                "description": "Code de statut renvoyé par le serveur"
+            },
+            "sc_bytes": {
+                "kind": "integer",
+                "description": "Taille de la réponse en octets"
+            },
+            "cs_referer": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Referer du client"
+            },
+            "cs_user_agent": {
+                "kind": "string",
+                "identifier": true,
+                "description": "User-Agent du client"
+            },
+            "filesystem_path": {
+                "kind": "string",
+                "identifier": true,
+                "description": "Chemin physique du fichier servi (champ additionnel propre à cette config lighttpd)"
+            }
+        },
+        "sample": [
+            {
+                "line": "5.75.208.253 kraynux.snake-mackarel.ts.net - [10/Jul/2026:22:40:04 +0200] \"GET / HTTP/1.1\" 200 7628 \"-\" \"SiteCheckerBotCrawler/1.0 (+http://sitechecker.pro)\" \"/var/www/html/index.html\"",
+                "level": "info"
+            },
+            {
+                "line": "5.75.208.253 kraynux.snake-mackarel.ts.net - [10/Jul/2026:22:48:44 +0200] \"GET / HTTP/1.1\" 451 3412 \"-\" \"SiteCheckerBotCrawler/1.0 (+http://sitechecker.pro)\" \"/var/www/html/.errors/status-451.html\"",
+                "level": "error"
+            },
+            {
+                "line": "2a03:2880:f80a:2a:: kraynux.snake-mackarel.ts.net - [19/Aug/2026:10:31:37 +0200] \"GET / HTTP/1.1\" 200 8343 \"-\" \"facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)\" \"/var/www/html/index.html\"",
+                "level": "info"
+            }
+        ]
+    }
+}

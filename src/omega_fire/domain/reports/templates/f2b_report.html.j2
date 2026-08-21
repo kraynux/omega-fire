@@ -1,0 +1,146 @@
+{% extends "_base.html.j2" %}
+
+{% block title %}Rapport détaillé Fail2ban - Omega-Fire{% endblock %}
+{% block terminal_title %}omega-fire -- rapport-fail2ban-detail{% endblock %}
+
+{% block extra_style %}
+        .badge-yes { background-color: var(--status-success-bg); color: var(--status-success-text); border: 1px solid var(--status-success-border); }
+        .badge-no { background-color: var(--status-neutral-bg); color: var(--status-neutral-text); border: 1px solid var(--status-neutral-border); }
+        .badge-unknown { background-color: var(--status-warning-bg); color: var(--status-warning-text); border: 1px solid var(--status-warning-border); }
+        .jail-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 4px;
+            padding: 1.4rem 1.8rem;
+            margin-bottom: 1.2rem;
+        }
+        .jail-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            margin-bottom: 0.8rem;
+        }
+        .jail-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .jail-stat .label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .jail-stat .value {
+            font-size: 0.95rem;
+            color: var(--text-table-cell);
+        }
+        .jail-ips {
+            font-size: 0.82rem;
+            color: var(--text-panel);
+            margin: 0.6rem 0;
+            word-break: break-all;
+        }
+        .jail-ips .label {
+            color: var(--text-accent);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+{% endblock %}
+
+{% block content %}
+            <h1>Rapport détaillé Fail2ban<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[FAIL2BAN REPORT]</span> Généré le {{ generated_at }}
+            </div>
+
+            <h2>Système</h2>
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">Installé</span>
+                    <span class="badge badge-{{ 'yes' if system.installed else 'no' }}">{{ 'Oui' if system.installed else 'Non' }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Service actif</span>
+                    <span class="badge badge-{{ 'yes' if system.service_running else 'no' }}">{{ 'Oui' if system.service_running else 'Non' }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Activé au démarrage</span>
+                    {% if system.enabled_at_boot is none %}
+                    <span class="badge badge-unknown">Indéterminé</span>
+                    {% else %}
+                    <span class="badge badge-{{ 'yes' if system.enabled_at_boot else 'no' }}">{{ 'Oui' if system.enabled_at_boot else 'Non' }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h2>Jails ({{ total_jails }})</h2>
+            {% if jails %}
+                {% for jail in jails %}
+                <div class="jail-card">
+                    <div class="jail-name">{{ jail.name }}</div>
+                    <div class="jail-stats">
+                        <div class="jail-stat"><div class="label">Échecs actuel/total</div><div class="value">{{ jail.currently_failed }} / {{ jail.total_failed }}</div></div>
+                        <div class="jail-stat"><div class="label">Bannis actuel/total</div><div class="value">{{ jail.currently_banned }} / {{ jail.total_banned }}</div></div>
+                        <div class="jail-stat"><div class="label">Maxretry</div><div class="value">{{ jail.maxretry or 'N/A' }}</div></div>
+                        <div class="jail-stat"><div class="label">Bantime</div><div class="value">{{ jail.bantime or 'N/A' }}</div></div>
+                        <div class="jail-stat"><div class="label">Findtime</div><div class="value">{{ jail.findtime or 'N/A' }}</div></div>
+                    </div>
+
+                    {% if jail.banned_ips %}
+                    <div class="jail-ips">
+                        <span class="label">IPs bannies actuellement</span>
+                        {{ jail.banned_ips|join(', ') }}{% if jail.banned_ips_overflow > 0 %} <em>(+{{ jail.banned_ips_overflow }} autre(s))</em>{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="jail-ips"><span class="label">IPs bannies actuellement</span>Aucune</div>
+                    {% endif %}
+
+                    {% if jail.history_available %}
+                        {% if jail.recent_bans %}
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date du ban</th><th>IP</th></tr></thead>
+                                <tbody>
+                                {% for rb in jail.recent_bans %}
+                                    <tr><td>{{ rb.timeofban.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ rb.ip }}</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">Aucun ban dans l'historique fail2ban.</div>
+                        {% endif %}
+                    {% else %}
+                    <div class="empty-state">Historique fail2ban indisponible (base non trouvée).</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">Aucune jail active.</div>
+            {% endif %}
+
+            <h2>IPs présentes dans plusieurs jails</h2>
+            {% if duplicate_ips %}
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>IP</th><th>Jails concernées</th></tr></thead>
+                    <tbody>
+                    {% for dup in duplicate_ips %}
+                        <tr><td>{{ dup.ip }}</td><td>{{ dup.jails|join(', ') }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">Aucune IP partagée entre plusieurs jails actuellement.</div>
+            {% endif %}
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Rapport détaillé Fail2ban.
+            </div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{# Export d'une liste d'IPs sur 3 colonnes (jail fail2ban ou blacklist).
+
+Partagé entre 4.8 (export_jail) et 6.1 (export_blacklist) — les deux
+généraient auparavant un HTML quasi identique en dur dans actions.py
+(f-string, hors HtmlExporter). Contexte attendu :
+  page_title, heading, source_label, source_value, generated_at,
+  ip_rows (liste de tuples (ip1, ip2, ip3), colonnes déjà réparties
+  côté Python — pas de logique de répartition ici).
+#}
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block terminal_title %}omega-fire -- export-ip-report{% endblock %}
+
+{% block extra_style %}
+        .reco-grid { grid-template-columns: 1fr 1fr; }
+        th { width: 33.33%; }
+        td.ip-cell { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; color: var(--text-heading); font-weight: 600; }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ heading }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM EXPORT]</span> Rapport d'exportation généré le {{ generated_at }}.
+            </div>
+
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">{{ source_label }}</span>
+                    <span class="value" style="color: var(--status-success-text);">{{ source_value }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">Nombre d'IPs</span>
+                    <span class="value">{{ total_ips }}</span>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Adresse IP (Colonne 1)</th>
+                            <th>Adresse IP (Colonne 2)</th>
+                            <th>Adresse IP (Colonne 3)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in ip_rows %}
+                        <tr>
+                            <td class="ip-cell">{{ row[0] }}</td>
+                            <td class="ip-cell">{{ row[1] }}</td>
+                            <td class="ip-cell">{{ row[2] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Document de Rapport d'Exportation.
+            </div>
+{% endblock %}

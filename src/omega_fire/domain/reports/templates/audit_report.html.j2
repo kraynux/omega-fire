@@ -1,0 +1,201 @@
+{% extends "_base.html.j2" %}
+
+{% block title %}Rapport d'audit - Omega-Fire{% endblock %}
+{% block terminal_title %}omega-fire -- rapport-audit-complet{% endblock %}
+
+{% block extra_style %}
+        .exec-summary {
+            background-color: var(--bg-header);
+            border: 1px solid #1a3a5e;
+            border-radius: 4px;
+            padding: 1.4rem 1.8rem;
+            margin-bottom: 2rem;
+            white-space: pre-line;
+            font-size: 0.9rem;
+        }
+        .badge-available { background-color: var(--status-success-bg); color: var(--status-success-text); border: 1px solid var(--status-success-border); }
+        .badge-degraded { background-color: var(--status-warning-bg); color: var(--status-warning-text); border: 1px solid var(--status-warning-border); }
+        .badge-missing { background-color: var(--status-neutral-bg); color: var(--status-neutral-text); border: 1px solid var(--status-neutral-border); }
+        .badge-disqualified { background-color: var(--status-danger-bg); color: var(--status-danger-text); border: 1px solid var(--status-danger-border); }
+        .cap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem;
+            margin: 1.2rem 0 1.5rem 0;
+        }
+        .cap-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 4px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.82rem;
+        }
+        .cap-chip-name {
+            color: var(--text-table-cell);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .cap-chip-reason {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            margin-top: 0.15rem;
+        }
+        .cap-missing-list {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 4px;
+            padding: 1rem 1.4rem;
+            margin: 1rem 0 1.5rem 0;
+            font-size: 0.85rem;
+        }
+        .cap-missing-list .label {
+            font-weight: 600;
+            color: var(--text-accent);
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        .cap-missing-names {
+            color: #8090a0;
+            line-height: 1.8;
+        }
+{% endblock %}
+
+{% block content %}
+            <h1>Rapport d'audit complet<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM AUDIT]</span> Généré le {{ generated_at }}
+                {% if period_since %}<br><span style="font-size:0.8rem; color:var(--text-dim);">(Rapport précédent généré le : {{ period_since }})</span>{% endif %}
+            </div>
+
+            <div class="exec-summary">{{ executive_summary }}</div>
+
+            <h2>Services &amp; Capacités</h2>
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Disponibles</span><span class="value" style="color:var(--status-success-text);">{{ capabilities.total_available }}</span></div>
+                <div class="reco-item"><span class="label">Manquantes</span><span class="value" style="color:var(--status-neutral-text);">{{ capabilities.total_missing }}</span></div>
+                <div class="reco-item"><span class="label">Dégradées</span><span class="value" style="color:var(--status-warning-text);">{{ capabilities.total_degraded }}</span></div>
+                <div class="reco-item"><span class="label">Disqualifiées</span><span class="value" style="color:var(--status-danger-text);">{{ capabilities.total_disqualified }}</span></div>
+            </div>
+            {% set available_caps = capabilities.capabilities|selectattr('status', 'in', ['AVAILABLE', 'DEGRADED'])|list %}
+            {% set missing_caps = capabilities.capabilities|selectattr('status', 'in', ['MISSING', 'DISQUALIFIED'])|list %}
+
+            {% if available_caps %}
+            <div class="cap-grid">
+                {% for cap in available_caps|sort(attribute='category') %}
+                <div class="cap-chip">
+                    <div>
+                        <span class="cap-chip-name">{{ cap.id }}</span>
+                        {% if cap.reason %}
+                        <div class="cap-chip-reason">{{ cap.reason }}</div>
+                        {% endif %}
+                    </div>
+                    <span class="badge badge-{{ cap.status|lower }}">{{ cap.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if missing_caps %}
+            <div class="cap-missing-list">
+                <span class="label">Non détectées ({{ missing_caps|length }})</span>
+                <span class="cap-missing-names">{{ missing_caps|map(attribute='id')|join(', ') }}</span>
+            </div>
+            {% endif %}
+
+            <h2>Règles &amp; synchronisation</h2>
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Règles totales</span><span class="value">{{ rules_inventory.total_count }}</span></div>
+                <div class="reco-item"><span class="label">Règles actives</span><span class="value">{{ rules_inventory.enabled_count }}</span></div>
+                <div class="reco-item"><span class="label">Dernière sync</span><span class="value">{% if sync_info.found %}{{ sync_info.last_sync_at }}{% else %}Aucune{% endif %}</span></div>
+            </div>
+
+            <h2>Inventaire IP actuel</h2>
+            {% if ip_inventory %}
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Backend</th><th>IPs actives</th></tr></thead>
+                    <tbody>
+                    {% for inv in ip_inventory %}
+                        <tr><td>{{ inv.backend }}</td><td>{{ inv.active_count }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">Aucune IP active actuellement.</div>
+            {% endif %}
+            {% if ip_internal_duplicate_count > 0 %}
+            <div class="anomaly anomaly-warning"><span class="anomaly-category">[IPs]</span>{{ ip_internal_duplicate_count }} doublon(s) IP au sein d'un même backend.</div>
+            {% endif %}
+            {% if ip_cross_backend_count > 0 %}
+            <div class="anomaly anomaly-warning" style="border-left-color:var(--text-accent);"><span class="anomaly-category">[IPs]</span>{{ ip_cross_backend_count }} IP(s) présente(s) dans plusieurs backends (normal après une synchronisation).</div>
+            {% endif %}
+
+
+            <h2>Fail2ban (résumé — détail complet : menu 6.4)</h2>
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Jails</span><span class="value">{{ fail2ban_summary.total_jails }}</span></div>
+                <div class="reco-item"><span class="label">IPs bannies (F2B)</span><span class="value">{{ fail2ban_summary.total_currently_banned }}</span></div>
+            </div>
+
+            <h2>Journal applicatif — top événements</h2>
+            {% if journal_summary.top_events %}
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Action</th><th>Occurrences</th></tr></thead>
+                    <tbody>
+                    {% for name, count in journal_summary.top_events %}
+                        <tr><td>{{ name }}</td><td>{{ count }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Erreurs</span><span class="value" style="color:var(--status-danger-text);">{{ journal_summary.error_count }}</span></div>
+                <div class="reco-item"><span class="label">Autres événements</span><span class="value">{{ journal_summary.other_count }}</span></div>
+            </div>
+
+            <h2>Anomalies détectées</h2>
+            {% if anomalies %}
+                {% for a in anomalies %}
+                <div class="anomaly anomaly-{{ a.severity }}">
+                    <span class="anomaly-category">[{{ a.category }}]</span>{{ a.description }}{% if a.count > 1 %} <strong>(×{{ a.count }})</strong>{% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">✔ Aucune anomalie détectée.</div>
+            {% endif %}
+
+            <h2>Santé applicative &amp; ressources</h2>
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Version</span><span class="value">{{ app_health.version }}</span></div>
+                <div class="reco-item"><span class="label">Dernier backup</span><span class="value">{{ app_health.last_backup_info }}</span></div>
+                <div class="reco-item"><span class="label">Taille backups</span><span class="value">{{ disk_usage.backups_size_mb }} MB ({{ disk_usage.backups_count }} archives)</span></div>
+                <div class="reco-item"><span class="label">Taille base</span><span class="value">{{ disk_usage.db_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">Taille logs</span><span class="value">{{ disk_usage.logs_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">Espace libre</span><span class="value">{{ disk_usage.free_space_gb }} GB</span></div>
+            </div>
+            {% if disk_usage.warning %}
+            <div class="anomaly anomaly-warning"><span class="anomaly-category">[Disque]</span>{{ disk_usage.warning }}</div>
+            {% endif %}
+
+            <h2>Intégrité base de données</h2>
+            <div class="reco-grid">
+                <div class="reco-item"><span class="label">Statut</span><span class="value" style="color:{% if db_integrity.integrity_ok %}var(--status-success-text){% else %}var(--status-danger-text){% endif %};">{{ db_integrity.integrity_details }}</span></div>
+                <div class="reco-item"><span class="label">Taille</span><span class="value">{{ db_integrity.db_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">Version schéma</span><span class="value">{{ db_integrity.schema_version }}</span></div>
+            </div>
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Rapport d'audit système complet.
+            </div>
+{% endblock %}

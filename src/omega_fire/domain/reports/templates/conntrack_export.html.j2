@@ -1,0 +1,78 @@
+{# Export HTML de l'état des connexions conntrack (menu 8.2).
+Contexte attendu :
+  page_title, heading, generated_at, filters_label (str, vide si aucun
+  filtre actif), total_count, by_protocol (dict proto -> count),
+  by_state (dict state -> count), entries (liste de dict : protocol,
+  source_ip, source_port, destination_ip, destination_port, state,
+  packets, bytes, timeout), theme_name.
+#}
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block terminal_title %}omega-fire -- conntrack-report{% endblock %}
+
+{% block extra_style %}
+        .reco-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        td.mono-cell { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ heading }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM EXPORT]</span> Rapport généré le {{ generated_at }}.
+                {% if filters_label %}Filtres actifs : {{ filters_label }}.{% endif %}
+            </div>
+
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">Connexions totales</span>
+                    <span class="value" style="color: var(--status-success-text);">{{ total_count }}</span>
+                </div>
+                {% for proto, count in by_protocol.items() %}
+                <div class="reco-item">
+                    <span class="label">Protocole {{ proto }}</span>
+                    <span class="value">{{ count }}</span>
+                </div>
+                {% endfor %}
+                {% for st, count in by_state.items() %}
+                <div class="reco-item">
+                    <span class="label">État {{ st }}</span>
+                    <span class="value">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Protocole</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>État</th>
+                            <th>Paquets</th>
+                            <th>Octets</th>
+                            <th>Timeout (s)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in entries %}
+                        <tr>
+                            <td>{{ e.protocol }}</td>
+                            <td class="mono-cell">{{ e.source_ip }}{% if e.source_port %}:{{ e.source_port }}{% endif %}</td>
+                            <td class="mono-cell">{{ e.destination_ip }}{% if e.destination_port %}:{{ e.destination_port }}{% endif %}</td>
+                            <td>{{ e.state }}</td>
+                            <td>{{ e.packets }}</td>
+                            <td>{{ e.bytes }}</td>
+                            <td>{{ e.timeout }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer-note">
+                Omega-Fire CLI Framework — Document de Rapport d'Exportation.
+            </div>
+{% endblock %}
