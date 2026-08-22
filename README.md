@@ -36,7 +36,6 @@ Apercu :
 - [Tests et qualité](#tests-et-qualité)
 - [Désinstallation](#désinstallation)
 - [Limites connues](#limites-connues)
-- [Contribution](#contribution)
 - [Licence](#licence)
 
 ---
@@ -370,6 +369,8 @@ fc-cache -fv
 ```bash
 cd ~/omega-fire
 ./omega-fire.sh
+
+ou simplement taper  fire    si vous avez créer l'alias
 ```
 
 Le lanceur :
@@ -391,18 +392,28 @@ Le lanceur :
 ### Navigation
 
 - Flèches haut/bas : déplacer le curseur.
+- Flèches gauche/droite : déplacer l'ecran pour lire les longues lignes de logs entieres
 - Entrée : sélectionner ou valider.
 - `Esc` : revenir en arrière.
 - `a` : afficher l’aide contextuelle.
 - `t` : changer de thème.
 - `q` : quitter.
+- `r` : refresh, rafraichit l'écran, utile apres un redimensionnement de terminal si non refresh.
+- `d` : début, lorsque une liste depasse l'ecran et rentre en systeme de pagination. (Flèches gauche/droite compatible)
+- `f` : fin, lorsque une liste depasse l'ecran et rentre en systeme de pagination. (Flèches gauche/droite compatible)
+- `Ctrl` + `q` : quitter certaines actions (logs, dashboard,...)
+- `Ctrl` + `g/G` : Début et fin de liste de logs (fusion lnav)
+- `Ctrl` + `c` : Mode interruption de l application direct (sauvegarde + confirmation)
 - Identifiant de menu, par exemple `2.1` : positionner le curseur, puis appuyer une seconde fois sur Entrée pour valider.
+- Identifiant de numero de menu et sous menu , par exemple `2.1` et Entrée : allez directement à la section 2.1.
 
 ---
 
 ## Thèmes et terminaux
-
-Dix thèmes Rich sont disponibles :
+- Taille : Confort minimal d 'utilisation 164x47 (specifié dans le header).
+- Themes : Application complete sur profil classic fond noir, police clair.
+- Si vous avez personnalisés des themes de profils specifique (wallpaper, couleur,...) le theme se met en mode Fusion (application partielle).
+- Dix thèmes Rich sont disponibles :
 
 ```text
 omega-base       omega-dark       omega-light
@@ -411,7 +422,9 @@ omega-hack       omega-contrast   omega-mono
 omega-minimal
 ```
 
-Basculez entre les thèmes avec `t`. Omega-Fire adapte automatiquement les couleurs, emojis, animations Live et palettes selon les capacités du terminal.
+- Basculez entre les thèmes avec `t`. Omega-Fire adapte automatiquement les couleurs, emojis, animations Live et palettes selon les capacités du terminal.
+- Effet du raccourci `[t]` : Sur certain dashboard le theme change directement (2s), sur d autres un lanceur vous permet de choisir directement à partir du nom du theme. 
+- le changement de theme s'active depuis les menus et dashboard, pas dans les actions.
 
 | Terminal | Couleurs | Emojis | Live | Thèmes |
 |---|---:|---|---|---|
@@ -560,7 +573,7 @@ pytest --cov
 ### Limites connues
 
 - Le mécanisme `ExecutionPlan`/`PipelineStep` reste partiellement conservé dans le projet.
-- La lecture clavier non bloquante est susceptible d’être dupliquée dans certains écrans Live. (non contaté mais probable)
+- La lecture clavier non bloquante est susceptible d’être dupliquée dans certains écrans Live. (non constaté mais probable)
 - La couverture automatisée des interfaces Live demeure limitée par l’absence de TTY dans certains environnements de test.
 - La disponibilité exacte des fonctionnalités dépend des binaires, services, permissions et configurations de la machine hôte.
 
