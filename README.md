@@ -1,18 +1,16 @@
 <!-- Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE) -->
-# 🔥 OMEGA-FIRE
+<div align="center">
+  <img src="docs/assets/omega-fire.png" alt="Omega-Fire" width="256">
+</div>
 
-## Poste de gestion unifié de la sécurité réseau
+# 󰦝 OMEGA-FIRE
 
-**Omega-Fire** est une application TUI (Terminal User Interface) Python construite avec [Rich](https://github.com/Textualize/rich). Elle fournit depuis un terminal une interface unique pour administrer les pare-feux Linux, Fail2Ban, les adresses bannies, les règles réseau, les journaux et les statistiques système.
+**Poste de gestion unifié de la sécurité réseau**
 
-Le projet est conçu selon les principes de la **Clean Architecture**, avec une séparation claire entre domaine métier, orchestration, infrastructure et interface utilisateur.
+> Élaboré par **kraynux** pour **Omega-server** 
+[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
 
-> Développé par **kraynux** pour **Omega-server** · Licence MIT [https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
-
-Page officiel :
-[OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) 
-Apercu :
-[Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)
+Page officiel : [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Apercu : [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -20,6 +18,10 @@ Apercu :
 [![Interface](https://img.shields.io/badge/Interface-TUI%20%2B%20Rich-cyan.svg)](https://github.com/Textualize/rich)
 
 ---
+
+**Omega-Fire** est une application TUI (Terminal User Interface) Python construite avec [Rich](https://github.com/Textualize/rich). Elle fournit depuis un terminal une interface unique pour administrer les pare-feux Linux, Fail2Ban, les adresses bannies, les règles réseau, les journaux et les statistiques système.
+
+Le projet est conçu selon les principes de la **Clean Architecture**, avec une séparation claire entre domaine métier, orchestration, infrastructure et interface utilisateur.
 
 ## Sommaire
 
