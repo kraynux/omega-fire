@@ -7,6 +7,20 @@
 
 set -e
 
+# Forcer un environnement UTF-8 : sans ça, sudo (qui réinitialise
+# l'environnement par défaut) ou une session distante mal configurée
+# peuvent faire retomber LANG/LC_ALL sur une locale C/POSIX, ce qui casse
+# l'affichage des icônes (Python/Rich les remplacent alors par "??").
+if [ -z "${LC_ALL:-}" ] && [ -z "${LANG:-}" ] || [ "${LANG:-}" = "C" ] || [ "${LANG:-}" = "POSIX" ]; then
+    if locale -a 2>/dev/null | grep -qi '^C\.utf8$'; then
+        export LC_ALL=C.UTF-8
+        export LANG=C.UTF-8
+    elif locale -a 2>/dev/null | grep -qi '^en_US\.utf8$'; then
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+    fi
+fi
+
 # Couleurs pour le terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -32,8 +46,10 @@ if [ "$EUID" -ne 0 ]; then
     echo -e "${YELLOW}[SECURITY] Omega-Fire requiert les privilèges d'administration.${NC}"
     echo -e "${YELLOW}           (Accès requis pour nftables, fail2ban-client, etc.)${NC}\n"
     
-    # Demande de mot de passe sudo
-    exec sudo "$0" "$@"
+    # Demande de mot de passe sudo (--preserve-env pour ne pas perdre la
+    # locale UTF-8 forcée ci-dessus : sudo réinitialise l'environnement
+    # par défaut, ce qui provoquerait le même souci d'affichage sous root)
+    exec sudo --preserve-env=LANG,LC_ALL "$0" "$@"
     exit $?
 fi
 

@@ -290,9 +290,12 @@ sudo pacman -S fail2ban conntrack-tools lnav
 sha256sum omega-fire.tar.gz
 ```
 
+> ⚠️ **以下三种方法仅适用于首次安装。** 如果 `~/omega-fire` 已经存在（升级自之前的版本），请改用下方的[更新](#更新)章节 —— 切勿在已存在的 `omega-fire` 目录内部重新执行这些命令：`tar` 会尝试创建一个嵌套的 `omega-fire/omega-fire/`，如果该目录属于 root（常见于此前误用 `sudo tar` 解压的情况），则会因权限错误而失败。
+
 ### 方法一 — 安装脚本
 
 ```bash
+[ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ 您似乎已经位于 omega-fire 目录内 —— 请参阅 README 的更新章节。" >&2; exit 1; }
 [ -d omega-fire ] && echo "ℹ️ 已在此解压，跳过此步骤。" || tar -xzf omega-fire.tar.gz
 [ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire 已存在，跳过移动。" || mv omega-fire ~/
 cd ~/omega-fire/
@@ -317,12 +320,15 @@ fire
 此命令可以重复执行：它会跳过已经完成的步骤。
 
 ```bash
-([ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire 已存在，跳过解压。" || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv 已存在，跳过此步骤。" || python3 -m venv .venv) && source .venv/bin/activate && ([ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib || true) && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ omega-fire 组已存在。" || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER 已是 omega-fire 组成员。" || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire 已安装。运行 ./omega-fire.sh。"
+([ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ 您似乎已经位于 omega-fire 目录内 —— 请参阅 README 的更新章节。" >&2; exit 1; }; [ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire 已存在，跳过解压。" || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv 已存在，跳过此步骤。" || python3 -m venv .venv) && source .venv/bin/activate && ([ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib || true) && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ omega-fire 组已存在。" || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER 已是 omega-fire 组成员。" || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire 已安装。运行 ./omega-fire.sh。"
 ```
 
 ### 方法三 — 详细安装
 
 ```bash
+# 0. 确认没有在已存在的 omega-fire 目录内重新执行本流程
+[ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ 您似乎已经位于 omega-fire 目录内 —— 请参阅 README 的更新章节。" >&2; exit 1; }
+
 # 1. 解压
 [ -d omega-fire ] && echo "ℹ️ 已在此解压，跳过此步骤。" || tar -xzf omega-fire.tar.gz
 
@@ -357,6 +363,33 @@ sudo chmod -R 2775 var
 `vendor/omega-lib/` 仅存在于官方归档中（`build-release.sh` 会自动将其纳入，因为 omega-lib 未发布到 PyPI）；在开发环境的克隆版本中，请从其自己的仓库单独安装（`pip install -e 指向omega-lib的路径`）。
 
 专用用户组和 `setgid` 位使得 root 和当前用户可以共享 `var/` 中产生的文件，而无需向整个系统开放权限。要立即获得该用户组的成员身份，可能需要重新登录，或执行 `newgrp omega-fire`。
+
+### 更新
+
+如果 `~/omega-fire` 已经存在（此前已安装过），**切勿在该目录内部重新执行安装命令**：`tar` 会尝试创建一个嵌套的 `omega-fire/omega-fire/` 并失败，如果该目录属于 `root`（常见于此前误用 `sudo tar` 解压的情况），通常会出现一连串"Permission denied"（权限被拒绝）错误。
+
+推荐流程，从 **`~/omega-fire` 以外**的任意目录执行（通常就是 `~` 本身）：
+
+```bash
+# 1. 检查现有安装的状态和所有者
+ls -ld ~/omega-fire
+
+# 2. 将旧安装移到一边，而不是直接覆盖
+sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
+
+# 3. 将新归档直接解压到主目录
+tar -xzf omega-fire.tar.gz -C ~/
+
+# 4. 重新安装（重建虚拟环境、重新安装依赖、重新设置 var/ 权限）
+cd ~/omega-fire
+chmod +x install.sh
+./install.sh
+
+# 5. 启动
+./omega-fire.sh
+```
+
+确认新安装工作正常后，可以删除旧的 `~/omega-fire.old-YYYYMMDD` 目录（`sudo rm -rf ~/omega-fire.old-YYYYMMDD`）。
 
 ### Bash 或 Zsh 别名
 

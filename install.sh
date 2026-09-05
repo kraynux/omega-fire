@@ -11,6 +11,19 @@
 
 set -e
 
+# Forcer un environnement UTF-8 : une session distante mal configurée peut
+# faire retomber LANG/LC_ALL sur une locale C/POSIX, ce qui casse l'affichage
+# des icônes ci-dessous (remplacées par "??").
+if [ -z "${LC_ALL:-}" ] && [ -z "${LANG:-}" ] || [ "${LANG:-}" = "C" ] || [ "${LANG:-}" = "POSIX" ]; then
+    if locale -a 2>/dev/null | grep -qi '^C\.utf8$'; then
+        export LC_ALL=C.UTF-8
+        export LANG=C.UTF-8
+    elif locale -a 2>/dev/null | grep -qi '^en_US\.utf8$'; then
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+    fi
+fi
+
 # Couleurs (mêmes conventions que omega-fire.sh)
 RED='\033[0;31m'
 GREEN='\033[0;32m'

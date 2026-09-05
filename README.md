@@ -19,6 +19,7 @@ Page officiel : [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) 
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
 🇫🇷 **Français** · 🇬🇧 [English](README.en.md) · 🇪🇸 [Español](README.es.md) · 🇷🇺 [Русский](README.ru.md) · 🇨🇳 [中文](README.zh.md)
+
 ---
 
 **Omega-Fire** est une application TUI (Terminal User Interface) Python construite avec [Textual](https://github.com/Textualize/textual). Elle fournit depuis un terminal une interface unique pour administrer les pare-feux Linux, Fail2Ban, les adresses bannies, les règles réseau, les journaux et les statistiques système.
@@ -289,9 +290,12 @@ L'archive officielle est fournie au format `.tar.gz`. Vérifiez son intégrité 
 sha256sum omega-fire.tar.gz
 ```
 
+> ⚠️ **Ces trois méthodes servent à une première installation.** Si `~/omega-fire` existe déjà (mise à jour d'une version précédente), utilisez la section [Mise à jour](#mise-à-jour) ci-dessous — ne relancez jamais ces commandes depuis l'intérieur d'un dossier `omega-fire` existant : `tar` tenterait de créer un `omega-fire/omega-fire/` imbriqué et échouerait avec des erreurs de permission si ce dossier appartient à root (fréquent si une extraction précédente a été faite par erreur avec `sudo tar`).
+
 ### Méthode 1 — script d'installation
 
 ```bash
+[ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ Vous semblez déjà être dans un dossier omega-fire — voir la section Mise à jour du README." >&2; exit 1; }
 [ -d omega-fire ] && echo "ℹ️ Déjà extrait ici, étape ignorée." || tar -xzf omega-fire.tar.gz
 [ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire existe déjà, déplacement ignoré." || mv omega-fire ~/
 cd ~/omega-fire/
@@ -316,12 +320,15 @@ fire
 Cette commande peut être relancée : elle ignore les étapes déjà réalisées.
 
 ```bash
-([ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire existe déjà, extraction ignorée." || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv existe déjà, étape ignorée." || python3 -m venv .venv) && source .venv/bin/activate && ([ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib || true) && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ Groupe omega-fire déjà présent." || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER déjà membre du groupe omega-fire." || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire installé. Lancez ./omega-fire.sh."
+([ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ Vous semblez déjà être dans un dossier omega-fire — voir la section Mise à jour du README." >&2; exit 1; }; [ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire existe déjà, extraction ignorée." || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv existe déjà, étape ignorée." || python3 -m venv .venv) && source .venv/bin/activate && ([ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib || true) && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ Groupe omega-fire déjà présent." || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER déjà membre du groupe omega-fire." || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire installé. Lancez ./omega-fire.sh."
 ```
 
 ### Méthode 3 — installation détaillée
 
 ```bash
+# 0. Vérifier qu'on ne relance pas depuis l'intérieur d'un omega-fire existant
+[ "$(basename "$PWD")" = "omega-fire" ] && { echo "❌ Vous semblez déjà être dans un dossier omega-fire — voir la section Mise à jour du README." >&2; exit 1; }
+
 # 1. Extraire
 [ -d omega-fire ] && echo "ℹ️ Déjà extrait ici, étape ignorée." || tar -xzf omega-fire.tar.gz
 
@@ -356,6 +363,33 @@ sudo chmod -R 2775 var
 `vendor/omega-lib/` n'est présent que dans l'archive officielle (`build-release.sh` l'y intègre automatiquement, car omega-lib n'est pas publiée sur PyPI) ; en clone de développement, installez-la séparément depuis son propre dépôt (`pip install -e chemin/vers/omega-lib`).
 
 Le groupe dédié et le bit `setgid` permettent à root et à l'utilisateur de partager les fichiers produits dans `var/` sans ouvrir les permissions à l'ensemble du système. Une nouvelle connexion ou `newgrp omega-fire` peut être nécessaire pour bénéficier immédiatement de l'appartenance au groupe.
+
+### Mise à jour
+
+Si `~/omega-fire` existe déjà (installation précédente), **ne relancez jamais les commandes d'installation depuis l'intérieur de ce dossier** : `tar` tenterait de créer un `omega-fire/omega-fire/` imbriqué et échouerait, généralement avec une cascade d'erreurs « Permission non accordée » si le dossier appartient à `root` (cas fréquent si une extraction précédente a été faite par erreur avec `sudo tar`).
+
+Procédure recommandée, depuis n'importe quel dossier **autre que `~/omega-fire`** (typiquement `~` lui-même) :
+
+```bash
+# 1. Vérifier l'état et le propriétaire de l'installation existante
+ls -ld ~/omega-fire
+
+# 2. Mettre l'ancienne installation de côté plutôt que l'écraser
+sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
+
+# 3. Extraire la nouvelle archive directement dans le home
+tar -xzf omega-fire.tar.gz -C ~/
+
+# 4. Réinstaller (recrée le venv, réinstalle les dépendances, refait les permissions var/)
+cd ~/omega-fire
+chmod +x install.sh
+./install.sh
+
+# 5. Lancer
+./omega-fire.sh
+```
+
+Une fois la nouvelle installation validée, l'ancien dossier `~/omega-fire.old-AAAAMMJJ` peut être supprimé (`sudo rm -rf ~/omega-fire.old-AAAAMMJJ`).
 
 ### Alias Bash ou Zsh
 
