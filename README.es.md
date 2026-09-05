@@ -1,5 +1,4 @@
 <!-- Copyright (c) 2026 kraynux - kraynux@proton.me - Licencia MIT (ver archivo LICENSE) -->
-🇫🇷 [Français](README.md) · 🇬🇧 [English](README.en.md) · 🇪🇸 **Español** · 🇷🇺 [Русский](README.ru.md) · 🇨🇳 [中文](README.zh.md)
 
 <div align="center">
   <img src="docs/assets/omega-fire.png" alt="Omega-Fire" width="256">
@@ -18,6 +17,8 @@ Página oficial: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
+
+🇫🇷 [Français](README.md) · 🇬🇧 [English](README.en.md) · 🇪🇸 **Español** · 🇷🇺 [Русский](README.ru.md) · 🇨🇳 [中文](README.zh.md)
 
 ---
 
