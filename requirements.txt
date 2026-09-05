@@ -7,6 +7,16 @@ jinja2>=3.1.0
 python-dotenv>=1.0.0
 pyte>=0.8.2  # emulateur de terminal virtuel, pour l'encapsulation pty de lnav (menu 8.6)
 
+# Migration TUI Textual (voir feuille de route) — même borne de version
+# que le reste de la suite (omega-check/omega-stress) pour rester cohérent.
+textual>=0.60
+# omega-lib n'est PAS listée ici : elle n'est pas publiée sur PyPI et un
+# chemin relatif figé casserait l'archive distribuable. En développement,
+# installez-la à part avant cette liste : scripts/setup_dev.sh (ou
+# manuellement : pip install -e ../../LIB/omega-lib). Pour la
+# distribution, voir vendor/omega-lib/ + install.sh (Phase 6 de la
+# feuille de route, même mécanisme qu'omega-stress/omega-check).
+
 # ============================================================
 # Dépendances de développement (tests, lint, formatage)
 # ============================================================

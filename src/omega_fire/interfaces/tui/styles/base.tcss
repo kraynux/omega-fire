@@ -1,0 +1,412 @@
+/* Regles communes aux 4 profils de rendu. Portees verbatim depuis
+   omega-check (D-008 : meme catalogue de themes, memes conventions
+   visuelles pour toute la suite omega-).
+
+   Boutons : patron porte tel quel. Le contour rond vit EXCLUSIVEMENT sur
+   ".omega-btn-frame" (un Container), jamais sur le Button lui-meme
+   ("border: none" partout) : remplir le fond d'un widget au survol/focus
+   peint TOUJOURS tout son rectangle, y compris l'anneau de bordure round
+   — separer decoration (frame, jamais recolore) et interactivite (Button,
+   fond $accent au survol/focus) evite ce bug tout en gardant un focus
+   colore selon le theme. ".omega-actions"/".omega-confirm-buttons" ne
+   portent PAS de contour a eux : le bouton est deja entoure par son
+   propre frame, un deuxieme cadre autour du groupe est redondant. */
+
+Screen {
+    background: $background;
+    color: $foreground;
+}
+
+.omega-title {
+    text-style: bold;
+    color: $primary;
+    border: round $accent;
+    padding: 0 1;
+    width: auto;
+    margin: 1 0;
+}
+
+.omega-subtitle {
+    color: $secondary;
+    padding: 0 0 1 0;
+}
+
+.omega-hint {
+    color: $foreground 60%;
+    padding: 0 0 1 0;
+}
+
+.omega-hidden {
+    display: none;
+}
+
+.omega-panel {
+    padding: 1 2;
+    height: 1fr;
+    overflow-y: auto;
+}
+
+/* Ecran de section (section_screen.py) : titre + liste de boutons
+   centres, comme le menu principal (.omega-home-root) et les
+   formulaires (.omega-form-panel) — un simple .omega-panel n'a pas de
+   centrage (partage par des ecrans a tableaux/listes qui doivent, eux,
+   occuper toute la largeur). */
+.omega-menu-panel {
+    align: center middle;
+}
+
+/* Meme raison que .omega-form-panel .omega-title juste en dessous : sans
+   largeur explicite, content-align n'a rien a centrer (la boite en
+   width:auto epouse deja son texte) — retour utilisateur reel, le titre
+   restait colle a gauche malgre le centrage du panneau. Largeur alignee
+   sur .omega-home-menu (48 + padding 1 4 + bordure = 58). */
+.omega-menu-panel .omega-title {
+    width: 58;
+    content-align: center middle;
+}
+
+.omega-form-panel {
+    padding: 1 2;
+    height: 1fr;
+    align-horizontal: center;
+    overflow-y: auto;
+}
+
+.omega-form-panel > Select,
+.omega-form-panel > Input {
+    width: 70;
+    margin-bottom: 1;
+}
+
+.omega-form-panel .omega-title,
+.omega-form-panel .omega-subtitle,
+.omega-form-panel .omega-hint {
+    width: 70;
+}
+
+.omega-form-panel .omega-title {
+    content-align: center middle;
+}
+
+.omega-form-panel > .omega-actions {
+    width: 70;
+    align: center middle;
+    height: auto;
+}
+
+.omega-home-root {
+    align: center middle;
+    height: 1fr;
+    overflow-y: auto;
+}
+
+.omega-splash-middle {
+    width: 1fr;
+}
+
+.omega-splash-hero {
+    color: $accent;
+    text-align: left;
+    width: auto;
+}
+
+.omega-splash-prompt {
+    color: $secondary;
+    width: auto;
+    margin-top: 1;
+    text-style: italic;
+}
+
+.omega-home-wordmark {
+    width: auto;
+    text-align: left;
+    padding-bottom: 1;
+}
+
+.omega-home-menu {
+    background: $panel;
+    border: round $accent;
+    border-title-align: center;
+    border-title-color: $background;
+    border-title-background: $accent;
+    border-title-style: bold;
+    padding: 1 4;
+    width: auto;
+    height: auto;
+}
+
+.omega-actions {
+    align: left middle;
+    height: auto;
+    width: auto;
+    margin-top: 1;
+    overflow-x: auto;
+}
+
+/* .omega-menu-panel (section_screen.py) : passer .omega-actions en
+   width:1fr pour centrer le seul bouton "Retour" a deplace TOUT LE
+   MENU au-dessus (.omega-home-menu, largeur auto) contre le bord
+   gauche -- retour utilisateur reel. Repli sur le patron deja
+   eprouve et sans effet de bord de .omega-form-panel > .omega-actions
+   juste en dessous (largeur fixe = celle du menu, 58, pas 1fr) :
+   scope au SEUL parent .omega-menu-panel, jamais la regle de base. */
+.omega-menu-panel > .omega-actions {
+    width: 58;
+    align: center middle;
+}
+
+.omega-btn-frame {
+    border: round $accent;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.omega-home-menu .omega-btn-frame {
+    width: 48;
+    height: 3;
+    margin-bottom: 0;
+}
+
+/* Designation de chaque action (section_screen.py) : le CLI Rich
+   l'affichait sous chaque item de menu ; une ligne separee par item
+   doublait quasiment la hauteur des sections a choix nombreux (retour
+   utilisateur reel) — affichee en infobulle nativement geree par
+   Textual (Button(tooltip=...), survol souris, zero cout d'espace)
+   plutot qu'un Static permanent. La liste complete des descriptions
+   reste consultable sans souris via l'aide contextuelle (`a`, voir
+   SectionScreen.help_content()). */
+
+.omega-actions Button,
+.omega-confirm-buttons Button,
+.omega-home-menu Button {
+    background: $surface;
+    border: none;
+    color: $foreground;
+    min-width: 10;
+}
+
+.omega-home-menu Button {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+}
+
+.omega-actions Button.-primary,
+.omega-confirm-buttons Button.-primary {
+    background: $surface;
+    border: none;
+    color: $primary;
+}
+
+.omega-actions Button.-error,
+.omega-confirm-buttons Button.-error {
+    background: $surface;
+    border: none;
+    color: $error;
+}
+
+.omega-actions Button:hover,
+.omega-confirm-buttons Button:hover,
+.omega-home-menu Button:hover,
+.omega-actions Button:focus,
+.omega-confirm-buttons Button:focus,
+.omega-home-menu Button:focus {
+    background: $accent;
+    color: $background;
+    text-style: bold;
+}
+
+.omega-actions Button.-error:hover,
+.omega-confirm-buttons Button.-error:hover,
+.omega-actions Button.-error:focus,
+.omega-confirm-buttons Button.-error:focus {
+    background: $error;
+    color: $background;
+    text-style: bold;
+}
+
+.omega-confirm-box {
+    width: 60;
+    height: auto;
+    border: round $accent;
+    padding: 1 2;
+    align: center middle;
+}
+
+.omega-confirm-title {
+    text-style: bold;
+    color: $error;
+    width: 60;
+    content-align: center middle;
+    margin-bottom: 1;
+}
+
+.omega-confirm-buttons {
+    width: 60;
+    height: auto;
+    align: center middle;
+}
+
+.omega-progress-panel {
+    align: center middle;
+    width: 1fr;
+    height: 1fr;
+}
+
+.omega-progress-panel > Static {
+    width: auto;
+}
+
+.omega-progress-panel LoadingIndicator {
+    width: auto;
+    height: 3;
+}
+
+.omega-progress-log {
+    width: 80%;
+    max-width: 120;
+    height: 12;
+    margin-top: 1;
+    border: round $accent;
+    background: $surface;
+    color: $foreground 80%;
+}
+
+.omega-modal {
+    width: 80%;
+    max-width: 100;
+    border: round $primary;
+    padding: 1 2;
+    background: $surface;
+}
+
+/* Note : la palette d'extension omega-fire (statuts de capacite,
+   identite de backend — theme_extensions.py + rendering/
+   textual_theme_builder.py) n'est JAMAIS referencee ici en CSS litteral
+   ($status-available, etc.) : ces 8 cles n'existent que pour les 10
+   themes omega-* (variables injectees par build_textual_theme()), pas
+   pour les themes natifs Textual (nord, dracula, gruvbox, ...) —
+   choisir un theme natif via la palette de commandes (Ctrl+P) ferait
+   planter le parseur CSS (UnresolvedVariableError) au premier theme
+   sans ces variables. Ces 8 couleurs sont donc resolues UNIQUEMENT en
+   Python via App.get_css_variables().get(cle, "") (toujours avec repli
+   sur une valeur par defaut), jamais en dur dans un fichier .tcss —
+   voir list_rules_screen.py/capabilities_table.py pour le patron. */
+
+DataTable {
+    height: 1fr;
+}
+
+ToggleButton > .toggle--button {
+    color: $foreground;
+    text-style: dim;
+}
+
+ToggleButton.-on > .toggle--button {
+    color: $success;
+    text-style: bold;
+}
+
+/* Ecran 8.1 (dashboard.py) — 4 colonnes, chaque conteneur est un Static
+   borde (titre via border_title, pas un Rich Panel : voir la convention
+   deja etablie pour les boutons en tete de fichier). */
+#dashboard-body {
+    height: 1fr;
+}
+
+.dash-col {
+    width: 1fr;
+    height: 1fr;
+}
+
+.omega-dash-box {
+    border: round $accent;
+    padding: 0 1;
+    height: 1fr;
+    overflow-y: auto;
+}
+
+.dash-box-tall {
+    height: 2fr;
+}
+
+.dash-box-short {
+    height: auto;
+    min-height: 3;
+}
+
+/* Ecran 5.1/8.5 (live_tail_screen.py) — panneau live : stats a gauche
+   (largeur fixe), tableau de logs a droite (flexible). */
+#live-body {
+    height: 1fr;
+}
+
+#stats-box {
+    width: 34;
+    height: 1fr;
+}
+
+#live-body > DataTable {
+    width: 1fr;
+    height: 1fr;
+}
+
+/* Ecran 5.8 (log_stats_screen.py) — 4 cartes KPI, histogramme, 2 tableaux. */
+#kpi-row {
+    height: auto;
+}
+
+#kpi-row > Static {
+    width: 1fr;
+    margin-right: 1;
+}
+
+#tables-row {
+    height: 16;
+}
+
+#tables-row > DataTable {
+    width: 1fr;
+    height: 1fr;
+}
+
+/* #box-chart/#box-hourly-chart/#box-trend-chart heritent de
+   .omega-dash-box (height: 1fr) mais sont places DIRECTEMENT dans un
+   VerticalScroll dont le contenu deborde (plusieurs blocs empiles) —
+   contrairement au dashboard (8.1), ou 1fr se partage une hauteur
+   REELLEMENT bornee (pas de scroll). Dans un conteneur qui deborde,
+   Textual peut resoudre ce 1fr a une hauteur nulle (widget invisible
+   bien que son contenu texte soit correct) — retour utilisateur reel
+   ("histogramme absent"). Hauteur fixee explicitement au lieu d'un
+   partage fractionnaire. */
+#box-chart,
+#box-hourly-chart,
+#box-trend-chart {
+    height: 16;
+}
+
+/* Ecrans 8.3/8.4 (stats_report_screen.py) — reutilise #kpi-row/#tables-row
+   ci-dessus, ajoute la rangee gestion/evolution. */
+#mgmt-row {
+    height: 14;
+}
+
+#mgmt-row > Static {
+    width: 1fr;
+    margin-right: 1;
+}
+
+/* Ecran 7.3 (action_history_screen.py) — le tableau doit occuper tout
+   l'espace vertical disponible : la taille de page se calcule sur sa
+   hauteur reelle (voir _page_size()), un DataTable non contraint se
+   dimensionnerait sur son contenu seul et laisserait la moitie de
+   l'ecran vide (retour utilisateur reel). */
+#history-table {
+    height: 1fr;
+}
+
+/* Ecran 1.5 (app_log_screen.py) — meme raison que #history-table. */
+#log-table {
+    height: 1fr;
+}

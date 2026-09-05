@@ -1,0 +1,15 @@
+/* Profil REDUCED : bordures simplifiees, terminal contraint (mais
+   toujours compatible Unicode — contrairement a MONO, qui masque le
+   splash ASCII plus bas dans mono.tcss). Un terminal 80x24 (taille par
+   defaut tres courante) tombe deja dans ce palier : masquer le splash
+   ici le rendait invisible pour la plupart des terminaux non
+   redimensionnes (retour utilisateur reel), sans raison technique
+   puisque ce palier gere encore les caracteres de dessin de boites. */
+
+.omega-home-menu {
+    border: solid $primary;
+}
+
+.omega-modal {
+    border: solid $primary;
+}

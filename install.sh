@@ -79,9 +79,22 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 3. Dépendances
+# 3. Dépendances — omega-lib n'est pas publiée sur PyPI : l'archive
+#    distribuable la vendore dans vendor/omega-lib/ (voir build-release.sh)
+#    — installée ICI, avant requirements.txt, pour que pip la trouve déjà
+#    satisfaite dans le venv et ne tente jamais de la chercher sur PyPI.
+#    Absente en clone de développement (omega-lib vient alors du monorepo
+#    local ~/DEV/LIB/omega-lib, déjà installée à part via
+#    scripts/setup_dev.sh) : étape silencieusement ignorée si
+#    vendor/omega-lib/ n'existe pas — même mécanisme qu'omega-stress/
+#    omega-check.
 # -------------------------------------------------------------------------
 source .venv/bin/activate
+pip install -q --upgrade pip
+if [ -d "$SCRIPT_DIR/vendor/omega-lib" ]; then
+    pip install -q -e "$SCRIPT_DIR/vendor/omega-lib"
+    ok "Dépendance vendorée omega-lib installée."
+fi
 pip install -q -r requirements.txt
 ok "Dépendances installées."
 

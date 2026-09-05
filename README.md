@@ -1,4 +1,6 @@
 <!-- Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE) -->
+🇫🇷 **Français** · 🇬🇧 [English](README.en.md) · 🇪🇸 [Español](README.es.md) · 🇷🇺 [Русский](README.ru.md) · 🇨🇳 [中文](README.zh.md)
+
 <div align="center">
   <img src="docs/assets/omega-fire.png" alt="Omega-Fire" width="256">
 </div>
@@ -15,11 +17,13 @@ Page officiel : [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
-[![Interface](https://img.shields.io/badge/Interface-TUI%20%2B%20Rich-cyan.svg)](https://github.com/Textualize/rich)
+[![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
 ---
 
-**Omega-Fire** est une application TUI (Terminal User Interface) Python construite avec [Rich](https://github.com/Textualize/rich). Elle fournit depuis un terminal une interface unique pour administrer les pare-feux Linux, Fail2Ban, les adresses bannies, les règles réseau, les journaux et les statistiques système.
+**Omega-Fire** est une application TUI (Terminal User Interface) Python construite avec [Textual](https://github.com/Textualize/textual). Elle fournit depuis un terminal une interface unique pour administrer les pare-feux Linux, Fail2Ban, les adresses bannies, les règles réseau, les journaux et les statistiques système.
+
+L'interface Textual est le mode de fonctionnement par défaut et navigue par menus, formulaires validés (tous les champs requis sont vérifiés avant de continuer) et écrans dédiés, avec thèmes, aide contextuelle et raccourcis clavier partagés avec le reste de la suite OMEGA (omega-check, omega-deep, omega-stress...). L'ancienne interface [Rich](https://github.com/Textualize/rich), séquentielle et pilotée par saisie de numéros, reste disponible via `--legacy-cli` (voir [Lancement](#lancement)).
 
 Le projet est conçu selon les principes de la **Clean Architecture**, avec une séparation claire entre domaine métier, orchestration, infrastructure et interface utilisateur.
 
@@ -36,8 +40,8 @@ Le projet est conçu selon les principes de la **Clean Architecture**, avec une 
 - [Persistance, logs et exports](#persistance-logs-et-exports)
 - [Sécurité](#sécurité)
 - [Tests et qualité](#tests-et-qualité)
+- [État du projet](#état-du-projet)
 - [Désinstallation](#désinstallation)
-- [Limites connues](#limites-connues)
 - [Licence](#licence)
 
 ---
@@ -49,10 +53,10 @@ Omega-Fire agit comme un **poste de pilotage local** pour la sécurité réseau.
 ### Objectifs
 
 - Réunir nftables, iptables, ip6tables et Fail2Ban dans une interface cohérente.
-- Faciliter l’observation et l action  des connexions, des bannissements et des événements système.
-- Centraliser les exports, les sauvegardes, les audits et l’historique des opérations.
+- Faciliter l'observation et l'action sur les connexions, les bannissements et les événements système.
+- Centraliser les exports, les sauvegardes, les audits et l'historique des opérations.
 - Conserver une architecture testable et extensible.
-- Fonctionner en mode dégradé lorsqu’un composant optionnel est absent.
+- Fonctionner en mode dégradé lorsqu'un composant optionnel est absent.
 
 ### Ce que fait Omega-Fire
 
@@ -64,9 +68,9 @@ Omega-Fire agit comme un **poste de pilotage local** pour la sécurité réseau.
 - Administre les jails Fail2Ban et leurs bannissements.
 - Analyse les logs en direct ou sous forme de statistiques.
 - Propose de la surveillance sous forme de monitoring.
-- Utilise conntrack pour afficher les connexions actives lorsqu’il est disponible.
+- Utilise conntrack pour afficher les connexions actives lorsqu'il est disponible.
 - Produit des exports JSON, TXT et HTML.
-- Sauvegarde et restaure l’état complet dans des archives `.tar.gz`.
+- Sauvegarde et restaure l'état complet dans des archives `.tar.gz`.
 - Journalise les opérations dans un journal applicatif et un audit JSON structuré.
 - Surveille les services et applications détectés : systemd, runit, OpenRC, Docker, serveurs, VNC, etc.
 
@@ -74,11 +78,11 @@ Omega-Fire agit comme un **poste de pilotage local** pour la sécurité réseau.
 
 - Il ne remplace pas nftables, iptables ou Fail2Ban.
 - Il ne constitue pas un pare-feu autonome indépendant du système.
-- Il ne fournit pas d’authentification multi-utilisateur.
-- Il n’expose pas d’API réseau en fonctionnement normal.
-- Il ne s’agit pas d’un dashboard web.
+- Il ne fournit pas d'authentification multi-utilisateur.
+- Il n'expose pas d'API réseau en fonctionnement normal.
+- Il ne s'agit pas d'un dashboard web.
 - Il ne protège pas directement une machine distante depuis une autre machine.
-- Il n’installe par défaut aucun fichier en dehors de son propre dossier.
+- Il n'installe par défaut aucun fichier en dehors de son propre dossier.
 - Il ne garantit pas la disponibilité de tous les backends sur toutes les distributions.
 
 ---
@@ -88,48 +92,49 @@ Omega-Fire agit comme un **poste de pilotage local** pour la sécurité réseau.
 ### 1. Capacités et diagnostics
 
 - Affichage du registre des capacités détectées.
-- Consultation détaillée d’une capacité par identifiant.
-- Re-scan manuel du système après installation d’un composant.
+- Consultation détaillée d'une capacité par identifiant.
+- Re-scan manuel du système après installation d'un composant.
 - Consultation des diagnostics récents.
 - Consultation et recherche dans le journal applicatif.
-- Export de l’état et des diagnostics en JSON, TXT ou HTML.
+- Export de l'état et des diagnostics en JSON, TXT ou HTML.
 
 ### 2. Gestion unifiée des IP
 
 La blacklist unifiée permet de travailler avec nftables et iptables depuis un même écran.
 
-- Bannissement d’une IP ou d’une liste d’IPs.
+- Bannissement d'une IP ou d'une liste d'IPs.
 - Débannissement individuel ou par lots.
 - Saisie directe ou import depuis un fichier.
 - Liste par backend ou vue unifiée.
 - Synchronisation entre les backends NFTables/IPTables.
 - Export et réimport des listes.
-- Nettoyage complet d’un ou plusieurs backends.
+- Nettoyage complet d'un ou plusieurs backends.
 - Prise en charge IPv4 et IPv6.
+- Gestion des fichiers de blocklist (`var/blocklist/`) et de leurs épingles directement depuis l'écran dédié.
 
 ### 3. Gestion des règles et politiques
 
 - Assistant pas à pas pour créer une règle avancée.
 - Liste des règles système et des règles créées par Omega-Fire.
-- Suppression d’une règle par sélection.
+- Suppression d'une règle par sélection.
 - Nettoyage automatique des règles inactives dans la base de référence.
 - Application de politiques prédéfinies.
-- Sauvegarde automatique avant application d’une politique.
-- Personnalisation, sauvegarde et restauration d’une politique.
+- Sauvegarde automatique avant application d'une politique.
+- Personnalisation, sauvegarde et restauration d'une politique.
 - Identification de la politique active dans le menu de statut et le dashboard.
 - Signalement des profils modifiés sous la forme `Profil + CUSTOM`.
 
 ### 4. Gestion Fail2Ban
 
 - État détaillé des jails et de leurs paramètres.
-- Nombre d’IPs bannies et informations de rate-limit.
-- Recherche d’une IP dans les jails.
+- Nombre d'IPs bannies et informations de rate-limit.
+- Recherche d'une IP dans les jails.
 - Ban et unban individuels ou multiples.
-- Transfert d’IPs entre jails, backends et fichiers.
-- Création guidée d’un jail personnalisé.
+- Transfert d'IPs entre jails, backends et fichiers.
+- Création guidée d'un jail personnalisé.
 - Modèles de jails prédéfinis.
-- Suppression d’un jail.
-- Vidage d’un jail ou purge générale.
+- Suppression d'un jail.
+- Vidage d'un jail ou purge générale.
 - Export en JSON, TXT ou HTML.
 - Vérification et audit de configuration.
 - Contrôle du service : statut, démarrage, arrêt, redémarrage, activation et désactivation au démarrage.
@@ -137,12 +142,12 @@ La blacklist unifiée permet de travailler avec nftables et iptables depuis un m
 ### 5. Logs et maintenance
 
 - Live Tail avec tableau de bord Omega-Fire.
-- Affichage multi-fichiers avec bookmarks.
-- Intégration optionnelle de `lnav`.
+- Affichage multi-fichiers avec épingles (sources favorites, persistées entre deux lancements).
+- Intégration de `lnav` : sélection d'un ou plusieurs fichiers (numéros ou chemins manuels, séparés par des virgules), fusion automatique en une seule vue chronologique, encapsulé dans un header/footer Omega-Fire (voir [Navigation](#navigation)).
 - Analyse des IPs les plus fréquentes avec Top N.
-- Nettoyage ciblé d’une IP dans des fichiers LOG ou TXT.
+- Nettoyage ciblé d'une IP dans des fichiers LOG ou TXT.
 - Rotation et sauvegardes immédiates ou automatisées.
-- Restauration d’un backup.
+- Restauration d'un backup.
 - Purge selon ancienneté, quota, type ou sélection manuelle.
 - Nettoyage avancé par dossier ou environnement.
 - Statistiques sur 24 heures, 7 jours ou 30 jours.
@@ -153,7 +158,7 @@ La blacklist unifiée permet de travailler avec nftables et iptables depuis un m
 Formats disponibles :
 
 - **JSON** : données structurées et réutilisables.
-- **TXT** : format brut ou adapté à l’injection.
+- **TXT** : format brut ou adapté à l'injection.
 - **HTML** : rapport lisible et visuel.
 
 Rapports disponibles :
@@ -161,7 +166,7 @@ Rapports disponibles :
 - Blacklist complète.
 - Ruleset structuré.
 - Règles sélectionnées par provenance : système, Omega-Fire ou actives.
-- Rapport d’audit complet.
+- Rapport d'audit complet.
 - Statistiques Fail2Ban.
 - État et diagnostics système.
 - Rapports statistiques sur 7 ou 30 jours.
@@ -176,21 +181,27 @@ Thèmes HTML :
 
 ### 7. Système et persistance
 
-- Sauvegarde de l’état complet : règles, bans nftables, bans iptables et Fail2Ban.
-- Création d’archives `.tar.gz` horodatées.
+- Sauvegarde de l'état complet : règles, bans nftables, bans iptables et Fail2Ban.
+- Création d'archives `.tar.gz` horodatées.
 - Liste et restauration des snapshots.
 - Historique des actions.
-- Filtrage et purge de l’historique.
+- Filtrage et purge de l'historique.
 - Rechargement de configuration et re-scan sans redémarrage.
 
 ### 8. Monitoring et statistiques
 
-- Dashboard temps réel avec rafraîchissement périodique.
+- Dashboard temps réel avec rafraîchissement périodique (toutes les 2 secondes), sans blocage de l'interface pendant la collecte.
 - Visualisation de la politique active.
 - Connexions actives via conntrack.
 - Trafic, événements, statistiques et logs serveur.
 - Rapports consolidés sur 7 et 30 jours.
 - Export HTML des snapshots et rapports.
+
+### 9. Réglages
+
+- Choix du thème actif parmi les dix thèmes `omega-*` partagés avec le reste de la suite (voir [Thèmes et terminaux](#thèmes-et-terminaux)), persisté entre deux lancements.
+- Surcharge manuelle du profil de rendu (automatique, complet, standard, réduit ou mono seul), appliquée au prochain lancement.
+- Accessible depuis le menu principal (`9. RÉGLAGES`) ou directement via la touche `s`.
 
 ---
 
@@ -198,30 +209,32 @@ Thèmes HTML :
 
 ```text
 src/omega_fire/
-├── app/              Bootstrap et conteneur d’injection de dépendances
+├── app/              Bootstrap et conteneur d'injection de dépendances
 ├── core/             Capacités, énumérations et exceptions
 ├── domain/           Logique métier pure : règles, IPs, jails, logs
 ├── application/      Orchestration : commands et queries
 ├── infrastructure/   Backends, stockage, exports, logs et sondes système
 ├── ports/            Contrats Protocol/ABC
-├── interfaces/       Interface TUI Rich, menus, actions et renderers
+├── interfaces/       interfaces/tui/ (Textual, par défaut) + interfaces/cli/ (Rich, --legacy-cli)
 ├── plugins/          Extensions intégrées : nftables, iptables, Fail2Ban, conntrack
 └── shared/           Parsing, réseau, formatage et utilitaires transverses
 ```
 
 ### Principes de conception
 
-- `domain/` ne contient ni I/O ni dépendance vers l’infrastructure.
-- `application/` orchestre les cas d’usage via le domaine et les ports.
-- `infrastructure/` est la seule couche autorisée à appeler `nft`, `iptables`, `fail2ban-client` et les autres outils externes.
+- `domain/` ne contient ni I/O ni dépendance vers l'infrastructure.
+- `application/` orchestre les cas d'usage via le domaine et les ports — les écrans Textual et les actions de l'interface Rich appellent les mêmes commands/queries, la logique métier ne dépend d'aucune des deux interfaces.
+- `infrastructure/` est la seule couche autorisée à appeler `nft`, `iptables`, `fail2ban-client` et les autres outils externes (subprocess, pty, fichiers).
 - `interfaces/` ne doit pas appeler directement `subprocess`.
 - `ports/` définit les contrats attendus par les adaptateurs.
 - `core/` fournit le registre de capacités utilisé par les différentes couches.
-- Les plugins permettent d’ajouter ou de faire évoluer les backends sans modifier le domaine métier.
+- Les plugins permettent d'ajouter ou de faire évoluer les backends sans modifier le domaine métier.
+- L'interface Textual (`interfaces/tui/`) s'appuie sur [`omega-lib`](https://github.com/) (dépendance partagée par toute la suite OMEGA : thème à 9 tokens, détection de terminal, contrats de port communs), non publiée sur PyPI — vendorée dans l'archive distribuable (`vendor/omega-lib/`, voir [Installation](#installation)).
+- Tout appel potentiellement lent (backend firewall, `fail2ban-client`, disque) déclenché depuis un écran Textual s'exécute en tâche de fond (thread), jamais sur le thread principal de l'interface — un dashboard ou un formulaire reste réactif pendant l'opération plutôt que de figer toute l'application.
 
 ### Structure des données
 
-Omega-Fire utilise SQLite via la bibliothèque standard `sqlite3`, sans ORM externe. Les principaux ensembles de données concernent les bans, règles, événements d’audit et snapshots.
+Omega-Fire utilise SQLite via la bibliothèque standard `sqlite3`, sans ORM externe. Les principaux ensembles de données concernent les bans, règles, événements d'audit et snapshots.
 
 Les migrations sont versionnées et appliquées automatiquement au démarrage.
 
@@ -236,25 +249,29 @@ Les migrations sont versionnées et appliquées automatiquement au démarrage.
 - Privilèges root disponibles via `sudo`.
 - Un gestionnaire de services : systemd, runit ou OpenRC.
 - Au moins un backend firewall : nftables ou iptables.
+- Un terminal d'au moins 80x24 (voir [Thèmes et terminaux](#thèmes-et-terminaux) pour le détail des profils de rendu selon la taille disponible).
 
 ### Dépendances Python
 
-Les dépendances sont définies dans `requirements.txt` :
+Les dépendances de production sont définies dans `requirements.txt` :
 
-- `rich` — TUI, tableaux, couleurs et affichage Live.
+- `textual` — interface TUI par défaut.
+- `omega-lib` — thème, détection de terminal et contrats partagés avec la suite OMEGA (non publiée sur PyPI, voir [Architecture](#architecture) et [Installation](#installation)).
+- `rich` — rendu de l'interface `--legacy-cli` et de certains rapports.
+- `psutil` — informations système (CPU, mémoire, réseau, processus) pour le dashboard et les diagnostics.
 - `jinja2` — génération des exports HTML.
-- `python-dotenv` — variables d’environnement.
-- `pytest` et `pytest-cov` — tests et couverture.
-- `black`, `flake8` et `mypy` — qualité de code.
+- `python-dotenv` — variables d'environnement.
+- `pyte` — émulateur de terminal virtuel, pour l'encapsulation `lnav` (menus 5.9/8.6).
+
+Les outils de qualité (`pytest`, `black`, `flake8`, `mypy`) sont listés en commentaire dans `requirements.txt` : décommentez-les ou installez-les séparément si vous contribuez au projet (voir [Tests et qualité](#tests-et-qualité)).
 
 ### Outils optionnels recommandés
 
-L’application fonctionne en mode dégradé si ces outils sont absents :
+L'application fonctionne en mode dégradé si ces outils sont absents :
 
 - `fail2ban` — bannissement automatisé.
 - `conntrack` ou `conntrack-tools` — connexions actives et statistiques réseau.
 - `lnav` — analyse avancée et multi-fichiers des logs.
-- `psutil` — informations complémentaires sur les composants système.
 
 Sur Arch Linux et dérivés :
 
@@ -266,13 +283,13 @@ sudo pacman -S fail2ban conntrack-tools lnav
 
 ## Installation
 
-L’archive officielle est fournie au format `.tar.gz`. Vérifiez son intégrité avant installation :
+L'archive officielle est fournie au format `.tar.gz`. Vérifiez son intégrité avant installation :
 
 ```bash
 sha256sum omega-fire.tar.gz
 ```
 
-### Méthode 1 — script d’installation
+### Méthode 1 — script d'installation
 
 ```bash
 [ -d omega-fire ] && echo "ℹ️ Déjà extrait ici, étape ignorée." || tar -xzf omega-fire.tar.gz
@@ -288,7 +305,7 @@ Lancement :
 ./omega-fire.sh
 ```
 
-Si l’alias a été installé, ouvrez un nouveau terminal puis utilisez :
+Si l'alias a été installé, ouvrez un nouveau terminal puis utilisez :
 
 ```bash
 fire
@@ -299,7 +316,7 @@ fire
 Cette commande peut être relancée : elle ignore les étapes déjà réalisées.
 
 ```bash
-([ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire existe déjà, extraction ignorée." || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv existe déjà, étape ignorée." || python3 -m venv .venv) && source .venv/bin/activate && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ Groupe omega-fire déjà présent." || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER déjà membre du groupe omega-fire." || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire installé. Lancez ./omega-fire.sh."
+([ -d ~/omega-fire ] && echo "ℹ️ ~/omega-fire existe déjà, extraction ignorée." || (tar -xzf omega-fire.tar.gz && mv omega-fire ~/)) && cd ~/omega-fire/ && ([ -d .venv ] && echo "ℹ️ .venv existe déjà, étape ignorée." || python3 -m venv .venv) && source .venv/bin/activate && ([ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib || true) && pip install -r requirements.txt && chmod +x omega-fire.sh && mkdir -p var && (getent group omega-fire >/dev/null 2>&1 && echo "ℹ️ Groupe omega-fire déjà présent." || sudo groupadd omega-fire) && (groups "$USER" 2>/dev/null | grep -qw omega-fire && echo "ℹ️ $USER déjà membre du groupe omega-fire." || sudo usermod -aG omega-fire "$USER") && sudo chgrp -R omega-fire var && sudo chmod -R 2775 var && echo "✅ Omega-Fire installé. Lancez ./omega-fire.sh."
 ```
 
 ### Méthode 3 — installation détaillée
@@ -314,17 +331,18 @@ Cette commande peut être relancée : elle ignore les étapes déjà réalisées
 # 3. Entrer dans le projet
 cd ~/omega-fire/
 
-# 4. Créer l’environnement virtuel
+# 4. Créer l'environnement virtuel
 [ -d .venv ] && echo "ℹ️ .venv existe déjà, création ignorée." || python3 -m venv .venv
 
-# 5. Installer les dépendances
+# 5. Installer les dépendances (omega-lib vendorée, si présente, avant requirements.txt)
 source .venv/bin/activate
+[ -d vendor/omega-lib ] && pip install -q -e vendor/omega-lib
 pip install -r requirements.txt
 
 # 6. Rendre le lanceur exécutable
 chmod +x omega-fire.sh
 
-# 7. Préparer var/ pour root et l’utilisateur courant
+# 7. Préparer var/ pour root et l'utilisateur courant
 mkdir -p var
 getent group omega-fire >/dev/null 2>&1 || sudo groupadd omega-fire
 groups "$USER" 2>/dev/null | grep -qw omega-fire || sudo usermod -aG omega-fire "$USER"
@@ -335,7 +353,9 @@ sudo chmod -R 2775 var
 ./omega-fire.sh
 ```
 
-Le groupe dédié et le bit `setgid` permettent à root et à l’utilisateur de partager les fichiers produits dans `var/` sans ouvrir les permissions à l’ensemble du système. Une nouvelle connexion ou `newgrp omega-fire` peut être nécessaire pour bénéficier immédiatement de l’appartenance au groupe.
+`vendor/omega-lib/` n'est présent que dans l'archive officielle (`build-release.sh` l'y intègre automatiquement, car omega-lib n'est pas publiée sur PyPI) ; en clone de développement, installez-la séparément depuis son propre dépôt (`pip install -e chemin/vers/omega-lib`).
+
+Le groupe dédié et le bit `setgid` permettent à root et à l'utilisateur de partager les fichiers produits dans `var/` sans ouvrir les permissions à l'ensemble du système. Une nouvelle connexion ou `newgrp omega-fire` peut être nécessaire pour bénéficier immédiatement de l'appartenance au groupe.
 
 ### Alias Bash ou Zsh
 
@@ -372,50 +392,61 @@ fc-cache -fv
 cd ~/omega-fire
 ./omega-fire.sh
 
-ou simplement taper  fire    si vous avez créer l'alias
+# ou simplement, si l'alias a été créé :
+fire
 ```
 
 Le lanceur :
 
-1. Vérifie les privilèges root et utilise `sudo` si nécessaire.
+1. Vérifie les privilèges root et relance via `sudo` si nécessaire.
 2. Détecte `.venv`, `venv` ou Python système.
 3. Configure `PYTHONPATH` vers `src/`.
-4. Lance `python -m omega_fire`.
+4. Lance `python -m omega_fire` — l'interface **Textual**, par défaut.
+
+Pour lancer l'ancienne interface Rich (saisie séquentielle de numéros) à la place :
+
+```bash
+./omega-fire.sh --legacy-cli
+```
 
 ### Parcours général
 
-1. Écran de démarrage.
-2. Détection des capacités système.
-3. Ouverture du menu principal.
-4. Sélection d’une section ou saisie directe d’un identifiant.
-5. Confirmation des opérations sensibles.
-6. Exécution, diagnostic et retour au menu.
+1. Écran de démarrage (splash), puis avertissement si le terminal est trop petit.
+2. Détection des capacités système (écran dédié, non bloquant).
+3. Menu principal : 8 sections thématiques (1-8) plus les réglages (9).
+4. Sélection d'une section, puis d'une action — chaque action ouvre un formulaire dont tous les champs requis sont validés avant de continuer.
+5. Confirmation explicite avant toute opération sensible ou destructive (flush, purge, restauration...).
+6. Exécution en tâche de fond pour les opérations lentes (l'interface reste utilisable pendant l'attente), puis retour au menu avec un résumé du résultat.
 
 ### Navigation
 
-- Flèches haut/bas : déplacer le curseur.
-- Flèches gauche/droite : déplacer l'ecran pour lire les longues lignes de logs entieres
+- Flèches haut/bas : déplacer le curseur dans une liste ou un menu.
+- Tab / Maj+Tab : naviguer entre les champs d'un formulaire.
 - Entrée : sélectionner ou valider.
-- `Esc` : revenir en arrière.
-- `a` : afficher l’aide contextuelle.
-- `t` : changer de thème.
-- `q` : quitter.
-- `r` : refresh, rafraichit l'écran, utile apres un redimensionnement de terminal si non refresh.
-- `d` : début, lorsque une liste depasse l'ecran et rentre en systeme de pagination. (Flèches gauche/droite compatible)
-- `f` : fin, lorsque une liste depasse l'ecran et rentre en systeme de pagination. (Flèches gauche/droite compatible)
-- `Ctrl` + `q` : quitter certaines actions (logs, dashboard,...)
-- `Ctrl` + `g/G` : Début et fin de liste de logs (fusion lnav)
-- `Ctrl` + `c` : Mode interruption de l application direct (sauvegarde + confirmation)
-- Identifiant de menu, par exemple `2.1` : positionner le curseur, puis appuyer une seconde fois sur Entrée pour valider.
-- Identifiant de numero de menu et sous menu , par exemple `2.1` et Entrée : allez directement à la section 2.1.
+- Cliquer une ligne d'un tableau : la sélectionner et pré-remplir les champs concernés (source à épingler, jail ciblé, etc.).
+- `Échap` : revenir à l'écran précédent (demande confirmation de sortie depuis l'accueil).
+- `a` : aide contextuelle — détaille l'action en cours, ou la totalité des actions de la section courante si aucun écran d'action n'est encore ouvert.
+- `t` : passer au thème suivant, sans confirmation.
+- `r` : redétecter la taille et la famille du terminal.
+- `s` : ouvrir les réglages (thème, profil de rendu).
+- `q` / `Ctrl+Q` : quitter, avec confirmation.
+
+#### Particularités de l'écran lnav (5.9 / 8.6)
+
+`lnav` est encapsulé dans un pseudo-terminal avec un header/footer Omega-Fire persistants autour de sa propre vue, pour éviter toute collision entre ses raccourcis natifs et ceux d'Omega-Fire :
+
+- Flèches ↑↓ : naviguer dans les logs (raccourci natif `lnav`, transmis tel quel).
+- Flèches ←→ : défiler horizontalement sur les lignes longues (raccourci natif `lnav`).
+- `g` / `G` : aller au début / à la fin (raccourci natif `lnav`).
+- `Ctrl+C` : marquer la ligne courante et la copier dans le presse-papier système (remplace la commande native de copie de `lnav`, qui peut se bloquer sur certains systèmes).
+- `t` minuscule : thème suivant, propre à cette vue (le `T` majuscule reste le raccourci natif de `lnav` pour afficher le temps écoulé entre les lignes).
+- `Ctrl+Q` : revenir à Omega-Fire (ferme `lnav` proprement, sans quitter l'application).
 
 ---
 
 ## Thèmes et terminaux
-- Taille : Confort minimal d 'utilisation 164x47 (specifié dans le header).
-- Themes : Application complete sur profil classic fond noir, police clair.
-- Si vous avez personnalisés des themes de profils specifique (wallpaper, couleur,...) le theme se met en mode Fusion (application partielle).
-- Dix thèmes Rich sont disponibles :
+
+Dix thèmes `omega-*` sont partagés avec le reste de la suite OMEGA :
 
 ```text
 omega-base       omega-dark       omega-light
@@ -424,21 +455,18 @@ omega-hack       omega-contrast   omega-mono
 omega-minimal
 ```
 
-- Basculez entre les thèmes avec `t`. Omega-Fire adapte automatiquement les couleurs, emojis, animations Live et palettes selon les capacités du terminal.
-- Effet du raccourci `[t]` : Sur certain dashboard le theme change directement (2s), sur d autres un lanceur vous permet de choisir directement à partir du nom du theme. 
-- le changement de theme s'active depuis les menus et dashboard, pas dans les actions.
+- Basculez entre les thèmes avec `t`, ou choisissez-en un directement depuis les réglages (`s`).
+- Le thème choisi est persisté et retrouvé au prochain lancement.
+- Omega-Fire adapte automatiquement la complexité visuelle (bordures, splash, densité d'information) au terminal détecté via un **profil de rendu** : Complet, Standard, Réduit ou Mono (ASCII seul). Le profil peut être surchargé manuellement depuis les réglages.
 
-| Terminal | Couleurs | Emojis | Live | Thèmes |
-|---|---:|---|---|---|
-| Ghostty, Alacritty, WezTerm, Kitty | 24-bit | Oui | Oui | Complets |
-| Konsole, GNOME Terminal, Terminator, xfce4-terminal | 256 | Oui | Oui | Complets |
-| urxvt | 256 | Non | Oui | Réduits |
-| xterm | 16 | Non | Oui | Réduits |
-| Linux TTY | 16 | Non | Non | Mono |
-| SSH moderne | Variable | Partiel | Partiel | Réduits |
-| SSH ancien | Partiel | Non | Non | Mono |
+| Taille minimale | Profil | Terminaux typiques |
+|---|---|---|
+| 120×32 ou plus | Complet | Ghostty, Alacritty, WezTerm, Kitty |
+| 100×28 ou plus | Standard | Konsole, GNOME Terminal, Terminator, xfce4-terminal |
+| 80×24 ou plus | Réduit | urxvt, xterm, SSH moderne |
+| en dessous de 80×24 | Mono (ASCII seul) | Linux TTY, SSH ancien |
 
-Sur un terminal limité, `omega-mono` ou `omega-minimal` constitue le meilleur mode de repli. Les options de lancement historiques `--no-emoji`, `--no-color` et `--plain` peuvent être utilisées si elles sont prises en charge par la version installée.
+En dessous de 80×24, le lancement est refusé (taille minimale requise) ; redimensionnez le terminal puis relancez, ou utilisez `r` après redimensionnement si l'affichage ne s'est pas mis à jour automatiquement.
 
 ---
 
@@ -458,7 +486,7 @@ Elle peut notamment définir :
 - environnements à analyser ;
 - paramètres adaptés à une installation particulière.
 
-La configuration est relue au redémarrage ou lors d’un re-scan manuel.
+La configuration est relue au redémarrage ou lors d'un re-scan manuel (menu 1.3 ou 7.4).
 
 ### Chemins internes et chemins système
 
@@ -469,7 +497,7 @@ var/exports/       # dossier interne au projet
 /var/exports/      # chemin absolu du système
 ```
 
-Le `/` initial est donc significatif. Les imports et exports vers le système doivent être demandés explicitement par l’utilisateur.
+Le `/` initial est donc significatif. Les imports et exports vers le système doivent être demandés explicitement par l'utilisateur.
 
 ---
 
@@ -490,7 +518,7 @@ Omega-Fire détecte les composants et active uniquement les fonctionnalités uti
 
 ### IPv4 et IPv6
 
-Les deux familles d’adresses sont prises en charge par les backends compatibles :
+Les deux familles d'adresses sont prises en charge par les backends compatibles :
 
 - nftables : IPv4 et IPv6 en dual stack ;
 - iptables/ip6tables : selon les binaires disponibles ;
@@ -507,12 +535,13 @@ Les formats IPv6 longs, compressés, locaux, mixtes, avec zéros et en notation 
 - SQLite via `sqlite3`.
 - Tables relatives aux bans, règles, audits et snapshots.
 - Migrations versionnées appliquées automatiquement.
-- Archives d’état complet au format `.tar.gz`.
+- Archives d'état complet au format `.tar.gz`.
+- Épingles (sources de logs favorites) et historique récent persistés en JSON (`var/runtime/`), survivent à un redémarrage.
 
 ### Journaux
 
 - Journal texte applicatif : `var/logs/app.log`.
-- Journal d’audit JSON structuré avec notamment `event_type`, `actor`, `action`, `result` et `details`.
+- Journal d'audit JSON structuré avec notamment `event_type`, `actor`, `action`, `result` et `details`.
 
 ### Exports
 
@@ -525,29 +554,35 @@ Les exports sont disponibles en JSON, TXT et HTML, avec plusieurs thèmes CSS po
 Omega-Fire agit sur des composants critiques du système et doit être utilisé avec prudence.
 
 - Le lancement requiert des privilèges root via `sudo`.
-- Le flush, la purge générale et l’application d’une politique peuvent être destructifs.
+- Le flush, la purge générale et l'application d'une politique peuvent être destructifs.
 - Une politique prédéfinie déclenche une sauvegarde automatique avant modification.
 - Réalisez une sauvegarde manuelle avant chaque changement majeur.
-- Vérifiez l’état réel du firewall, des jails et des connexions après chaque opération.
-- Testez d’abord sur une machine ou une cible jetable.
+- Vérifiez l'état réel du firewall, des jails et des connexions après chaque opération.
+- Testez d'abord sur une machine ou une cible jetable.
 - Utilisez les réseaux de documentation RFC 5737 pour les essais IPv4 : `192.0.2.0/24`, `198.51.100.0/24` et `203.0.113.0/24`.
 - Vérifiez les exports et snapshots avant de les restaurer sur une machine de production.
-- N’accordez pas de permissions plus larges que nécessaire au dossier `var/`.
+- N'accordez pas de permissions plus larges que nécessaire au dossier `var/`.
 
 ---
 
 ## Tests et qualité
 
-Activer l’environnement virtuel puis exécuter les tests unitaires :
+Le projet compte une suite historique de 152 tests unitaires, écrite avant la migration Textual : elle couvre le domaine métier, l'orchestration (`application/`), l'infrastructure et l'interface Rich (`interfaces/cli/`), mais **ne couvre pas encore `interfaces/tui/`** (l'interface Textual par défaut). Cette archive ne contient pas le dossier `tests/` : récupérez-le depuis votre dépôt de développement si besoin de l'exécuter.
 
 ```bash
 source .venv/bin/activate
 python -m unittest discover tests/unit -v
 ```
 
-La base historique du projet couvre 150 tests unitaires sans échec. Les domaines couverts incluent le parsing, les backends, le domaine métier, l’application, l’infrastructure et les interfaces. Les tests d’intégration et end-to-end sont présents séparément et les écrans Live nécessitent encore une validation manuelle dans un terminal réel.
+Comme l'architecture en couches sépare strictement le domaine métier de la présentation (`domain/`, `application/`, `ports/` en `Protocol`, voir [Architecture](#architecture)), cette suite reste valide sans changement malgré la migration : seule l'interface Textual, plus récente, n'a pas encore sa propre couverture dédiée.
 
-Outils de qualité disponibles selon la configuration du projet :
+Si vous contribuez au projet, installez les outils de qualité déclarés (en commentaire) dans `requirements.txt` :
+
+```bash
+pip install pytest pytest-cov black flake8 mypy
+```
+
+Outils disponibles une fois installés :
 
 ```bash
 black .
@@ -562,22 +597,23 @@ pytest --cov
 
 ### Points opérationnels
 
-- TUI unifiée pour les principaux mécanismes de sécurité réseau.
+- TUI Textual unifiée pour les principaux mécanismes de sécurité réseau, formulaires validés, thèmes et aide contextuelle partagés avec la suite OMEGA.
+- Interface Rich historique conservée en repli (`--legacy-cli`).
 - Détection automatique des capacités.
 - Gestion des backends disponibles.
 - Support IPv4/IPv6 selon les outils présents.
 - Journalisation applicative et audit.
 - Sauvegarde et restauration.
 - Exports JSON, TXT et HTML.
-- Dashboard et statistiques.
+- Dashboard et statistiques, rafraîchis en tâche de fond sans bloquer l'interface.
 - Architecture en couches documentée.
 
 ### Limites connues
 
+- La suite de tests (152) ne couvre pas encore l'interface Textual (`interfaces/tui/`), écrite après elle (voir [Tests et qualité](#tests-et-qualité)).
 - Le mécanisme `ExecutionPlan`/`PipelineStep` reste partiellement conservé dans le projet.
-- La lecture clavier non bloquante est susceptible d’être dupliquée dans certains écrans Live. (non constaté mais probable)
-- La couverture automatisée des interfaces Live demeure limitée par l’absence de TTY dans certains environnements de test.
 - La disponibilité exacte des fonctionnalités dépend des binaires, services, permissions et configurations de la machine hôte.
+- L'interface Rich historique (`--legacy-cli`) n'est plus l'axe de développement actif ; elle est conservée le temps de fiabiliser totalement l'interface Textual en conditions réelles.
 
 ---
 
@@ -589,13 +625,13 @@ Si les données sont restées dans le dossier du projet :
 sudo rm -rf ~/omega-fire
 ```
 
-Supprimez manuellement les fichiers exportés ailleurs, les éventuels alias `fire` ajoutés dans `~/.bashrc` ou `~/.zshrc`, ainsi que le groupe dédié si celui-ci n’est plus utilisé :
+Supprimez manuellement les fichiers exportés ailleurs, les éventuels alias `fire` ajoutés dans `~/.bashrc` ou `~/.zshrc`, ainsi que le groupe dédié si celui-ci n'est plus utilisé :
 
 ```bash
 sudo groupdel omega-fire
 ```
 
-N’exécutez cette dernière commande que si aucun autre fichier ou service ne dépend de ce groupe.
+N'exécutez cette dernière commande que si aucun autre fichier ou service ne dépend de ce groupe.
 
 ---
 

@@ -1,0 +1,9 @@
+/* Profil COMPLETE : ornements riches, terminal grand et capable. */
+
+.omega-home-menu {
+    border: heavy $primary;
+}
+
+.omega-modal {
+    border: heavy $primary;
+}

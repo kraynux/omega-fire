@@ -186,15 +186,41 @@ def bootstrap(console: Optional[Console] = None) -> int:
     return run_app(registry=registry, console=console, container=container)
 
 
+def bootstrap_tui() -> int:
+    """Point d'entree Textual (mode par defaut depuis la Phase 6 de la
+    migration TUI). Ne duplique pas les etapes de bootstrap() ci-dessus
+    (verification taille terminal, theme, splash, scan systeme) : Phase 1
+    a deja transpose tout ca dans OmegaFireApp elle-meme (StartupController
+    resout le profil de rendu et le theme persiste, splash/scan/avertissement
+    terminal sont des ecrans Textual) — ce point d'entree ne fait que
+    construire le conteneur puis lancer l'app.
+
+    Returns:
+        Exit code (toujours 0 : Textual gere ses propres erreurs via
+        App._handle_exception(), voir interfaces/tui/app.py).
+    """
+    from omega_fire.app.dependency_container import DependencyContainer
+    from omega_fire.interfaces.tui.app import OmegaFireApp
+
+    container = DependencyContainer()
+    app = OmegaFireApp(container)
+    app.run()
+    return 0
+
 
 def main() -> int:
-    """Entry point for the application.
+    """Entry point for the application. Textual (interfaces/tui/) est le
+    mode par defaut depuis la Phase 6 de la feuille de route de migration ;
+    --legacy-cli relance l'ancienne interface Rich (interfaces/cli/), le
+    temps de valider le TUI en conditions reelles avant un retrait complet.
 
     Returns:
         Exit code (0 = success, 1 = error, 130 = SIGINT).
     """
     try:
-        return bootstrap()
+        if "--legacy-cli" in sys.argv:
+            return bootstrap()
+        return bootstrap_tui()
     except KeyboardInterrupt:
         # Sortie propre si interruption brutale avant le lancement de l'interface
         print("\n\n[+] Interruption système. Fermeture d'Omega-Fire.\n")

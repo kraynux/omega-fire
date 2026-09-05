@@ -150,6 +150,16 @@ class BackendNotAvailableError(ApplicationError):
         super().__init__(message)
 
 
+class UnknownThemeError(ApplicationError):
+    """Raised when selecting a theme name absent from omega_lib.theme.policies.TUI_THEMES.
+
+    Raised by application/commands/select_theme.py (migration TUI Textual).
+    """
+    def __init__(self, theme_name: str):
+        self.theme_name = theme_name
+        super().__init__(f"Theme inconnu : '{theme_name}'")
+
+
 class PartialExecutionError(ApplicationError):
     """Raised when a multi-step operation partially succeeds.
     

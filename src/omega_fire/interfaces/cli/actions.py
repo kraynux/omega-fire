@@ -80,7 +80,6 @@ from omega_fire.infrastructure.config.paths import (
 BLOCKLIST_DIR_STR = str(BLOCKLIST_DIR)
 EXPORTS_DIR_STR = str(EXPORTS_DIR)
 BACKUPS_DIR_STR = str(BACKUPS_DIR)
-DEFAULT_PINNED_FILES_STR = [str(p) for p in DEFAULT_PINNED_FILES]
 
 # Stockage global des automatisations de rotation (chargement au démarrage)
 auto_file = RUNTIME_DIR / "scheduled_rotations.json"
@@ -1180,10 +1179,19 @@ def action_2_2_ban_list(ctx: ActionContext) -> None:
         extracted_ips: set[str] = set()
         source_label = ""
 
-        if not hasattr(ctx, "pinned_export_files") or not ctx.pinned_export_files:
-            ctx.pinned_export_files = DEFAULT_PINNED_FILES_STR
+        # Épingles persistées, même mécanisme que 5.2/4.4 (voir leur
+        # commentaire) — bug réel corrigé le 2026-09-04 : ctx.pinned_export_files
+        # n'était qu'un attribut en mémoire sur ActionContext, jamais
+        # sauvegardé sur disque, perdu à chaque redémarrage.
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 
-        pinned_files = ctx.pinned_export_files
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_files = pinned_command.list_paths()
 
         if mode_choice == "1":
             raw_ips = ctx.console.input(_info("Saisissez les IPs à bannir (ou 'annuler') : ")).strip()
@@ -1249,9 +1257,8 @@ def action_2_2_ban_list(ctx: ActionContext) -> None:
                     ctx.console.print(_muted("Opération annulée."))
                     return
                 if os.path.exists(new_pin):
-                    if new_pin not in pinned_files:
-                        pinned_files.append(new_pin)
-                        ctx.pinned_export_files = pinned_files
+                    add_result = pinned_command.add_path(new_pin)
+                    if add_result.success:
                         ctx.console.print(_success(f"Fichier '{new_pin}' épinglé."))
                     target_path = new_pin
                 else:
@@ -1556,10 +1563,15 @@ def action_2_4_unban_list(ctx: ActionContext) -> None:
         extracted_ips: set[str] = set()
         source_label = ""
 
-        if not hasattr(ctx, "pinned_export_files") or not ctx.pinned_export_files:
-            ctx.pinned_export_files = DEFAULT_PINNED_FILES_STR
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 
-        pinned_files = ctx.pinned_export_files
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_files = pinned_command.list_paths()
 
         if mode_choice == "1":
             raw_ips = ctx.console.input(_info("Saisissez les IPs à débannir (ou 'annuler') : ")).strip()
@@ -1625,9 +1637,8 @@ def action_2_4_unban_list(ctx: ActionContext) -> None:
                     ctx.console.print(_muted("Opération annulée."))
                     return
                 if os.path.exists(new_pin):
-                    if new_pin not in pinned_files:
-                        pinned_files.append(new_pin)
-                        ctx.pinned_export_files = pinned_files
+                    add_result = pinned_command.add_path(new_pin)
+                    if add_result.success:
                         ctx.console.print(_success(f"Fichier '{new_pin}' épinglé."))
                     target_path = new_pin
                 else:
@@ -2347,13 +2358,29 @@ def action_2_8_export_file(ctx: ActionContext) -> None:
         default_file = str(DEFAULT_BLOCKLIST_FILE)
 
         # Initialisation centralisée des ÉPINGLES
-        if not hasattr(ctx, "pinned_export_files") or not ctx.pinned_export_files:
-            ctx.pinned_export_files = list(DEFAULT_PINNED_FILES)
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 
-        pinned_files = ctx.pinned_export_files
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_files = pinned_command.list_paths()
 
-        # Historique des fichiers RÉCENTS d'export
-        recent_files = getattr(ctx, "recent_export_files", [])
+        # Historique des fichiers RÉCENTS d'export — persisté (même bug de
+        # fond que les épingles : ctx.recent_export_files n'était qu'un
+        # attribut en mémoire sur ActionContext, jamais sauvegardé sur
+        # disque, perdu à chaque redémarrage).
+        recent_store = JsonStore(RUNTIME_DIR)
+        RECENT_EXPORT_FILES_PATH = "recent_export_files.json"
+        if recent_store.exists(RECENT_EXPORT_FILES_PATH):
+            try:
+                recent_files = recent_store.load(RECENT_EXPORT_FILES_PATH)
+            except Exception:
+                recent_files = []
+        else:
+            recent_files = []
 
         file_path = None
         write_mode = "w"  # Mode par défaut : 'w' (écraser)
@@ -2514,9 +2541,8 @@ def action_2_8_export_file(ctx: ActionContext) -> None:
                                 with open(new_pin, "w", encoding="utf-8") as f:
                                     f.write("# OmegaFire Blocklist\n")
 
-                            if new_pin not in pinned_files:
-                                pinned_files.append(new_pin)
-                                ctx.pinned_export_files = pinned_files
+                            add_result = pinned_command.add_path(new_pin)
+                            if add_result.success:
                                 ctx.console.print(_success(f"✔ Fichier '{new_pin}' épinglé et prêt."))
                         except Exception as e:
                             ctx.console.print(_error(f"Erreur création épingle : {e}"))
@@ -2547,7 +2573,11 @@ def action_2_8_export_file(ctx: ActionContext) -> None:
         # Mise à jour de l'historique récent
         if file_path and file_path not in recent_files:
             recent_files.insert(0, file_path)
-            ctx.recent_export_files = recent_files[:5]
+            recent_files = recent_files[:5]
+            try:
+                recent_store.save(RECENT_EXPORT_FILES_PATH, recent_files)
+            except Exception:
+                pass
 
         # --- Sélection Backends ---
         ctx.console.print(_title("Backends à exporter"))
@@ -4253,8 +4283,14 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
         DEFAULT_NFT_IPT_PATH = str(DEFAULT_BLOCKLIST_FILE)
 
         # Initialisation centralisée des ÉPINGLES
-        if not hasattr(ctx, "pinned_export_files") or not ctx.pinned_export_files:
-            ctx.pinned_export_files = list(DEFAULT_PINNED_FILES)
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
 
         fail2ban_port = None
         if ctx.container:
@@ -4499,7 +4535,7 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
         elif source_type_choice == "5":
             ctx.console.print()
             ctx.console.print(_title("Gestion & Sélection des fichiers épinglés"))
-            pinned_list = ctx.pinned_export_files
+            pinned_list = pinned_command.list_paths()
 
             if pinned_list:
                 for idx, path in enumerate(pinned_list, start=1):
@@ -4534,8 +4570,8 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
                             with open(new_pin, "w", encoding="utf-8") as f:
                                 f.write("# OmegaFire Blocklist\n")
 
-                        if new_pin not in ctx.pinned_export_files:
-                            ctx.pinned_export_files.append(new_pin)
+                        add_result = pinned_command.add_path(new_pin)
+                        if add_result.success:
                             ctx.console.print(_success(f"✔ Fichier '{new_pin}' épinglé et prêt."))
                         src_file = new_pin
                     except Exception as e:
@@ -4548,8 +4584,11 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
             elif pin_choice == "D" and pinned_list:
                 del_idx = ctx.console.input(_info("Numéro de l'épingle à retirer : ")).strip()
                 if del_idx.isdigit() and 1 <= int(del_idx) <= len(pinned_list):
-                    removed = ctx.pinned_export_files.pop(int(del_idx) - 1)
-                    ctx.console.print(_success(f"✔ Épingle '{removed}' retirée."))
+                    remove_result = pinned_command.remove_path(pinned_list[int(del_idx) - 1])
+                    if remove_result.success:
+                        ctx.console.print(_success(remove_result.message))
+                    else:
+                        ctx.console.print(_error(remove_result.message))
                 else:
                     ctx.console.print(_error("Numéro d'épingle invalide."))
                 return
@@ -4712,7 +4751,7 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
             target_mode = "file"
             ctx.console.print()
             ctx.console.print(_title("Gestion des fichiers épinglés"))
-            pinned_list = ctx.pinned_export_files
+            pinned_list = pinned_command.list_paths()
 
             if pinned_list:
                 for idx, path in enumerate(pinned_list, start=1):
@@ -4739,8 +4778,8 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
                 except PromptCancelled:
                     new_pin = ""
                 if new_pin:
-                    if new_pin not in ctx.pinned_export_files:
-                        ctx.pinned_export_files.append(new_pin)
+                    add_result = pinned_command.add_path(new_pin)
+                    if add_result.success:
                         ctx.console.print(_success(f"✔ Fichier '{new_pin}' épinglé."))
                     target_path = new_pin
                 else:
@@ -4750,8 +4789,11 @@ def action_4_3_jail_transfer(ctx: ActionContext) -> None:
             elif pin_choice == "D" and pinned_list:
                 del_idx = ctx.console.input(_info("Numéro de l'épingle à retirer : ")).strip()
                 if del_idx.isdigit() and 1 <= int(del_idx) <= len(pinned_list):
-                    removed = ctx.pinned_export_files.pop(int(del_idx) - 1)
-                    ctx.console.print(_success(f"✔ Épingle '{removed}' retirée."))
+                    remove_result = pinned_command.remove_path(pinned_list[int(del_idx) - 1])
+                    if remove_result.success:
+                        ctx.console.print(_success(remove_result.message))
+                    else:
+                        ctx.console.print(_error(remove_result.message))
                 else:
                     ctx.console.print(_error("Numéro d'épingle invalide."))
                 return
@@ -6823,16 +6865,21 @@ def action_5_2_top_ips(ctx: ActionContext) -> None:
         ctx.console.print()  # Ligne d'écart pour séparer les actions des épingles
         ctx.console.print(_muted("🖈 Epinglés :"))
 
-        # Épingles par défaut directement définies dans le code
-        default_pins = [
-            str(_PROJECT_ROOT / "var" / "blocklist" / "blocklist.txt"),
-            str(_PROJECT_ROOT / "var" / "blocklist" / "blocklist-f2b.txt"),
-        ]
+        # Épingles persistées (var/runtime/blocklist_analysis_pinned_paths.json) —
+        # bug réel corrigé le 2026-09-04 : utilisait auparavant une simple
+        # liste Python en mémoire (DEFAULT_PINNED_FILES_STR), jamais
+        # sauvegardée sur disque, perdue à chaque redémarrage. Même
+        # mécanisme que le menu 4.4 (ManagePinnedLogPathsCommand), avec
+        # ses propres défauts/fichier de stockage.
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 
-        if not DEFAULT_PINNED_FILES_STR:
-            DEFAULT_PINNED_FILES_STR.extend(default_pins)
-
-        pinned_sources = list(DEFAULT_PINNED_FILES_STR)
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_sources = pinned_command.list_paths()
         default_log = str(_PROJECT_ROOT / "var" / "log" / "access.log")
         
         # Liste des épingles (numérotées à partir de 1)
@@ -6864,10 +6911,12 @@ def action_5_2_top_ips(ctx: ActionContext) -> None:
         elif choice == "a":
             new_pin = ctx.console.input(_info("Chemin complet du fichier à épingler (ou 'annuler') : ")).strip()
             if new_pin and not is_cancel_word(new_pin) and Path(new_pin).exists():
-                if new_pin not in DEFAULT_PINNED_FILES_STR:
-                    DEFAULT_PINNED_FILES_STR.append(new_pin)
+                add_result = pinned_command.add_path(new_pin)
                 selected_file = new_pin
-                ctx.console.print(_success(f"Épingle ajoutée : {new_pin}"))
+                if add_result.success:
+                    ctx.console.print(_success(add_result.message))
+                else:
+                    ctx.console.print(_error(add_result.message))
             else:
                 ctx.console.print(_error("Fichier introuvable. Opération annulée."))
                 return
@@ -6879,8 +6928,11 @@ def action_5_2_top_ips(ctx: ActionContext) -> None:
                 return
             del_choice = ctx.console.input(_info(f"Numéro de l'épingle à supprimer (1-{len(pinned_sources)}) : ")).strip()
             if del_choice.isdigit() and 1 <= int(del_choice) <= len(pinned_sources):
-                removed = DEFAULT_PINNED_FILES_STR.pop(int(del_choice) - 1)
-                ctx.console.print(_success(f"Épingle supprimée : {removed}"))
+                remove_result = pinned_command.remove_path(pinned_sources[int(del_choice) - 1])
+                if remove_result.success:
+                    ctx.console.print(_success(remove_result.message))
+                else:
+                    ctx.console.print(_error(remove_result.message))
             else:
                 ctx.console.print(_error("Choix invalide."))
             return
@@ -7060,7 +7112,17 @@ def action_5_3_remove_ip_logs(ctx: ActionContext) -> None:
         # --- 1. SÉLECTION DU FICHIER SOURCE ---
         ctx.console.print(_title("1. SOURCE DU LOG OU FICHIER IP"))
         ctx.console.print()  # Ligne d'écart
-        pinned_sources = list(DEFAULT_PINNED_FILES_STR)
+        # Épingles persistées, même mécanisme que 5.2 (voir son commentaire) —
+        # bug réel corrigé le 2026-09-04.
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_sources = pinned_command.list_paths()
         default_log = "var/log/access.log"
 
         # Liste des épingles (numérotées à partir de 1)
@@ -7093,10 +7155,12 @@ def action_5_3_remove_ip_logs(ctx: ActionContext) -> None:
         elif choice == "a":
             new_pin = ctx.console.input(_info("Chemin complet du fichier à épingler (ou 'annuler') : ")).strip()
             if new_pin and not is_cancel_word(new_pin) and Path(new_pin).exists():
-                if new_pin not in DEFAULT_PINNED_FILES_STR:
-                    DEFAULT_PINNED_FILES_STR.append(new_pin)
+                add_result = pinned_command.add_path(new_pin)
                 selected_file = new_pin
-                ctx.console.print(_success(f"Épingle ajoutée : {new_pin}"))
+                if add_result.success:
+                    ctx.console.print(_success(add_result.message))
+                else:
+                    ctx.console.print(_error(add_result.message))
             else:
                 ctx.console.print(_error("Fichier introuvable. Opération annulée."))
                 return
@@ -7108,8 +7172,11 @@ def action_5_3_remove_ip_logs(ctx: ActionContext) -> None:
                 return
             del_choice = ctx.console.input(_info(f"Numéro de l'épingle à supprimer (1-{len(pinned_sources)}) : ")).strip()
             if del_choice.isdigit() and 1 <= int(del_choice) <= len(pinned_sources):
-                removed = DEFAULT_PINNED_FILES_STR.pop(int(del_choice) - 1)
-                ctx.console.print(_success(f"Épingle supprimée : {removed}"))
+                remove_result = pinned_command.remove_path(pinned_sources[int(del_choice) - 1])
+                if remove_result.success:
+                    ctx.console.print(_success(remove_result.message))
+                else:
+                    ctx.console.print(_error(remove_result.message))
             else:
                 ctx.console.print(_error("Choix invalide."))
             return
@@ -7295,7 +7362,17 @@ def action_5_4_rotate_logs(ctx: ActionContext) -> None:
         ctx.console.print()
         ctx.console.print(_title("1. SOURCE À SAUVEGARDER"))
         ctx.console.print(_muted("🖈 Epinglés :"))
-        pinned_sources = list(DEFAULT_PINNED_FILES_STR)
+        # Épingles persistées, même mécanisme que 5.2 (voir son commentaire) —
+        # bug réel corrigé le 2026-09-04.
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_sources = pinned_command.list_paths()
         default_log = "var/log/access.log"
 
         for i, source in enumerate(pinned_sources, start=1):
@@ -7324,10 +7401,12 @@ def action_5_4_rotate_logs(ctx: ActionContext) -> None:
         elif choice == "a":
             new_pin = ctx.console.input(_info("Chemin complet du fichier à épingler (ou 'annuler') : ")).strip()
             if new_pin and not is_cancel_word(new_pin) and Path(new_pin).exists():
-                if new_pin not in DEFAULT_PINNED_FILES_STR:
-                    DEFAULT_PINNED_FILES_STR.append(new_pin)
+                add_result = pinned_command.add_path(new_pin)
                 selected_file = new_pin
-                ctx.console.print(_success(f"Épingle ajoutée : {new_pin}"))
+                if add_result.success:
+                    ctx.console.print(_success(add_result.message))
+                else:
+                    ctx.console.print(_error(add_result.message))
             else:
                 ctx.console.print(_error("Fichier introuvable. Opération annulée."))
                 return
@@ -7338,8 +7417,11 @@ def action_5_4_rotate_logs(ctx: ActionContext) -> None:
                 return
             del_choice = ctx.console.input(_info(f"Numéro de l'épingle à supprimer (1-{len(pinned_sources)}) : ")).strip()
             if del_choice.isdigit() and 1 <= int(del_choice) <= len(pinned_sources):
-                removed = DEFAULT_PINNED_FILES_STR.pop(int(del_choice) - 1)
-                ctx.console.print(_success(f"Épingle supprimée : {removed}"))
+                remove_result = pinned_command.remove_path(pinned_sources[int(del_choice) - 1])
+                if remove_result.success:
+                    ctx.console.print(_success(remove_result.message))
+                else:
+                    ctx.console.print(_error(remove_result.message))
             else:
                 ctx.console.print(_error("Choix invalide."))
             return
@@ -8292,7 +8374,17 @@ def action_6_1_export_blacklist(ctx: ActionContext) -> None:
         # ÉTAPE 1 : SELECTION DU FICHIER SOURCE (IPs)
         # -------------------------------------------------------------------------
         ctx.console.print(_muted("🖈 Epinglés :"))
-        pinned_sources = list(DEFAULT_PINNED_FILES_STR)
+        # Épingles persistées, même mécanisme que 5.2 (voir son commentaire) —
+        # bug réel corrigé le 2026-09-04.
+        from omega_fire.infrastructure.storage.files.json_store import JsonStore
+        from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+
+        pinned_command = ManagePinnedLogPathsCommand(
+            JsonStore(RUNTIME_DIR),
+            relative_path="blocklist_analysis_pinned_paths.json",
+            defaults=[str(p) for p in DEFAULT_PINNED_FILES],
+        )
+        pinned_sources = pinned_command.list_paths()
 
         if pinned_sources:
             for idx, source in enumerate(pinned_sources, start=1):
@@ -8332,10 +8424,12 @@ def action_6_1_export_blacklist(ctx: ActionContext) -> None:
         elif choice == "a":
             new_pin = ctx.console.input(_info("Chemin complet du fichier à épingler (ou 'annuler') : ")).strip()
             if new_pin and not is_cancel_word(new_pin) and os.path.isfile(new_pin):
-                if new_pin not in DEFAULT_PINNED_FILES_STR:
-                    DEFAULT_PINNED_FILES_STR.append(new_pin)
+                add_result = pinned_command.add_path(new_pin)
                 selected_source = new_pin
-                ctx.console.print(_success(f"Épingle ajoutée : {new_pin}"))
+                if add_result.success:
+                    ctx.console.print(_success(add_result.message))
+                else:
+                    ctx.console.print(_error(add_result.message))
             else:
                 ctx.console.print(_error("Fichier introuvable ou invalide."))
                 return
@@ -8346,8 +8440,11 @@ def action_6_1_export_blacklist(ctx: ActionContext) -> None:
                 return
             del_choice = ctx.console.input(_info(f"Numéro de l'épingle à supprimer (1-{len(pinned_sources)}) : ")).strip()
             if del_choice.isdigit() and 1 <= int(del_choice) <= len(pinned_sources):
-                removed = DEFAULT_PINNED_FILES_STR.pop(int(del_choice) - 1)
-                ctx.console.print(_success(f"Épingle supprimée : {removed}"))
+                remove_result = pinned_command.remove_path(pinned_sources[int(del_choice) - 1])
+                if remove_result.success:
+                    ctx.console.print(_success(remove_result.message))
+                else:
+                    ctx.console.print(_error(remove_result.message))
             else:
                 ctx.console.print(_error("Choix invalide."))
             return

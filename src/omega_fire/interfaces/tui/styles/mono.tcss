@@ -1,0 +1,18 @@
+/* Profil MONO : aucun ornement non-ASCII, terminal tres limite. */
+
+.omega-home-menu {
+    border: solid $foreground;
+}
+
+.omega-splash-hero {
+    display: none;
+}
+
+.omega-modal {
+    border: solid $foreground;
+}
+
+.omega-role-badge {
+    background: $panel;
+    color: $foreground;
+}

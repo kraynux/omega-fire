@@ -6,6 +6,8 @@ using the detected service manager (systemd, openrc, runit).
 
 This module uses the ServiceManager adapter to perform service operations.
 """
+import os
+
 from omega_fire.infrastructure.backends.service_manager.detector import ServiceManagerDetector
 from omega_fire.infrastructure.backends.service_manager.adapter import ServiceManager
 from omega_fire.infrastructure.backends.service_manager.systemd import SystemdServiceManager
@@ -21,6 +23,17 @@ from omega_fire.infrastructure.backends.fail2ban.exceptions import (
 )
 from omega_fire.core.enums import ServiceManagerType
 
+# Chemin standard du log propre a fail2ban (logtarget par defaut de
+# fail2ban.conf sur toutes les distributions majeures) — distinct du
+# logpath d'une jail (le fichier qu'une jail SURVEILLE, deja gere par
+# infrastructure/backends/fail2ban/adapter.py::create_jail(), qui recree
+# deja ce fichier s'il est absent avant d'ecrire la config de la jail).
+# Ce fichier-ci est celui que le DAEMON fail2ban lui-meme ecrit — s'il a
+# ete supprime (ex. rotation/purge de logs), fail2ban ne le recree jamais
+# tout seul et refuse alors de (re)demarrer (bug reel rapporte : "stoppe
+# le service fail2ban depuis l'interface, impossible a redemarrer").
+FAIL2BAN_LOG_PATH = "/var/log/fail2ban.log"
+
 
 class Fail2banServiceController:
     """Controls the fail2ban service using the detected service manager."""
@@ -29,6 +42,24 @@ class Fail2banServiceController:
         """Initialize the service controller."""
         self._detector = ServiceManagerDetector()
         self._manager: ServiceManager = None
+
+    def _ensure_log_file_exists(self) -> None:
+        """Recree un fichier vide a FAIL2BAN_LOG_PATH s'il est absent,
+        avant de (re)demarrer le service — meme motif defensif deja
+        applique a un logpath de jail dans adapter.py::create_jail()
+        (creation du dossier parent si besoin, puis fichier vide via
+        open(...).close()). Jamais bloquant : une erreur ici (permissions
+        insuffisantes, etc.) est ignoree silencieusement, le start/restart
+        sous-jacent echouera de toute facon avec un message clair si le
+        fichier manque toujours."""
+        try:
+            log_dir = os.path.dirname(FAIL2BAN_LOG_PATH)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            if not os.path.exists(FAIL2BAN_LOG_PATH):
+                open(FAIL2BAN_LOG_PATH, "a", encoding="utf-8").close()
+        except OSError:
+            pass
 
     def _get_manager(self) -> ServiceManager:
         """Get the appropriate service manager adapter.
@@ -64,6 +95,7 @@ class Fail2banServiceController:
         Raises:
             Fail2banServiceError: If the operation fails
         """
+        self._ensure_log_file_exists()
         try:
             manager = self._get_manager()
             return manager.start("fail2ban")
@@ -94,6 +126,7 @@ class Fail2banServiceController:
         Raises:
             Fail2banServiceError: If the operation fails
         """
+        self._ensure_log_file_exists()
         try:
             manager = self._get_manager()
             return manager.restart("fail2ban")
@@ -177,6 +210,14 @@ class Fail2banServiceController:
 # - is_active() / is_enabled() : vérifications rapides
 # - Toutes les méthodes capturent les exceptions du ServiceManager
 #   et les convertissent en Fail2banServiceError
+# - start()/restart() appellent _ensure_log_file_exists() en premier
+#   (bug réel corrigé le 2026-09-04, rapporté par l'utilisateur : "stoppe
+#   fail2ban depuis l'interface, impossible à redémarrer — pas de fichier
+#   log suite à suppression, fail2ban ne le recrée pas automatiquement").
+#   Même motif défensif que adapter.py::create_jail() pour le logpath
+#   d'une jail, appliqué ici au log PROPRE de fail2ban (FAIL2BAN_LOG_PATH,
+#   /var/log/fail2ban.log) — jamais bloquant si la création échoue, le
+#   start/restart sous-jacent produit alors son propre message d'erreur.
 # - Composition : utilise ServiceManagerDetector et les adapters de service_manager/
 # Comment il sera utilisé (aperçu) :
 # - ports/fail2ban.py définira le contrat que ce controller implémente

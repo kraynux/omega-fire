@@ -4,6 +4,9 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
 
 # État runtime généré localement (recréé automatiquement au démarrage)
 var/db/
@@ -12,9 +15,11 @@ var/runtime/
 var/cache/*
 var/backups/*
 var/exports/*
+var/screenshots/*
 !var/cache/.gitkeep
 !var/backups/.gitkeep
 !var/exports/.gitkeep
+!var/screenshots/.gitkeep
 
 # Secrets locaux
 .env
@@ -26,3 +31,8 @@ var/exports/*
 
 # Logs de test locaux
 *.log
+
+# Archives distribuables (regenerees par build-release.sh, jamais a versionner)
+omega-fire.tar.gz
+omega-fire-*.tar.gz
+vendor/

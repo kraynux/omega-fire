@@ -253,6 +253,36 @@ class DependencyContainer:
             return AuditLogger()
     
     # ------------------------------------------------------------------
+    # Infrastructure - TUI (theme/terminal, migration Textual)
+    # ------------------------------------------------------------------
+
+    @property
+    def settings_store(self) -> Any:
+        return self._get_or_create("settings_store", self._create_settings_store)
+
+    def _create_settings_store(self) -> Any:
+        from omega_fire.infrastructure.storage.files.json_settings_store import JsonSettingsStore
+        from omega_fire.infrastructure.config.paths import RUNTIME_DIR
+        return JsonSettingsStore(RUNTIME_DIR / "settings.json")
+
+    @property
+    def terminal_detector(self) -> Any:
+        return self._get_or_create("terminal_detector", self._create_terminal_detector)
+
+    def _create_terminal_detector(self) -> Any:
+        from omega_lib.infrastructure.terminal.detector import SystemTerminalDetector
+        return SystemTerminalDetector()
+
+    @property
+    def default_screenshots_dir(self) -> Path:
+        """Sans ce chemin explicite, `App.deliver_screenshot()` ecrirait
+        par defaut dans le dossier Telechargements de l'utilisateur,
+        jamais dans var/ — meme piege deja documente et corrige cote
+        omega-check/omega-stress."""
+        from omega_fire.infrastructure.config.paths import VAR_DIR
+        return Path(self.config.get("screenshots_dir", VAR_DIR / "screenshots"))
+
+    # ------------------------------------------------------------------
     # Plugins
     # ------------------------------------------------------------------
     
