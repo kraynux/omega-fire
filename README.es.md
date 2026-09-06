@@ -25,6 +25,8 @@ Página oficial: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/)
 **Omega-Fire** es una aplicación TUI (Terminal User Interface) en Python construida con [Textual](https://github.com/Textualize/textual). Ofrece desde un terminal una interfaz única para administrar los cortafuegos de Linux, Fail2Ban, las direcciones baneadas, las reglas de red, los registros (logs) y las estadísticas del sistema.
 
 La interfaz Textual es el modo de funcionamiento por defecto y navega mediante menús, formularios validados (todos los campos requeridos se verifican antes de continuar) y pantallas dedicadas, con temas, ayuda contextual y atajos de teclado compartidos con el resto de la suite OMEGA (omega-check, omega-deep, omega-stress...). La antigua interfaz [Rich](https://github.com/Textualize/rich), secuencial y controlada mediante la introducción de números, sigue disponible vía `--legacy-cli` (ver [Lanzamiento](#lanzamiento)).
+Vista previa: [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
+
 
 El proyecto está diseñado según los principios de la **Clean Architecture**, con una separación clara entre el dominio de negocio, la orquestación, la infraestructura y la interfaz de usuario.
 

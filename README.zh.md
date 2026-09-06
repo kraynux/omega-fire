@@ -25,6 +25,8 @@
 **Omega-Fire** 是一个基于 [Textual](https://github.com/Textualize/textual) 构建的 Python TUI（终端用户界面）应用程序。它在终端中提供一个统一的界面，用于管理 Linux 防火墙、Fail2Ban、被封禁的地址、网络规则、日志以及系统统计信息。
 
 Textual 界面是默认的运行模式，通过菜单、经过校验的表单（所有必填字段在继续之前都会被检查）以及专用界面进行导航，并与 OMEGA 套件其余工具（omega-check、omega-deep、omega-stress……）共享主题、上下文帮助和键盘快捷键。旧版 [Rich](https://github.com/Textualize/rich) 界面（顺序式、通过输入编号操作）仍可通过 `--legacy-cli` 使用（参见[启动](#使用方法)）。
+预览：[Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
+
 
 本项目依据 **Clean Architecture（整洁架构）** 原则设计，业务领域、编排逻辑、基础设施与用户界面之间有清晰的分层。
 
