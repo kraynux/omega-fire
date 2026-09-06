@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE) -->
 
 <div align="center">
-  <img src="docs/assets/omega-fire.png" alt="Omega-Fire" width="256">
+  <img src="docs/assets/omega-fire.png" alt="Omega-Fire" width="384">
 </div>
 
 # 󰦝 OMEGA-FIRE
