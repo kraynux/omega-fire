@@ -117,6 +117,19 @@ class OmegaFireApp(App[None]):
         except UnknownThemeError as exc:
             self.notify(str(exc), severity="error")
             return
+        except OSError as exc:
+            # Retour utilisateur (GROS BUG : "t" fermait l'application) -
+            # JsonSettingsStore.set() (infrastructure/storage/files/
+            # json_settings_store.py) ecrit reellement sur disque
+            # (var/runtime/settings.json) sans jamais etre protege ici -
+            # une simple erreur de persistance (permissions, disque
+            # plein, systeme de fichiers en lecture seule) faisait
+            # planter cette action sans aucun rattrapage, plutot que de
+            # se degrader en simple notification. Le theme change quand
+            # meme visuellement (self.theme = next_name plus bas) : seule
+            # la PERSISTANCE du choix echoue, pas la fonctionnalite
+            # immediate.
+            self.notify(f"Theme applique mais non enregistre : {exc}", severity="warning")
         self.theme = next_name
 
     def action_refresh_terminal(self) -> None:

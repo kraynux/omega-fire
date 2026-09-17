@@ -1,0 +1,23 @@
+/* Cadre "application" reutilisable (retour utilisateur 2026-09-13) -
+   donne l'illusion d'une vraie application plutot que du texte brut
+   affiche dans un terminal : une bordure + un fond qui suit le theme
+   actif, appliquee au conteneur de CONTENU PRINCIPAL de chaque ecran
+   (jamais aux modales - ConfirmScreen/DynamicFormScreen restent des
+   popups centrees et reduites par nature, un cadre plein ecran les
+   rendrait incoherentes).
+
+   FICHIER ISOLE ET PORTABLE A DESSEIN : aucune regle ici ne depend
+   d'un theme/profil specifique a ce projet - copier ce fichier tel
+   quel dans un autre outil omega- (memes 3 classes partagees par
+   omega-check et consorts : `.omega-panel`/`.omega-form-panel` comme
+   enveloppe de contenu, `.omega-home-root` pour l'ecran d'accueil) et
+   l'ajouter a la liste retournee par rendering/stylesheet_loader.py::
+   stylesheet_paths_for() suffit a l'appliquer partout - aucun
+   changement necessaire dans le compose() de chaque ecran. */
+.omega-panel,
+.omega-form-panel,
+.omega-home-root {
+    border: solid $primary;
+    background: $surface;
+    padding: 1 2;
+}

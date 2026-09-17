@@ -7,6 +7,16 @@
 # Meme mecanisme qu'omega-stress/omega-check (Phase 6 de la feuille de
 # route de migration TUI). Outil de maintenance, jamais lui-meme inclus
 # dans l'archive generee.
+#
+# `docs/assets/` exclu (retour utilisateur) : logo/capture du dashboard
+# utilise par le rendu README sur GitHub uniquement
+# (docs/assets/omega-fire.png, ~2.4 Mo) - jamais lu par le code, inutile
+# a une installation reelle. Le reste de docs/ (architecture, exceptions
+# inter-couches, format IPv6...) reste inclus.
+#
+# DIST_DIR (par defaut PROJECT_ROOT/../dist, comme le reste de la suite) :
+# destination de l'archive - PROJECT_ROOT lui-meme reste le repli si
+# DIST_DIR ne peut pas etre cree, jamais un echec silencieux.
 # ==============================================================================
 
 set -e
@@ -34,6 +44,7 @@ err()  { echo -e "${RED}❌ $1${NC}"; }
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OMEGA_LIB_SRC="${OMEGA_LIB_SRC:-$HOME/DEV/LIB/omega-lib}"
+DIST_DIR="${DIST_DIR:-$PROJECT_ROOT/../dist}"
 
 if [ ! -d "$OMEGA_LIB_SRC" ]; then
     err "omega-lib introuvable : $OMEGA_LIB_SRC (definissez OMEGA_LIB_SRC si le chemin differe)."
@@ -59,6 +70,7 @@ rsync -a \
     --exclude='.pytest_cache/' --exclude='.mypy_cache/' --exclude='.ruff_cache/' \
     --exclude='.import_linter_cache/' --exclude='*.egg-info/' \
     --exclude='.git/' --exclude='.claude/' \
+    --exclude='docs/assets/' \
     --exclude='var/blocklist/*' --exclude='var/cache/*' --exclude='var/backups/*' \
     --exclude='var/runtime/*' --exclude='var/exports/*' --exclude='var/db/*' \
     --exclude='var/logs/*' --exclude='var/screenshots/*' --exclude='var/settings.json' \
@@ -77,8 +89,9 @@ rsync -a \
     "$OMEGA_LIB_SRC/" "$DEST/vendor/omega-lib/"
 
 info "Archivage..."
-tar -C "$STAGING_DIR" -czf "$PROJECT_ROOT/$ARCHIVE_NAME" omega-fire
+mkdir -p "$DIST_DIR"
+tar -C "$STAGING_DIR" -czf "$DIST_DIR/$ARCHIVE_NAME" omega-fire
 
-ok "Archive generee : $ARCHIVE_NAME"
-echo "sha256sum $ARCHIVE_NAME :"
-sha256sum "$PROJECT_ROOT/$ARCHIVE_NAME"
+ok "Archive generee : $DIST_DIR/$ARCHIVE_NAME"
+echo "sha256sum :"
+sha256sum "$DIST_DIR/$ARCHIVE_NAME"

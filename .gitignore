@@ -32,7 +32,3 @@ var/screenshots/*
 # Logs de test locaux
 *.log
 
-# Archives distribuables (regenerees par build-release.sh, jamais a versionner)
-omega-fire.tar.gz
-omega-fire-*.tar.gz
-vendor/
