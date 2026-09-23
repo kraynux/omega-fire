@@ -57,7 +57,11 @@ class RestoreStateScreen(OmegaScreen):
             persistence_port = self._container.get_persistence_port()
             snapshots = persistence_port.list_snapshots()
         except Exception as e:
-            hint.update(f"Impossible de lister les snapshots : {e}")
+            # Text(...) plutot qu'un f-string brut : evite le meme crash
+            # MarkupError que notify() (retour utilisateur 2026-09-24,
+            # voir OmegaFireApp.notify) si {e} contient des crochets
+            # (CoreError.context, ou un OSError natif type "[Errno 2] ...").
+            hint.update(Text(f"Impossible de lister les snapshots : {e}"))
             return
 
         if not snapshots:

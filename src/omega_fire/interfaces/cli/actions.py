@@ -3830,6 +3830,175 @@ def action_3_4_apply_preset(ctx: ActionContext) -> None:
 
     _execute_action_flow(ctx, "3.4 Appliquer une politique prédéfinie", logic)
 
+
+def action_3_5_table_management(ctx: ActionContext) -> None:
+    """3.5 — Gestion des tables (retour utilisateur 2026-09-24, suite a
+    l'incident reel : perte totale de reseau apres application repetee
+    de profils, `nft flush ruleset` global necessaire pour recuperer
+    l'acces faute d'un equivalent controle dans Omega-Fire)."""
+
+    def logic(out: List[Any]):
+        from rich.box import ROUNDED
+        from omega_fire.application.commands.manage_tables import (
+            GetTablesStatusQuery,
+            InitializeTablesCommand,
+            ResetChainPoliciesCommand,
+            FlushBackendTableCommand,
+            FlushAllTablesSyncCommand,
+            DeleteTableCommand,
+        )
+
+        if not hasattr(ctx, "container") or not ctx.container:
+            ctx.console.print(_error("Le conteneur n'est pas disponible."))
+            return
+
+        adapters: dict[str, Any] = {}
+        for name in ("nftables", "iptables", "ip6tables"):
+            try:
+                adapters[name] = ctx.container.get_firewall_port(name)
+            except Exception:
+                adapters[name] = None
+        available_backends = [name for name, a in adapters.items() if a is not None]
+
+        if not available_backends:
+            ctx.console.print(_error(
+                "Aucun backend firewall n'est disponible (nftables, iptables et "
+                "ip6tables non détectés)."
+            ))
+            return
+
+        # ─── ÉTAPE 1 : État actuel (toujours affiché en entrant) ───
+        status_result = GetTablesStatusQuery(adapters).execute()
+        status_table = Table(box=ROUNDED, border_style=theme_registry.get_style("border.default"), expand=True)
+        status_table.add_column("Backend", style=theme_registry.get_style("text.heading"))
+        status_table.add_column("Table", justify="center")
+        status_table.add_column("INPUT", justify="center")
+        status_table.add_column("OUTPUT", justify="center")
+        status_table.add_column("FORWARD", justify="center")
+        status_table.add_column("Règles", justify="center")
+        for entry in status_result.entries:
+            if not entry.available:
+                status_table.add_row(entry.backend, "—", "—", "—", "—", "—")
+                continue
+            if entry.error:
+                status_table.add_row(entry.backend, Text(f"erreur : {entry.error}", style="red"), "—", "—", "—", "—")
+                continue
+            table_cell = Text("présente", style="green") if entry.table_exists else Text("absente", style="yellow")
+
+            def _policy_cell(chain: str) -> Text:
+                policy = entry.policies.get(chain) or entry.policies.get(chain.upper())
+                if policy is None:
+                    return Text("—", style="dim")
+                return Text(policy.upper(), style="green" if policy.lower() == "accept" else "red")
+
+            status_table.add_row(
+                entry.backend, table_cell,
+                _policy_cell("input"), _policy_cell("output"), _policy_cell("forward"),
+                str(entry.rule_count),
+            )
+        ctx.console.print(status_table)
+        if status_result.policy_divergences:
+            ctx.console.print(_warning("Divergence(s) de politique détectée(s) entre backends :"))
+            for note in status_result.policy_divergences:
+                ctx.console.print(_warning(f"  • {note}"))
+        ctx.console.print()
+
+        # ─── ÉTAPE 2 : Choix ───
+        print_choice = lambda num, label: ctx.console.print(_info(f"  [{num}] {label}"))
+        print_choice("1", "Initialiser les tables (nftables, première utilisation)")
+        print_choice("2", "Réinitialiser les politiques à ACCEPT sur un backend")
+        print_choice("3", "Vider un backend spécifique")
+        print_choice("4", "Vider TOUS les backends détectés (synchronisé)")
+        print_choice("5", "[AVANCÉ] Supprimer complètement la table nftables")
+        ctx.console.print()
+        choice = ctx.console.input(_info("Choix [1-5 + Entrée] (ou Entrée vide pour annuler) : ")).strip()
+        if not choice:
+            ctx.console.print(_info("Opération annulée."))
+            return
+        if choice not in ("1", "2", "3", "4", "5"):
+            ctx.console.print(_error("Choix invalide."))
+            return
+
+        def _pick_backend(candidates: List[str]) -> Optional[str]:
+            if len(candidates) == 1:
+                return candidates[0]
+            for i, name in enumerate(candidates, start=1):
+                ctx.console.print(_info(f"  [{i}] {name}"))
+            raw = ctx.console.input(_info("Backend [numéro + Entrée] : ")).strip()
+            try:
+                index = int(raw) - 1
+                if 0 <= index < len(candidates):
+                    return candidates[index]
+            except ValueError:
+                pass
+            ctx.console.print(_error("Choix invalide."))
+            return None
+
+        if choice == "1":
+            if adapters.get("nftables") is None:
+                ctx.console.print(_error("nftables n'est pas disponible — rien à initialiser."))
+                return
+            result = InitializeTablesCommand(adapters["nftables"]).execute()
+
+        elif choice == "2":
+            backend = _pick_backend(available_backends)
+            if backend is None:
+                return
+            confirm = ctx.console.input(_info(
+                f"Remettre input/output/forward à ACCEPT sur {backend} ? [o/N] : "
+            )).strip().lower()
+            if confirm not in ("o", "oui", "y", "yes"):
+                ctx.console.print(_info("Opération annulée."))
+                return
+            result = ResetChainPoliciesCommand(adapters[backend], backend).execute()
+
+        elif choice == "3":
+            backend = _pick_backend(available_backends)
+            if backend is None:
+                return
+            confirm = ctx.console.input(_info(
+                f"Vider (flush) toutes les règles de {backend} ? [o/N] : "
+            )).strip().lower()
+            if confirm not in ("o", "oui", "y", "yes"):
+                ctx.console.print(_info("Opération annulée."))
+                return
+            result = FlushBackendTableCommand(adapters[backend], backend).execute()
+
+        elif choice == "4":
+            ctx.console.print(_warning(
+                f"ATTENTION : va vider TOUS les backends détectés ({', '.join(available_backends)}) — "
+                f"toutes les règles actives seront retirées."
+            ))
+            confirm = ctx.console.input(_info("Confirmer le vidage global ? [o/N] : ")).strip().lower()
+            if confirm not in ("o", "oui", "y", "yes"):
+                ctx.console.print(_info("Opération annulée."))
+                return
+            result = FlushAllTablesSyncCommand(adapters).execute()
+
+        else:  # "5"
+            if adapters.get("nftables") is None:
+                ctx.console.print(_error("nftables n'est pas disponible — rien à supprimer."))
+                return
+            ctx.console.print(_warning(
+                "ATTENTION : action AVANCÉE — supprime la table nftables ENTIÈRE (chaînes et "
+                "hooks compris, pas seulement les règles). Plus aucun filtrage actif sur ce "
+                "backend tant qu'elle n'est pas réinitialisée (choix [1])."
+            ))
+            confirm = ctx.console.input(_info("Confirmer la suppression de la table ? [o/N] : ")).strip().lower()
+            if confirm not in ("o", "oui", "y", "yes"):
+                ctx.console.print(_info("Opération annulée."))
+                return
+            result = DeleteTableCommand(adapters["nftables"]).execute()
+
+        ctx.console.print()
+        if result.success:
+            ctx.console.print(_success(result.message))
+        else:
+            ctx.console.print(_error(result.message))
+
+    _execute_action_flow(ctx, "3.5 Gestion des tables", logic)
+
+
 # ----------------------------------------------------------------------
 # Menu 4 — Gestion Fail2ban
 # ----------------------------------------------------------------------
@@ -10599,6 +10768,7 @@ class ActionRegistry:
             "3.2": action_3_2_delete_rule,
             "3.3": action_3_3_list_rules,
             "3.4": action_3_4_apply_preset,
+            "3.5": action_3_5_table_management,
             "4.1": action_4_1_jails_status,
             "4.2": action_4_2_jail_ban_unban,
             "4.3": action_4_3_jail_transfer,

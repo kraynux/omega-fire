@@ -53,6 +53,7 @@ from omega_fire.interfaces.tui.screens.search_diagnostics_screen import SearchDi
 from omega_fire.interfaces.tui.screens.section_screen import SectionItem, SectionScreen
 from omega_fire.interfaces.tui.screens.stats_report_screen import StatsReportScreen
 from omega_fire.interfaces.tui.screens.sync_backends_screen import SyncBackendsScreen
+from omega_fire.interfaces.tui.screens.table_management_screen import TableManagementScreen
 from omega_fire.interfaces.tui.screens.top_ips_screen import TopIpsScreen
 from omega_fire.interfaces.tui.screens.unban_ip_screen import UnbanIpScreen
 from omega_fire.interfaces.tui.support.direct_actions import (
@@ -144,6 +145,8 @@ SECTION_3_ITEMS: tuple[SectionItem, ...] = (
                 screen_factory=lambda c: ListRulesScreen(container=c)),
     SectionItem("3.4", "Appliquer une politique pre-definie", "Profils activable (sauvegarde-auto de l'etat)",
                 screen_factory=lambda c: ApplyPresetScreen(container=c)),
+    SectionItem("3.5", "Gestion des tables", "Diagnostic, initialisation, reset des politiques, flush cible ou synchronise",
+                screen_factory=lambda c: TableManagementScreen(container=c)),
 )
 
 SECTION_4_TITLE = "GESTION FAIL2BAN (Jails & Transferts)"

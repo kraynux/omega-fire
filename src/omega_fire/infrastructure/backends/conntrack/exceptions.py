@@ -15,10 +15,19 @@ class ConntrackError(CoreError):
 
 
 class ConntrackCommandError(ConntrackError):
-    """Raised when a conntrack command fails."""
-    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
+    """Raised when a conntrack command fails.
+
+    `note` (retour utilisateur 2026-09-25) : explication en langage clair
+    prependue au message technique, jamais a sa place — l'utilisateur
+    demande explicitement les DEUX (le detail technique reste utile pour
+    diagnostiquer plus tard, ex. rapporter le bug en amont). Vide par
+    defaut (aucun changement pour les echecs conntrack "ordinaires")."""
+    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None, note: str = ""):
+        message = f"conntrack command failed (exit {returncode}): {command}"
+        if note:
+            message = f"{note} — {message}"
         super().__init__(
-            f"conntrack command failed (exit {returncode}): {command}",
+            message,
             {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
         )
         self.command = command
@@ -38,10 +47,19 @@ class ConntrackParseError(ConntrackError):
 
 
 class ConntrackPermissionError(ConntrackError):
-    """Raised when conntrack operations require elevated privileges."""
+    """Raised when conntrack operations require elevated privileges.
+
+    Retour utilisateur 2026-09-25 : message enrichi avec DEUX solutions
+    concretes (pas juste "lancez en root", qui oblige a executer toute
+    l'application en root pour une seule fonctionnalite de lecture) -
+    l'alternative `setcap` est non-destructive, ne s'applique qu'au seul
+    binaire conntrack, et n'est JAMAIS executee automatiquement ici
+    (juste suggeree a l'utilisateur, qui reste seul decisionnaire)."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission denied for conntrack operation: {operation}. Run as root.",
+            f"Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou "
+            f"CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une "
+            f"fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack)).",
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

@@ -422,6 +422,23 @@ class Ip6tablesAdapter:
         except (Ip6tCommandError, Ip6tPermissionError):
             return False
 
+    def get_table_status(self) -> dict:
+        """Meme role que IptablesAdapter.get_table_status() (menu 3.5.1,
+        retour utilisateur 2026-09-24) — voir sa docstring, mecanisme
+        identique avec 'ip6tables -S'."""
+        output = self._run_command(["ip6tables", "-S"])
+        policies: dict[str, Optional[str]] = {}
+        rule_count = 0
+        for line in output.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("-P "):
+                parts = stripped.split()
+                if len(parts) >= 3:
+                    policies[parts[1].lower()] = parts[2].lower()
+            elif stripped.startswith("-A "):
+                rule_count += 1
+        return {"table_exists": True, "policies": policies, "rule_count": rule_count}
+
     # ------------------------------------------------------------------
     # Preset application / ruleset snapshot & restore (menu 3.4)
     # ------------------------------------------------------------------

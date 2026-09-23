@@ -126,6 +126,11 @@ La lista negra unificada permite trabajar con nftables e iptables desde una mism
 - Personalización, guardado y restauración de una política.
 - Identificación de la política activa en el menú de estado y en el dashboard.
 - Señalización de los perfiles modificados en la forma `Perfil + CUSTOM`.
+- Gestión de tablas (menú 3.5): diagnóstico de solo lectura por backend (presencia de la tabla, políticas input/output/forward, número de reglas) con detección de divergencias entre backends.
+- Inicialización de una tabla nftables en el primer uso, sin sobrescribir nunca una cadena ya configurada.
+- Reinicialización de las políticas de cadena a ACCEPT en un backend, para corregir una política restrictiva huérfana dejada por un perfil anterior.
+- Vaciado dirigido de un backend o vaciado sincronizado de todos los backends detectados en una sola acción.
+- Eliminación completa de una tabla nftables (acción avanzada, más allá de solo las reglas).
 
 ### 4. Gestión de Fail2Ban
 

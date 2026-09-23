@@ -118,6 +118,36 @@ class ApplyPresetToAllBackendsCommand:
             except Exception as e:
                 snapshot_warning = f"snapshot complet non créé ({e})"
 
+        # --- Flush global SYNCHRONISE, avant de reconstruire QUOI QUE CE
+        # SOIT sur AUCUN backend (retour utilisateur 2026-09-24) ---
+        # Sans ce pré-passage, la boucle plus bas traite les backends l'un
+        # après l'autre : pendant qu'elle reconstruit le premier (ex.
+        # nftables/inet filter) avec le NOUVEAU profil, le second (ex.
+        # iptables/ip filter, table nftables séparée quand iptables est en
+        # réalité iptables-nft — quasi systématique sur Arch/Archcraft/
+        # Ditana) continue d'appliquer intégralement l'ANCIEN profil pendant
+        # toute la durée de cette fenêtre. Les deux tables étant accrochées
+        # aux mêmes hooks netfilter et évaluées TOUTES LES DEUX pour chaque
+        # paquet, le trafic reste gouverné par le plus restrictif des deux
+        # tant que la boucle n'a pas fini — confirmé en usage réel : accès
+        # Samba/Internet perdu de façon persistante après un changement de
+        # profil, seul un `nft flush ruleset` GLOBAL (hors d'Omega-Fire,
+        # vidant aussi ce qu'il ne gère pas) rétablissait l'accès. Vider
+        # TOUS les backends d'abord, puis reconstruire ensuite, élimine
+        # cette fenêtre : les deux tables sont soit encore sur l'ancien
+        # profil (avant ce pré-passage), soit déjà toutes les deux vides
+        # (après), jamais un mélange ancien/nouveau entre backends.
+        # Best-effort et jamais bloquant : un flush qui échoue ici (backend
+        # dégradé, permissions) n'empêche pas la boucle suivante de tenter
+        # quand même l'application complète sur ce backend (qui refera son
+        # propre flush scopé en interne) — seul le GAIN de synchronisation
+        # est perdu pour ce backend précis, jamais l'application elle-même.
+        for backend in target_backends:
+            try:
+                self._adapters[backend].flush()
+            except Exception:
+                pass
+
         outcomes: list[BackendApplyOutcome] = []
         for backend in target_backends:
             # Chaque backend reçoit sa PROPRE instance d'ApplyPresetCommand,

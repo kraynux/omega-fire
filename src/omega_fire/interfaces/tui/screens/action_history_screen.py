@@ -115,7 +115,10 @@ class ActionHistoryScreen(OmegaScreen):
         try:
             audit_port = self._container.get_audit_port()
         except Exception as e:
-            self.query_one("#page-hint", Static).update(f"Registre d'audit indisponible : {e}")
+            # Text(...) : voir restore_state_screen.py::_refresh (meme
+            # correctif, meme raison - MarkupError si {e} contient des
+            # crochets).
+            self.query_one("#page-hint", Static).update(Text(f"Registre d'audit indisponible : {e}"))
             return
 
         result = ReadAuditHistoryQuery(audit_port).execute(

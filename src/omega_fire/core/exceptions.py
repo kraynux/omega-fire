@@ -27,13 +27,23 @@ class CoreError(Exception):
     
     def __str__(self) -> str:
         """Return string representation with context.
-        
+
         Returns:
             Error message with context if available
-        """
+
+        Retour utilisateur 2026-09-24 : contexte entre PARENTHESES, jamais
+        entre crochets (`[...]`) - crash reel reproduit et trace dans
+        var/logs/app.log (textual.markup.MarkupError) des qu'un ecran TUI
+        affiche cette chaine via un notify()/update() qui interprete les
+        crochets comme une balise de style Rich/Textual (ex: applying a
+        preset preset then failing, or deleting a rule by a stale nft
+        handle - "Could not process rule: No such file or directory" -
+        finissait dans un f-string interpole tel quel). Les parentheses ne
+        sont jamais un caractere de balisage Rich - memes informations,
+        zero risque d'etre mal interpretees en UI."""
         if self.context:
             context_str = ", ".join(f"{k}={v}" for k, v in self.context.items())
-            return f"{self.message} [{context_str}]"
+            return f"{self.message} ({context_str})"
         return self.message
 
 

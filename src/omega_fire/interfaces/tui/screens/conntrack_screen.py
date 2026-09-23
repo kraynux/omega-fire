@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static
@@ -100,7 +101,11 @@ class ConntrackScreen(OmegaScreen):
         if state_filter:
             filters_desc.append(f"etat={state_filter}")
         filters_str = f" (filtres : {', '.join(filters_desc)})" if filters_desc else ""
-        hint.update(f"{result.total_count} connexion(s) au total{filters_str}. {result.message}")
+        # Text(...) : result.message peut contenir le texte d'une exception
+        # conntrack (ConntrackPermissionError/ConntrackCommandError) - meme
+        # correctif que restore_state_screen.py/action_history_screen.py
+        # (retour utilisateur 2026-09-24/25, MarkupError).
+        hint.update(Text(f"{result.total_count} connexion(s) au total{filters_str}. {result.message}"))
 
         protocol_select = self.query_one("#protocol-select", Select)
         protocol_select.set_options(

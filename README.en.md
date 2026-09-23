@@ -125,6 +125,11 @@ The unified blacklist lets you work with nftables and iptables from a single scr
 - Customize, save and restore a policy.
 - Identification of the active policy in the status menu and the dashboard.
 - Modified profiles flagged as `Profile + CUSTOM`.
+- Table management (menu 3.5): read-only diagnostic per backend (table presence, input/output/forward policies, rule count) with detection of divergences between backends.
+- Initialize an nftables table on first use, without ever overwriting an already-configured chain.
+- Reset chain policies to ACCEPT on a backend, to fix a stale restrictive policy left over from an earlier profile.
+- Flush a specific backend or synchronously flush all detected backends in a single action.
+- Fully delete an nftables table (advanced action, beyond just its rules).
 
 ### 4. Fail2Ban management
 

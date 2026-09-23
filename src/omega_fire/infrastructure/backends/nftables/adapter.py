@@ -542,6 +542,80 @@ class NftablesAdapter:
             return False
 
     # ------------------------------------------------------------------
+    # Gestion des tables (menu 3.5, retour utilisateur 2026-09-24)
+    # ------------------------------------------------------------------
+
+    _BASE_CHAINS = ("input", "output", "forward")
+
+    def chain_exists(self, chain_name: str, family: str = "inet", table: str = "filter") -> bool:
+        """Whether a given base chain currently exists.
+
+        Utilise par InitializeTablesCommand (menu 3.5.2, "premiere
+        utilisation") pour decider, chaine par chaine, s'il faut la creer
+        (absente) ou la laisser intacte (deja presente, quelle que soit sa
+        policy actuelle) — l'initialisation ne doit JAMAIS ecraser
+        silencieusement une chaine deja configuree, contrairement a
+        ResetChainPoliciesCommand (3.5.3) qui force explicitement.
+        """
+        try:
+            self._run_command(["nft", "list", "chain", family, table, chain_name])
+            return True
+        except NftCommandError as e:
+            if "No such file or directory" in str(e) or "does not exist" in str(e):
+                return False
+            raise
+
+    def get_table_status(self, family: str = "inet", table: str = "filter") -> dict:
+        """Instantane en lecture seule pour l'ecran "Etat des tables"
+        (menu 3.5.1) — jamais de mutation ici.
+
+        Returns:
+            {"table_exists": bool,
+             "policies": {"input": str|None, "output": str|None, "forward": str|None},
+             "rule_count": int}
+            policies[chain] vaut None si CETTE chaine precise n'existe pas
+            encore (distinct d'une vraie valeur de policy) ; table_exists
+            a False signifie que RIEN n'existe encore (premiere
+            utilisation jamais faite).
+        """
+        try:
+            output = self._run_command(["nft", "-a", "list", "table", family, table])
+        except NftCommandError as e:
+            if "No such file or directory" in str(e) or "does not exist" in str(e):
+                return {
+                    "table_exists": False,
+                    "policies": {chain: None for chain in self._BASE_CHAINS},
+                    "rule_count": 0,
+                }
+            raise
+
+        policies: dict[str, Optional[str]] = {}
+        for chain in self._BASE_CHAINS:
+            match = re.search(rf"chain {chain} \{{[^}}]*?policy (\w+);", output)
+            policies[chain] = match.group(1) if match else None
+
+        return {
+            "table_exists": True,
+            "policies": policies,
+            "rule_count": len(self._parser.parse_ruleset(output)),
+        }
+
+    def delete_table(self, family: str = "inet", table: str = "filter") -> bool:
+        """Suppression COMPLETE de la table (chaines/hooks compris) — menu
+        3.5.6, action avancee, plus destructrice qu'un simple flush()
+        (qui ne retire que les regles, jamais les chaines/policies/hooks).
+        Idempotent : une table deja absente est un succes (rien a faire),
+        jamais une erreur — meme discipline que flush()/apply_preset().
+        """
+        try:
+            self._run_command(["nft", "delete", "table", family, table])
+        except NftCommandError as e:
+            if "No such file or directory" in str(e) or "does not exist" in str(e):
+                return True
+            raise
+        return True
+
+    # ------------------------------------------------------------------
     # Preset application / ruleset snapshot & restore (menu 3.4)
     # ------------------------------------------------------------------
 

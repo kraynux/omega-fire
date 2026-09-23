@@ -6,6 +6,7 @@ kill connections. Uses subprocess to execute conntrack commands.
 
 This is the only module that directly calls conntrack via subprocess.
 """
+import os
 import subprocess
 from typing import Optional
 from omega_fire.domain.monitoring.conntrack import Connection, ConnectionState, ConnectionProtocol
@@ -56,12 +57,50 @@ class ConntrackAdapter:
 
             if result.returncode != 0:
                 stderr = result.stderr.strip()
-                if "Permission denied" in stderr or "Operation not permitted" in stderr:
+                # Retour utilisateur 2026-09-25 : "conntrack -L" echoue en
+                # pratique sur TOUT processus non-root/sans CAP_NET_ADMIN
+                # (verifie en test reel), mais le texte de stderr differe
+                # selon la version de conntrack-tools installee - constate
+                # deux formulations DIFFERENTES pour la MEME cause manque
+                # de privilege ("... you must be root or get CAP_NET_ADMIN
+                # capability to do this"). Se fier au texte seul aurait pu
+                # rater ce cas (tombant alors dans ConntrackCommandError
+                # generique, perdant le message actionnable de
+                # ConntrackPermissionError) - os.geteuid() est fiable
+                # independamment du texte exact.
+                looks_like_permission_issue = (
+                    os.geteuid() != 0
+                    or "Permission denied" in stderr
+                    or "Operation not permitted" in stderr
+                    or "CAP_NET_ADMIN" in stderr
+                )
+                if looks_like_permission_issue:
                     raise ConntrackPermissionError(operation=" ".join(cmd[:3]))
+
+                # Retour utilisateur 2026-09-25 : "Operation failed: invalid
+                # parameters" reproduit en root, MEME avec -f ipv4 explicite
+                # (confirme en test reel direct, hors Omega-Fire - donc PAS
+                # une cause de permission, contrairement a l'hypothese
+                # initiale ci-dessus) - correspond a des rapports connus
+                # d'incompatibilite conntrack-tools/noyau (ex. RedHat
+                # bugzilla #2072313, listes netfilter), rien de reparable
+                # cote code Omega-Fire. Note ajoutee EN PLUS du detail
+                # technique (jamais a sa place, retour utilisateur
+                # explicite) pour que l'utilisateur sache immediatement que
+                # ce n'est pas un bug applicatif, tout en gardant le detail
+                # exploitable pour signaler le probleme en amont.
+                note = ""
+                if "invalid parameters" in stderr.lower():
+                    note = (
+                        "Incompatibilité probable entre conntrack-tools et ce noyau (pas un bug "
+                        "Omega-Fire — la commande système échoue identiquement en root, en dehors "
+                        "de l'application)"
+                    )
                 raise ConntrackCommandError(
                     command=" ".join(cmd),
                     returncode=result.returncode,
                     stderr=stderr,
+                    note=note,
                 )
 
             return result.stdout

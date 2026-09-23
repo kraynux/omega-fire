@@ -140,10 +140,31 @@ class BackupStateCommand:
 
         jails = _collect_jails(self._adapters.get("fail2ban"))
 
+        # Retour utilisateur 2026-09-25 : distinguait a tort "rien a
+        # sauvegarder" de "aucun backend detecte" - un backend fraichement
+        # initialise (menu 3.5, policy accept, ZERO regle ajoutee - cas
+        # reel reproduit) n'a AUCUN rapport avec "backend non detecte".
+        if not any(adapter is not None for adapter in self._adapters.values()):
+            return BackupStateResult(
+                success=False,
+                message="Aucun backend disponible (nftables, iptables, ip6tables et fail2ban non détectés).",
+            )
+
+        # domain/persistence/backup.py::plan_backup() refuse tout backup
+        # totalement vide (EmptyBackupError, regle de domaine deliberee,
+        # verifiee en plusieurs points - creation ET validite ulterieure
+        # du snapshot) - anticipe ici pour donner un message CLAIR et
+        # EXACT (jamais "backend non detecte", qui etait faux) plutot que
+        # de laisser remonter le message technique imbrique de l'exception.
         if not banned_ips and not rules and not jails:
             return BackupStateResult(
                 success=False,
-                message="Aucune donnée disponible à sauvegarder (aucun backend actif ?).",
+                message=(
+                    "Rien à sauvegarder pour l'instant (0 règle, 0 IP bannie, 0 jail) — normal "
+                    "juste après une initialisation sans règle ajoutée (menu 3.5). Ajoutez des "
+                    "règles avant de sauvegarder, ou réinitialisez cet état à la demande via le "
+                    "menu 3.5 plutôt que de le sauvegarder vide."
+                ),
             )
 
         try:

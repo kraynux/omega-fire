@@ -125,6 +125,11 @@ La blacklist unifiée permet de travailler avec nftables et iptables depuis un m
 - Personnalisation, sauvegarde et restauration d'une politique.
 - Identification de la politique active dans le menu de statut et le dashboard.
 - Signalement des profils modifiés sous la forme `Profil + CUSTOM`.
+- Gestion des tables (menu 3.5) : diagnostic en lecture seule par backend (présence de la table, politiques input/output/forward, nombre de règles) avec détection des divergences entre backends.
+- Initialisation d'une table nftables lors d'une première utilisation, sans jamais écraser une chaîne déjà configurée.
+- Réinitialisation des politiques de chaîne à ACCEPT sur un backend, pour corriger une politique restrictive orpheline laissée par un profil antérieur.
+- Vidage ciblé d'un backend ou vidage synchronisé de tous les backends détectés en une seule action.
+- Suppression complète d'une table nftables (action avancée, hors des règles seules).
 
 ### 4. Gestion Fail2Ban
 

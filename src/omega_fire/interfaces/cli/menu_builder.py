@@ -95,6 +95,7 @@ class MenuBuilder:
         section_3.add_child(create_node("3.2", "Supprimer une règle", requires_any=["nftables", "iptables", "ip6tables"], action=actions.get("3.2"), description="Supression simplifié d'une regle"))
         section_3.add_child(create_node("3.3", "Lister les règles", requires_any=["nftables", "iptables", "ip6tables"], action=actions.get("3.3"), description="Tableau avec detail & compteurs par backend "))
         section_3.add_child(create_node("3.4", "Appliquer une politique pré-définie", requires_any=["nftables", "iptables", "ip6tables"], action=actions.get("3.4"), description="Profils activable (sauvegarde-auto de l'état)"))
+        section_3.add_child(create_node("3.5", "Gestion des tables", requires_any=["nftables", "iptables", "ip6tables"], action=actions.get("3.5"), description="Diagnostic, initialisation, reset des politiques, flush cible ou synchronisé"))
         self._root.add_child(section_3)
         
         # ====================================================================

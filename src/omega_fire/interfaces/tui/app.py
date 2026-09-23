@@ -12,6 +12,7 @@ from omega_lib.terminal.models import RenderProfile
 from omega_lib.theme.policies import TUI_THEMES
 from textual.app import App, SystemCommand
 from textual.binding import Binding, BindingType
+from textual.notifications import SeverityLevel
 
 from omega_fire.application.commands.select_theme import select_theme
 from omega_fire.application.exceptions import UnknownThemeError
@@ -69,6 +70,35 @@ class OmegaFireApp(App[None]):
         for theme in build_all_textual_themes():
             self.register_theme(theme)
         self.theme = self._startup_state.theme.theme_name
+
+    def notify(
+        self,
+        message: str,
+        *,
+        title: str = "",
+        severity: SeverityLevel = "information",
+        timeout: float | None = None,
+        markup: bool = False,
+    ) -> None:
+        """Meme signature que App.notify() - seul le defaut de `markup`
+        change (True -> False).
+
+        Retour utilisateur 2026-09-24 : crash reel et trace (var/logs/app.log,
+        textual.markup.MarkupError) chaque fois qu'un ecran notifie un texte
+        d'erreur contenant des crochets non intentionnels - `CoreError`
+        (voir core/exceptions.py) en produisait via son propre contexte
+        (corrige separement), mais des crochets natifs Python
+        (`[Errno 2] No such file or directory`, `FileNotFoundError`/`OSError`)
+        restent un risque identique pour N'IMPORTE QUEL futur appel
+        `self.notify(f"...{e}...")` (~35 sites deja recenses dans
+        interfaces/tui/screens/). Aucun de ces appels n'utilise
+        intentionnellement de balisage Rich (verifie : zero occurrence de
+        `[bold]`/`[red]`/etc. dans un notify() de ce projet) - desactiver le
+        markup par defaut est donc sans effet visible sur les notifications
+        existantes, seulement un filet de securite. Un appelant qui aurait
+        reellement besoin de markup peut toujours passer `markup=True`
+        explicitement."""
+        super().notify(message, title=title, severity=severity, timeout=timeout, markup=markup)
 
     def on_mount(self) -> None:
         self.push_screen(SplashScreen(), self._after_splash)
