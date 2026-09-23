@@ -17,6 +17,19 @@
 # DIST_DIR (par defaut PROJECT_ROOT/../dist, comme le reste de la suite) :
 # destination de l'archive - PROJECT_ROOT lui-meme reste le repli si
 # DIST_DIR ne peut pas etre cree, jamais un echec silencieux.
+#
+# `config/omega-fire.conf` exclu (retour utilisateur 2026-09-27, meme trou
+# identifie et corrige cote omega-serv pour config/omega-serve.json et
+# webroot/) : fichier de configuration UTILISATEUR (ressources
+# personnalisees - logs/ports/backends non detectes automatiquement),
+# jamais du contenu du depot a expedier tel quel. Optionnel cote code
+# (infrastructure/config/settings.py::_load_user_resources - absent =
+# repli silencieux sur les variables d'environnement, aucun crash) : une
+# reinstallation par-dessus une installation existante ne doit JAMAIS
+# ecraser silencieusement les personnalisations deja en place. Cout
+# accepte : une premiere installation ne recoit plus le gabarit commente
+# de ce fichier (a recreer manuellement au besoin) - prix largement
+# inferieur au risque d'ecraser une vraie configuration utilisateur.
 # ==============================================================================
 
 set -e
@@ -75,6 +88,7 @@ rsync -a \
     --exclude='var/runtime/*' --exclude='var/exports/*' --exclude='var/db/*' \
     --exclude='var/logs/*' --exclude='var/screenshots/*' --exclude='var/settings.json' \
     --exclude='var/*.log' --exclude='var/*.jsonl' \
+    --exclude='config/omega-fire.conf' \
     --exclude='*~' --exclude='*.bak' --exclude='*.swp' \
     --exclude='.coverage' --exclude='htmlcov/' \
     --exclude='build-release.sh' --exclude='omega-fire-*.tar.gz' --exclude='omega-fire.tar.gz' \

@@ -387,12 +387,17 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. Extraer el nuevo archivo directamente en el home
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. Reinstalar (recrea el venv, reinstala las dependencias, rehace los permisos de var/)
+# 4. Recuperar tu config/omega-fire.conf personalizado si tenías uno
+#    (archivo opcional, ausente del archivo deliberadamente — ver "Configuración" más abajo)
+[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
+    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
+
+# 5. Reinstalar (recrea el venv, reinstala las dependencias, rehace los permisos de var/)
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 5. Lanzar
+# 6. Lanzar
 ./omega-fire.sh
 ```
 
@@ -528,6 +533,8 @@ Puede definir en particular:
 - parámetros adaptados a una instalación particular.
 
 La configuración se relee al reiniciar o durante un nuevo escaneo manual (menú 1.3 o 7.4).
+
+Este archivo es completamente opcional (la aplicación funciona normalmente sin él, recurriendo a variables de entorno) y **está excluido del archivo distribuible** — una actualización nunca lo sobrescribe silenciosamente (ver "Actualización" más arriba para recuperarlo tras una reinstalación).
 
 ### Rutas internas y rutas del sistema
 

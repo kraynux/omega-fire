@@ -387,12 +387,17 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. 将新归档直接解压到主目录
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. 重新安装（重建虚拟环境、重新安装依赖、重新设置 var/ 权限）
+# 4. 如果你有自定义的 config/omega-fire.conf，将其找回
+#    （可选文件，按设计不包含在归档中——见下文"配置"一节）
+[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
+    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
+
+# 5. 重新安装（重建虚拟环境、重新安装依赖、重新设置 var/ 权限）
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 5. 启动
+# 6. 启动
 ./omega-fire.sh
 ```
 
@@ -528,6 +533,8 @@ omega-fire/config/omega-fire.conf
 - 适配特定安装场景的参数。
 
 配置会在重启时或手动重新扫描时（菜单 1.3 或 7.4）被重新读取。
+
+该文件完全可选（应用在没有它的情况下也能正常运行，会回退到环境变量）且**被排除在可分发归档之外**——更新操作绝不会悄悄覆盖它（重新安装后如何找回它，见上文"更新"一节）。
 
 ### 内部路径与系统路径
 
