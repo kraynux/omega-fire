@@ -386,19 +386,18 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. Extract the new archive directly into the home directory
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. Recover your customized config/omega-fire.conf if you had one
-#    (optional file, deliberately absent from the archive — see "Configuration" below)
-[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
-    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
-
-# 5. Reinstall (recreates the venv, reinstalls dependencies, redoes var/ permissions)
+# 4. Reinstall (recreates the venv, reinstalls dependencies, redoes var/ permissions)
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 6. Launch
+# 5. Launch
 ./omega-fire.sh
 ```
+
+Step 4 (`./install.sh`) automatically detects this situation (empty `var/db/` here, an `~/omega-fire.old-YYYYMMDD` folder found right next to it) and **recovers everything itself** — `config/omega-fire.conf`, the database, the blocklist, backups, exports, and screenshots from the old install — with no question asked, no manual step. Nothing more to do than steps 1 through 5 above, whatever your previous install contained.
+
+If several folders that look like a previous install are sitting nearby (ambiguous), `install.sh` never guesses: it prints their paths and asks you to run `sudo ./migrate-state.sh <folder>` yourself once you've identified the right source.
 
 Once the new install is confirmed working, the old `~/omega-fire.old-YYYYMMDD` folder can be removed (`sudo rm -rf ~/omega-fire.old-YYYYMMDD`).
 
@@ -533,7 +532,7 @@ It can notably define:
 
 The configuration is reloaded on restart or during a manual re-scan (menu 1.3 or 7.4).
 
-This file is entirely optional (the application works normally without it, falling back to environment variables) and **excluded from the distributable archive** — an update never silently overwrites it (see "Update" above to recover it after a reinstall).
+This file is entirely optional (the application works normally without it, falling back to environment variables) and **excluded from the distributable archive** — an update never silently overwrites it, and `install.sh` recovers it automatically from a previous install when applicable (see "Update" above).
 
 ### Internal paths and system paths
 

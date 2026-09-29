@@ -387,19 +387,18 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. Extraer el nuevo archivo directamente en el home
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. Recuperar tu config/omega-fire.conf personalizado si tenías uno
-#    (archivo opcional, ausente del archivo deliberadamente — ver "Configuración" más abajo)
-[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
-    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
-
-# 5. Reinstalar (recrea el venv, reinstala las dependencias, rehace los permisos de var/)
+# 4. Reinstalar (recrea el venv, reinstala las dependencias, rehace los permisos de var/)
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 6. Lanzar
+# 5. Lanzar
 ./omega-fire.sh
 ```
+
+El paso 4 (`./install.sh`) detecta automáticamente esta situación (`var/db/` vacío aquí, una carpeta `~/omega-fire.old-AAAAMMDD` encontrada justo al lado) y **recupera todo por sí mismo** — `config/omega-fire.conf`, la base de datos, la lista de bloqueo, las copias de seguridad, las exportaciones y las capturas de pantalla desde la instalación anterior — sin ninguna pregunta, sin paso manual. Nada más que hacer que los pasos 1 a 5 anteriores, sea lo que sea lo que contuviera su instalación anterior.
+
+Si hay varias carpetas que parecen una instalación anterior cerca (ambiguo), `install.sh` nunca adivina: muestra sus rutas y le invita a ejecutar `sudo ./migrate-state.sh <carpeta>` usted mismo una vez identificada la fuente correcta.
 
 Una vez confirmada la nueva instalación, la carpeta antigua `~/omega-fire.old-AAAAMMDD` puede eliminarse (`sudo rm -rf ~/omega-fire.old-AAAAMMDD`).
 
@@ -534,7 +533,7 @@ Puede definir en particular:
 
 La configuración se relee al reiniciar o durante un nuevo escaneo manual (menú 1.3 o 7.4).
 
-Este archivo es completamente opcional (la aplicación funciona normalmente sin él, recurriendo a variables de entorno) y **está excluido del archivo distribuible** — una actualización nunca lo sobrescribe silenciosamente (ver "Actualización" más arriba para recuperarlo tras una reinstalación).
+Este archivo es completamente opcional (la aplicación funciona normalmente sin él, recurriendo a variables de entorno) y **está excluido del archivo distribuible** — una actualización nunca lo sobrescribe silenciosamente, y `install.sh` lo recupera automáticamente desde una instalación anterior cuando corresponde (ver "Actualización" más arriba).
 
 ### Rutas internas y rutas del sistema
 

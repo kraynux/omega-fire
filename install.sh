@@ -146,6 +146,40 @@ tip "L'appli (toujours lancée en sudo) fonctionne dès maintenant, aucune recon
 tip "Optionnel : pour accéder aux fichiers de var/ SANS sudo, le groupe omega-fire doit être actif dans votre session — automatique à la prochaine connexion, ou immédiat avec 'newgrp omega-fire'."
 
 # -------------------------------------------------------------------------
+# 5bis. Recuperation automatique d'une ancienne installation, SANS AUCUNE
+#    QUESTION (2026-09-29, meme correctif qu'omega-serv/install.sh, meme
+#    retour utilisateur : "le but d'une mise a jour... c'est de recuperer
+#    les parametres et contenu presents" + "jamais vu une mise a jour ou
+#    l'installateur demande une restauration de dossier apres avoir
+#    execute"). Detecte une extraction FRAICHE via var/db/ VIDE (aucune
+#    base de donnees reelle encore accumulee ici - signal plus fiable que
+#    config/omega-fire.conf, optionnel par conception, voir build-release.sh)
+#    ET un seul dossier voisin ressemblant sans ambiguite a une ancienne
+#    installation (config/omega-fire.conf OU var/db non vide y est
+#    present). Ne se declenche JAMAIS sur une simple reinstallation
+#    par-dessus l'existant (var/db deja peuple, cette etape entiere est
+#    alors silencieusement sautee) - jamais d'action sur un signal
+#    ambigu (plusieurs candidats, ou aucun).
+# -------------------------------------------------------------------------
+if [ -z "$(ls -A var/db 2>/dev/null)" ]; then
+    CANDIDATES=()
+    for dir in "$SCRIPT_DIR"/../*omega-fire*/; do
+        dir="${dir%/}"
+        if [ "$dir" != "$SCRIPT_DIR" ] && { [ -f "$dir/config/omega-fire.conf" ] || [ -n "$(ls -A "$dir/var/db" 2>/dev/null)" ]; }; then
+            CANDIDATES+=("$dir")
+        fi
+    done
+    if [ "${#CANDIDATES[@]}" -eq 1 ]; then
+        info "Ancienne installation detectee : ${CANDIDATES[0]}"
+        sudo "$SCRIPT_DIR/migrate-state.sh" "${CANDIDATES[0]}" --yes
+    elif [ "${#CANDIDATES[@]}" -gt 1 ]; then
+        warn "Plusieurs anciennes installations voisines detectees, aucune recuperee automatiquement (ambigu) :"
+        for c in "${CANDIDATES[@]}"; do echo "    $c"; done
+        tip "Recuperez manuellement : sudo ${SCRIPT_DIR}/migrate-state.sh <dossier>"
+    fi
+fi
+
+# -------------------------------------------------------------------------
 # 6. Alias (optionnel) — bash et zsh, quel que soit celui réellement utilisé
 # -------------------------------------------------------------------------
 ALIAS_LINE="alias fire=\"sudo ${SCRIPT_DIR}/omega-fire.sh\""

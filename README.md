@@ -386,19 +386,18 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. Extraire la nouvelle archive directement dans le home
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. Récupérer votre config/omega-fire.conf personnalisé si vous en aviez un
-#    (fichier optionnel, absent de l'archive par conception — voir "Configuration" ci-dessous)
-[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
-    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
-
-# 5. Réinstaller (recrée le venv, réinstalle les dépendances, refait les permissions var/)
+# 4. Réinstaller (recrée le venv, réinstalle les dépendances, refait les permissions var/)
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 6. Lancer
+# 5. Lancer
 ./omega-fire.sh
 ```
+
+L'étape 4 (`./install.sh`) détecte automatiquement ce cas de figure (base de données `var/db/` absente ici, dossier `~/omega-fire.old-AAAAMMJJ` trouvé juste à côté) et **récupère lui-même** `config/omega-fire.conf`, la base de données, la blocklist, les sauvegardes, les exports et les captures d'écran depuis l'ancienne installation — sans question posée, sans étape manuelle. Rien à faire de plus qu'aux points 1 à 5 ci-dessus, quel que soit ce que contenait votre installation précédente.
+
+Si plusieurs dossiers ressemblant à une ancienne installation traînent à côté (ambigu), `install.sh` ne devine rien : il affiche leurs chemins et vous invite à lancer `sudo ./migrate-state.sh <dossier>` vous-même une fois la bonne source identifiée.
 
 Une fois la nouvelle installation validée, l'ancien dossier `~/omega-fire.old-AAAAMMJJ` peut être supprimé (`sudo rm -rf ~/omega-fire.old-AAAAMMJJ`).
 
@@ -533,7 +532,7 @@ Elle peut notamment définir :
 
 La configuration est relue au redémarrage ou lors d'un re-scan manuel (menu 1.3 ou 7.4).
 
-Ce fichier est entièrement optionnel (l'application fonctionne normalement sans, avec repli sur les variables d'environnement) et **exclu de l'archive distribuable** — une mise à jour ne l'écrase jamais silencieusement (voir « Mise à jour » plus haut pour le récupérer après une réinstallation).
+Ce fichier est entièrement optionnel (l'application fonctionne normalement sans, avec repli sur les variables d'environnement) et **exclu de l'archive distribuable** — une mise à jour ne l'écrase jamais silencieusement, et `install.sh` le récupère lui-même automatiquement depuis une ancienne installation le cas échéant (voir « Mise à jour » plus haut).
 
 ### Chemins internes et chemins système
 

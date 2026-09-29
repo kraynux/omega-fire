@@ -387,19 +387,18 @@ sudo mv ~/omega-fire ~/omega-fire.old-$(date +%Y%m%d)
 # 3. 将新归档直接解压到主目录
 tar -xzf omega-fire.tar.gz -C ~/
 
-# 4. 如果你有自定义的 config/omega-fire.conf，将其找回
-#    （可选文件，按设计不包含在归档中——见下文"配置"一节）
-[ -f ~/omega-fire.old-*/config/omega-fire.conf ] && \
-    cp ~/omega-fire.old-*/config/omega-fire.conf ~/omega-fire/config/omega-fire.conf
-
-# 5. 重新安装（重建虚拟环境、重新安装依赖、重新设置 var/ 权限）
+# 4. 重新安装（重建虚拟环境、重新安装依赖、重新设置 var/ 权限）
 cd ~/omega-fire
 chmod +x install.sh
 ./install.sh
 
-# 6. 启动
+# 5. 启动
 ./omega-fire.sh
 ```
+
+第 4 步（`./install.sh`）会自动检测这种情况（此处 `var/db/` 为空，且旁边正好找到一个 `~/omega-fire.old-YYYYMMDD` 目录），并**自行恢复**旧安装中的一切——`config/omega-fire.conf`、数据库、封锁名单、备份、导出文件和截图——全程无需任何确认，无需手动步骤。除了上面的第 1 至 5 步之外，无论此前的安装包含什么内容，都不需要再做任何事情。
+
+如果附近有多个看起来像旧安装的目录（存在歧义），`install.sh` 绝不会猜测：它会打印出这些路径，并请你在确认正确的来源后自行运行 `sudo ./migrate-state.sh <目录>`。
 
 确认新安装工作正常后，可以删除旧的 `~/omega-fire.old-YYYYMMDD` 目录（`sudo rm -rf ~/omega-fire.old-YYYYMMDD`）。
 
@@ -534,7 +533,7 @@ omega-fire/config/omega-fire.conf
 
 配置会在重启时或手动重新扫描时（菜单 1.3 或 7.4）被重新读取。
 
-该文件完全可选（应用在没有它的情况下也能正常运行，会回退到环境变量）且**被排除在可分发归档之外**——更新操作绝不会悄悄覆盖它（重新安装后如何找回它，见上文"更新"一节）。
+该文件完全可选（应用在没有它的情况下也能正常运行，会回退到环境变量）且**被排除在可分发归档之外**——更新操作绝不会悄悄覆盖它，适用时 `install.sh` 会自动从旧安装中恢复它（见上文"更新"一节）。
 
 ### 内部路径与系统路径
 
