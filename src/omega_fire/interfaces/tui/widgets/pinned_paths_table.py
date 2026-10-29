@@ -5,6 +5,7 @@ meme store que les 8 sites corriges en Phase 0 — 5.2/5.3/5.4/6.1/2.2/2.4/
 from __future__ import annotations
 
 from textual.widgets import DataTable
+from omega_fire.shared.i18n import _
 
 
 class PinnedPathsTable(DataTable[str]):
@@ -12,7 +13,7 @@ class PinnedPathsTable(DataTable[str]):
 
     def on_mount(self) -> None:
         self.cursor_type = "row"
-        self.add_columns("Chemin epingle")
+        self.add_columns(_("Chemin épinglé"))
 
     def set_paths(self, paths: list[str]) -> None:
         self.clear()

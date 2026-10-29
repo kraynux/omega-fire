@@ -6,6 +6,7 @@ These express business rule violations, not technical failures.
 They are caught by application/ and translated into Results
 or user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class RulesError(Exception):
@@ -25,7 +26,7 @@ class InvalidRuleError(RulesError):
     def __init__(self, rule_description: str, reason: str):
         self.rule_description = rule_description
         self.reason = reason
-        super().__init__(f"Invalid rule ({rule_description}): {reason}")
+        super().__init__(_("Règle invalide ({rule_description}) : {reason}").format(rule_description=rule_description, reason=reason))
 
 
 class ConflictingRuleError(RulesError):
@@ -39,7 +40,7 @@ class ConflictingRuleError(RulesError):
         self.existing_rule = existing_rule
         self.reason = reason
         super().__init__(
-            f"Rule conflict: {new_rule} conflicts with {existing_rule} — {reason}"
+            _("Conflit de règles : {new_rule} entre en conflit avec {existing_rule} — {reason}").format(new_rule=new_rule, existing_rule=existing_rule, reason=reason)
         )
 
 
@@ -47,7 +48,7 @@ class RuleNotFoundError(RulesError):
     """Raised when attempting to delete or modify a non-existent rule."""
     def __init__(self, rule_id: int):
         self.rule_id = rule_id
-        super().__init__(f"Rule with ID {rule_id} not found")
+        super().__init__(_("Règle d'ID {rule_id} introuvable").format(rule_id=rule_id))
 
 
 class InvalidPolicyError(RulesError):
@@ -59,7 +60,7 @@ class InvalidPolicyError(RulesError):
     def __init__(self, policy_name: str, reason: str):
         self.policy_name = policy_name
         self.reason = reason
-        super().__init__(f"Invalid policy '{policy_name}': {reason}")
+        super().__init__(_("Politique « {policy_name} » invalide : {reason}").format(policy_name=policy_name, reason=reason))
 
 
 class PolicyNotFoundError(RulesError):
@@ -71,7 +72,7 @@ class PolicyNotFoundError(RulesError):
     def __init__(self, policy_name: str, reason: str):
         self.policy_name = policy_name
         self.reason = reason
-        super().__init__(f"Policy '{policy_name}' not found: {reason}")
+        super().__init__(_("Politique « {policy_name} » introuvable : {reason}").format(policy_name=policy_name, reason=reason))
 
 
 class ChainError(RulesError):
@@ -83,7 +84,7 @@ class ChainError(RulesError):
     def __init__(self, chain_name: str, reason: str):
         self.chain_name = chain_name
         self.reason = reason
-        super().__init__(f"Chain error on '{chain_name}': {reason}")
+        super().__init__(_("Erreur sur la chaîne « {chain_name} » : {reason}").format(chain_name=chain_name, reason=reason))
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :

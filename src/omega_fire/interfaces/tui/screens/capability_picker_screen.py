@@ -14,6 +14,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Static
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.capability_detail_screen import CapabilityDetailScreen
 from omega_fire.interfaces.tui.widgets.capabilities_table import CapabilitiesTable
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -29,11 +30,11 @@ class CapabilityPickerScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("DETAIL D'UNE CAPACITE", classes="omega-title")
-            yield Static("Selectionnez une ligne pour voir le detail.", classes="omega-hint")
+            yield Static(_("DÉTAIL D'UNE CAPACITÉ"), classes="omega-title")
+            yield Static(_("Sélectionnez une ligne pour voir le détail."), classes="omega-hint")
             yield CapabilitiesTable(id="capabilities-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:

@@ -15,6 +15,7 @@ Conforms to Omega-Fire architecture charter:
 - Depends on infrastructure/ for system probing
 """
 import sys
+from collections.abc import MutableMapping
 from typing import Optional
 
 from rich.console import Console
@@ -24,6 +25,7 @@ from omega_fire.interfaces.cli.renderers.styles import (
     MIN_TERMINAL_HEIGHT,
 )
 from omega_fire.interfaces.cli.themes.registry import theme_registry
+from omega_fire.shared.i18n import _
 
 
 def check_terminal_size() -> bool:
@@ -199,13 +201,77 @@ def bootstrap_tui() -> int:
         Exit code (toujours 0 : Textual gere ses propres erreurs via
         App._handle_exception(), voir interfaces/tui/app.py).
     """
+    import os
+
+    from omega_fire.app.early_language import install_language_early
+
+    # Langue installee AVANT d'importer le conteneur et la TUI (plan i18n §5) : une phrase
+    # traduite au chargement d'un module est ainsi deja dans la bonne langue. Jamais pour
+    # --legacy-cli (Q1 : l'ancienne interface reste en francais).
+    choice = install_language_early(os.environ)
+
+    # Hindi (plan i18n Q6, repris d'omega-serv via omega-lib) : Rich compte les voyelles
+    # devanagari espacantes pour 0 colonne, le terminal pour 1 - aligne avant tout rendu,
+    # sans effet sur les autres langues.
+    from omega_lib.i18n.terminal_cell_widths import align_spacing_marks_with_terminal
+
+    align_spacing_marks_with_terminal()
+
     from omega_fire.app.dependency_container import DependencyContainer
     from omega_fire.interfaces.tui.app import OmegaFireApp
 
     container = DependencyContainer()
     app = OmegaFireApp(container)
-    app.run()
+    _run_with_text_direction(app, choice.language.code)
+    if app.pending_restart is not None:
+        # Meme Python, meme installation, memes arguments : seule l'interface redemarre.
+        prepare_language_restart_environment(os.environ, app.pending_restart.language_code)
+        path, exec_argv = build_execv_invocation(sys.executable, sys.argv[1:])
+        os.execv(path, exec_argv)  # pragma: no cover - remplace le processus, jamais testable pour de vrai
     return 0
+
+
+def _run_with_text_direction(app, language_code: str) -> None:  # type: ignore[no-untyped-def]
+    """Arabe (plan i18n Q6, repris d'omega-serv via omega-lib) : omega-fire ordonne lui-meme le
+    texte droite-a-gauche, le terminal passe en mode bidi explicite le temps de la TUI pour ne
+    plus rien deplacer. Toute autre langue : lancement normal."""
+    from omega_lib.i18n.policies import text_direction
+    from omega_lib.i18n.terminal_bidi import (
+        ENTER_EXPLICIT_MODE,
+        LEAVE_EXPLICIT_MODE,
+        install_visual_reordering,
+    )
+
+    if text_direction(language_code) != "rtl" or not install_visual_reordering():
+        app.run()
+        return
+    sys.stdout.write(ENTER_EXPLICIT_MODE)
+    sys.stdout.flush()
+    try:
+        app.run()
+    finally:
+        sys.stdout.write(LEAVE_EXPLICIT_MODE)
+        sys.stdout.flush()
+
+
+def build_execv_invocation(python_executable: str, args: list[str]) -> tuple[str, list[str]]:
+    """Ce qui est passe a os.execv() apres un changement de langue (fonction pure, testable ;
+    l'appel reel remplacerait le processus de test). Meme interpreteur (.venv), meme module ;
+    l'environnement (PYTHONPATH pose par omega-fire.sh, droits root) est conserve par execv."""
+    return python_executable, [python_executable, "-m", "omega_fire", *args]
+
+
+def prepare_language_restart_environment(environ: "MutableMapping[str, str]", language_code: str) -> None:
+    """Environnement du processus relance : le splash « langue changee » est demande, et une
+    eventuelle surcharge OMEGA_FIRE_LANG (voie de secours, une fois) est retiree - sinon elle
+    masquerait la langue que l'utilisateur vient de choisir."""
+    from omega_fire.application.commands.select_language import (
+        LANGUAGE_CHANGED_ENV_VAR,
+        LANGUAGE_ENV_VAR,
+    )
+
+    environ[LANGUAGE_CHANGED_ENV_VAR] = language_code
+    environ.pop(LANGUAGE_ENV_VAR, None)
 
 
 def main() -> int:
@@ -223,7 +289,7 @@ def main() -> int:
         return bootstrap_tui()
     except KeyboardInterrupt:
         # Sortie propre si interruption brutale avant le lancement de l'interface
-        print("\n\n[+] Interruption système. Fermeture d'Omega-Fire.\n")
+        print(_("\n\n[+] Interruption système. Fermeture d'Omega-Fire.\n"))
         return 130
 
 

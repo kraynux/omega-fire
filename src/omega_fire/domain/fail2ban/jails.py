@@ -12,6 +12,7 @@ from omega_fire.domain.fail2ban.exceptions import (
     InvalidJailConfigError,
     InvalidParameterError,
 )
+from omega_fire.shared.i18n import _
 
 
 def validate_jail_name(name: str) -> bool:
@@ -60,7 +61,7 @@ def validate_maxretry(value: int) -> None:
         raise InvalidParameterError(
             "maxretry",
             value,
-            "maxretry must be >= 1"
+            _("maxretry doit être >= 1")
         )
 
 
@@ -80,7 +81,7 @@ def validate_bantime(value: int) -> None:
         raise InvalidParameterError(
             "bantime",
             value,
-            "bantime must be >= 0 (0 = permanent ban)"
+            _("bantime doit être >= 0 (0 = bannissement permanent)")
         )
 
 
@@ -100,7 +101,7 @@ def validate_findtime(value: int) -> None:
         raise InvalidParameterError(
             "findtime",
             value,
-            "findtime must be >= 0"
+            _("findtime doit être >= 0")
         )
 
 
@@ -129,10 +130,10 @@ def validate_jail(jail: Jail) -> list[str]:
     
     # Additional jail-level validations
     if not validate_jail_name(jail.name):
-        errors.append(f"Invalid jail name: '{jail.name}'")
+        errors.append(_("Nom de jail invalide : « {name} »").format(name=jail.name))
     
     if jail.name != jail.config.jail_name:
-        errors.append(f"Jail name mismatch: jail.name='{jail.name}' vs config.jail_name='{jail.config.jail_name}'")
+        errors.append(_("Noms de jail différents : jail.name='{name}' / config.jail_name='{jail_name}'").format(name=jail.name, jail_name=jail.config.jail_name))
     
     return errors
 
@@ -178,7 +179,7 @@ def create_valid_jail_config(
     if not validate_jail_name(jail_name):
         raise InvalidJailConfigError(
             jail_name,
-            f"Invalid jail name: '{jail_name}'"
+            _("Nom de jail invalide : « {jail_name} »").format(jail_name=jail_name)
         )
     
     # Validate parameters

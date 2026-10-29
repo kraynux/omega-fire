@@ -7,6 +7,7 @@ with status, details, and error information.
 from dataclasses import dataclass, field
 from typing import Any, Optional
 from omega_fire.core.enums import CapabilityStatus
+from omega_fire.shared.i18n import N_, _, lazy
 
 
 @dataclass
@@ -79,7 +80,7 @@ class ProbeResult:
             success=False,
             capability_id=capability_id,
             status=CapabilityStatus.MISSING,
-            reason=f"Probe failed: {error_msg}",
+            reason=lazy(N_("Échec de la sonde : {error_msg}"), error_msg=error_msg),
             error=error_msg,
         )
 

@@ -7,6 +7,7 @@ schema migration, or repository operations. They are caught by
 the application layer and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class StorageError(CoreError):
@@ -19,7 +20,7 @@ class DatabaseConnectionError(StorageError):
     """Raised when database connection fails."""
     def __init__(self, db_path: str, reason: str, context: dict = None):
         super().__init__(
-            f"Failed to connect to database '{db_path}': {reason}",
+            _("Impossible d'ouvrir la base de données « {db_path} » : {reason}").format(db_path=db_path, reason=reason),
             {**(context or {}), "db_path": db_path, "reason": reason},
         )
         self.db_path = db_path
@@ -30,7 +31,7 @@ class DatabaseQueryError(StorageError):
     """Raised when a database query fails."""
     def __init__(self, query: str, reason: str, context: dict = None):
         super().__init__(
-            f"Database query failed: {reason}",
+            _("Échec de la requête en base de données : {reason}").format(reason=reason),
             {**(context or {}), "query": query[:100], "reason": reason},
         )
         self.query = query
@@ -41,7 +42,7 @@ class DatabaseSchemaError(StorageError):
     """Raised when schema creation or migration fails."""
     def __init__(self, reason: str, version: str = "", context: dict = None):
         super().__init__(
-            f"Database schema error: {reason}",
+            _("Erreur de schéma de la base de données : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason, "version": version},
         )
         self.reason = reason
@@ -52,7 +53,7 @@ class MigrationError(StorageError):
     """Raised when a migration fails."""
     def __init__(self, migration_name: str, reason: str, context: dict = None):
         super().__init__(
-            f"Migration '{migration_name}' failed: {reason}",
+            _("Échec de la migration « {migration_name} » : {reason}").format(migration_name=migration_name, reason=reason),
             {**(context or {}), "migration_name": migration_name, "reason": reason},
         )
         self.migration_name = migration_name
@@ -63,7 +64,7 @@ class RepositoryError(StorageError):
     """Raised when a repository operation fails."""
     def __init__(self, repository: str, operation: str, reason: str, context: dict = None):
         super().__init__(
-            f"Repository '{repository}' operation '{operation}' failed: {reason}",
+            _("Échec de l'opération « {operation} » du dépôt « {repository} » : {reason}").format(operation=operation, repository=repository, reason=reason),
             {**(context or {}), "repository": repository, "operation": operation, "reason": reason},
         )
         self.repository = repository
@@ -75,7 +76,7 @@ class EntityNotFoundError(StorageError):
     """Raised when an entity is not found in the database."""
     def __init__(self, entity_type: str, entity_id: str, context: dict = None):
         super().__init__(
-            f"{entity_type} with id '{entity_id}' not found",
+            _("{entity_type} d'identifiant « {entity_id} » introuvable").format(entity_type=entity_type, entity_id=entity_id),
             {**(context or {}), "entity_type": entity_type, "entity_id": entity_id},
         )
         self.entity_type = entity_type

@@ -9,6 +9,7 @@ and information about skipped elements (degraded mode).
 from dataclasses import dataclass, field
 from typing import Generic, TypeVar, Optional, Any
 from datetime import datetime
+from omega_fire.shared.i18n import _
 
 
 # Generic type parameter for the result data
@@ -73,7 +74,7 @@ class Result(Generic[T]):
         """
         return self.data if self.data is not None else default
     
-    def get_error(self, default: str = "Unknown error") -> str:
+    def get_error(self, default: str = _("Erreur inconnue")) -> str:
         """Get the error message or a default value.
         
         Args:
@@ -225,7 +226,7 @@ def merge_results(results: list[Result[Any]]) -> Result[Any]:
     
     # At least one failed — return failure with aggregated skipped
     errors = [r.error for r in results if not r.success and r.error]
-    error_msg = "; ".join(errors) if errors else "Unknown error"
+    error_msg = "; ".join(errors) if errors else _("Erreur inconnue")
     return failure_result(error_msg, all_skipped, all_metadata)
 
 # <-- INFO DEV ---------------------------------------------------------

@@ -18,6 +18,7 @@ Trang chính thức: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fi
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 Tài liệu, bản xuất & giao diện có sẵn bằng **17 ngôn ngữ** — xem [Ngôn ngữ giao diện](#ngôn-ngữ-giao-diện).  
 **Ngôn ngữ:**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](../nl/README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](../pl/README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](../zh-CN/README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](../id/README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](../ko/README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -100,6 +101,7 @@ Omega-Fire hoạt động như một **trạm điều khiển cục bộ** cho b
 - Xem các chẩn đoán gần đây.
 - Xem và tìm kiếm trong nhật ký ứng dụng.
 - Xuất trạng thái và chẩn đoán ra JSON, TXT hoặc HTML.
+- Danh mục **Bộ omega**: omega-serv (các phiên bản được phát hiện và đang chạy), omega-waf (đã bật phần mở rộng `magnet`) và omega-jail (các jail đã cài đặt), hiển thị trong sổ đăng ký, dashboard và các báo cáo.
 
 ### 2. Quản lý IP thống nhất
 
@@ -121,12 +123,15 @@ Blacklist thống nhất cho phép làm việc với nftables và iptables từ 
 - Danh sách quy tắc hệ thống và quy tắc do Omega-Fire tạo.
 - Xóa một quy tắc bằng cách chọn.
 - Tự động dọn các quy tắc không hoạt động trong cơ sở tham chiếu.
+- Dọn dẹp và đồng bộ lại cơ sở dữ liệu với tường lửa thực tế, có xem trước và sao lưu trước, không bao giờ sửa đổi chính tường lửa.
+- Quy tắc của các công cụ khác (UFW, Tailscale, Docker…) được nhận diện theo nguồn gốc: hiển thị để tham khảo, không bao giờ bị xóa từ Omega-Fire.
+- Biện pháp bảo vệ trước khi áp dụng một chính sách hoặc xóa sạch iptables khi các công cụ khác có quy tắc trong đó: áp dụng ở mọi nơi, chỉ trên nftables, hoặc hủy — hệ quả được mô tả chi tiết trong phần trợ giúp.
 - Áp dụng các chính sách định sẵn.
 - Sao lưu tự động trước khi áp dụng một chính sách.
 - Tùy chỉnh, lưu và khôi phục một chính sách.
 - Nhận diện chính sách đang hoạt động trong menu trạng thái và dashboard.
 - Đánh dấu các hồ sơ đã sửa dưới dạng `Hồ sơ + CUSTOM`.
-- Quản lý bảng (menu 3.5): chẩn đoán chỉ đọc theo từng backend (sự có mặt của bảng, chính sách input/output/forward, số quy tắc) với phát hiện sai lệch giữa các backend.
+- Quản lý bảng (menu 3.5): chẩn đoán chỉ đọc theo từng backend (sự hiện diện của bảng, các chính sách input/output/forward, số quy tắc) kèm giải thích các chính sách khác nhau giữa các backend (tác động thực tế, nguyên nhân và cách khắc phục).
 - Khởi tạo một bảng nftables ở lần dùng đầu tiên, không bao giờ ghi đè một chain đã cấu hình.
 - Đặt lại chính sách chain về ACCEPT trên một backend, để sửa một chính sách hạn chế mồ côi do một hồ sơ trước đó để lại.
 - Làm trống có chọn lọc một backend hoặc làm trống đồng bộ mọi backend được phát hiện trong một thao tác.
@@ -140,20 +145,23 @@ Blacklist thống nhất cho phép làm việc với nftables và iptables từ 
 - Ban và unban riêng lẻ hoặc nhiều.
 - Chuyển IP giữa các jail, backend và tệp.
 - Tạo jail tùy chỉnh có hướng dẫn.
-- Các mẫu jail định sẵn.
-- Xóa một jail.
+- Các mẫu jail định sẵn, có thể sửa và xóa.
+- Nguồn gốc của từng jail: Omega-Fire, omega-jail, cấu hình chính của fail2ban hoặc tệp khác.
+- Xóa jail một cách đáng tin cậy, bất kể tên tệp của nó: cảnh báo với jail do omega-jail cài đặt, từ chối có giải thích với jail trong `jail.local` hoặc trong tệp dùng chung, không bao giờ xóa các bộ lọc chuẩn của fail2ban.
 - Làm trống một jail hoặc dọn sạch toàn bộ.
 - Xuất ra JSON, TXT hoặc HTML.
 - Kiểm tra và kiểm toán cấu hình.
-- Điều khiển dịch vụ: trạng thái, khởi động, dừng, khởi động lại, bật và tắt khi khởi động máy.
+- Điều khiển dịch vụ: trạng thái, khởi động, dừng, khởi động lại, bật và tắt khi khởi động máy; sau khi khởi động hoặc dừng, sổ đăng ký khả năng và dashboard được cập nhật.
 
 ### 5. Nhật ký và bảo trì
 
-- Live Tail với dashboard của Omega-Fire.
-- Hiển thị nhiều tệp với các mục ghim (nguồn yêu thích, được lưu giữa hai lần chạy).
-- Tích hợp `lnav`: chọn một hoặc nhiều tệp (số hoặc đường dẫn thủ công, cách nhau bằng dấu phẩy), tự động gộp thành một góc nhìn theo thời gian duy nhất, được bọc trong header/footer của Omega-Fire (xem [Điều hướng](#điều-hướng)).
-- Phân tích các IP xuất hiện nhiều nhất với Top N.
-- Xóa có chọn lọc một IP trong các tệp LOG hoặc TXT.
+- **Thư viện nhật ký** (5.1): tự động nhập nhật ký của các phiên bản omega-serv được phát hiện, bao gồm cả nhật ký của omega-waf, ghim thủ công một đường dẫn, và lấy nhật ký từ xa qua SSH (khóa hoặc agent, không bao giờ dùng mật khẩu).
+- **Yêu thích** (5.2): kết hợp các nhật ký từ Thư viện, lưu chúng dưới một tên kèm trình xem và khởi chạy trực tiếp.
+- **Xem nhật ký** (5.3): một nhật ký không cần cấu hình, với trình xem tùy chọn — Đơn giản (dashboard thời gian thực), Cổ điển (các dòng cuối rồi theo dõi trực tiếp) hoặc `lnav`.
+- Tích hợp `lnav`: nhiều nhật ký được gộp thành một góc nhìn theo thời gian duy nhất, được bọc trong header/footer của Omega-Fire (xem [Điều hướng](#điều-hướng)).
+- Phân tích các IP xuất hiện nhiều nhất bằng Top N, có thể xuất ra để nạp lại vào việc dọn dẹp có mục tiêu.
+- Dọn dẹp có mục tiêu một hoặc nhiều IP trong tệp LOG hoặc TXT, nhập tay hoặc đánh dấu từ một bản xuất.
+- Tệp được ghim với **preset để đánh dấu**: chỉ đề xuất các đường dẫn thông dụng thực sự có trên máy.
 - Xoay vòng và sao lưu tức thì hoặc tự động.
 - Khôi phục một bản sao lưu.
 - Dọn theo độ cũ, hạn mức, loại hoặc chọn thủ công.
@@ -178,6 +186,10 @@ Các báo cáo có sẵn:
 - Thống kê Fail2Ban.
 - Trạng thái và chẩn đoán hệ thống.
 - Báo cáo thống kê 7 hoặc 30 ngày.
+- Bảng xếp hạng Top N các IP.
+- Hướng dẫn trợ giúp và FAQ.
+
+**Xem tất cả bản xuất** (6.5): mọi tệp đã xuất ở cùng một nơi, kèm loại, ngày và kích thước; báo cáo HTML mở trong trình duyệt web mặc định của người dùng, tệp JSON hoặc TXT đọc ngay trong Omega-Fire, không cần terminal hay trình quản lý tệp.
 
 Chủ đề HTML:
 
@@ -187,11 +199,13 @@ Chủ đề HTML:
 - `light-basic` — sáng và giản dị.
 - `light-alt` — giấy màu kem và xanh rừng.
 
+Ngôn ngữ bản xuất: đặt riêng trong cài đặt (mặc định « Giống giao diện »), để gửi báo cáo bằng ngôn ngữ của người đọc mà không đổi ngôn ngữ giao diện.
+
 ### 7. Hệ thống và lưu trữ
 
 - Sao lưu toàn bộ trạng thái: quy tắc, lệnh cấm nftables, lệnh cấm iptables và Fail2Ban.
 - Tạo các tệp lưu trữ `.tar.gz` có dấu thời gian.
-- Liệt kê và khôi phục các snapshot.
+- Liệt kê và khôi phục snapshot: chỉ các quy tắc của Omega-Fire có thể tạo lại y hệt mới được đặt lại; quy tắc của các công cụ khác không bao giờ bị động đến.
 - Lịch sử thao tác.
 - Lọc và dọn lịch sử.
 - Tải lại cấu hình và quét lại mà không cần khởi động lại.
@@ -209,7 +223,17 @@ Chủ đề HTML:
 
 - Chọn chủ đề đang dùng trong mười chủ đề `omega-*` dùng chung với phần còn lại của bộ (xem [Chủ đề và terminal](#chủ-đề-và-terminal)), được lưu giữa hai lần chạy.
 - Ghi đè thủ công hồ sơ hiển thị (tự động, đầy đủ, tiêu chuẩn, rút gọn hoặc chỉ mono), áp dụng ở lần chạy tiếp theo.
-- Truy cập từ menu chính (`9. RÉGLAGES`) hoặc trực tiếp bằng phím `s`.
+- Ngôn ngữ giao diện trong 17 ngôn ngữ (xem [Ngôn ngữ giao diện](#ngôn-ngữ-giao-diện)): chỉ giao diện khởi động lại; quy tắc tường lửa, Fail2Ban và các dịch vụ không bị ảnh hưởng.
+- Ngôn ngữ của bản xuất HTML và TXT, độc lập với ngôn ngữ giao diện.
+- Thư mục bản xuất và ảnh chụp màn hình có thể thay đổi, xóa sạch sau khi xác nhận.
+- Truy cập từ menu chính (`9. THIẾT LẬP`) hoặc trực tiếp bằng phím `s`.
+
+### 10. Trợ giúp
+
+- **Hướng dẫn trợ giúp**: tất cả các trang trợ giúp được tập hợp theo thứ tự menu, mỗi trang mở được các trang liên quan.
+- **FAQ**: các câu hỏi thực tế gặp phải khi sử dụng (quy tắc của công cụ khác, khôi phục, Fail2Ban, nhật ký, bản xuất và trình duyệt).
+- Xuất HTML hướng dẫn và FAQ, bằng ngôn ngữ xuất.
+- Phím `a` vẫn là trợ giúp của màn hình hiện tại.
 
 ---
 
@@ -269,7 +293,7 @@ Các phụ thuộc vận hành được định nghĩa trong `requirements.txt`:
 - `psutil` — thông tin hệ thống (CPU, bộ nhớ, mạng, tiến trình) cho dashboard và chẩn đoán.
 - `jinja2` — tạo các bản xuất HTML.
 - `python-dotenv` — biến môi trường.
-- `pyte` — trình giả lập terminal ảo, để bọc `lnav` (menu 5.9/8.6).
+- `pyte` — trình giả lập terminal ảo, để bọc `lnav` (menu 8.6 và trình xem lnav của 5.2 / 5.3).
 
 Các công cụ chất lượng (`pytest`, `black`, `flake8`, `mypy`) được liệt kê dưới dạng chú thích trong `requirements.txt`: bỏ chú thích hoặc cài riêng nếu bạn đóng góp cho dự án (xem [Kiểm thử và chất lượng](#kiểm-thử-và-chất-lượng)).
 
@@ -454,11 +478,17 @@ Trình khởi chạy:
 ./omega-fire.sh --legacy-cli
 ```
 
+Giao diện cũ vẫn là giao diện của phiên bản 3.0, bằng tiếng Pháp: menu 5 gốc (không có Thư viện, Yêu thích hay trình xem Cổ điển), không có "Xem tất cả bản xuất", không có hướng dẫn trợ giúp hay FAQ, không có preset. Giao diện Textual mang phiên bản 3.5 đầy đủ.
+
+### Ngôn ngữ giao diện
+
+17 ngôn ngữ: tiếng Pháp, tiếng Anh, tiếng Tây Ban Nha, tiếng Bồ Đào Nha (Brazil), tiếng Ý, tiếng Đức, tiếng Hà Lan, tiếng Ba Lan, tiếng Nga, tiếng Trung, tiếng Việt, tiếng Thái, tiếng Indonesia, tiếng Nhật, tiếng Hàn, tiếng Hindi, tiếng Ả Rập. Chọn trong cài đặt (phím `s`, « Langue / Language », nhãn không bao giờ được dịch), áp dụng bằng cách chỉ khởi động lại giao diện, hoặc dùng một lần `OMEGA_FIRE_LANG=vi ./omega-fire.sh` (trình khởi chạy giữ biến này qua `sudo`). Trong console văn bản Linux (TTY), các ngôn ngữ có chữ viết không có trong phông chữ console (tiếng Việt, tiếng Trung, tiếng Thái, tiếng Nhật, tiếng Hàn, tiếng Hindi, tiếng Ả Rập) được hiển thị bằng tiếng Anh trong phiên đó. Tiếng Ả Rập hiển thị từ phải sang trái. Với tiếng Hindi, Terminator, GNOME Terminal, Xfce Terminal và Alacritty hiển thị văn bản thẳng hàng; các terminal tự ghép chữ nối (Kitty, Ghostty, Konsole) có thể làm lệch khung và cột. **Ngôn ngữ bản xuất** (báo cáo HTML và TXT) được đặt riêng, mặc định « Giống giao diện ». Nhật ký ứng dụng và lịch sử kiểm tra vẫn được ghi bằng tiếng Pháp; tiêu đề trong lịch sử được hiển thị bằng ngôn ngữ đã chọn. Giao diện cũ (`--legacy-cli`) vẫn bằng tiếng Pháp.
+
 ### Luồng chung
 
 1. Màn hình khởi động (splash), sau đó là cảnh báo nếu terminal quá nhỏ.
 2. Phát hiện khả năng hệ thống (màn hình riêng, không chặn).
-3. Menu chính: 8 mục theo chủ đề (1-8) cùng phần cài đặt (9).
+3. Menu chính: 8 mục theo chủ đề (1-8), cài đặt (9) và trợ giúp (10).
 4. Chọn một mục, rồi một thao tác — mỗi thao tác mở một biểu mẫu mà mọi trường bắt buộc đều được xác thực trước khi tiếp tục.
 5. Xác nhận rõ ràng trước mọi thao tác nhạy cảm hoặc phá hủy (flush, dọn sạch, khôi phục...).
 6. Chạy nền cho các thao tác chậm (giao diện vẫn dùng được trong lúc chờ), rồi quay lại menu với bản tóm tắt kết quả.
@@ -470,13 +500,13 @@ Trình khởi chạy:
 - Enter: chọn hoặc xác nhận.
 - Nhấp vào một dòng của bảng: chọn dòng đó và điền sẵn các trường liên quan (nguồn cần ghim, jail đích, v.v.).
 - `Esc`: quay lại màn hình trước (hỏi xác nhận thoát khi ở màn hình chính).
-- `a`: trợ giúp theo ngữ cảnh — mô tả thao tác đang làm, hoặc toàn bộ thao tác của mục hiện tại nếu chưa mở màn hình thao tác nào.
+- `a`: trợ giúp theo ngữ cảnh — mô tả chi tiết hành động hiện tại, hoặc toàn bộ hành động của mục hiện tại nếu chưa mở màn hình hành động nào; hướng dẫn đầy đủ và FAQ nằm ở menu 10.
 - `t`: chuyển sang chủ đề tiếp theo, không cần xác nhận.
 - `r`: phát hiện lại kích thước và họ terminal.
-- `s`: mở cài đặt (chủ đề, hồ sơ hiển thị).
+- `s`: mở cài đặt (chủ đề, hồ sơ hiển thị, ngôn ngữ, thư mục).
 - `q` / `Ctrl+Q`: thoát, có xác nhận.
 
-#### Đặc điểm của màn hình lnav (5.9 / 8.6)
+#### Đặc điểm của màn hình lnav (8.6, và trình xem lnav của 5.2 / 5.3)
 
 `lnav` được bọc trong một pseudo-terminal với header/footer Omega-Fire cố định quanh góc nhìn riêng của nó, để tránh mọi xung đột giữa phím tắt gốc của nó và của Omega-Fire:
 
@@ -603,6 +633,7 @@ Omega-Fire tác động lên các thành phần quan trọng của hệ thống 
 - Việc khởi chạy cần quyền root qua `sudo`.
 - Flush, dọn sạch toàn bộ và áp dụng một chính sách có thể mang tính phá hủy.
 - Một chính sách định sẵn sẽ kích hoạt sao lưu tự động trước khi thay đổi.
+- Trên iptables / ip6tables, áp dụng một chính sách hoặc xóa sạch một backend cũng xóa luôn quy tắc của các công cụ khác (UFW…): Omega-Fire báo trước và để bạn chọn trước khi thực hiện.
 - Hãy sao lưu thủ công trước mỗi thay đổi lớn.
 - Kiểm tra trạng thái thực tế của tường lửa, jail và kết nối sau mỗi thao tác.
 - Hãy thử trước trên một máy hoặc mục tiêu dùng một lần.
@@ -614,14 +645,14 @@ Omega-Fire tác động lên các thành phần quan trọng của hệ thống 
 
 ## Kiểm thử và chất lượng
 
-Dự án có một bộ 152 bài kiểm thử đơn vị lâu đời, viết trước khi chuyển sang Textual: nó bao phủ miền nghiệp vụ, điều phối (`application/`), hạ tầng và giao diện Rich (`interfaces/cli/`), nhưng **chưa bao phủ `interfaces/tui/`** (giao diện Textual mặc định). Tệp lưu trữ này không chứa thư mục `tests/`: hãy lấy nó từ kho phát triển của bạn nếu cần chạy.
+Bộ kiểm thử gồm 137 unit test (hơn 8.000 trường hợp được kiểm tra): miền nghiệp vụ, điều phối (`application/`), hạ tầng, và các màn hình Textual được thêm hoặc sửa trong 3.5, chạy với các stylesheet thật (bố cục, luồng đầy đủ, ngôn ngữ xuất). Kho lưu trữ này không chứa thư mục `tests/`: hãy lấy nó từ kho phát triển của bạn nếu cần chạy.
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-Vì kiến trúc phân lớp tách biệt nghiêm ngặt miền nghiệp vụ khỏi phần trình bày (`domain/`, `application/`, `ports/` dưới dạng `Protocol`, xem [Kiến trúc](#kiến-trúc)), bộ này vẫn hợp lệ mà không cần sửa dù đã chuyển đổi: chỉ giao diện Textual, mới hơn, là chưa có độ bao phủ riêng.
+Kiến trúc phân lớp tách biệt nghiêm ngặt miền nghiệp vụ khỏi phần trình bày (`domain/`, `application/`, `ports/` dưới dạng `Protocol`, xem [Kiến trúc](#kiến-trúc)): phần lớn các bài kiểm thử không cần root cũng không cần tường lửa thật.
 
 Nếu bạn đóng góp cho dự án, hãy cài các công cụ chất lượng được khai báo (dưới dạng chú thích) trong `requirements.txt`:
 
@@ -657,7 +688,7 @@ pytest --cov
 
 ### Hạn chế đã biết
 
-- Bộ kiểm thử (152) chưa bao phủ giao diện Textual (`interfaces/tui/`), vốn được viết sau nó (xem [Kiểm thử và chất lượng](#kiểm-thử-và-chất-lượng)).
+- Bộ kiểm thử bao phủ các màn hình Textual của 3.5, chưa bao phủ toàn bộ các màn hình cũ hơn (xem [Kiểm thử và chất lượng](#kiểm-thử-và-chất-lượng)).
 - Cơ chế `ExecutionPlan`/`PipelineStep` vẫn còn một phần trong dự án.
 - Mức độ có sẵn chính xác của các tính năng phụ thuộc vào tệp nhị phân, dịch vụ, quyền và cấu hình của máy chủ.
 - Giao diện Rich lâu đời (`--legacy-cli`) không còn là trục phát triển chính; nó được giữ lại cho đến khi giao diện Textual hoàn toàn đáng tin cậy trong điều kiện thực tế.

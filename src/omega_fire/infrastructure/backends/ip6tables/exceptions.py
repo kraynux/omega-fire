@@ -7,6 +7,7 @@ or configuration. They are caught by the application layer
 and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class Ip6tablesError(CoreError):
@@ -19,7 +20,7 @@ class Ip6tCommandError(Ip6tablesError):
     """Raised when an ip6tables command fails."""
     def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
         super().__init__(
-            f"ip6tables command failed (exit {returncode}): {command}",
+            _("Échec de la commande ip6tables (code {returncode}) : {command}").format(returncode=returncode, command=command),
             {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
         )
         self.command = command
@@ -31,7 +32,7 @@ class Ip6tParseError(Ip6tablesError):
     """Raised when ip6tables output cannot be parsed."""
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
-            f"Failed to parse ip6tables output: {reason}",
+            _("Sortie d'ip6tables illisible : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -42,7 +43,7 @@ class Ip6tChainNotFoundError(Ip6tablesError):
     """Raised when a referenced ip6tables chain does not exist."""
     def __init__(self, chain_name: str, table: str = "filter", context: dict = None):
         super().__init__(
-            f"ip6tables chain '{chain_name}' not found in table '{table}'",
+            _("Chaîne ip6tables « {chain_name} » introuvable dans la table « {table} »").format(chain_name=chain_name, table=table),
             {**(context or {}), "chain_name": chain_name, "table": table},
         )
         self.chain_name = chain_name
@@ -53,7 +54,7 @@ class Ip6tRuleNotFoundError(Ip6tablesError):
     """Raised when a referenced ip6tables rule does not exist."""
     def __init__(self, rule_num: int, chain_name: str = "", context: dict = None):
         super().__init__(
-            f"ip6tables rule #{rule_num} not found in chain '{chain_name}'",
+            _("Règle ip6tables n° {rule_num} introuvable dans la chaîne « {chain_name} »").format(rule_num=rule_num, chain_name=chain_name),
             {**(context or {}), "rule_num": rule_num, "chain_name": chain_name},
         )
         self.rule_num = rule_num
@@ -64,7 +65,7 @@ class Ip6tPermissionError(Ip6tablesError):
     """Raised when ip6tables operations require elevated privileges."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission denied for ip6tables operation: {operation}. Run as root.",
+            _("Permission refusée pour l'opération ip6tables : {operation}. Lancez omega-fire en root.").format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

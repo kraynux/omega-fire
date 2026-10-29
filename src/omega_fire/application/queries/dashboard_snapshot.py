@@ -24,8 +24,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
-OMEGA_FIRE_VERSION = "v3.0"
+from omega_fire.core.constants import OMEGA_FIRE_VERSION
 
 # Un jail dont le nombre d'IPs actuellement bannies atteint ce seuil est
 # signalé comme "pic d'activité" dans fail2ban_alerts.
@@ -223,10 +224,10 @@ class DashboardSnapshotProvider:
                 return preset_name
 
             if current_count != rules_count_at_apply:
-                return f"{preset_name} + Custom"
+                return _("{preset_name} + Custom").format(preset_name=preset_name)
             return preset_name
 
-        return "Aucun"
+        return _("Aucun")
 
     def _get_registry_update(self) -> str:
         """Find the most recent audit entry for a system rescan (menu
@@ -301,7 +302,7 @@ class DashboardSnapshotProvider:
         for entry in entries:
             if entry.action.startswith("2.6"):
                 time_label = entry.timestamp.strftime(_TIMESTAMP_FORMAT)
-                status_label = "Réussie" if entry.success else "Échec"
+                status_label = _("Réussie") if entry.success else _("Échec")
                 return (time_label, status_label)
 
         return ("N/A", "N/A")
@@ -459,16 +460,24 @@ class DashboardSnapshotProvider:
             loaded_names.add(jail.name)
             if jail.banned_count >= _JAIL_ACTIVITY_SPIKE_THRESHOLD:
                 alerts.append(
-                    f"{jail.name} : {jail.banned_count} IPs bannies (pic d'activité)"
+                    _("{name} : {banned_count} IPs bannies (pic d'activité)").format(name=jail.name, banned_count=jail.banned_count)
                 )
 
         try:
             from pathlib import Path
             jail_d_dir = Path(_FAIL2BAN_JAIL_D_DIR)
             if jail_d_dir.is_dir():
-                configured_names = {f.stem for f in jail_d_dir.glob("*.conf")}
+                from omega_fire.domain.fail2ban.definitions import enabled_jails
+                files = sorted(jail_d_dir.glob("*.conf")) + sorted(jail_d_dir.glob("*.local"))
+                contents = []
+                for path in files:
+                    try:
+                        contents.append(path.read_text(encoding="utf-8", errors="replace"))
+                    except OSError:
+                        continue
+                configured_names = enabled_jails(contents)
                 for name in sorted(configured_names - loaded_names):
-                    alerts.append(f"{name} : configuré (jail.d) mais non chargé")
+                    alerts.append(_("{name} : configuré (jail.d) mais non chargé").format(name=name))
         except Exception:
             pass
 
@@ -512,13 +521,13 @@ class DashboardSnapshotProvider:
 
         parts = []
         if duplicate_groups:
-            parts.append(f"{len(duplicate_groups)} doublon(s) de règle")
+            parts.append(_("{count} doublon(s) de règle").format(count=len(duplicate_groups)))
 
         critical = [a for a in anomalies if getattr(a, "severity", "") == "critical"]
         if critical:
-            parts.append(f"{len(critical)} anomalie(s) critique(s)")
+            parts.append(_("{count} anomalie(s) critique(s)").format(count=len(critical)))
         elif anomalies:
-            parts.append(f"{len(anomalies)} anomalie(s)")
+            parts.append(_("{count} anomalie(s)").format(count=len(anomalies)))
 
         return ", ".join(parts) if parts else "ok"
 

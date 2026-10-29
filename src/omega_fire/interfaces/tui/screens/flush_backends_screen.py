@@ -19,6 +19,7 @@ from omega_fire.application.commands.unban_ip_all_backends import (
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -49,26 +50,26 @@ class FlushBackendsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("VIDER LES IP BANNIES", classes="omega-title")
+            yield Static(_("VIDER LES IP BANNIES"), classes="omega-title")
             yield Static(
-                "Attention : debannit TOUTES les IPs sur le(s) backend(s) choisi(s). "
-                "Vos regles de filtrage principales (ports autorises, acces SSH, etc.) restent intactes.",
+                _("Attention : débannit TOUTES les IPs sur le(s) backend(s) choisi(s). "
+                "Vos règles de filtrage principales (ports autorisés, accès SSH, etc.) restent intactes."),
                 classes="omega-hint",
             )
             if self._supported_backends:
-                yield Static("Backend(s) cible(s)", classes="omega-subtitle")
-                options = [("Tous les backends (recommande)", _ALL_BACKENDS)] + [
-                    (f"Uniquement {name} (diagnostic)", name) for name in self._supported_backends
+                yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
+                options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
-                yield Static("Aucun backend disponible pour le flush.", classes="omega-hint")
+                yield Static(_("Aucun backend disponible pour le flush."), classes="omega-hint")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Vider", id="launch", variant="error")
+                    yield Button(_("Vider"), id="launch", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -78,7 +79,7 @@ class FlushBackendsScreen(OmegaScreen):
         if event.button.id != "launch":
             return
         if not self._supported_backends:
-            self.app.notify("Aucun backend disponible pour le flush.", severity="error")
+            self.app.notify(_("Aucun backend disponible pour le flush."), severity="error")
             return
 
         choice = str(self.query_one("#backend-select", Select).value)
@@ -87,8 +88,8 @@ class FlushBackendsScreen(OmegaScreen):
         )
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LE VIDAGE",
-                message=f"Debannir TOUTES les IPs sur : {', '.join(target_backends)} ?",
+                title=_("CONFIRMER LE VIDAGE"),
+                message=_("Débannir TOUTES les IPs sur : {value} ?").format(value=', '.join(target_backends)),
             ),
             lambda confirmed: self._flush_if_confirmed(confirmed, target_backends),
         )
@@ -123,7 +124,7 @@ class FlushBackendsScreen(OmegaScreen):
                 continue
 
         if not all_banned_ips:
-            self.app.notify("Aucune IP bannie trouvee sur les backends cibles.")
+            self.app.notify(_("Aucune IP bannie trouvée sur les backends cibles."))
             self.dismiss()
             return
 
@@ -135,18 +136,18 @@ class FlushBackendsScreen(OmegaScreen):
         flushed_count = 0
         for backend, outcome in result.outcomes.items():
             if outcome.unbanned:
-                self.app.notify(f"{len(outcome.unbanned)} IP(s) debannie(s).", title=backend, severity="information")
+                self.app.notify(_("{count} IP(s) débannie(s).").format(count=len(outcome.unbanned)), title=backend, severity="information")
                 flushed_count += 1
             elif outcome.already_free and not outcome.errors:
-                self.app.notify("Aucune IP a debannir (deja vide).", title=backend, severity="information")
+                self.app.notify(_("Aucune IP à débannir (déjà vide)."), title=backend, severity="information")
                 flushed_count += 1
             for failed_ip, reason in outcome.errors:
-                self.app.notify(f"Echec pour {failed_ip} : {reason}", title=backend, severity="error")
+                self.app.notify(_("Échec pour {failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
 
         if flushed_count > 0:
-            self.app.notify(f"Purge effectuee sur {flushed_count}/{len(target_backends)} backend(s).")
+            self.app.notify(_("Purge effectuée sur {flushed_count}/{count} backend(s).").format(flushed_count=flushed_count, count=len(target_backends)))
         else:
-            self.app.notify("Echec : aucun backend n'a ete vide.", severity="error")
+            self.app.notify(_("Échec : aucun backend n'a été vide."), severity="error")
 
         log_action_result(self._container, _ACTION_TITLE, status="success" if flushed_count else "failure")
         self.dismiss()

@@ -9,6 +9,7 @@ from typing import Optional
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.exceptions import CapabilityUnavailableError
+from omega_fire.shared.i18n import _
 
 
 def check_capability(
@@ -36,7 +37,7 @@ def check_capability(
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status="UNKNOWN",
-            reason=f"Capability '{capability_id}' not found in registry"
+            reason=_("Capacité « {capability_id} » absente du registre").format(capability_id=capability_id)
         )
     
     status = capability.status
@@ -46,21 +47,21 @@ def check_capability(
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or "Capability is not available on this system"
+            reason=capability.reason or _("Capacité non disponible sur ce système")
         )
     
     if status == CapabilityStatus.DISQUALIFIED:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or "Capability has been disqualified"
+            reason=capability.reason or _("Capacité disqualifiée")
         )
     
     if status == CapabilityStatus.DEGRADED and not allow_degraded:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or "Capability is in degraded state"
+            reason=capability.reason or _("Capacité en état dégradé")
         )
     
     # Status is AVAILABLE or DEGRADED (with allow_degraded=True)
@@ -181,7 +182,7 @@ def get_unavailable_capabilities(
     for capability_id in capability_ids:
         capability = registry.get(capability_id)
         if capability is None:
-            unavailable.append((capability_id, "UNKNOWN", "Not found in registry"))
+            unavailable.append((capability_id, "UNKNOWN", _("Absente du registre")))
             continue
         
         status = capability.status
@@ -194,7 +195,7 @@ def get_unavailable_capabilities(
             unavailable.append((
                 capability_id,
                 status.value,
-                capability.reason or "No reason provided"
+                capability.reason or _("Aucune raison précisée")
             ))
     
     return unavailable

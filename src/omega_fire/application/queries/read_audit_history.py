@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from omega_fire.ports.audit import AuditEntry
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -46,14 +47,14 @@ class ReadAuditHistoryQuery:
     def execute(self, request: ReadAuditHistoryRequest) -> ReadAuditHistoryResult:
         if self._audit_port is None:
             return ReadAuditHistoryResult(
-                success=False, entries=[], message="Le registre d'audit n'est pas disponible."
+                success=False, entries=[], message=_("Le registre d'audit n'est pas disponible.")
             )
 
         try:
             entries = self._audit_port.get_recent(limit=request.limit)
         except Exception as e:
             return ReadAuditHistoryResult(
-                success=False, entries=[], message=f"Erreur lors de la lecture de l'audit : {e}"
+                success=False, entries=[], message=_("Erreur lors de la lecture de l'audit : {e}").format(e=e)
             )
 
         if request.keyword:

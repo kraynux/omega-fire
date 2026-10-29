@@ -20,6 +20,7 @@ import os
 import fcntl
 from collections import deque
 from typing import Any, Deque, Optional
+from omega_fire.shared.i18n import _
 
 try:
     import termios
@@ -255,52 +256,52 @@ def _render_stats_panel(stats: dict, use_emoji: bool) -> Panel:
         return f"{int(size)} B"
 
     # --- 1. PERFORMANCE & RENDEMENT ---
-    content.append("── RENDEMENT ───────────────\n", style=_get_theme_style("menu.title"))
+    content.append(_("── RENDEMENT ───────────────\n"), style=_get_theme_style("menu.title"))
     rps_icon = "⚡" if use_emoji else "RPS"
     lat_icon = "⏱" if use_emoji else "LAT"
     
-    content.append(f" {rps_icon} Débit      : {stats['rps']:.1f} req/s\n", style=_get_theme_style("text.info"))
+    content.append(_(" {rps_icon} Débit      : {rps:.1f} req/s\n").format(rps_icon=rps_icon, rps=stats['rps']), style=_get_theme_style("text.info"))
     
     # Latence moyenne avec code couleur
     avg_lat = stats['avg_latency']
     lat_style = "status.available" if avg_lat < 200 else ("text.warning" if avg_lat < 500 else "text.danger")
-    content.append(f" {lat_icon} Latence moy: {avg_lat:.0f} ms\n\n", style=_get_theme_style(lat_style))
+    content.append(_(" {lat_icon} Latence moy: {avg_lat:.0f} ms\n\n").format(lat_icon=lat_icon, avg_lat=avg_lat), style=_get_theme_style(lat_style))
 
     # --- 2. TRAFIC & BANDE PASSANTE ---
-    content.append("── BANDE PASSANTE ──────────\n", style=_get_theme_style("menu.title"))
+    content.append(_("── BANDE PASSANTE ──────────\n"), style=_get_theme_style("menu.title"))
     net_icon = "" if use_emoji else "NET"
     tot_icon = "📦" if use_emoji else "VOL"
     
-    content.append(f" {net_icon} Débit Réseau: {_format_bytes(stats['bps'])}/s\n", style=_get_theme_style("text.main"))
-    content.append(f" {tot_icon} Vol. Total  : {_format_bytes(stats['bytes_total'])}\n", style=_get_theme_style("text.main"))
-    content.append(f" 🗜 Taille moy. : {_format_bytes(stats['avg_size'])}\n\n", style=_get_theme_style("text.main"))
+    content.append(_(" {net_icon} Débit Réseau: {value}/s\n").format(net_icon=net_icon, value=_format_bytes(stats['bps'])), style=_get_theme_style("text.main"))
+    content.append(_(" {tot_icon} Vol. Total  : {value}\n").format(tot_icon=tot_icon, value=_format_bytes(stats['bytes_total'])), style=_get_theme_style("text.main"))
+    content.append(_(" 🗜 Taille moy. : {value}\n\n").format(value=_format_bytes(stats['avg_size'])), style=_get_theme_style("text.main"))
 
     # --- 3. RÉPARTITION DES REQUÊTES ---
-    content.append("── STATUTS HTTP ────────────\n", style=_get_theme_style("menu.title"))
-    content.append(f" 📊 Total Req.  : {stats['total']}\n", style=_get_theme_style("text.main"))
-    content.append(f" √  Succès 2xx  : {stats['success_2xx']}\n", style=_get_theme_style("status.available"))
-    content.append(f" ↔  Redir. 3xx  : {stats['redirect_3xx']}\n", style=_get_theme_style("text.info"))
-    content.append(f" ⚠  Erreurs 4xx : {stats['errors_4xx']}\n", style=_get_theme_style("text.warning"))
-    content.append(f" ❌ Erreurs 5xx : {stats['errors_5xx']}\n\n", style=_get_theme_style("text.danger"))
+    content.append(_("── STATUTS HTTP ────────────\n"), style=_get_theme_style("menu.title"))
+    content.append(_(" 📊 Total Req.  : {total}\n").format(total=stats['total']), style=_get_theme_style("text.main"))
+    content.append(_(" √  Succès 2xx  : {success_2xx}\n").format(success_2xx=stats['success_2xx']), style=_get_theme_style("status.available"))
+    content.append(_(" ↔  Redir. 3xx  : {redirect_3xx}\n").format(redirect_3xx=stats['redirect_3xx']), style=_get_theme_style("text.info"))
+    content.append(_(" ⚠  Erreurs 4xx : {errors_4xx}\n").format(errors_4xx=stats['errors_4xx']), style=_get_theme_style("text.warning"))
+    content.append(_(" ❌ Erreurs 5xx : {errors_5xx}\n\n").format(errors_5xx=stats['errors_5xx']), style=_get_theme_style("text.danger"))
 
     # --- 4. RÉSEAU & CLIENTS ---
-    content.append("── CLIENTS & RÉSEAU ────────\n", style=_get_theme_style("menu.title"))
+    content.append(_("── CLIENTS & RÉSEAU ────────\n"), style=_get_theme_style("menu.title"))
     ip_icon = "💻" if use_emoji else "IP "
-    content.append(f" {ip_icon} IPs uniques : {stats['unique_ips']}\n", style=_get_theme_style("text.main"))
-    content.append(f" 🖧  Top Talker  : {stats['top_ip'][:14]}\n\n", style=_get_theme_style("text.info"))
+    content.append(_(" {ip_icon} IPs uniques : {unique_ips}\n").format(ip_icon=ip_icon, unique_ips=stats['unique_ips']), style=_get_theme_style("text.main"))
+    content.append(_(" 🖧  Top Talker  : {value}\n\n").format(value=stats['top_ip'][:14]), style=_get_theme_style("text.info"))
 
     # --- 5. TAMPON & ÉTAT DE SANTÉ ---
-    content.append("── RAMP & TAMPON ───────────\n", style=_get_theme_style("menu.title"))
+    content.append(_("── RAMP & TAMPON ───────────\n"), style=_get_theme_style("menu.title"))
     err_rate = stats['error_rate']
     health_style = "status.available" if err_rate < 5 else ("text.warning" if err_rate < 15 else "text.danger")
     health_label = "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else "DEGRADED")
     
-    content.append(f" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n", style=_get_theme_style(health_style))
-    content.append(f" 📥 Tampon Live : {stats['buffer_size']}/{DEFAULT_BUFFER_SIZE}", style=_get_theme_style("text.main"))
+    content.append(_(" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n").format(health_label=health_label, err_rate=err_rate), style=_get_theme_style(health_style))
+    content.append(_(" 📥 Tampon Live : {buffer_size}/{DEFAULT_BUFFER_SIZE}").format(buffer_size=stats['buffer_size'], DEFAULT_BUFFER_SIZE=DEFAULT_BUFFER_SIZE), style=_get_theme_style("text.main"))
 
     return Panel(
         content,
-        title="Statistiques Live",
+        title=_("Statistiques Live"),
         title_align="left",
         border_style=_get_theme_style("border.default"),
         box=box.ROUNDED,
@@ -310,19 +311,19 @@ def _render_stats_panel(stats: dict, use_emoji: bool) -> Panel:
 def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = False, total_buffered: int = 0) -> Panel:
     if show_help:
         help_text = Text()
-        help_text.append("=== AIDE LIVE TAIL ===\n\n", style=_get_theme_style("text.heading"))
-        help_text.append("• [q] / [m] / [ESC] : Quitter le Live Tail\n", style=_get_theme_style("text.main"))
-        help_text.append("• [↑]/[↓] [PgUp]/[PgDn] : Défiler dans l'historique (fige le direct)\n", style=_get_theme_style("text.main"))
-        help_text.append("• [t]               : Basculer vers le thème suivant\n", style=_get_theme_style("text.main"))
-        help_text.append("• [a]               : Masquer cet écran d'aide\n\n", style=_get_theme_style("text.main"))
-        help_text.append("Code couleurs HTTP & Latence :\n", style=_get_theme_style("text.heading"))
-        help_text.append("  • 2xx / <200ms  : Optimal\n", style=_get_theme_style("status.available"))
-        help_text.append("  • 4xx / <500ms  : Avertissement / Latence moyenne\n", style=_get_theme_style("text.warning"))
-        help_text.append("  • 5xx / >500ms  : Erreur / Latence critique\n", style=_get_theme_style("text.danger"))
+        help_text.append(_("=== AIDE LIVE TAIL ===\n\n"), style=_get_theme_style("text.heading"))
+        help_text.append(_("• [q] / [m] / [ESC] : Quitter le Live Tail\n"), style=_get_theme_style("text.main"))
+        help_text.append(_("• [↑]/[↓] [PgUp]/[PgDn] : Défiler dans l'historique (fige le direct)\n"), style=_get_theme_style("text.main"))
+        help_text.append(_("• [t]               : Basculer vers le thème suivant\n"), style=_get_theme_style("text.main"))
+        help_text.append(_("• [a]               : Masquer cet écran d'aide\n\n"), style=_get_theme_style("text.main"))
+        help_text.append(_("Code couleurs HTTP & Latence :\n"), style=_get_theme_style("text.heading"))
+        help_text.append(_("  • 2xx / <200ms  : Optimal\n"), style=_get_theme_style("status.available"))
+        help_text.append(_("  • 4xx / <500ms  : Avertissement / Latence moyenne\n"), style=_get_theme_style("text.warning"))
+        help_text.append(_("  • 5xx / >500ms  : Erreur / Latence critique\n"), style=_get_theme_style("text.danger"))
 
         return Panel(
             help_text,
-            title="Aide & Raccourcis",
+            title=_("Aide & Raccourcis"),
             title_align="left",
             border_style=_get_theme_style("border.default"),
             box=box.ROUNDED,
@@ -344,14 +345,14 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
     )
 
     # Colonnes enrichies et dimensionnées proprement
-    table.add_column("Timestamp", style=_get_theme_style("text.muted"), width=19, no_wrap=True)
-    table.add_column("IP Source", style=_get_theme_style("text.main"), width=15, no_wrap=True)
-    table.add_column("Type", width=8, no_wrap=True)
-    table.add_column("Méthode", style=_get_theme_style("text.info"), width=7, no_wrap=True)
-    table.add_column("Chemin", style=_get_theme_style("text.main"), ratio=1, no_wrap=True)
-    table.add_column("Statut", justify="right", width=6, no_wrap=True)
-    table.add_column("Taille", justify="right", style=_get_theme_style("text.muted"), width=8, no_wrap=True)
-    table.add_column("Latence", justify="right", width=8, no_wrap=True)
+    table.add_column(_("Timestamp"), style=_get_theme_style("text.muted"), width=19, no_wrap=True)
+    table.add_column(_("IP Source"), style=_get_theme_style("text.main"), width=15, no_wrap=True)
+    table.add_column(_("Type"), width=8, no_wrap=True)
+    table.add_column(_("Méthode"), style=_get_theme_style("text.info"), width=7, no_wrap=True)
+    table.add_column(_("Chemin"), style=_get_theme_style("text.main"), ratio=1, no_wrap=True)
+    table.add_column(_("Statut"), justify="right", width=6, no_wrap=True)
+    table.add_column(_("Taille"), justify="right", style=_get_theme_style("text.muted"), width=8, no_wrap=True)
+    table.add_column(_("Latence"), justify="right", width=8, no_wrap=True)
 
     for entry in entries:
         # 1. Style HTTP Status
@@ -389,11 +390,11 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
         # 4. Tag de type de client (Bot / Admin / Web)
         user_agent = str(entry.get("user_agent", "")).lower()
         if "bot" in user_agent or "crawler" in user_agent:
-            client_type = Text("🤖 Bot", style=_get_theme_style("text.warning"))
+            client_type = Text(_("🤖 Bot"), style=_get_theme_style("text.warning"))
         elif "curl" in user_agent or "python" in user_agent or "scanner" in user_agent:
-            client_type = Text("⚠ CLI", style=_get_theme_style("text.danger"))
+            client_type = Text(_("⚠ CLI"), style=_get_theme_style("text.danger"))
         else:
-            client_type = Text("🖧 Web", style=_get_theme_style("text.muted"))
+            client_type = Text(_("🖧 Web"), style=_get_theme_style("text.muted"))
 
         # Données de base nettoyées
         ts = str(entry.get("timestamp") or "").strip()[:19]
@@ -413,9 +414,9 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
         )
 
     if paused:
-        title = f"⏸ Défilement (figé) — {len(entries)} affichée(s) / {total_buffered} en mémoire"
+        title = _("⏸ Défilement (figé) — {count} affichée(s) / {total_buffered} en mémoire").format(count=len(entries), total_buffered=total_buffered)
     else:
-        title = f"▶ Logs en temps réel ({len(entries)} / {total_buffered} entrées)"
+        title = _("▶ Logs en temps réel ({count} / {total_buffered} entrées)").format(count=len(entries), total_buffered=total_buffered)
 
     return Panel(
         table,
@@ -508,9 +509,9 @@ def render_logs_live(
         header_text = Text(no_wrap=True)
         if use_emoji:
             header_text.append("🛡 ", style=_get_theme_style("menu.title"))
-        header_text.append("OMEGA-FIRE v3.0", style=_get_theme_style("menu.title"))
+        header_text.append(_("OMEGA-FIRE v3.5"), style=_get_theme_style("menu.title"))
         header_text.append("  |  ", style=_get_theme_style("text.muted"))
-        header_text.append("Live Logs", style=_get_theme_style("text.heading"))
+        header_text.append(_("Live Logs"), style=_get_theme_style("text.heading"))
 
         root["header"].update(
             Panel(
@@ -567,10 +568,10 @@ def render_logs_live(
         footer_text.append("ide  ", style=_get_theme_style("footer.label"))
         footer_text.append("|  ", style=_get_theme_style("footer.separator"))
         footer_text.append("[↑↓/PgUp/PgDn]", style=_get_theme_style("footer.key"))
-        footer_text.append(" Défiler  ", style=_get_theme_style("footer.label"))
+        footer_text.append(_(" Défiler  "), style=_get_theme_style("footer.label"))
         footer_text.append("|  ", style=_get_theme_style("footer.separator"))
         footer_text.append("[esc]", style=_get_theme_style("footer.key"))
-        footer_text.append(" Retour  ", style=_get_theme_style("footer.label"))
+        footer_text.append(_(" Retour  "), style=_get_theme_style("footer.label"))
         footer_text.append("|  ", style=_get_theme_style("footer.separator"))
         footer_text.append("[q]", style=_get_theme_style("footer.key"))
         footer_text.append("uitter", style=_get_theme_style("footer.label"))

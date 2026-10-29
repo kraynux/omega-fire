@@ -6,6 +6,7 @@ These express business rule violations (invalid snapshot, failed backup,
 failed restore), not technical failures of file I/O. They are caught
 by application/ and translated into Results or user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class PersistenceError(Exception):
@@ -21,7 +22,7 @@ class InvalidSnapshotError(PersistenceError):
     def __init__(self, snapshot_id: str, reason: str):
         self.snapshot_id = snapshot_id
         self.reason = reason
-        super().__init__(f"Invalid snapshot '{snapshot_id}': {reason}")
+        super().__init__(_("Snapshot « {snapshot_id} » invalide : {reason}").format(snapshot_id=snapshot_id, reason=reason))
 
 
 class BackupError(PersistenceError):
@@ -32,7 +33,7 @@ class BackupError(PersistenceError):
     def __init__(self, operation: str, reason: str):
         self.operation = operation
         self.reason = reason
-        super().__init__(f"Backup error ({operation}): {reason}")
+        super().__init__(_("Erreur de sauvegarde ({operation}) : {reason}").format(operation=operation, reason=reason))
 
 
 class RestoreError(PersistenceError):
@@ -43,7 +44,7 @@ class RestoreError(PersistenceError):
     def __init__(self, snapshot_id: str, reason: str):
         self.snapshot_id = snapshot_id
         self.reason = reason
-        super().__init__(f"Restore error for '{snapshot_id}': {reason}")
+        super().__init__(_("Erreur de restauration de « {snapshot_id} » : {reason}").format(snapshot_id=snapshot_id, reason=reason))
 
 
 class SnapshotNotFoundError(PersistenceError):
@@ -53,7 +54,7 @@ class SnapshotNotFoundError(PersistenceError):
     """
     def __init__(self, snapshot_id: str):
         self.snapshot_id = snapshot_id
-        super().__init__(f"Snapshot not found: {snapshot_id}")
+        super().__init__(_("Snapshot introuvable : {snapshot_id}").format(snapshot_id=snapshot_id))
 
 
 class CorruptedSnapshotError(PersistenceError):
@@ -64,7 +65,7 @@ class CorruptedSnapshotError(PersistenceError):
     def __init__(self, snapshot_id: str, reason: str):
         self.snapshot_id = snapshot_id
         self.reason = reason
-        super().__init__(f"Corrupted snapshot '{snapshot_id}': {reason}")
+        super().__init__(_("Corrupted snapshot '{snapshot_id}': {reason}").format(snapshot_id=snapshot_id, reason=reason))
 
 
 class IncompatibleVersionError(PersistenceError):
@@ -76,7 +77,7 @@ class IncompatibleVersionError(PersistenceError):
         self.snapshot_version = snapshot_version
         self.app_version = app_version
         super().__init__(
-            f"Incompatible versions: snapshot={snapshot_version}, app={app_version}"
+            _("Incompatible versions: snapshot={snapshot_version}, app={app_version}").format(snapshot_version=snapshot_version, app_version=app_version)
         )
 
 
@@ -87,7 +88,7 @@ class EmptyBackupError(PersistenceError):
     """
     def __init__(self, reason: str):
         self.reason = reason
-        super().__init__(f"Empty backup: {reason}")
+        super().__init__(_("Sauvegarde vide : {reason}").format(reason=reason))
 
 
 class InvalidRestoreScopeError(PersistenceError):
@@ -99,8 +100,7 @@ class InvalidRestoreScopeError(PersistenceError):
         self.requested_scope = requested_scope
         self.available_scope = available_scope
         super().__init__(
-            f"Invalid restore scope: requested={requested_scope}, "
-            f"available={available_scope}"
+            _("Portée de restauration invalide : demandée={requested_scope}, disponible={available_scope}").format(requested_scope=requested_scope, available_scope=available_scope)
         )
 
 # <-- INFO DEV ---------------------------------------------------------

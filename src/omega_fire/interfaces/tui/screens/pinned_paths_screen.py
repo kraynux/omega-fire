@@ -9,15 +9,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import os
+
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    DEFAULT_PINNED_LOG_PATHS,
+    ManagePinnedLogPathsCommand,
+)
 from omega_fire.infrastructure.config.paths import DEFAULT_PINNED_FILES, RUNTIME_DIR
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens.checklist import CheckListScreen
 from omega_fire.interfaces.tui.widgets.pinned_paths_table import PinnedPathsTable
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -40,16 +47,18 @@ class PinnedPathsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("FICHIERS EPINGLES", classes="omega-title")
+            yield Static(_("FICHIERS ÉPINGLÉS"), classes="omega-title")
             yield PinnedPathsTable(id="pinned-table")
-            yield Input(placeholder="Chemin complet du fichier a epingler", id="path-input")
+            yield Input(placeholder=_("Chemin complet du fichier à épingler"), id="path-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Epingler", id="pin", variant="primary")
+                    yield Button(_("Épingler"), id="pin", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retirer", id="unpin", variant="error")
+                    yield Button(_("Presets"), id="presets")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retirer"), id="unpin", variant="error")
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -66,11 +75,15 @@ class PinnedPathsScreen(OmegaScreen):
             self.dismiss()
             return
 
+        if event.button.id == "presets":
+            self._open_presets()
+            return
+
         if event.button.id == "pin":
             path_input = self.query_one("#path-input", Input)
             new_path = path_input.value.strip()
             if not new_path:
-                self.app.notify("Saisissez un chemin de fichier.", severity="warning")
+                self.app.notify(_("Saisissez un chemin de fichier."), severity="warning")
                 return
             result = self._command.add_path(new_path)
             if result.success:
@@ -83,7 +96,7 @@ class PinnedPathsScreen(OmegaScreen):
 
         if event.button.id == "unpin":
             if self._selected_path is None:
-                self.app.notify("Selectionnez d'abord une ligne.", severity="warning")
+                self.app.notify(_("Sélectionnez d'abord une ligne."), severity="warning")
                 return
             result = self._command.remove_path(self._selected_path)
             if result.success:
@@ -92,3 +105,36 @@ class PinnedPathsScreen(OmegaScreen):
                 self.app.notify(result.message, severity="warning")
             self._selected_path = None
             self._refresh()
+
+    def _open_presets(self) -> None:
+        """Presets a cocher (version 3.5) : chemins usuels (logs systeme, serveurs web,
+        blocklists d'omega-fire) et logs de la Bibliotheque 5.1, seulement ceux presents
+        sur cette machine. Seules les blocklists d'omega-fire restent epinglees d'office
+        (fichiers de l'application, toujours presents) ; la liste des logs systeme ne sert
+        plus que de presets."""
+        from omega_fire.interfaces.tui.screens.log_library_screen import library_command
+
+        library = [entry.path for entry in library_command().list_logs()]
+        candidates = [str(p) for p in DEFAULT_PINNED_FILES] + DEFAULT_PINNED_LOG_PATHS + library
+        presets = self._command.preset_candidates(candidates, os.path.isfile)
+        if not presets:
+            self.app.notify(_("Aucun preset disponible : les chemins usuels présents sur cette machine "
+                              "sont déjà épinglés."), severity="information")
+            return
+        self.app.push_screen(
+            CheckListScreen(
+                title=_("PRESETS À ÉPINGLER"),
+                message=_("Chemins usuels présents sur cette machine (et logs de la Bibliothèque 5.1). "
+                          "Cochez ceux à épingler."),
+                items=[(path, path) for path in presets],
+                confirm_label=_("Épingler"),
+            ),
+            self._pin_presets,
+        )
+
+    def _pin_presets(self, paths: list[str] | None) -> None:
+        if not paths:
+            return
+        result = self._command.add_paths(paths)
+        self.app.notify(result.message, severity="information" if result.success else "warning")
+        self._refresh()

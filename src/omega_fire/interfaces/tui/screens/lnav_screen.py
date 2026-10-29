@@ -45,7 +45,7 @@ action_8_6_lnav_analysis) :
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -58,24 +58,16 @@ from omega_fire.interfaces.cli.renderers.lnav_live import render_lnav_live
 from omega_fire.interfaces.cli.themes import initialize_theme, theme_registry
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.interfaces.tui.support.terminal_handoff import suspended_terminal
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
 _ACTION_TITLE = "8.6 Visualiser les logs serveurs (lnav)"
 
-# Memes serveurs web que DEFAULT_LIVE_TAIL_PINS (interfaces/cli/actions.py)
-# mais liste propre a 8.6 : access ET error log par backend, puisque lnav
-# sait fusionner plusieurs fichiers en une seule vue (ce que 5.1 ne fait pas).
-_DEFAULT_LNAV_PINS: dict[str, str] = {
-    "Nginx Access Log": "/var/log/nginx/access.log",
-    "Nginx Error Log": "/var/log/nginx/error.log",
-    "Apache Access Log": "/var/log/apache2/access.log",
-    "Apache Error Log": "/var/log/apache2/error.log",
-    "Lighttpd Access Log": "/var/log/lighttpd/access.log",
-    "Lighttpd Error Log": "/var/log/lighttpd/error.log",
-    "Caddy Access Log": "/var/log/caddy/access.log",
-}
+# Plus d'epingles par defaut codees en dur (retour utilisateur 2026-10-28), comme le Live Tail.
+_DEFAULT_LNAV_PINS: dict[str, str] = {}
 
 
 class LnavScreen(OmegaScreen):
@@ -97,31 +89,31 @@ class LnavScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("VISUALISER LES LOGS SERVEURS AVEC LNAV", classes="omega-title")
+            yield Static(_("VISUALISER LES LOGS SERVEURS AVEC LNAV"), classes="omega-title")
             yield Static(
-                "Cliquez une ligne pour ajouter son numero au champ de fusion "
-                "ci-dessous (lnav fusionne automatiquement plusieurs fichiers).",
+                _("Cliquez une ligne pour ajouter son numéro au champ de fusion "
+                "ci-dessous (lnav fusionne automatiquement plusieurs fichiers)."),
                 classes="omega-hint",
             )
             yield DataTable(id="sources-table")
 
-            yield Static("Sources a fusionner (numeros ci-dessus et/ou chemins manuels, separes par des virgules)", classes="omega-subtitle")
-            yield Input(placeholder="ex: 1,3 ou /chemin/manuel.log", id="merge-input")
+            yield Static(_("Sources à fusionner (numéros ci-dessus et/ou chemins manuels, séparés par des virgules)"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex: 1,3 ou /chemin/manuel.log"), id="merge-input")
 
-            yield Static("Epingler (toujours UNE seule source : la ligne en surbrillance, ou le 1er element ci-dessus)", classes="omega-subtitle")
-            yield Input(placeholder="Nom de l'epingle", id="pin-name-input")
+            yield Static(_("Épingler (toujours UNE seule source : la ligne en surbrillance, ou le 1er élément ci-dessus)"), classes="omega-subtitle")
+            yield Input(placeholder=_("Nom de l'épingle"), id="pin-name-input")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Lancer lnav", id="launch", variant="primary")
+                    yield Button(_("Lancer lnav"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Epingler", id="pin")
+                    yield Button(_("Épingler"), id="pin")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retirer (ligne en surbrillance)", id="unpin", variant="error")
+                    yield Button(_("Retirer (ligne en surbrillance)"), id="unpin", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Purger tout", id="purge", variant="error")
+                    yield Button(_("Purger tout"), id="purge", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -132,7 +124,7 @@ class LnavScreen(OmegaScreen):
         # au clic mais l'evenement n'est jamais emis (retour utilisateur
         # reel : rien ne se selectionnait jamais).
         table.cursor_type = "row"
-        table.add_columns("#", "Type", "Nom", "Chemin")
+        table.add_columns("#", _("Type"), _("Nom"), _("Chemin"))
         self._refresh_sources_table()
 
     def _refresh_sources_table(self) -> None:
@@ -145,14 +137,14 @@ class LnavScreen(OmegaScreen):
             key = str(idx)
             self._display_items[key] = {"type": "pinned", "name": name, "path": path}
             sub_paths = [p.strip() for p in path.split(",") if p.strip()]
-            display_name = name if len(sub_paths) <= 1 else f"{name} ({len(sub_paths)} fichiers)"
-            table.add_row(key, "Epingle", display_name, path, key=key)
+            display_name = name if len(sub_paths) <= 1 else _("{name} ({count} fichiers)").format(name=name, count=len(sub_paths))
+            table.add_row(key, _("Épingle"), display_name, path, key=key)
             idx += 1
 
         for h_path in self._command.list_history()[:5]:
             key = str(idx)
-            self._display_items[key] = {"type": "history", "name": "Historique recent", "path": h_path}
-            table.add_row(key, "Historique", "Historique recent", h_path, key=key)
+            self._display_items[key] = {"type": "history", "name": _("Historique récent"), "path": h_path}
+            table.add_row(key, _("Historique"), _("Historique récent"), h_path, key=key)
             idx += 1
 
         # Le curseur du tableau demarre automatiquement sur la 1ere ligne
@@ -223,7 +215,7 @@ class LnavScreen(OmegaScreen):
     def _pin(self) -> None:
         name = self.query_one("#pin-name-input", Input).value.strip()
         if not name:
-            self.app.notify("Saisissez un nom pour l'epingle.", severity="warning")
+            self.app.notify(_("Saisissez un nom pour l'épingle."), severity="warning")
             return
 
         # Epingle la selection COMPLETE actuellement dans le champ de
@@ -236,12 +228,12 @@ class LnavScreen(OmegaScreen):
         # contenu), re-eclatee par _resolve_token() a la relecture.
         paths = self._current_merge_paths()
         if not paths:
-            self.app.notify("Aucune source a epingler (selectionnez une ligne ou saisissez un chemin).", severity="warning")
+            self.app.notify(_("Aucune source à épingler (sélectionnez une ligne ou saisissez un chemin)."), severity="warning")
             return
 
         result = self._command.add_pinned(name, ", ".join(paths))
         if result.success:
-            self.app.notify(f"{result.message} ({len(paths)} fichier(s))")
+            self.app.notify(_("{message} ({count} fichier(s))").format(message=result.message, count=len(paths)))
             self.query_one("#pin-name-input", Input).value = ""
             self._refresh_sources_table()
         else:
@@ -249,11 +241,11 @@ class LnavScreen(OmegaScreen):
 
     def _unpin(self) -> None:
         if self._highlighted_key is None:
-            self.app.notify("Aucune ligne en surbrillance.", severity="warning")
+            self.app.notify(_("Aucune ligne en surbrillance."), severity="warning")
             return
         item = self._display_items.get(self._highlighted_key)
         if item is None:
-            self.app.notify("Aucune ligne en surbrillance.", severity="warning")
+            self.app.notify(_("Aucune ligne en surbrillance."), severity="warning")
             return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])
@@ -270,13 +262,13 @@ class LnavScreen(OmegaScreen):
         self._command.purge_all()
         self._highlighted_key = None
         self.query_one("#merge-input", Input).value = ""
-        self.app.notify("Historique et epingles lnav purges avec succes.")
+        self.app.notify(_("Historique et épingles lnav purges avec succès."))
         self._refresh_sources_table()
 
     def _launch(self) -> None:
         resolved_paths = self._current_merge_paths()
         if not resolved_paths:
-            self.app.notify("Aucune source valide selectionnee.", severity="warning")
+            self.app.notify(_("Aucune source valide sélectionnée."), severity="warning")
             return
 
         valid_paths: list[str] = []
@@ -292,10 +284,10 @@ class LnavScreen(OmegaScreen):
                 missing_paths.append(p)
 
         if missing_paths:
-            self.app.notify(f"Fichier(s) introuvable(s), ignore(s) : {', '.join(missing_paths)}", severity="warning")
+            self.app.notify(_("Fichier(s) introuvable(s), ignore(s) : {value}").format(value=', '.join(missing_paths)), severity="warning")
 
         if not valid_paths:
-            self.app.notify("Aucun fichier valide au final. Operation annulee.", severity="warning")
+            self.app.notify(_("Aucun fichier valide au final. Opération annulée."), severity="warning")
             return
 
         known_paths = self._command.list_all_known_paths()
@@ -307,14 +299,14 @@ class LnavScreen(OmegaScreen):
             self._run_lnav(valid_paths)
         except FileNotFoundError:
             self.app.notify(
-                "L'executable 'lnav' est introuvable (non installe ou absent du PATH). "
-                "Sur Arch/EndeavourOS : sudo pacman -S lnav",
+                _("L'exécutable 'lnav' est introuvable (non installé ou absent du PATH). "
+                "Sur Arch/EndeavourOS : sudo pacman -S lnav"),
                 severity="error",
             )
             log_action_result(self._container, _ACTION_TITLE, status="failure", error="lnav introuvable")
             return
         except Exception as e:
-            self.app.notify(f"Echec du lancement de lnav : {e}", severity="error")
+            self.app.notify(_("Échec du lancement de lnav : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
             return
 
@@ -350,33 +342,42 @@ class LnavScreen(OmegaScreen):
         Ctrl-C pour marquer+copier, [t] pour son propre cycle de theme
         CLI) — App.suspend() se contente de rendre la main du terminal
         le temps de l'appel, exactement comme pour un subprocess normal."""
-        self._sync_cli_theme()
-        with self.app.suspend():
-            render_lnav_live([Path(p) for p in paths])
+        run_lnav(self.app, paths)
 
-    def _sync_cli_theme(self) -> None:
-        """render_lnav_live() lit interfaces/cli/themes/registry.py
-        (theme_registry), un registre COMPLETEMENT INDEPENDANT du theme
-        Textual de l'appli (omega_lib.theme, voir app.py) — jamais
-        active dans le processus TUI puisque rien d'autre ne l'utilise.
-        Sans ceci, get_active() a l'interieur de render_lnav_live() leve
-        immediatement ("No theme is currently active."). Tente de
-        reprendre le nom du theme Textual courant (memes noms dans la
-        plupart des cas, ex. "omega-mono") pour une transition visuelle
-        coherente ; retombe sur la detection automatique du CLI sinon.
-        Ne reinitialise PAS un theme deja actif (le cycle [t] interne a
-        lnav, d'une session precedente, doit persister d'un appel a
-        l'autre)."""
+
+def run_lnav(app: Any, paths: list[str]) -> None:
+    """Lance lnav (PTY + pyte, header/footer Omega-Fire) en rendant le terminal le temps de
+    l'appel. A appeler depuis un gestionnaire de clic (8.6 « Lancer lnav », 5.2 / 5.3) :
+    lance automatiquement a l'ouverture d'un ecran (call_after_refresh), l'interface se
+    bloquait (retour utilisateur 2026-10-28, Textual ecrivant dans un terminal deja rendu)."""
+    _sync_cli_theme(app)
+    with suspended_terminal(app):
+        render_lnav_live([Path(p) for p in paths])
+
+
+def _sync_cli_theme(app: Any) -> None:
+    """render_lnav_live() lit interfaces/cli/themes/registry.py
+    (theme_registry), un registre COMPLETEMENT INDEPENDANT du theme
+    Textual de l'appli (omega_lib.theme, voir app.py) — jamais
+    active dans le processus TUI puisque rien d'autre ne l'utilise.
+    Sans ceci, get_active() a l'interieur de render_lnav_live() leve
+    immediatement ("No theme is currently active."). Tente de
+    reprendre le nom du theme Textual courant (memes noms dans la
+    plupart des cas, ex. "omega-mono") pour une transition visuelle
+    coherente ; retombe sur la detection automatique du CLI sinon.
+    Ne reinitialise PAS un theme deja actif (le cycle [t] interne a
+    lnav, d'une session precedente, doit persister d'un appel a
+    l'autre)."""
+    try:
+        theme_registry.get_active()
+        return
+    except Exception:
+        pass
+    app_theme = getattr(app, "theme", None)
+    if app_theme:
         try:
-            theme_registry.get_active()
+            initialize_theme(app_theme)
             return
         except Exception:
             pass
-        app_theme = getattr(self.app, "theme", None)
-        if app_theme:
-            try:
-                initialize_theme(app_theme)
-                return
-            except Exception:
-                pass
-        initialize_theme()
+    initialize_theme()

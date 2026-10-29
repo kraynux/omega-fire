@@ -7,6 +7,7 @@ or jail management. They are caught by the application layer
 and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class Fail2banError(CoreError):
@@ -19,7 +20,7 @@ class Fail2banCommandError(Fail2banError):
     """Raised when a fail2ban-client command fails."""
     def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
         super().__init__(
-            f"fail2ban-client command failed (exit {returncode}): {command}",
+            _("Échec de la commande fail2ban-client (code {returncode}) : {command}").format(returncode=returncode, command=command),
             {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
         )
         self.command = command
@@ -31,7 +32,7 @@ class Fail2banParseError(Fail2banError):
     """Raised when fail2ban-client output cannot be parsed."""
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
-            f"Failed to parse fail2ban-client output: {reason}",
+            _("Sortie de fail2ban-client illisible : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -42,7 +43,7 @@ class JailNotFoundError(Fail2banError):
     """Raised when a referenced jail does not exist."""
     def __init__(self, jail_name: str, context: dict = None):
         super().__init__(
-            f"Fail2ban jail '{jail_name}' not found",
+            _("Jail fail2ban « {jail_name} » introuvable").format(jail_name=jail_name),
             {**(context or {}), "jail_name": jail_name},
         )
         self.jail_name = jail_name
@@ -52,7 +53,7 @@ class JailAlreadyExistsError(Fail2banError):
     """Raised when attempting to create a jail that already exists."""
     def __init__(self, jail_name: str, context: dict = None):
         super().__init__(
-            f"Fail2ban jail '{jail_name}' already exists",
+            _("Le jail fail2ban « {jail_name} » existe déjà").format(jail_name=jail_name),
             {**(context or {}), "jail_name": jail_name},
         )
         self.jail_name = jail_name
@@ -62,7 +63,7 @@ class Fail2banServiceError(Fail2banError):
     """Raised when fail2ban service control fails."""
     def __init__(self, operation: str, reason: str, context: dict = None):
         super().__init__(
-            f"Fail2ban service {operation} failed: {reason}",
+            _("Échec de l'opération {operation} sur le service fail2ban : {reason}").format(operation=operation, reason=reason),
             {**(context or {}), "operation": operation, "reason": reason},
         )
         self.operation = operation
@@ -73,7 +74,7 @@ class Fail2banPermissionError(Fail2banError):
     """Raised when fail2ban operations require elevated privileges."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission denied for fail2ban operation: {operation}. Run as root.",
+            _("Permission refusée pour l'opération fail2ban : {operation}. Lancez omega-fire en root.").format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

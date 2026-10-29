@@ -22,7 +22,7 @@ généraient auparavant un HTML quasi identique en dur dans actions.py
             <h1>{{ heading }}<span class="cursor"></span></h1>
 
             <div class="note-historique">
-                <span class="note-prefix">[SYSTEM EXPORT]</span> Rapport d'exportation généré le {{ generated_at }}.
+                <span class="note-prefix">[SYSTEM EXPORT]</span> {{ _("Rapport d'exportation généré le {when}.").format(when=generated_at) }}
             </div>
 
             <div class="reco-grid">
@@ -31,7 +31,7 @@ généraient auparavant un HTML quasi identique en dur dans actions.py
                     <span class="value" style="color: var(--status-success-text);">{{ source_value }}</span>
                 </div>
                 <div class="reco-item">
-                    <span class="label">Nombre d'IPs</span>
+                    <span class="label">{{ _("Nombre d'IPs") }}</span>
                     <span class="value">{{ total_ips }}</span>
                 </div>
             </div>
@@ -40,9 +40,9 @@ généraient auparavant un HTML quasi identique en dur dans actions.py
                 <table>
                     <thead>
                         <tr>
-                            <th>Adresse IP (Colonne 1)</th>
-                            <th>Adresse IP (Colonne 2)</th>
-                            <th>Adresse IP (Colonne 3)</th>
+                            <th>{{ _("Adresse IP (Colonne {number})").format(number=1) }}</th>
+                            <th>{{ _("Adresse IP (Colonne {number})").format(number=2) }}</th>
+                            <th>{{ _("Adresse IP (Colonne {number})").format(number=3) }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,6 +58,6 @@ généraient auparavant un HTML quasi identique en dur dans actions.py
             </div>
 
             <div class="footer-note">
-                Omega-Fire CLI Framework — Document de Rapport d'Exportation.
+                {{ _("Omega-Fire CLI Framework — Document de Rapport d'Exportation.") }}
             </div>
 {% endblock %}

@@ -27,7 +27,10 @@ from omega_fire.domain.fail2ban.exceptions import (
     JailAlreadyExistsError as DomainJailAlreadyExistsError,
     IPAlreadyBannedError,
     IPNotFoundError,
+    JailNotDeletableError,
 )
+from omega_fire.domain.fail2ban.definitions import ConfigFile, JailDefinition, build_definitions, owned_filter
+from omega_fire.shared.i18n import _
 
 
 class Fail2banAdapter:
@@ -980,27 +983,59 @@ class Fail2banAdapter:
 
         return self._build_jail_info(name)
 
+    def _jail_config_files(
+        self,
+        jail_d_dir: str = "/etc/fail2ban/jail.d",
+        jail_conf_path: Optional[str] = None,
+        jail_local_path: Optional[str] = None,
+    ) -> list[ConfigFile]:
+        """Fichiers de configuration fail2ban, dans l'ordre de lecture de fail2ban."""
+        base_dir = os.path.dirname(os.path.normpath(jail_d_dir))
+        jail_conf_path = jail_conf_path or os.path.join(base_dir, "jail.conf")
+        jail_local_path = jail_local_path or os.path.join(base_dir, "jail.local")
+        names: list[tuple[str, bool]] = [(jail_conf_path, True)]
+        if os.path.isdir(jail_d_dir):
+            listing = sorted(os.listdir(jail_d_dir))
+            names += [(os.path.join(jail_d_dir, f), False) for f in listing if f.endswith(".conf")]
+            names.append((jail_local_path, True))
+            names += [(os.path.join(jail_d_dir, f), False) for f in listing if f.endswith(".local")]
+        else:
+            names.append((jail_local_path, True))
+        configs: list[ConfigFile] = []
+        for path, main in names:
+            try:
+                with open(path, encoding="utf-8", errors="replace") as handle:
+                    configs.append(ConfigFile(path=path, content=handle.read(), main=main))
+            except OSError:
+                continue
+        return configs
+
+    def jail_definitions(
+        self,
+        jail_d_dir: str = "/etc/fail2ban/jail.d",
+        jail_conf_path: Optional[str] = None,
+        jail_local_path: Optional[str] = None,
+    ) -> dict[str, JailDefinition]:
+        """Ou est defini chaque jail et par qui (Fail2banPort contract, version 3.5) : par
+        section `[nom]`, quel que soit le nom du fichier (omega-jail ecrit
+        omega-jail-<nom>.conf)."""
+        return build_definitions(self._jail_config_files(jail_d_dir, jail_conf_path, jail_local_path))
+
     def list_configured_jail_files(self, jail_d_dir: str = "/etc/fail2ban/jail.d") -> dict[str, str]:
         """List jail config files present on disk (Fail2banPort contract).
 
-        Moved here from action_4_5_delete_jail (interfaces/cli/actions.py),
-        qui faisait ce même scan `os.listdir()` directement — violation de
-        la charte hexagonale (référentiel §80). Logique inchangée, seule
-        la couche d'exécution change.
-
-        Args:
-            jail_d_dir: Directory the jail configs live in (overridable for testing)
+        Version 3.5 : cle = nom du JAIL (section `[nom]`), et non plus le nom du fichier —
+        un fichier omega-jail-<nom>.conf faisait apparaitre un faux jail « omega-jail-<nom> »
+        a cote du vrai. Seuls les jails definis dans jail.d/ (jail.conf / jail.local exclus).
 
         Returns:
             Mapping {jail_name: absolute path to its .conf/.local file}.
         """
         jail_files: dict[str, str] = {}
-        if not os.path.exists(jail_d_dir):
-            return jail_files
-        for fname in os.listdir(jail_d_dir):
-            if fname.endswith(".conf") or fname.endswith(".local"):
-                j_name = fname.rsplit(".", 1)[0]
-                jail_files[j_name] = os.path.join(jail_d_dir, fname)
+        for name, definition in self.jail_definitions(jail_d_dir).items():
+            own = [path for path in definition.files if os.path.dirname(path) == os.path.normpath(jail_d_dir)]
+            if own:
+                jail_files[name] = own[-1]
         return jail_files
 
     def delete_jail(
@@ -1008,44 +1043,44 @@ class Fail2banAdapter:
         jail_name: str,
         jail_d_dir: str = "/etc/fail2ban/jail.d",
         filter_d_dir: str = "/etc/fail2ban/filter.d",
+        jail_conf_path: Optional[str] = None,
+        jail_local_path: Optional[str] = None,
     ) -> None:
         """Delete a fail2ban jail (Fail2banPort contract).
 
-        Looks for both `{jail_name}.conf` and `{jail_name}.local` under
-        jail_d_dir — both are valid fail2ban config file extensions, and
-        action_4_5_delete_jail's own pre-existing discovery (before it
-        delegated here, referentiel §33/§35) already scanned for both.
-        Widened in place rather than added alongside: zero real callers
-        of this method existed before action_4_5_delete_jail's own
-        migration (grep-confirmed), so there was no existing behavior to
-        preserve.
-
-        Args:
-            jail_name: Name of the jail to delete
-            jail_d_dir: Directory the jail config lives in (overridable for testing)
-            filter_d_dir: Directory jail-named filters would live in, if any
-                (overridable for testing)
+        Version 3.5 : le fichier est retrouve par sa section `[nom]` (omega-jail ecrit
+        omega-jail-<nom>.conf : avant, le jail etait arrete puis relance par le reload). Refus
+        (JailNotDeletableError) si le jail est defini dans jail.conf / jail.local ou dans un
+        fichier jail.d partage avec d'autres jails : supprimer le fichier toucherait a autre
+        chose. Le filtre n'est supprime que s'il est propre au jail ET porte l'en-tete
+        d'Omega-Fire ou d'Omega-Jail — jamais un filtre standard de fail2ban (sshd…).
 
         Raises:
             DomainJailNotFoundError: If the jail exists neither on disk nor in the daemon
+            JailNotDeletableError: If removing its file would touch other settings
         """
-        jail_conf_paths = [
-            os.path.join(jail_d_dir, f"{jail_name}.conf"),
-            os.path.join(jail_d_dir, f"{jail_name}.local"),
-        ]
-        existing_conf_paths = [p for p in jail_conf_paths if os.path.exists(p)]
+        definition = self.jail_definitions(jail_d_dir, jail_conf_path, jail_local_path).get(jail_name)
         exists_in_daemon = jail_name in self.list_jails()
-        if not existing_conf_paths and not exists_in_daemon:
+        if definition is None and not exists_in_daemon:
             raise DomainJailNotFoundError(jail_name)
+        if definition is not None and not definition.deletable:
+            raise JailNotDeletableError(jail_name, definition.blocked or "", definition.files)
 
         self._run_raw(["fail2ban-client", "stop", jail_name])  # best-effort
 
-        for path in existing_conf_paths:
+        for path in (definition.files if definition else ()):
             os.remove(path)
 
-        filter_conf_path = os.path.join(filter_d_dir, f"{jail_name}.conf")
-        if os.path.exists(filter_conf_path):
-            os.remove(filter_conf_path)
+        filter_name = owned_filter(definition) if definition else None
+        if filter_name:
+            filter_conf_path = os.path.join(filter_d_dir, f"{filter_name}.conf")
+            try:
+                with open(filter_conf_path, encoding="utf-8", errors="replace") as handle:
+                    head = handle.read(300)
+            except OSError:
+                head = ""
+            if "Omega-Fire" in head or "Omega-Jail" in head:
+                os.remove(filter_conf_path)
 
         self._run_raw(["fail2ban-client", "reload"])  # best-effort
 
@@ -1091,7 +1126,7 @@ class Fail2banAdapter:
         raw_output = (result.stderr or result.stdout or "").strip()
         errors = [line.strip() for line in raw_output.splitlines() if line.strip()]
         if not errors:
-            errors = [f"fail2ban-client -t a échoué sans détail (code de retour {result.returncode})"]
+            errors = [_("fail2ban-client -t a échoué sans détail (code de retour {returncode})").format(returncode=result.returncode)]
         return False, errors
 
     def stop_service(self) -> None:

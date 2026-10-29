@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from omega_fire.shared.i18n import _
 
 
 def human_bytes(value: int, *, binary: bool = True) -> str:
@@ -15,7 +16,7 @@ def human_bytes(value: int, *, binary: bool = True) -> str:
                 sinon des puissances de 1000 (KB, MB...).
     """
     if value < 0:
-        raise ValueError("human_bytes attend une valeur positive")
+        raise ValueError(_("human_bytes attend une valeur positive"))
     base = 1024 if binary else 1000
     units = (
         ["B", "KiB", "MiB", "GiB", "TiB"]
@@ -33,7 +34,7 @@ def human_bytes(value: int, *, binary: bool = True) -> str:
 def human_duration(seconds: float) -> str:
     """Formate une durée en secondes sous forme lisible (ex: '2h 15m 03s')."""
     if seconds < 0:
-        raise ValueError("human_duration attend une valeur positive")
+        raise ValueError(_("human_duration attend une valeur positive"))
     td = timedelta(seconds=int(seconds))
     total = int(td.total_seconds())
     days, rem = divmod(total, 86400)

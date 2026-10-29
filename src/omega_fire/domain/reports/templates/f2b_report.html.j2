@@ -1,6 +1,6 @@
 {% extends "_base.html.j2" %}
 
-{% block title %}Rapport détaillé Fail2ban - Omega-Fire{% endblock %}
+{% block title %}{{ _("Rapport détaillé Fail2ban - Omega-Fire") }}{% endblock %}
 {% block terminal_title %}omega-fire -- rapport-fail2ban-detail{% endblock %}
 
 {% block extra_style %}
@@ -52,40 +52,40 @@
 {% endblock %}
 
 {% block content %}
-            <h1>Rapport détaillé Fail2ban<span class="cursor"></span></h1>
+            <h1>{{ _("Rapport détaillé Fail2ban") }}<span class="cursor"></span></h1>
 
             <div class="note-historique">
-                <span class="note-prefix">[FAIL2BAN REPORT]</span> Généré le {{ generated_at }}
+                <span class="note-prefix">[FAIL2BAN REPORT]</span> {{ _("Généré le {when}").format(when=generated_at) }}
             </div>
 
-            <h2>Système</h2>
+            <h2>{{ _("Système") }}</h2>
             <div class="reco-grid">
                 <div class="reco-item">
-                    <span class="label">Installé</span>
-                    <span class="badge badge-{{ 'yes' if system.installed else 'no' }}">{{ 'Oui' if system.installed else 'Non' }}</span>
+                    <span class="label">{{ _("Installé") }}</span>
+                    <span class="badge badge-{{ 'yes' if system.installed else 'no' }}">{{ _("Oui") if system.installed else _("Non") }}</span>
                 </div>
                 <div class="reco-item">
-                    <span class="label">Service actif</span>
-                    <span class="badge badge-{{ 'yes' if system.service_running else 'no' }}">{{ 'Oui' if system.service_running else 'Non' }}</span>
+                    <span class="label">{{ _("Service actif") }}</span>
+                    <span class="badge badge-{{ 'yes' if system.service_running else 'no' }}">{{ _("Oui") if system.service_running else _("Non") }}</span>
                 </div>
                 <div class="reco-item">
-                    <span class="label">Activé au démarrage</span>
+                    <span class="label">{{ _("Activé au démarrage") }}</span>
                     {% if system.enabled_at_boot is none %}
-                    <span class="badge badge-unknown">Indéterminé</span>
+                    <span class="badge badge-unknown">{{ _("Indéterminé") }}</span>
                     {% else %}
-                    <span class="badge badge-{{ 'yes' if system.enabled_at_boot else 'no' }}">{{ 'Oui' if system.enabled_at_boot else 'Non' }}</span>
+                    <span class="badge badge-{{ 'yes' if system.enabled_at_boot else 'no' }}">{{ _("Oui") if system.enabled_at_boot else _("Non") }}</span>
                     {% endif %}
                 </div>
             </div>
 
-            <h2>Jails ({{ total_jails }})</h2>
+            <h2>{{ _("Jails ({count})").format(count=total_jails) }}</h2>
             {% if jails %}
                 {% for jail in jails %}
                 <div class="jail-card">
                     <div class="jail-name">{{ jail.name }}</div>
                     <div class="jail-stats">
-                        <div class="jail-stat"><div class="label">Échecs actuel/total</div><div class="value">{{ jail.currently_failed }} / {{ jail.total_failed }}</div></div>
-                        <div class="jail-stat"><div class="label">Bannis actuel/total</div><div class="value">{{ jail.currently_banned }} / {{ jail.total_banned }}</div></div>
+                        <div class="jail-stat"><div class="label">{{ _("Échecs actuel/total") }}</div><div class="value">{{ jail.currently_failed }} / {{ jail.total_failed }}</div></div>
+                        <div class="jail-stat"><div class="label">{{ _("Bannis actuel/total") }}</div><div class="value">{{ jail.currently_banned }} / {{ jail.total_banned }}</div></div>
                         <div class="jail-stat"><div class="label">Maxretry</div><div class="value">{{ jail.maxretry or 'N/A' }}</div></div>
                         <div class="jail-stat"><div class="label">Bantime</div><div class="value">{{ jail.bantime or 'N/A' }}</div></div>
                         <div class="jail-stat"><div class="label">Findtime</div><div class="value">{{ jail.findtime or 'N/A' }}</div></div>
@@ -93,18 +93,18 @@
 
                     {% if jail.banned_ips %}
                     <div class="jail-ips">
-                        <span class="label">IPs bannies actuellement</span>
-                        {{ jail.banned_ips|join(', ') }}{% if jail.banned_ips_overflow > 0 %} <em>(+{{ jail.banned_ips_overflow }} autre(s))</em>{% endif %}
+                        <span class="label">{{ _("IPs bannies actuellement") }}</span>
+                        {{ jail.banned_ips|join(', ') }}{% if jail.banned_ips_overflow > 0 %} <em>{{ _("(+{count} autre(s))").format(count=jail.banned_ips_overflow) }}</em>{% endif %}
                     </div>
                     {% else %}
-                    <div class="jail-ips"><span class="label">IPs bannies actuellement</span>Aucune</div>
+                    <div class="jail-ips"><span class="label">{{ _("IPs bannies actuellement") }}</span>{{ _("Aucune") }}</div>
                     {% endif %}
 
                     {% if jail.history_available %}
                         {% if jail.recent_bans %}
                         <div class="table-wrapper">
                             <table>
-                                <thead><tr><th>Date du ban</th><th>IP</th></tr></thead>
+                                <thead><tr><th>{{ _("Date du ban") }}</th><th>IP</th></tr></thead>
                                 <tbody>
                                 {% for rb in jail.recent_bans %}
                                     <tr><td>{{ rb.timeofban.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ rb.ip }}</td></tr>
@@ -113,22 +113,22 @@
                             </table>
                         </div>
                         {% else %}
-                        <div class="empty-state">Aucun ban dans l'historique fail2ban.</div>
+                        <div class="empty-state">{{ _("Aucun ban dans l'historique fail2ban.") }}</div>
                         {% endif %}
                     {% else %}
-                    <div class="empty-state">Historique fail2ban indisponible (base non trouvée).</div>
+                    <div class="empty-state">{{ _("Historique fail2ban indisponible (base non trouvée).") }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="empty-state">Aucune jail active.</div>
+            <div class="empty-state">{{ _("Aucune jail active.") }}</div>
             {% endif %}
 
-            <h2>IPs présentes dans plusieurs jails</h2>
+            <h2>{{ _("IPs présentes dans plusieurs jails") }}</h2>
             {% if duplicate_ips %}
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>IP</th><th>Jails concernées</th></tr></thead>
+                    <thead><tr><th>IP</th><th>{{ _("Jails concernées") }}</th></tr></thead>
                     <tbody>
                     {% for dup in duplicate_ips %}
                         <tr><td>{{ dup.ip }}</td><td>{{ dup.jails|join(', ') }}</td></tr>
@@ -137,10 +137,10 @@
                 </table>
             </div>
             {% else %}
-            <div class="empty-state">Aucune IP partagée entre plusieurs jails actuellement.</div>
+            <div class="empty-state">{{ _("Aucune IP partagée entre plusieurs jails actuellement.") }}</div>
             {% endif %}
 
             <div class="footer-note">
-                Omega-Fire CLI Framework — Rapport détaillé Fail2ban.
+                {{ _("Omega-Fire CLI Framework — Rapport détaillé Fail2ban.") }}
             </div>
 {% endblock %}

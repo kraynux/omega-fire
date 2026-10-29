@@ -6,6 +6,7 @@ These express failures in conntrack command execution or parsing.
 They are caught by the application layer and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class ConntrackError(CoreError):
@@ -23,7 +24,7 @@ class ConntrackCommandError(ConntrackError):
     diagnostiquer plus tard, ex. rapporter le bug en amont). Vide par
     defaut (aucun changement pour les echecs conntrack "ordinaires")."""
     def __init__(self, command: str, returncode: int, stderr: str, context: dict = None, note: str = ""):
-        message = f"conntrack command failed (exit {returncode}): {command}"
+        message = _("Échec de la commande conntrack (code {returncode}) : {command}").format(returncode=returncode, command=command)
         if note:
             message = f"{note} — {message}"
         super().__init__(
@@ -39,7 +40,7 @@ class ConntrackParseError(ConntrackError):
     """Raised when conntrack output cannot be parsed."""
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
-            f"Failed to parse conntrack output: {reason}",
+            _("Sortie de conntrack illisible : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -57,9 +58,7 @@ class ConntrackPermissionError(ConntrackError):
     (juste suggeree a l'utilisateur, qui reste seul decisionnaire)."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou "
-            f"CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une "
-            f"fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack)).",
+            _("Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack)).").format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

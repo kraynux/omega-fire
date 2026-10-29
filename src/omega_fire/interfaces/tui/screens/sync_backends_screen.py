@@ -13,6 +13,7 @@ from textual.widgets import Button, Footer, Header, Select, Static
 from omega_fire.application.commands.sync_backends import SyncBackendsCommand
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -41,17 +42,17 @@ class SyncBackendsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("SYNCHRONISER LES BACKENDS", classes="omega-title")
-            yield Static("Backend(s) a synchroniser", classes="omega-subtitle")
-            options = [("Tous les backends", _ALL_BACKENDS)] + [
+            yield Static(_("SYNCHRONISER LES BACKENDS"), classes="omega-title")
+            yield Static(_("Backend(s) à synchroniser"), classes="omega-subtitle")
+            options = [(_("Tous les backends"), _ALL_BACKENDS)] + [
                 (name, name) for name in self._supported_backends
             ]
             yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Synchroniser", id="launch", variant="primary")
+                    yield Button(_("Synchroniser"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -77,16 +78,16 @@ class SyncBackendsScreen(OmegaScreen):
 
         for outcome in result.outcomes:
             for err in outcome.errors:
-                self.app.notify(f"Echec pour {err}", title=outcome.backend, severity="error")
+                self.app.notify(_("Échec pour {err}").format(err=err), title=outcome.backend, severity="error")
             if outcome.added_count > 0:
-                self.app.notify(f"{outcome.added_count} IP(s) manquante(s) ajoutee(s).", title=outcome.backend, severity="information")
+                self.app.notify(_("{added_count} IP(s) manquante(s) ajoutée(s).").format(added_count=outcome.added_count), title=outcome.backend, severity="information")
             elif not outcome.errors:
-                self.app.notify("Deja a jour (0 IP a ajouter).", title=outcome.backend, severity="information")
+                self.app.notify(_("Déjà à jour (0 IP à ajouter)."), title=outcome.backend, severity="information")
 
         if result.total_added == 0:
-            self.app.notify("Tous les backends cibles etaient deja parfaitement synchronises.")
+            self.app.notify(_("Tous les backends cibles étaient déjà parfaitement synchronisés."))
         else:
-            self.app.notify(f"Synchronisation terminee : {result.total_added} IP(s) au total realignees.")
+            self.app.notify(_("Synchronisation terminée : {total_added} IP(s) au total realignees.").format(total_added=result.total_added))
 
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

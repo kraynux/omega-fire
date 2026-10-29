@@ -20,6 +20,7 @@ from omega_fire.infrastructure.backends.service_manager.exceptions import (
     ServiceControlError,
     ServiceStatusError,
 )
+from omega_fire.shared.i18n import _
 
 
 class SystemdServiceManager(ServiceManager):
@@ -73,7 +74,7 @@ class SystemdServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="start",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="systemd",
                 )
         
@@ -81,7 +82,7 @@ class SystemdServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="start",
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     
@@ -117,7 +118,7 @@ class SystemdServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="stop",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="systemd",
                 )
         
@@ -125,7 +126,7 @@ class SystemdServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="stop",
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     
@@ -161,7 +162,7 @@ class SystemdServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="restart",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="systemd",
                 )
         
@@ -169,7 +170,7 @@ class SystemdServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="restart",
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     
@@ -205,7 +206,7 @@ class SystemdServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="enable",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="systemd",
                 )
         
@@ -213,7 +214,7 @@ class SystemdServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="enable",
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     
@@ -249,7 +250,7 @@ class SystemdServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="disable",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="systemd",
                 )
         
@@ -257,7 +258,7 @@ class SystemdServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="disable",
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     
@@ -308,7 +309,7 @@ class SystemdServiceManager(ServiceManager):
         except FileNotFoundError:
             raise ServiceStatusError(
                 service_name=service_name,
-                reason="systemctl binary not found",
+                reason=_("Exécutable systemctl introuvable"),
                 manager_type="systemd",
             )
     

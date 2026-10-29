@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple
 from omega_fire.core.stats.models import IpStat, JailStat, LogEntry, LogStatsSummary
 from omega_fire.infrastructure.logging.stats.file_collector import FileLogCollector
 from omega_fire.infrastructure.logging.stats.sqlite_collector import SqliteLogCollector
+from omega_fire.shared.i18n import N_, _
 
 
 class LogAggregator:
@@ -80,9 +81,9 @@ class LogAggregator:
                     continue
 
                 if "NFT" in fw_type or "nft" in line.lower():
-                    jail_name = f"nftables (port {dpt})" if dpt else "nftables-drop"
+                    jail_name = _("nftables (port {dpt})").format(dpt=dpt) if dpt else "nftables-drop"
                 else:
-                    jail_name = f"iptables (port {dpt})" if dpt else "iptables-drop"
+                    jail_name = _("iptables (port {dpt})").format(dpt=dpt) if dpt else "iptables-drop"
 
                 entries.append(
                     LogEntry(
@@ -110,19 +111,19 @@ class LogAggregator:
         # 1. Tentative d'extraction via SQLite
         if self.sqlite_collector.is_available():
             entries = self.sqlite_collector.fetch_bans(since=start_date)
-            data_source = "SQLite"
+            data_source = _("SQLite")
 
         # 2. Fallback / Complément via les fichiers logs
         if not entries:
             entries = self.file_collector.fetch_entries(since=start_date)
-            data_source = "Fichiers Logs"
+            data_source = _("Fichiers Logs")
 
         # 2b. Ajout des événements pare-feu (iptables / nftables)
         fw_entries = self._parse_kernel_firewall_logs(since=start_date)
         if fw_entries:
             entries.extend(fw_entries)
             if data_source == "Inconnue":
-                data_source = "Pare-feu Système"
+                data_source = _("Pare-feu Système")
 
         return entries, data_source
 
@@ -165,7 +166,7 @@ class LogAggregator:
                 )
             )
 
-        top_jail_name = top_jails[0].name if top_jails else "Aucun"
+        top_jail_name = top_jails[0].name if top_jails else _("Aucun")
 
         # Agrégation par IP
         ip_data: Dict[str, Dict] = {}
@@ -213,7 +214,8 @@ class LogAggregator:
             data_source=data_source,
         )
 
-    _DAY_LABELS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+    # N_ : traduits a l'usage, pour suivre la langue des exports (lot N).
+    _DAY_LABELS_FR = [N_("Lun"), N_("Mar"), N_("Mer"), N_("Jeu"), N_("Ven"), N_("Sam"), N_("Dim")]
 
     def get_daily_trend(self, period_code: str = "7d") -> List[Tuple[str, int]]:
         """Agrège les bans par jour (période '7d') ou par bloc de 7 jours
@@ -238,7 +240,7 @@ class LogAggregator:
         delta = self.PERIOD_MAP.get(period_code, timedelta(days=7))
         start_date = end_date - delta
 
-        entries, _ = self._collect_entries(start_date)
+        entries, _ignored = self._collect_entries(start_date)
         bans_only = [e for e in entries if e.action in ("Ban", "Restore")]
 
         bucket_days = 7 if period_code == "30d" else 1
@@ -257,7 +259,7 @@ class LogAggregator:
                 if bucket_start <= e.timestamp < bucket_end
             )
             if bucket_days == 1:
-                label = f"{self._DAY_LABELS_FR[bucket_start.weekday()]} {bucket_start.day:02d}"
+                label = _("{value} {day:02d}").format(value=_(self._DAY_LABELS_FR[bucket_start.weekday()]), day=bucket_start.day)
             else:
                 last_day = bucket_end - timedelta(seconds=1)
                 label = f"{bucket_start.strftime('%d/%m')}-{last_day.strftime('%d/%m')}"

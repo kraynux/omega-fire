@@ -14,6 +14,7 @@ from typing import Any, Optional
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
 from omega_fire.domain.fail2ban.models import Jail, JailConfig, JailStatus, JailManagedBy
 from omega_fire.infrastructure.exceptions import StorageError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -147,7 +148,7 @@ class BackupStateCommand:
         if not any(adapter is not None for adapter in self._adapters.values()):
             return BackupStateResult(
                 success=False,
-                message="Aucun backend disponible (nftables, iptables, ip6tables et fail2ban non détectés).",
+                message=_("Aucun backend disponible (nftables, iptables, ip6tables et fail2ban non détectés)."),
             )
 
         # domain/persistence/backup.py::plan_backup() refuse tout backup
@@ -160,10 +161,10 @@ class BackupStateCommand:
             return BackupStateResult(
                 success=False,
                 message=(
-                    "Rien à sauvegarder pour l'instant (0 règle, 0 IP bannie, 0 jail) — normal "
+                    _("Rien à sauvegarder pour l'instant (0 règle, 0 IP bannie, 0 jail) — normal "
                     "juste après une initialisation sans règle ajoutée (menu 3.5). Ajoutez des "
                     "règles avant de sauvegarder, ou réinitialisez cet état à la demande via le "
-                    "menu 3.5 plutôt que de le sauvegarder vide."
+                    "menu 3.5 plutôt que de le sauvegarder vide.")
                 ),
             )
 
@@ -176,13 +177,13 @@ class BackupStateCommand:
                 origin=request.origin,
             )
         except StorageError as e:
-            return BackupStateResult(success=False, message=f"Échec de la sauvegarde : {e}")
+            return BackupStateResult(success=False, message=_("Échec de la sauvegarde : {e}").format(e=e))
         except Exception as e:
-            return BackupStateResult(success=False, message=f"Erreur inattendue : {e}")
+            return BackupStateResult(success=False, message=_("Erreur inattendue : {e}").format(e=e))
 
         return BackupStateResult(
             success=True,
-            message=f"Snapshot créé avec succès : {snapshot.id}",
+            message=_("Snapshot créé avec succès : {id}").format(id=snapshot.id),
             snapshot_id=snapshot.id,
             blacklist_count=snapshot.blacklist_count,
             rules_count=snapshot.rules_count,

@@ -16,6 +16,7 @@ from omega_fire.domain.rules.models import (
     RuleProtocol,
     RuleSet,
 )
+from omega_fire.shared.i18n import _
 
 
 class PolicyType(Enum):
@@ -106,7 +107,7 @@ def build_local_policy(backend: str = "nftables") -> FirewallPolicy:
     return FirewallPolicy(
         policy_type=PolicyType.LOCAL,
         name="Local Workstation",
-        description="Allow outgoing, block incoming except SSH",
+        description=_("Autorise le trafic sortant, bloque le trafic entrant sauf SSH"),
         rules=rules,
         backend=backend,
     )
@@ -200,7 +201,7 @@ def build_strict_policy(backend: str = "nftables") -> FirewallPolicy:
     return FirewallPolicy(
         policy_type=PolicyType.STRICT,
         name="Strict Production",
-        description="Allow only SSH/HTTP/HTTPS, log and drop all other incoming",
+        description=_("N'autorise que SSH/HTTP/HTTPS, journalise et bloque tout autre trafic entrant"),
         rules=rules,
         backend=backend,
     )
@@ -251,7 +252,7 @@ def build_maintenance_policy(backend: str = "nftables") -> FirewallPolicy:
     return FirewallPolicy(
         policy_type=PolicyType.MAINTENANCE,
         name="Maintenance Mode",
-        description="Allow only SSH, drop all other incoming",
+        description=_("N'autorise que SSH, bloque tout autre trafic entrant"),
         rules=rules,
         backend=backend,
     )
@@ -307,7 +308,7 @@ def build_monitoring_policy(backend: str = "nftables") -> FirewallPolicy:
     return FirewallPolicy(
         policy_type=PolicyType.MONITORING,
         name="Monitoring Mode",
-        description="Log all traffic, no blocking",
+        description=_("Journalise tout le trafic, sans rien bloquer"),
         rules=rules,
         backend=backend,
     )
@@ -335,7 +336,7 @@ def get_policy(policy_type: PolicyType, backend: str = "nftables") -> FirewallPo
     
     builder = builders.get(policy_type)
     if builder is None:
-        raise ValueError(f"Unknown policy type: {policy_type}")
+        raise ValueError(_("Type de politique inconnu : {policy_type}").format(policy_type=policy_type))
     
     return builder(backend=backend)
 

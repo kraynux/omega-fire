@@ -22,11 +22,12 @@ from omega_fire.infrastructure.probe.network_probe import list_network_interface
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "3.1 Creer une regle avancee"
+_ACTION_TITLE = "3.1 Créer une règle avancée"
 _ALL_BACKENDS = "__all__"
 _IFACE_ANY = "__any__"
 _IFACE_MANUAL = "__manual__"
@@ -54,72 +55,72 @@ class CreateRuleScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
-            yield Static("CREER UNE REGLE AVANCEE", classes="omega-title")
+            yield Static(_("CRÉER UNE RÈGLE AVANCÉE"), classes="omega-title")
 
             if not self._available_backends:
-                yield Static("Aucun backend firewall disponible (nftables/iptables non detectes).", classes="omega-hint")
+                yield Static(_("Aucun backend firewall disponible (nftables/iptables non détectés)."), classes="omega-hint")
                 with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
                 yield Footer()
                 return
 
-            yield Static("Backend(s) cible(s)", classes="omega-subtitle")
-            options = [("Tous les backends (recommande)", _ALL_BACKENDS)] + [
-                (f"Uniquement {b} (diagnostic)", b) for b in self._available_backends
+            yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
+            options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
+                (_("Uniquement {b} (diagnostic)").format(b=b), b) for b in self._available_backends
             ]
             yield Select(options, value=_ALL_BACKENDS, id="backend-select")
 
-            yield Static("Nom de la regle", classes="omega-subtitle")
-            yield Input(placeholder="ex. BLOCK_SSH_ATTACKS", id="name-input")
+            yield Static(_("Nom de la règle"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. BLOCK_SSH_ATTACKS"), id="name-input")
 
-            yield Static("Description (optionnelle)", classes="omega-subtitle")
+            yield Static(_("Description (optionnelle)"), classes="omega-subtitle")
             yield Input(id="description-input")
 
-            yield Static("Action", classes="omega-subtitle")
+            yield Static(_("Action"), classes="omega-subtitle")
             yield Select(
-                [("DROP (bloquer silencieusement)", "DROP"), ("REJECT (rejeter avec notification)", "REJECT"),
-                 ("ACCEPT (autoriser)", "ACCEPT")],
+                [(_("DROP (bloquer silencieusement)"), "DROP"), (_("REJECT (rejeter avec notification)"), "REJECT"),
+                 (_("ACCEPT (autoriser)"), "ACCEPT")],
                 value="DROP",
                 id="action-select",
             )
 
-            yield Static("Chaine / Flux", classes="omega-subtitle")
+            yield Static(_("Chaîne / Flux"), classes="omega-subtitle")
             yield Select(
-                [("INPUT (trafic entrant)", "INPUT"), ("FORWARD (trafic route/transitant)", "FORWARD"),
-                 ("OUTPUT (trafic sortant)", "OUTPUT")],
+                [(_("INPUT (trafic entrant)"), "INPUT"), (_("FORWARD (trafic route/transitant)"), "FORWARD"),
+                 (_("OUTPUT (trafic sortant)"), "OUTPUT")],
                 value="INPUT",
                 id="chain-select",
             )
 
-            yield Static("Protocole", classes="omega-subtitle")
+            yield Static(_("Protocole"), classes="omega-subtitle")
             yield Select(
-                [("TCP", "tcp"), ("UDP", "udp"), ("ICMP", "icmp"), ("ALL (tous protocoles)", "all")],
+                [("TCP", "tcp"), ("UDP", "udp"), ("ICMP", "icmp"), (_("ALL (tous protocoles)"), "all")],
                 value="tcp",
                 id="protocol-select",
             )
 
-            yield Static("IP/Subnet source (vide = ANY)", classes="omega-subtitle")
-            yield Input(placeholder="ex. 192.168.1.50 ou 10.0.0.0/24", id="src-input")
+            yield Static(_("IP/Subnet source (vide = ANY)"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 192.168.1.50 ou 10.0.0.0/24"), id="src-input")
 
-            yield Static("IP/Subnet destination (vide = ANY)", classes="omega-subtitle")
-            yield Input(placeholder="ex. 192.168.1.1", id="dst-input")
+            yield Static(_("IP/Subnet destination (vide = ANY)"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 192.168.1.1"), id="dst-input")
 
-            yield Static("Port destination (vide = ANY)", id="port-label", classes="omega-subtitle")
-            yield Input(placeholder="ex. 22, 80, 443", id="port-input")
+            yield Static(_("Port destination (vide = ANY)"), id="port-label", classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 22, 80, 443"), id="port-input")
 
-            yield Static("Interface reseau", classes="omega-subtitle")
-            iface_options = [("ANY (toutes interfaces)", _IFACE_ANY)] + [
+            yield Static(_("Interface réseau"), classes="omega-subtitle")
+            iface_options = [(_("ANY (toutes interfaces)"), _IFACE_ANY)] + [
                 (name, name) for name in self._detected_interfaces
-            ] + [("Saisie manuelle", _IFACE_MANUAL)]
+            ] + [(_("Saisie manuelle"), _IFACE_MANUAL)]
             yield Select(iface_options, value=_IFACE_ANY, id="iface-select")
-            yield Static("Nom de l'interface", id="iface-manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Nom de l'interface"), id="iface-manual-label", classes="omega-subtitle omega-hidden")
             yield Input(id="iface-manual-input", classes="omega-hidden")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Creer", id="launch", variant="primary")
+                    yield Button(_("Créer"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -152,7 +153,7 @@ class CreateRuleScreen(OmegaScreen):
     def _launch(self) -> None:
         rule_name = self.query_one("#name-input", Input).value.strip().upper()
         if not rule_name:
-            self.app.notify("Le nom de la regle ne peut pas etre vide.", severity="warning")
+            self.app.notify(_("Le nom de la règle ne peut pas être vide."), severity="warning")
             return
         description = self.query_one("#description-input", Input).value.strip()
 
@@ -172,7 +173,7 @@ class CreateRuleScreen(OmegaScreen):
                 ipaddress.ip_network(src_raw, strict=False)
                 src_ip = src_raw
             except ValueError:
-                self.app.notify("Adresse IP/subnet source invalide.", severity="warning")
+                self.app.notify(_("Adresse IP/subnet source invalide."), severity="warning")
                 return
 
         dst_raw = self.query_one("#dst-input", Input).value.strip()
@@ -182,7 +183,7 @@ class CreateRuleScreen(OmegaScreen):
                 ipaddress.ip_network(dst_raw, strict=False)
                 dst_ip = dst_raw
             except ValueError:
-                self.app.notify("Adresse IP/subnet destination invalide.", severity="warning")
+                self.app.notify(_("Adresse IP/subnet destination invalide."), severity="warning")
                 return
 
         dst_port = None
@@ -192,7 +193,7 @@ class CreateRuleScreen(OmegaScreen):
                 if port_raw.isdigit() and 1 <= int(port_raw) <= 65535:
                     dst_port = int(port_raw)
                 else:
-                    self.app.notify("Le port doit etre un entier valide entre 1 et 65535.", severity="warning")
+                    self.app.notify(_("Le port doit être un entier valide entre 1 et 65535."), severity="warning")
                     return
 
         iface_choice = str(self.query_one("#iface-select", Select).value)
@@ -204,13 +205,10 @@ class CreateRuleScreen(OmegaScreen):
             iface = iface_choice
 
         summary = (
-            f"Nom : {rule_name}\nBackend(s) : {', '.join(target_backends)}\n"
-            f"Action : {rule_action} | Chaine : {rule_chain} | Protocole : {protocol.upper()}\n"
-            f"Source : {src_ip or 'ANY'} | Destination : {dst_ip or 'ANY'} | Port : {dst_port or 'ANY'}\n"
-            f"Interface : {iface or 'ANY'}"
+            _("Nom : {rule_name}\nBackend(s) : {value}\nAction : {rule_action} | Chaîne : {rule_chain} | Protocole : {value2}\nSource : {value3} | Destination : {value4} | Port : {value5}\nInterface : {value6}").format(rule_name=rule_name, value=', '.join(target_backends), rule_action=rule_action, rule_chain=rule_chain, value2=protocol.upper(), value3=src_ip or _('ANY'), value4=dst_ip or _('ANY'), value5=dst_port or _('ANY'), value6=iface or _('ANY'))
         )
         self.app.push_screen(
-            ConfirmScreen(title="CONFIRMER LA CREATION", message=summary),
+            ConfirmScreen(title=_("CONFIRMER LA CRÉATION"), message=summary),
             lambda confirmed: self._create_if_confirmed(
                 confirmed, rule_name, description, target_backends, rule_action,
                 rule_chain, protocol, src_ip, dst_ip, dst_port, iface,

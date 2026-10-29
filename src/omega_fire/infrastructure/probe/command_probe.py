@@ -15,6 +15,7 @@ from omega_fire.infrastructure.probe.exceptions import (
     ProbeExecutionError,
     ProbeTimeoutError,
 )
+from omega_fire.shared.i18n import N_, lazy
 
 
 class CommandProbe:
@@ -72,11 +73,11 @@ class CommandProbe:
         # Check presence
         binary_path = self.get_binary_path(binary_name)
         if binary_path is None:
-            return False, f"Binary '{binary_name}' not found in PATH"
+            return False, lazy(N_("Exécutable « {binary_name} » introuvable dans le PATH"), binary_name=binary_name)
         
         # If no test command, just check presence
         if test_command is None:
-            return True, f"Binary '{binary_name}' found at {binary_path}"
+            return True, lazy(N_("Exécutable « {binary_name} » trouvé : {binary_path}"), binary_name=binary_name, binary_path=binary_path)
         
         # Run test command
         try:
@@ -89,17 +90,17 @@ class CommandProbe:
             )
             
             if result.returncode == 0:
-                return True, f"Binary '{binary_name}' is functional"
+                return True, lazy(N_("Exécutable « {binary_name} » fonctionnel"), binary_name=binary_name)
             else:
-                error_msg = result.stderr.strip() or f"Exit code {result.returncode}"
-                return False, f"Binary '{binary_name}' test failed: {error_msg}"
+                error_msg = result.stderr.strip() or lazy(N_("Exit code {returncode}"), returncode=result.returncode)
+                return False, lazy(N_("Échec du test de l'exécutable « {binary_name} » : {error_msg}"), binary_name=binary_name, error_msg=error_msg)
         
         except subprocess.TimeoutExpired:
-            return False, f"Binary '{binary_name}' test timed out after {self._timeout}s"
+            return False, lazy(N_("Test de l'exécutable « {binary_name} » interrompu après {timeout} s"), binary_name=binary_name, timeout=self._timeout)
         except FileNotFoundError:
-            return False, f"Binary '{binary_name}' disappeared during test"
+            return False, lazy(N_("L'exécutable « {binary_name} » a disparu pendant le test"), binary_name=binary_name)
         except Exception as e:
-            return False, f"Binary '{binary_name}' test error: {e}"
+            return False, lazy(N_("Erreur pendant le test de l'exécutable « {binary_name} » : {e}"), binary_name=binary_name, e=e)
     
     def probe_command(
         self,
@@ -127,7 +128,7 @@ class CommandProbe:
                 "present": False,
                 "functional": False,
                 "path": None,
-                "message": f"Binary '{binary_name}' not found in PATH",
+                "message": lazy(N_("Exécutable « {binary_name} » introuvable dans le PATH"), binary_name=binary_name),
             }
         
         functional, message = self.check_functionality(binary_name, test_command)

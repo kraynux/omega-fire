@@ -25,6 +25,8 @@
 
         /* --- Distribution horaire (barres verticales) --- */
         .hourly-chart {
+            /* Axe des heures toujours de 00 a 23 de gauche a droite, meme en arabe (dir=rtl). */
+            direction: ltr;
             display: flex;
             align-items: flex-end;
             gap: 3px;
@@ -92,30 +94,30 @@
             <h1>{{ title }}<span class="cursor"></span></h1>
 
             <div class="note-historique">
-                <span class="note-prefix">[STATS]</span> Généré le {{ generated_at[:19] | replace("T", " à ") }}
+                <span class="note-prefix">[STATS]</span> {{ _("Généré le {date} à {time}").format(date=generated_at[:10], time=generated_at[11:19]) }}
             </div>
 
         {% for section in sections %}
 
             {% if section.name == "KPI" %}
                 <section>
-                    <h2>Synthèse — {{ section.content.period_label }}</h2>
+                    <h2>{{ _("Synthèse — {period}").format(period=section.content.period_label) }}</h2>
                     <div class="kpi-grid">
                         <div class="kpi-card">
                             <div class="value">{{ section.content.total_events }}</div>
-                            <div class="label">Événements scannés ({{ section.content.data_source }})</div>
+                            <div class="label">{{ _("Événements scannés ({source})").format(source=section.content.data_source) }}</div>
                         </div>
                         <div class="kpi-card">
                             <div class="value">{{ section.content.total_bans }}</div>
-                            <div class="label">Adresses IP bloquées</div>
+                            <div class="label">{{ _("Adresses IP bloquées") }}</div>
                         </div>
                         <div class="kpi-card">
                             <div class="value">{{ section.content.top_jail_name }}</div>
-                            <div class="label">Service le plus ciblé</div>
+                            <div class="label">{{ _("Service le plus ciblé") }}</div>
                         </div>
                         <div class="kpi-card">
                             <div class="value">{{ section.content.peak_hour }}</div>
-                            <div class="label">Heure de pointe ({{ section.content.peak_count }} évts)</div>
+                            <div class="label">{{ _("Heure de pointe ({count} évts)").format(count=section.content.peak_count) }}</div>
                         </div>
                     </div>
                 </section>
@@ -124,13 +126,13 @@
                 {% set hs = section.content.hourly_series %}
                 {% set max_val = hs|max if hs and hs|max > 0 else 1 %}
                 <section>
-                    <h2>Distribution Horaire (24h)</h2>
+                    <h2>{{ _("Distribution Horaire (24h)") }}</h2>
                     <div class="hourly-chart">
                         {% for val in hs %}
                             <div class="bar-col">
                                 <div class="bar {% if val == max_val and val > 0 %}peak{% endif %}"
                                      style="height: {{ (val / max_val * 100)|round(0) }}%;"
-                                     title="{{ '%02d'|format(loop.index0) }}h — {{ val }} évt(s)"></div>
+                                     title="{{ _("{hour}h — {count} évt(s)").format(hour='%02d'|format(loop.index0), count=val) }}"></div>
                                 {% if loop.index0 % 2 == 0 %}
                                     <div class="hour-label">{{ '%02d'|format(loop.index0) }}</div>
                                 {% endif %}
@@ -144,7 +146,7 @@
                 {% set max_t = (trend|map(attribute=1)|list)|max if trend else 1 %}
                 {% set max_t = max_t if max_t > 0 else 1 %}
                 <section>
-                    <h2>Tendance Journalière</h2>
+                    <h2>{{ _("Tendance Journalière") }}</h2>
                     {% if trend %}
                         {% for item in trend %}
                             <div class="trend-row">
@@ -156,16 +158,16 @@
                             </div>
                         {% endfor %}
                     {% else %}
-                        <p class="evo-empty">Aucune donnée disponible pour cette période.</p>
+                        <p class="evo-empty">{{ _("Aucune donnée disponible pour cette période.") }}</p>
                     {% endif %}
                 </section>
 
             {% elif section.name == "Top IPs" %}
                 <section>
-                    <h2>Top Adresses IP Ciblées</h2>
+                    <h2>{{ _("Top Adresses IP Ciblées") }}</h2>
                     <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>#</th><th>Adresse IP</th><th>Bans</th><th>Dernier Ban</th></tr></thead>
+                        <thead><tr><th>#</th><th>{{ _("Adresse IP") }}</th><th>{{ _("Bans") }}</th><th>{{ _("Dernier Ban") }}</th></tr></thead>
                         <tbody>
                             {% if section.content.ips %}
                                 {% for ip_stat in section.content.ips %}
@@ -177,7 +179,7 @@
                                     </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="4">Aucune donnée</td></tr>
+                                <tr><td colspan="4">{{ _("Aucune donnée") }}</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -186,24 +188,24 @@
 
             {% elif section.name == "Top Jails" %}
                 <section>
-                    <h2>Activité par Service (Jail)</h2>
+                    <h2>{{ _("Activité par Service (Jail)") }}</h2>
                     <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>Jail / Service</th><th>Statut</th><th>Bans</th><th>Part</th></tr></thead>
+                        <thead><tr><th>{{ _("Jail / Service") }}</th><th>{{ _("Statut") }}</th><th>{{ _("Bans") }}</th><th>{{ _("Part") }}</th></tr></thead>
                         <tbody>
                             {% if section.content.jails %}
                                 {% for jail in section.content.jails %}
                                     <tr>
                                         <td>{{ jail.name }}</td>
                                         <td class="{{ 'status-active' if jail.is_active else 'status-inactive' }}">
-                                            {{ '● Actif' if jail.is_active else '○ Archivé' }}
+                                            {{ '● ' ~ _("Actif") if jail.is_active else '○ ' ~ _("Archivé") }}
                                         </td>
                                         <td>{{ jail.total_bans }}</td>
                                         <td>{{ jail.percentage }}%</td>
                                     </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="4">Aucune donnée</td></tr>
+                                <tr><td colspan="4">{{ _("Aucune donnée") }}</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -212,26 +214,26 @@
 
             {% elif section.name == "Gestion" %}
                 <section>
-                    <h2>Gestion &amp; Administration</h2>
+                    <h2>{{ _("Gestion & Administration") }}</h2>
                     <div class="mgmt-grid">
                         <div class="mgmt-stat">
                             <div class="value">{{ section.content.rule_changes }}</div>
-                            <div class="label">Changements de profil / règles</div>
+                            <div class="label">{{ _("Changements de profil / règles") }}</div>
                         </div>
                         <div class="mgmt-stat">
                             <div class="value">{{ section.content.backups }}</div>
-                            <div class="label">Sauvegardes effectuées</div>
+                            <div class="label">{{ _("Sauvegardes effectuées") }}</div>
                         </div>
                         <div class="mgmt-stat">
                             <div class="value">{{ section.content.restores }}</div>
-                            <div class="label">Restaurations effectuées</div>
+                            <div class="label">{{ _("Restaurations effectuées") }}</div>
                         </div>
                         <div class="mgmt-stat">
                             {% set rate = section.content.success_rate %}
                             <div class="value success-rate {{ 'good' if rate >= 95 else ('warn' if rate >= 80 else 'bad') }}">
                                 {{ "%.1f"|format(rate) }}%
                             </div>
-                            <div class="label">Taux de succès ({{ section.content.total_actions }} action(s))</div>
+                            <div class="label">{{ _("Taux de succès ({count} action(s))").format(count=section.content.total_actions) }}</div>
                         </div>
                     </div>
                     {% if section.content.recent_entries %}
@@ -249,13 +251,13 @@
 
             {% elif section.name == "Évolution des Règles" %}
                 <section>
-                    <h2>Évolution des Règles &amp; IPs Bannies</h2>
+                    <h2>{{ _("Évolution des Règles & IPs Bannies") }}</h2>
                     {% set points = section.content.points %}
                     {% if points %}
-                        <p class="evo-note">{{ points|length }} point(s) de mesure sur la période — reflète les sauvegardes disponibles, pas un suivi continu.</p>
+                        <p class="evo-note">{{ _("{count} point(s) de mesure sur la période — reflète les sauvegardes disponibles, pas un suivi continu.").format(count=points|length) }}</p>
                         <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>Date</th><th>Règles Actives</th><th>IPs Bannies</th></tr></thead>
+                            <thead><tr><th>{{ _("Date") }}</th><th>{{ _("Règles Actives") }}</th><th>{{ _("IPs Bannies") }}</th></tr></thead>
                             <tbody>
                                 {% for point in points %}
                                     <tr>
@@ -268,7 +270,7 @@
                         </table>
                         </div>
                     {% else %}
-                        <p class="evo-empty">Aucun snapshot disponible sur cette période.</p>
+                        <p class="evo-empty">{{ _("Aucun snapshot disponible sur cette période.") }}</p>
                     {% endif %}
                 </section>
             {% endif %}
@@ -276,6 +278,6 @@
         {% endfor %}
 
             <div class="footer-note">
-                Omega-Fire — Rapport Statistique Périodique
+                {{ _("Omega-Fire — Rapport Statistique Périodique") }}
             </div>
 {% endblock %}

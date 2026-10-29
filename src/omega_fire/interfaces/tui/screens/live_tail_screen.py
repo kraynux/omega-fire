@@ -33,11 +33,12 @@ from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.cli.renderers.logs_live import LogBuffer
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "5.1 Visualiser les logs en direct (Live Tail)"
+_ACTION_TITLE = "8.5 Visualiser les logs serveurs avec Tail"
 _REFRESH_SECONDS = 2.0
 _VISIBLE_ROWS = 30
 _BUFFER_SIZE = 500
@@ -191,10 +192,10 @@ class _LogProvider:
                 "timestamp": "",
                 "source_ip": "ERR",
                 "method": "ERR",
-                "path": f"Erreur de lecture ({self.source}) : {e}",
+                "path": _("Erreur de lecture ({source}) : {e}").format(source=self.source, e=e),
                 "status_code": 500,
                 "bytes_sent": 0,
-                "user_agent": "System/Error",
+                "user_agent": "Système/Erreur",
                 "response_time_ms": 0,
             }]
 
@@ -202,9 +203,13 @@ class _LogProvider:
 class LiveTailScreen(OmegaScreen):
     """5.1/8.5 — selection de source puis suivi live (tableau + stats)."""
 
-    def __init__(self, *, container: DependencyContainer) -> None:
+    def __init__(self, *, container: DependencyContainer, source: str | None = None) -> None:
+        """source : ouverture directe sur ce log (lecteur Simple de 5.2 Favoris / 5.3 Voir
+        les logs) — sans passer par la selection, sans toucher a l'historique de 8.5 ;
+        « Arreter / Retour » revient alors a l'ecran appelant."""
         super().__init__()
         self._container = container
+        self._direct_source = source
         self._command = ManageLiveTailPinsCommand(JsonStore(RUNTIME_DIR))
         self._display_items: dict[str, dict] = {}
         self._provider: _LogProvider | None = None
@@ -214,22 +219,22 @@ class LiveTailScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(id="setup-panel", classes="omega-panel"):
-            yield Static("VISUALISER LES LOGS EN DIRECT (LIVE TAIL)", classes="omega-title")
+            yield Static(_("VISUALISER LES LOGS EN DIRECT (LIVE TAIL)"), classes="omega-title")
             yield Static("", id="setup-hint", classes="omega-hint")
             yield DataTable(id="sources-table")
-            yield Input(placeholder="Nom de l'epingle (uniquement pour 'Epingler')", id="pin-name-input")
-            yield Input(placeholder="Chemin du fichier ou URL http(s)://...", id="source-input")
+            yield Input(placeholder=_("Nom de l'épingle (uniquement pour 'Épingler')"), id="pin-name-input")
+            yield Input(placeholder=_("Chemin du fichier ou URL http(s)://..."), id="source-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Lancer", id="launch", variant="primary")
+                    yield Button(_("Lancer"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Epingler", id="pin")
+                    yield Button(_("Épingler"), id="pin")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retirer", id="unpin", variant="error")
+                    yield Button(_("Retirer"), id="unpin", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Purger tout", id="purge", variant="error")
+                    yield Button(_("Purger tout"), id="purge", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
 
         with Vertical(id="live-panel", classes="omega-panel omega-hidden"):
             yield Static("", id="live-title", classes="omega-title")
@@ -237,7 +242,7 @@ class LiveTailScreen(OmegaScreen):
                 yield Static(id="stats-box", classes="omega-dash-box")
                 yield DataTable(id="logs-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Arreter / Retour", id="stop")
+                yield Button(_("Arrêter / Retour"), id="stop")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -248,11 +253,14 @@ class LiveTailScreen(OmegaScreen):
         # peuple jamais (retour utilisateur reel : "bloque sur la premiere
         # ligne, rien a selectionner").
         self.query_one("#sources-table", DataTable).cursor_type = "row"
-        self.query_one("#sources-table", DataTable).add_columns("Type", "Nom", "Chemin")
+        self.query_one("#sources-table", DataTable).add_columns(_("Type"), _("Nom"), _("Chemin"))
         self.query_one("#logs-table", DataTable).add_columns(
-            "Heure", "IP Source", "Type", "Methode", "Chemin", "Statut", "Taille", "Latence"
+            _("Heure"), _("IP Source"), _("Type"), _("Méthode"), _("Chemin"), _("Statut"), _("Taille"), _("Latence")
         )
         self._refresh_sources_table()
+        if self._direct_source:
+            self.query_one("#source-input", Input).value = self._direct_source
+            self.call_after_refresh(self._launch)
 
     def action_back(self) -> None:
         self._stop_live()
@@ -270,18 +278,18 @@ class LiveTailScreen(OmegaScreen):
         for name, path in self._command.list_active_pinned().items():
             key = str(idx)
             self._display_items[key] = {"type": "pinned", "name": name, "path": path}
-            table.add_row("Epingle", name, path, key=key)
+            table.add_row(_("Épingle"), name, path, key=key)
             idx += 1
 
         for h_path in self._command.list_history()[:5]:
             key = str(idx)
-            self._display_items[key] = {"type": "history", "name": "Historique recent", "path": h_path}
-            table.add_row("Historique", "Historique recent", h_path, key=key)
+            self._display_items[key] = {"type": "history", "name": _("Historique récent"), "path": h_path}
+            table.add_row(_("Historique"), _("Historique récent"), h_path, key=key)
             idx += 1
 
         hint = self.query_one("#setup-hint", Static)
         if self._display_items:
-            hint.update("Selectionnez une ligne, ou saisissez un chemin/URL manuellement.")
+            hint.update(_("Sélectionnez une ligne, ou saisissez un chemin/URL manuellement."))
             # Le curseur du tableau demarre automatiquement sur la 1ere
             # ligne (deja "en surbrillance") : cliquer PRECISEMENT cette
             # ligne ne declenche aucun RowHighlighted (la coordonnee ne
@@ -292,14 +300,17 @@ class LiveTailScreen(OmegaScreen):
             first_key = next(iter(self._display_items))
             self._apply_selected_item(self._display_items[first_key])
         else:
-            hint.update("Aucune source epinglee. Saisissez un chemin/URL manuellement.")
+            hint.update(_("Aucune source épinglée. Saisissez un chemin/URL manuellement."))
 
     def _apply_selected_item(self, item: dict) -> None:
         self.query_one("#source-input", Input).value = item["path"]
         self.query_one("#pin-name-input", Input).value = item["name"] if item["type"] == "pinned" else ""
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        if event.data_table.id != "sources-table":
+        # Ouverture directe (5.2 / 5.3) : la surbrillance automatique de la 1re epingle
+        # arrive APRES le montage et remplacait le log choisi (retour utilisateur 2026-10-28 :
+        # log omega-serv choisi, /var/log/apache2/access.log ouvert).
+        if event.data_table.id != "sources-table" or self._direct_source:
             return
         item = self._display_items.get(str(event.row_key.value))
         if item is None:
@@ -327,7 +338,7 @@ class LiveTailScreen(OmegaScreen):
         name = self.query_one("#pin-name-input", Input).value.strip()
         path = self.query_one("#source-input", Input).value.strip()
         if not name or not path:
-            self.app.notify("Nom et chemin requis pour epingler.", severity="warning")
+            self.app.notify(_("Nom et chemin requis pour épingler."), severity="warning")
             return
         result = self._command.add_pinned(name, path)
         if result.success:
@@ -339,12 +350,12 @@ class LiveTailScreen(OmegaScreen):
     def _unpin(self) -> None:
         table = self.query_one("#sources-table", DataTable)
         if table.cursor_row is None or table.row_count == 0:
-            self.app.notify("Aucune ligne selectionnee.", severity="warning")
+            self.app.notify(_("Aucune ligne sélectionnée."), severity="warning")
             return
         row_key = table.coordinate_to_cell_key((table.cursor_row, 0)).row_key
         item = self._display_items.get(str(row_key.value))
         if item is None:
-            self.app.notify("Aucune ligne selectionnee.", severity="warning")
+            self.app.notify(_("Aucune ligne sélectionnée."), severity="warning")
             return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])
@@ -358,19 +369,19 @@ class LiveTailScreen(OmegaScreen):
 
     def _purge(self) -> None:
         self._command.purge_all()
-        self.app.notify("Historique et epingles purges avec succes.")
+        self.app.notify(_("Historique et épingles purges avec succès."))
         self._refresh_sources_table()
 
     # ------------------------------------------------------------------
     # Panneau live
     # ------------------------------------------------------------------
     def _launch(self) -> None:
-        source = self.query_one("#source-input", Input).value.strip()
+        source = self._direct_source or self.query_one("#source-input", Input).value.strip()
         if not source:
-            self.app.notify("Source invalide. Saisissez un chemin ou une URL.", severity="warning")
+            self.app.notify(_("Source invalide. Saisissez un chemin ou une URL."), severity="warning")
             return
 
-        if source not in self._command.list_all_known_paths():
+        if not self._direct_source and source not in self._command.list_all_known_paths():
             self._command.record_history(source)
 
         if self._timer is not None:
@@ -378,7 +389,7 @@ class LiveTailScreen(OmegaScreen):
 
         self._provider = _LogProvider(source)
         self._buffer = LogBuffer(max_size=_BUFFER_SIZE)
-        self.query_one("#live-title", Static).update(f"LIVE TAIL — {source}")
+        self.query_one("#live-title", Static).update(_("LIVE TAIL — {source}").format(source=source))
 
         self.query_one("#setup-panel").set_class(True, "omega-hidden")
         self.query_one("#live-panel").set_class(False, "omega-hidden")
@@ -423,34 +434,34 @@ class LiveTailScreen(OmegaScreen):
             return f"{int(size)} B"
 
         content = Text()
-        content.append("── RENDEMENT ───────────────\n", style=colors["heading"])
-        content.append(f" ⚡ Debit      : {stats['rps']:.1f} req/s\n", style=colors["info"])
+        content.append(_("── RENDEMENT ───────────────\n"), style=colors["heading"])
+        content.append(_(" ⚡ Débit      : {rps:.1f} req/s\n").format(rps=stats['rps']), style=colors["info"])
         avg_lat = stats["avg_latency"]
         lat_style = colors["available"] if avg_lat < 200 else (colors["warning"] if avg_lat < 500 else colors["danger"])
-        content.append(f" ⏱ Latence moy: {avg_lat:.0f} ms\n\n", style=lat_style)
+        content.append(_(" ⏱ Latence moy: {avg_lat:.0f} ms\n\n").format(avg_lat=avg_lat), style=lat_style)
 
-        content.append("── BANDE PASSANTE ──────────\n", style=colors["heading"])
-        content.append(f" 🌐 Debit reseau: {_format_bytes(stats['bps'])}/s\n", style=colors["main"])
-        content.append(f" 📦 Vol. total  : {_format_bytes(stats['bytes_total'])}\n", style=colors["main"])
-        content.append(f" 🗜 Taille moy. : {_format_bytes(stats['avg_size'])}\n\n", style=colors["main"])
+        content.append(_("── BANDE PASSANTE ──────────\n"), style=colors["heading"])
+        content.append(_(" 🌐 Débit réseau: {value}/s\n").format(value=_format_bytes(stats['bps'])), style=colors["main"])
+        content.append(_(" 📦 Vol. total  : {value}\n").format(value=_format_bytes(stats['bytes_total'])), style=colors["main"])
+        content.append(_(" 🗜 Taille moy. : {value}\n\n").format(value=_format_bytes(stats['avg_size'])), style=colors["main"])
 
-        content.append("── STATUTS HTTP ────────────\n", style=colors["heading"])
-        content.append(f" 📊 Total Req.  : {stats['total']}\n", style=colors["main"])
-        content.append(f" √  Succes 2xx  : {stats['success_2xx']}\n", style=colors["available"])
-        content.append(f" ↔  Redir. 3xx  : {stats['redirect_3xx']}\n", style=colors["info"])
-        content.append(f" ⚠  Erreurs 4xx : {stats['errors_4xx']}\n", style=colors["warning"])
-        content.append(f" ❌ Erreurs 5xx : {stats['errors_5xx']}\n\n", style=colors["danger"])
+        content.append(_("── STATUTS HTTP ────────────\n"), style=colors["heading"])
+        content.append(_(" 📊 Total Req.  : {total}\n").format(total=stats['total']), style=colors["main"])
+        content.append(_(" √  Succès 2xx  : {success_2xx}\n").format(success_2xx=stats['success_2xx']), style=colors["available"])
+        content.append(_(" ↔  Redir. 3xx  : {redirect_3xx}\n").format(redirect_3xx=stats['redirect_3xx']), style=colors["info"])
+        content.append(_(" ⚠  Erreurs 4xx : {errors_4xx}\n").format(errors_4xx=stats['errors_4xx']), style=colors["warning"])
+        content.append(_(" ❌ Erreurs 5xx : {errors_5xx}\n\n").format(errors_5xx=stats['errors_5xx']), style=colors["danger"])
 
-        content.append("── CLIENTS & RESEAU ────────\n", style=colors["heading"])
-        content.append(f" 💻 IPs uniques : {stats['unique_ips']}\n", style=colors["main"])
-        content.append(f" 🖧 Top Talker  : {stats['top_ip'][:14]}\n\n", style=colors["info"])
+        content.append(_("── CLIENTS & RÉSEAU ────────\n"), style=colors["heading"])
+        content.append(_(" 💻 IPs uniques : {unique_ips}\n").format(unique_ips=stats['unique_ips']), style=colors["main"])
+        content.append(_(" 🖧 Top Talker  : {value}\n\n").format(value=stats['top_ip'][:14]), style=colors["info"])
 
-        content.append("── SANTE & TAMPON ──────────\n", style=colors["heading"])
+        content.append(_("── SANTÉ & TAMPON ──────────\n"), style=colors["heading"])
         err_rate = stats["error_rate"]
         health_style = colors["available"] if err_rate < 5 else (colors["warning"] if err_rate < 15 else colors["danger"])
-        health_label = "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else "DEGRADE")
-        content.append(f" 🌡 Sante Log   : {health_label} ({err_rate:.1f}% err)\n", style=health_style)
-        content.append(f" 📥 Tampon Live : {stats['buffer_size']}/{_BUFFER_SIZE}", style=colors["main"])
+        health_label = "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else _("DÉGRADÉ"))
+        content.append(_(" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n").format(health_label=health_label, err_rate=err_rate), style=health_style)
+        content.append(_(" 📥 Tampon Live : {buffer_size}/{BUFFER_SIZE}").format(buffer_size=stats['buffer_size'], BUFFER_SIZE=_BUFFER_SIZE), style=colors["main"])
         return content
 
     def _render_logs_table(self, colors: dict, entries: list[dict]) -> None:
@@ -488,11 +499,11 @@ class LiveTailScreen(OmegaScreen):
 
             user_agent = str(entry.get("user_agent", "")).lower()
             if "bot" in user_agent or "crawler" in user_agent:
-                client_type = Text("🤖 Bot", style=colors["warning"])
+                client_type = Text(_("🤖 Bot"), style=colors["warning"])
             elif "curl" in user_agent or "python" in user_agent or "scanner" in user_agent:
-                client_type = Text("⚠ CLI", style=colors["danger"])
+                client_type = Text(_("⚠ CLI"), style=colors["danger"])
             else:
-                client_type = Text("🖧 Web", style="dim")
+                client_type = Text(_("🖧 Web"), style="dim")
 
             table.add_row(
                 str(entry.get("timestamp") or "").strip()[:19],

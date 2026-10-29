@@ -29,11 +29,12 @@ from rich.text import Text
 from omega_fire.interfaces.cli.renderers.pager import bypass_pagination
 from omega_fire.interfaces.cli.renderers.styles import get_terminal_width
 from omega_fire.interfaces.cli.themes.registry import theme_registry
+from omega_fire.shared.i18n import _
 
 DEFAULT_FILL_WIDTH = 6
 DEFAULT_SPEED = 18.0  # positions par seconde — ~2s pour un aller-retour complet
 DIALOG_WIDTH = 46
-PATIENCE_LABEL = "Veuillez patienter..."
+PATIENCE_LABEL = _("Veuillez patienter...")
 
 
 class AnimatedGauge:

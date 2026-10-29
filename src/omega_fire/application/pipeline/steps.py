@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
 from omega_fire.application.pipeline.planner import PipelineStep, create_step
+from omega_fire.shared.i18n import _
 
 
 def make_validation_step(
@@ -29,7 +30,7 @@ def make_validation_step(
     def _execute() -> None:
         errors = validate_fn()
         if errors:
-            raise ValueError(f"Validation failed: {'; '.join(errors)}")
+            raise ValueError(_("Échec de la validation : {value}").format(value='; '.join(errors)))
 
     return create_step(
         name=name,

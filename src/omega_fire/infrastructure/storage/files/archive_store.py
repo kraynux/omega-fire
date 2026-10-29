@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class ArchiveStoreError(CoreError):
@@ -64,7 +65,7 @@ class ArchiveStore:
             return archive_path
         
         except Exception as e:
-            raise ArchiveStoreError(f"Failed to create archive {archive_name}: {e}") from e
+            raise ArchiveStoreError(_("Impossible de créer l'archive {archive_name} : {e}").format(archive_name=archive_name, e=e)) from e
     
     def extract_archive(
         self,
@@ -87,7 +88,7 @@ class ArchiveStore:
                 tar.extractall(dest_dir)
         
         except Exception as e:
-            raise ArchiveStoreError(f"Failed to extract archive {archive_path}: {e}") from e
+            raise ArchiveStoreError(_("Impossible d'extraire l'archive {archive_path} : {e}").format(archive_path=archive_path, e=e)) from e
     
     def list_archives(self, pattern: str = "*.tar.gz") -> list[Path]:
         """List archive files matching a pattern.
@@ -124,7 +125,7 @@ class ArchiveStore:
             }
         
         except Exception as e:
-            raise ArchiveStoreError(f"Failed to get info for {archive_path}: {e}") from e
+            raise ArchiveStoreError(_("Impossible de lire les informations de {archive_path} : {e}").format(archive_path=archive_path, e=e)) from e
     
     def delete_archive(self, archive_path: Path) -> bool:
         """Delete an archive file.

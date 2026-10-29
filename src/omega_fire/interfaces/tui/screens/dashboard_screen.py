@@ -31,20 +31,22 @@ from omega_fire.interfaces.cli.renderers.dashboard import (
     collect_os_stats,
 )
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "8.1 Tableau de bord en temps reel"
+_ACTION_TITLE = "8.1 Tableau de bord en temps réel"
 _REFRESH_SECONDS = 2.0
 _SERVICES_DISPLAY_BUDGET = 20
 
 _CATEGORY_LABELS: dict[str, str] = {
-    "backends": "Backends",
-    "system_services": "Systeme",
-    "servers": "Serveurs",
-    "bureau_distant": "Bureau",
-    "security_network": "Securite Reseau",
+    "backends": _("Backends"),
+    "system_services": _("Système"),
+    "servers": _("Serveurs"),
+    "bureau_distant": _("Bureau"),
+    "security_network": _("Sécurité Réseau"),
+    "omega_suite": _("Suite omega"),
 }
 
 
@@ -79,18 +81,18 @@ class DashboardScreen(OmegaScreen):
 
     def on_mount(self) -> None:
         titles = {
-            "box-services": "Services",
-            "box-system": "Systeme",
-            "box-counters": "Compteurs Temps Reel",
-            "box-network": "Reseau & Firewall",
-            "box-uptime": "Disponibilite",
-            "box-policy-sync": "Politique & Synchronisation",
-            "box-bans-alerts": "Bans & Alertes Recentes",
-            "box-top-attackers": "Top IPs Attaquantes",
-            "box-recent-actions": "Dernieres Actions",
-            "box-firewall-metrics": "Metriques Performance Firewall",
-            "box-advanced-network": "Reseau Avance",
-            "box-maintenance": "Maintenance & Sante",
+            "box-services": _("Services"),
+            "box-system": _("Système"),
+            "box-counters": _("Compteurs Temps Réel"),
+            "box-network": _("Réseau & Firewall"),
+            "box-uptime": _("Disponibilité"),
+            "box-policy-sync": _("Politique & Synchronisation"),
+            "box-bans-alerts": _("Bans & Alertes Récentes"),
+            "box-top-attackers": _("Top IPs Attaquantes"),
+            "box-recent-actions": _("Dernières Actions"),
+            "box-firewall-metrics": _("Métriques Performance Firewall"),
+            "box-advanced-network": _("Réseau Avancé"),
+            "box-maintenance": _("Maintenance & Santé"),
         }
         for widget_id, title in titles.items():
             self.query_one(f"#{widget_id}", Static).border_title = title
@@ -203,12 +205,12 @@ class DashboardScreen(OmegaScreen):
     def _panel_services(self, colors: dict) -> Text:
         registry = getattr(self._container, "capability_registry", None)
         if registry is None:
-            return Text("Registre des capacites indisponible", style="dim")
+            return Text(_("Registre des capacités indisponible"), style="dim")
 
         capabilities_state = _get_capabilities_state(registry)
         categories = list(capabilities_state.keys())
         if not categories:
-            return Text("Aucune capacite detectee", style="dim")
+            return Text(_("Aucune capacité détectée"), style="dim")
 
         total_services = sum(len(capabilities_state[cat]) for cat in categories)
         overflow_total = max(0, total_services - _SERVICES_DISPLAY_BUDGET)
@@ -243,7 +245,7 @@ class DashboardScreen(OmegaScreen):
                 content.append(f"{symbol}\n", style=style)
 
             if overflow_count > 0:
-                content.append(f"  … +{overflow_count} autre(s) (voir 1.1)\n", style="dim")
+                content.append(_("  … +{overflow_count} autre(s) (voir 1.1)\n").format(overflow_count=overflow_count), style="dim")
 
         return content
 
@@ -252,23 +254,23 @@ class DashboardScreen(OmegaScreen):
     # ------------------------------------------------------------------
     def _panel_system(self, colors: dict, stats: dict) -> Text:
         content = Text()
-        content.append(f"  🗲 CPU : {_render_progress_bar(stats['cpu'])}\n", style=colors["main"])
+        content.append(_("  🗲 CPU : {value}\n").format(value=_render_progress_bar(stats['cpu'])), style=colors["main"])
         if stats.get("temps"):
             temp_str = " / ".join(f"{v:.0f}°C" for v in list(stats["temps"].values())[:3])
-            content.append(f"       Temp: {temp_str}\n", style=colors["main"])
+            content.append(_("       Temp: {temp_str}\n").format(temp_str=temp_str), style=colors["main"])
         if stats.get("fans"):
             fan_str = " / ".join(f"{v:.0f} RPM" for v in list(stats["fans"].values())[:2])
-            content.append(f"       Fans: {fan_str}\n", style=colors["main"])
+            content.append(_("       Fans: {fan_str}\n").format(fan_str=fan_str), style=colors["main"])
 
         content.append("\n")
-        content.append(f"  🖤 RAM : {_render_progress_bar(stats['mem_percent'])}\n", style=colors["main"])
+        content.append(_("  🖤 RAM : {value}\n").format(value=_render_progress_bar(stats['mem_percent'])), style=colors["main"])
         content.append(
             f"       ({_bytes_to_human(stats['mem_used'])} / {_bytes_to_human(stats['mem_total'])})\n",
             style="dim",
         )
 
         content.append("\n")
-        content.append(f"  💿 Disk: {_render_progress_bar(stats['disk_percent'])}\n", style=colors["main"])
+        content.append(_("  💿 Disk: {value}\n").format(value=_render_progress_bar(stats['disk_percent'])), style=colors["main"])
         content.append(
             f"       ({_bytes_to_human(stats['disk_used'])} / {_bytes_to_human(stats['disk_total'])})\n",
             style="dim",
@@ -276,19 +278,18 @@ class DashboardScreen(OmegaScreen):
 
         content.append("\n")
         content.append(
-            f"  🗘 Swap: {stats['swap_percent']:5.1f}% "
-            f"({_bytes_to_human(stats['swap_used'])} / {_bytes_to_human(stats['swap_total'])})\n",
+            _("  🗘 Swap: {swap_percent:5.1f}% ({value} / {value2})\n").format(swap_percent=stats['swap_percent'], value=_bytes_to_human(stats['swap_used']), value2=_bytes_to_human(stats['swap_total'])),
             style=colors["main"],
         )
 
         content.append("\n")
         content.append(
-            f"  ⚖ Load: {stats['load_1']:.2f} {stats['load_5']:.2f} {stats['load_15']:.2f}\n",
+            _("  ⚖ Load: {load_1:.2f} {load_5:.2f} {load_15:.2f}\n").format(load_1=stats['load_1'], load_5=stats['load_5'], load_15=stats['load_15']),
             style=colors["main"],
         )
 
         content.append("\n")
-        content.append(f"  ⚙ Processus: {stats['num_processes']}", style=colors["main"])
+        content.append(_("  ⚙ Processus: {num_processes}").format(num_processes=stats['num_processes']), style=colors["main"])
         return content
 
     # ------------------------------------------------------------------
@@ -301,11 +302,11 @@ class DashboardScreen(OmegaScreen):
         alerts = stats.get("active_alerts", 0)
 
         content = Text()
-        content.append(f"  󰦞 IPs bannies   : {banned:<5}\n", style=colors["danger"])
-        content.append(f"  󱁝 Regles actives: {rules:<5}\n", style=colors["main"])
-        content.append(f"  󰦝 Jails actifs  : {jails:<5}\n", style=colors["warning"])
+        content.append(_("  󰦞 IPs bannies   : {banned:<5}\n").format(banned=banned), style=colors["danger"])
+        content.append(_("  󱁝 Règles actives: {rules:<5}\n").format(rules=rules), style=colors["main"])
+        content.append(_("  󰦝 Jails actifs  : {jails:<5}\n").format(jails=jails), style=colors["warning"])
         if alerts > 0:
-            content.append(f"  ⚠ Alertes       : {alerts:<5}\n", style=colors["danger"])
+            content.append(_("  ⚠ Alertes       : {alerts:<5}\n").format(alerts=alerts), style=colors["danger"])
         return content
 
     # ------------------------------------------------------------------
@@ -313,24 +314,24 @@ class DashboardScreen(OmegaScreen):
     # ------------------------------------------------------------------
     def _panel_network(self, colors: dict, stats: dict) -> Text:
         content = Text()
-        content.append(f"  TCP Connexions TCP (OS) : {stats.get('tcp_established', 0)}\n", style=colors["main"])
+        content.append(_("  TCP Connexions TCP (OS) : {value}\n").format(value=stats.get('tcp_established', 0)), style=colors["main"])
 
         conntrack_count = stats.get("conntrack_count", "N/A")
         dropped = stats.get("dropped_packets", 0)
-        content.append(f"  🛡 Sessions Conntrack  : {conntrack_count}\n", style=colors["info"])
+        content.append(_("  🛡 Sessions Conntrack  : {conntrack_count}\n").format(conntrack_count=conntrack_count), style=colors["info"])
         if dropped:
-            content.append(f"       Paquets dropes  : {dropped}\n", style=colors["danger"])
+            content.append(_("       Paquets dropés  : {dropped}\n").format(dropped=dropped), style=colors["danger"])
 
         users = stats.get("users", [])
         if users:
             user_names = ", ".join(u.name for u in users[:3])
-            content.append(f"  Usr Utilisateurs: {user_names}\n", style=colors["main"])
+            content.append(_("  Usr Utilisateurs: {user_names}\n").format(user_names=user_names), style=colors["main"])
         else:
-            content.append("  Usr Aucun utilisateur connecte\n", style=colors["main"])
+            content.append(_("  Usr Aucun utilisateur connecté\n"), style=colors["main"])
 
         sent = _bytes_to_human(stats.get("net_bytes_sent", 0))
         recv = _bytes_to_human(stats.get("net_bytes_recv", 0))
-        content.append(f"  🖧 Reseau: ↓{recv}  ↑{sent}\n", style=colors["main"])
+        content.append(_("  🖧 Réseau: ↓{recv}  ↑{sent}\n").format(recv=recv, sent=sent), style=colors["main"])
         return content
 
     # ------------------------------------------------------------------
@@ -341,7 +342,7 @@ class DashboardScreen(OmegaScreen):
         days = int(uptime_sec // 86400)
         hours = int((uptime_sec % 86400) // 3600)
         minutes = int((uptime_sec % 3600) // 60)
-        return Text(f"  🕒 Uptime: {days}j {hours}h {minutes}m", style=colors["main"])
+        return Text(_("  🕒 Uptime: {days}j {hours}h {minutes}m").format(days=days, hours=hours, minutes=minutes), style=colors["main"])
 
     # ------------------------------------------------------------------
     # Conteneur 6 : Politique & Synchronisation
@@ -352,15 +353,15 @@ class DashboardScreen(OmegaScreen):
         sync_status = stats.get("last_sync_status", "N/A")
 
         content = Text()
-        content.append("  Politique active : ", style=colors["main"])
+        content.append(_("  Politique active : "), style=colors["main"])
         content.append(f"[{policy.upper()}]\n", style=colors["warning"])
-        content.append(f"  Derniere sync    : {last_sync}\n", style=colors["main"])
+        content.append(_("  Dernière sync    : {last_sync}\n").format(last_sync=last_sync), style=colors["main"])
         if sync_status == "success":
-            content.append("       Statut          : ✔ Reussie\n", style=colors["available"])
+            content.append(_("       Statut          : ✔ Réussie\n"), style=colors["available"])
         elif sync_status == "failed":
-            content.append("       Statut          : ❌ Echouee\n", style=colors["missing"])
+            content.append(_("       Statut          : ❌ Échouée\n"), style=colors["missing"])
         else:
-            content.append(f"       Statut          : {sync_status}\n", style="dim")
+            content.append(_("       Statut          : {sync_status}\n").format(sync_status=sync_status), style="dim")
         return content
 
     # ------------------------------------------------------------------
@@ -373,24 +374,24 @@ class DashboardScreen(OmegaScreen):
 
         content = Text()
         if last_ban:
-            content.append(f"  Dernier ban   : {last_ban.get('ip', 'N/A')}\n", style=colors["danger"])
-            content.append(f"       Backend     : {last_ban.get('backend', 'N/A')}\n", style="dim")
-            content.append(f"       Timestamp   : {last_ban.get('time', 'N/A')}\n", style="dim")
+            content.append(_("  Dernier ban   : {value}\n").format(value=last_ban.get('ip', 'N/A')), style=colors["danger"])
+            content.append(_("       Backend     : {value}\n").format(value=last_ban.get('backend', 'N/A')), style="dim")
+            content.append(_("       Timestamp   : {value}\n").format(value=last_ban.get('time', 'N/A')), style="dim")
         else:
-            content.append("  Dernier ban   : Aucun\n", style="dim")
+            content.append(_("  Dernier ban   : Aucun\n"), style="dim")
 
         content.append("\n")
         if last_unban:
-            content.append(f"  Dernier unban : {last_unban.get('ip', 'N/A')}\n", style=colors["available"])
-            content.append(f"       Timestamp   : {last_unban.get('time', 'N/A')}\n", style="dim")
+            content.append(_("  Dernier unban : {value}\n").format(value=last_unban.get('ip', 'N/A')), style=colors["available"])
+            content.append(_("       Timestamp   : {value}\n").format(value=last_unban.get('time', 'N/A')), style="dim")
 
         content.append("\n")
         if active_alerts:
-            content.append("  ⚠ Alertes F2B   :\n", style=colors["warning"])
+            content.append(_("  ⚠ Alertes F2B   :\n"), style=colors["warning"])
             for alert in active_alerts[:3]:
                 content.append(f"       • {alert}\n", style=colors["main"])
         else:
-            content.append("  ⚠ Alertes F2B   : Aucune\n", style="dim")
+            content.append(_("  ⚠ Alertes F2B   : Aucune\n"), style="dim")
         return content
 
     # ------------------------------------------------------------------
@@ -399,12 +400,12 @@ class DashboardScreen(OmegaScreen):
     def _panel_top_attackers(self, colors: dict, stats: dict) -> Text:
         top_ips = stats.get("top_attackers", [])
         if not top_ips:
-            return Text("  Aucune attaque detectee", style="dim")
+            return Text(_("  Aucune attaque détectée"), style="dim")
 
         content = Text()
         for i, (ip, count) in enumerate(top_ips[:5], 1):
             style = colors["danger"] if count > 50 else colors["warning"]
-            content.append(f"  {i}. {ip:<15} ({count} tentatives)\n", style=style)
+            content.append(_("  {i}. {ip:<15} ({count} tentatives)\n").format(i=i, ip=ip, count=count), style=style)
         return content
 
     # ------------------------------------------------------------------
@@ -413,7 +414,7 @@ class DashboardScreen(OmegaScreen):
     def _panel_recent_actions(self, colors: dict, stats: dict) -> Text:
         actions = stats.get("recent_actions", [])
         if not actions:
-            return Text("  Aucune action recente", style="dim")
+            return Text(_("  Aucune action récente"), style="dim")
 
         content = Text()
         for action in actions[:5]:
@@ -428,12 +429,12 @@ class DashboardScreen(OmegaScreen):
     def _panel_firewall_metrics(self, colors: dict, stats: dict) -> Text:
         latency = stats.get("backend_latency", {})
         content = Text()
-        content.append("  Latence backends :\n", style=colors["heading"])
+        content.append(_("  Latence backends :\n"), style=colors["heading"])
         if latency:
             for backend, ms in latency.items():
                 content.append(f"       {backend:<12} : {ms} ms\n", style=colors["main"])
         else:
-            content.append("       (aucune mesure)\n", style="dim")
+            content.append(_("       (aucune mesure)\n"), style="dim")
         return content
 
     # ------------------------------------------------------------------
@@ -446,16 +447,16 @@ class DashboardScreen(OmegaScreen):
         dns = stats.get("dns", [])
 
         content = Text()
-        content.append(f"  🌍 IP reseau (sortante) : {outbound_ip}\n", style=colors["info"])
-        content.append("\n  Interfaces   :\n", style=colors["heading"])
+        content.append(_("  🌍 IP réseau (sortante) : {outbound_ip}\n").format(outbound_ip=outbound_ip), style=colors["info"])
+        content.append(_("\n  Interfaces   :\n"), style=colors["heading"])
         for iface in interfaces[:4]:
             content.append(f"       {iface['name']:<10} : {iface['ip']}\n", style=colors["main"])
-        content.append(f"\n  🖥 Passerelle   : {gateway}\n", style=colors["main"])
-        content.append("  🔍 DNS          : ", style=colors["main"])
+        content.append(_("\n  🖥 Passerelle   : {gateway}\n").format(gateway=gateway), style=colors["main"])
+        content.append(_("  🔍 DNS          : "), style=colors["main"])
         if dns:
             content.append(", ".join(dns[:3]) + "\n", style=colors["main"])
         else:
-            content.append("Non configure\n", style="dim")
+            content.append(_("Non configuré\n"), style="dim")
         return content
 
     # ------------------------------------------------------------------
@@ -469,27 +470,27 @@ class DashboardScreen(OmegaScreen):
 
         content = Text()
         if last_backup:
-            content.append("  🗜 Dernier backup :\n", style=colors["heading"])
-            content.append(f"       Date : {last_backup.get('date', 'N/A')}\n", style=colors["main"])
+            content.append(_("  🗜 Dernier backup :\n"), style=colors["heading"])
+            content.append(_("       Date : {value}\n").format(value=last_backup.get('date', 'N/A')), style=colors["main"])
             status = last_backup.get("status", "N/A")
             if status == "ok":
-                content.append("       Statut: ✔ OK\n", style=colors["available"])
+                content.append(_("       Statut: ✔ OK\n"), style=colors["available"])
             elif status == "late":
-                content.append("       Statut: ⚠ En retard\n", style=colors["warning"])
+                content.append(_("       Statut: ⚠ En retard\n"), style=colors["warning"])
             else:
-                content.append("       Statut: ❌ Echoue\n", style=colors["missing"])
+                content.append(_("       Statut: ❌ Échoué\n"), style=colors["missing"])
         else:
-            content.append("  🗜 Dernier backup : Aucun\n", style="dim")
+            content.append(_("  🗜 Dernier backup : Aucun\n"), style="dim")
 
         content.append("\n")
-        content.append("  Integrite config : ", style=colors["main"])
+        content.append(_("  Intégrité config : "), style=colors["main"])
         if config_integrity == "ok":
             content.append("✔ OK\n", style=colors["available"])
         elif config_integrity == "error":
-            content.append("❌ Erreur\n", style=colors["missing"])
+            content.append(_("❌ Erreur\n"), style=colors["missing"])
         else:
             content.append(f"{config_integrity}\n", style="dim")
 
-        content.append(f"\n  📦 Version Omega-Fire : {version}\n", style=colors["info"])
-        content.append(f"       MAJ registre     : {registry_update}\n", style="dim")
+        content.append(_("\n  📦 Version Omega-Fire : {version}\n").format(version=version), style=colors["info"])
+        content.append(_("       MAJ registre     : {registry_update}\n").format(registry_update=registry_update), style="dim")
         return content

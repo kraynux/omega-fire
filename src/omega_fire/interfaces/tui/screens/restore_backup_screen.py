@@ -18,11 +18,12 @@ from omega_fire.application.commands.restore_backup import RestoreBackupCommand,
 from omega_fire.infrastructure.config.paths import BACKUPS_DIR, BLOCKLIST_DIR, EXPORTS_DIR, LOGS_DIR, RUNTIME_DIR
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "5.5 Restaurer Backup"
+_ACTION_TITLE = "5.7 Restaurer un backup"
 _RESTORE_AUTO_FILE = "scheduled_restores.json"
 
 _MODE_IMMEDIATE = "immediate"
@@ -30,9 +31,9 @@ _MODE_SCHEDULE = "schedule"
 _MODE_MANAGE = "manage"
 
 _STRATEGIES: dict[str, tuple[str, str]] = {
-    "1": ("Restauration manuelle ciblee", "Restaure uniquement l'archive specifiee depuis var/backups/"),
-    "2": ("Dernier etat sain", "Recherche et restaure automatiquement la derniere archive valide de la cible"),
-    "3": ("Rollback periodique", "Reinitialisation automatique programmee"),
+    "1": (_("Restauration manuelle ciblée"), _("Restaure uniquement l'archive spécifiée depuis var/backups/")),
+    "2": (_("Dernier état sain"), _("Recherche et restaure automatiquement la dernière archive valide de la cible")),
+    "3": (_("Rollback périodique"), _("Réinitialisation automatique programmée")),
 }
 
 
@@ -68,64 +69,64 @@ class RestoreBackupScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
-            yield Static("RESTAURER UN BACKUP", classes="omega-title")
+            yield Static(_("RESTAURER UN BACKUP"), classes="omega-title")
 
-            yield Static("Action", classes="omega-subtitle")
+            yield Static(_("Action"), classes="omega-subtitle")
             yield Select(
                 [
-                    ("Restaurer une sauvegarde immediatement", _MODE_IMMEDIATE),
-                    ("Configurer une automatisation de restauration", _MODE_SCHEDULE),
-                    ("Lister et gerer les automatisations en cours", _MODE_MANAGE),
+                    (_("Restaurer une sauvegarde immédiatement"), _MODE_IMMEDIATE),
+                    (_("Configurer une automatisation de restauration"), _MODE_SCHEDULE),
+                    (_("Lister et gérer les automatisations en cours"), _MODE_MANAGE),
                 ],
                 value=_MODE_IMMEDIATE,
                 id="mode-select",
             )
 
-            yield Static("Archive a restaurer", id="backup-label", classes="omega-subtitle")
-            yield Select(self._backup_options(), id="backup-select")
+            yield Static(_("Archive à restaurer"), id="backup-label", classes="omega-subtitle")
+            yield Select(self._backup_options(), id="backup-select", prompt=_("Sélectionner"))
 
-            yield Static("Mode de restauration", id="restore-mode-label", classes="omega-subtitle")
+            yield Static(_("Mode de restauration"), id="restore-mode-label", classes="omega-subtitle")
             yield Select(
-                [("Rajouter (fusion incrementale)", "append"), ("Ecraser (sauvegarde de securite auto)", "overwrite")],
+                [(_("Rajouter (fusion incrémentale)"), "append"), (_("Écraser (sauvegarde de sécurité auto)"), "overwrite")],
                 value="append",
                 id="restore-mode-select",
             )
 
-            yield Static("Strategie", id="strategy-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Stratégie"), id="strategy-label", classes="omega-subtitle omega-hidden")
             yield Select(
-                [(label, key) for key, (label, _) in _STRATEGIES.items()],
+                [(label, key) for key, (label, _ignored) in _STRATEGIES.items()],
                 value="1",
                 id="strategy-select",
                 classes="omega-hidden",
             )
-            yield Static("Periode de rollback", id="period-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Période de rollback"), id="period-label", classes="omega-subtitle omega-hidden")
             yield Select(
-                [("180 jours (standard)", "standard"), ("Personnalise", "custom")],
+                [(_("180 jours (standard)"), "standard"), (_("Personnalisé"), "custom")],
                 value="standard",
                 id="period-select",
                 classes="omega-hidden",
             )
-            yield Static("Nombre de jours", id="period-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Nombre de jours"), id="period-custom-label", classes="omega-subtitle omega-hidden")
             yield Input(value="90", id="period-custom-input", classes="omega-hidden")
-            yield Static("Mode d'application", id="apply-mode-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Mode d'application"), id="apply-mode-label", classes="omega-subtitle omega-hidden")
             yield Select(
-                [("Incrementation (fusion)", "append"), ("Ecraser (remplacement complet)", "overwrite")],
+                [(_("Incrementation (fusion)"), "append"), (_("Écraser (remplacement complet)"), "overwrite")],
                 value="append",
                 id="apply-mode-select",
                 classes="omega-hidden",
             )
 
-            yield Static("Automatisations planifiees", id="manage-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Automatisations planifiées"), id="manage-label", classes="omega-subtitle omega-hidden")
             yield DataTable(id="automations-table", classes="omega-hidden")
             with Horizontal(classes="omega-actions", id="manage-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Supprimer la selection", id="delete-automation", variant="error")
+                    yield Button(_("Supprimer la sélection"), id="delete-automation", variant="error")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Valider", id="launch", variant="primary")
+                    yield Button(_("Valider"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def _backup_options(self) -> list[tuple[str, str]]:
@@ -133,7 +134,7 @@ class RestoreBackupScreen(OmegaScreen):
         for bfile in self._backups():
             mtime = datetime.fromtimestamp(bfile.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
             size_kb = bfile.stat().st_size / 1024
-            options.append((f"{bfile.name} ({mtime} — {size_kb:.1f} KB)", str(bfile)))
+            options.append((_("{name} ({mtime} — {size_kb:.1f} KB)").format(name=bfile.name, mtime=mtime, size_kb=size_kb), str(bfile)))
         return options
 
     def on_mount(self) -> None:
@@ -195,7 +196,7 @@ class RestoreBackupScreen(OmegaScreen):
         table = self.query_one("#automations-table", DataTable)
         table.clear(columns=True)
         table.cursor_type = "row"
-        table.add_columns("Strategie", "Intervalle", "Mode", "Creee le")
+        table.add_columns(_("Stratégie"), _("Intervalle"), _("Mode"), _("Créée le"))
         for idx, item in enumerate(self._load_automations()):
             days = item.get("days_interval", 0)
             table.add_row(
@@ -229,18 +230,18 @@ class RestoreBackupScreen(OmegaScreen):
         idx = self._selected_automation_index
         automations = self._load_automations()
         if idx is None or not (0 <= idx < len(automations)):
-            self.app.notify("Selectionnez d'abord une ligne.", severity="warning")
+            self.app.notify(_("Sélectionnez d'abord une ligne."), severity="warning")
             return
         removed = automations.pop(idx)
         self._save_automations(automations)
-        self.app.notify(f"Automatisation '{removed.get('strategy_title', '')}' supprimee.")
+        self.app.notify(_("Automatisation '{value}' supprimée.").format(value=removed.get('strategy_title', '')))
         self._selected_automation_index = None
         self._refresh_automations_table()
 
     def _run_restore(self) -> None:
         selected = self.query_one("#backup-select", Select).value
         if selected is None or selected == Select.BLANK:
-            self.app.notify("Aucune sauvegarde disponible ou selectionnee.", severity="warning")
+            self.app.notify(_("Aucune sauvegarde disponible ou sélectionnée."), severity="warning")
             return
         from pathlib import Path
         selected_backup = Path(str(selected))
@@ -258,13 +259,13 @@ class RestoreBackupScreen(OmegaScreen):
             backup_path=str(selected_backup), target_dir=str(target_dir), mode=mode,
         ))
         if not result.success:
-            self.app.notify(f"Echec de la restauration : {result.message}", severity="error")
+            self.app.notify(_("Échec de la restauration : {message}").format(message=result.message), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=result.message)
             return
 
-        message = f"Restauration reussie : {result.target_file}"
+        message = _("Restauration réussie : {target_file}").format(target_file=result.target_file)
         if result.safety_backup_path:
-            message += f" (securite : {result.safety_backup_path.name})"
+            message += _(" (sécurité : {name})").format(name=result.safety_backup_path.name)
         self.app.notify(message)
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()
@@ -281,10 +282,10 @@ class RestoreBackupScreen(OmegaScreen):
                 days_interval = 180
 
         apply_mode = str(self.query_one("#apply-mode-select", Select).value)
-        mode_label = "Fusion incrementale" if apply_mode == "append" else "Ecrasement complet"
+        mode_label = _("Fusion incrémentale") if apply_mode == "append" else _("Écrasement complet")
         strat_title, strat_desc = _STRATEGIES.get(strategy_key, _STRATEGIES["1"])
         if strategy_key == "3":
-            strat_title = f"{strat_title} ({days_interval} jours)"
+            strat_title = _("{strat_title} ({days_interval} jours)").format(strat_title=strat_title, days_interval=days_interval)
 
         automations = self._load_automations()
         automations.append({
@@ -298,6 +299,6 @@ class RestoreBackupScreen(OmegaScreen):
         })
         self._save_automations(automations)
 
-        self.app.notify(f"Automatisation enregistree : {strat_title} — {mode_label}.")
+        self.app.notify(_("Automatisation enregistrée : {strat_title} — {mode_label}.").format(strat_title=strat_title, mode_label=mode_label))
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

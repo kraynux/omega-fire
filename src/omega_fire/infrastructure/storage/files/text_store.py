@@ -9,6 +9,7 @@ This module performs real file I/O and is therefore in infrastructure/.
 from pathlib import Path
 from typing import Optional
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class TextStoreError(CoreError):
@@ -48,7 +49,7 @@ class TextStore:
             file_path.write_text(content, encoding=encoding)
             return file_path
         except Exception as e:
-            raise TextStoreError(f"Failed to save text to {relative_path}: {e}") from e
+            raise TextStoreError(_("Impossible d'enregistrer le texte dans {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
     
     def load(self, relative_path: str, encoding: str = "utf-8") -> str:
         """Load content from a text file.
@@ -67,14 +68,14 @@ class TextStore:
             file_path = self._base_dir / relative_path
             
             if not file_path.exists():
-                raise TextStoreError(f"File not found: {relative_path}")
+                raise TextStoreError(_("Fichier introuvable : {relative_path}").format(relative_path=relative_path))
             
             return file_path.read_text(encoding=encoding)
         
         except Exception as e:
             if isinstance(e, TextStoreError):
                 raise
-            raise TextStoreError(f"Failed to load text from {relative_path}: {e}") from e
+            raise TextStoreError(_("Impossible de lire le texte de {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
     
     def append(self, relative_path: str, content: str, encoding: str = "utf-8") -> Path:
         """Append content to a text file.
@@ -99,7 +100,7 @@ class TextStore:
             
             return file_path
         except Exception as e:
-            raise TextStoreError(f"Failed to append text to {relative_path}: {e}") from e
+            raise TextStoreError(_("Impossible d'ajouter le texte à {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
     
     def exists(self, relative_path: str) -> bool:
         """Check if a text file exists.
@@ -148,11 +149,11 @@ class TextStore:
             dest_path = self._base_dir / new_relative_path
 
             if not source_path.exists():
-                raise TextStoreError(f"File not found: {relative_path}")
+                raise TextStoreError(_("Fichier introuvable : {relative_path}").format(relative_path=relative_path))
 
             if dest_path.exists():
                 raise TextStoreError(
-                    f"A file already exists at destination: {new_relative_path}"
+                    _("Un fichier existe déjà à la destination : {new_relative_path}").format(new_relative_path=new_relative_path)
                 )
 
             dest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +164,7 @@ class TextStore:
             if isinstance(e, TextStoreError):
                 raise
             raise TextStoreError(
-                f"Failed to rename {relative_path} to {new_relative_path}: {e}"
+                _("Impossible de renommer {relative_path} en {new_relative_path} : {e}").format(relative_path=relative_path, new_relative_path=new_relative_path, e=e)
             ) from e
     
     

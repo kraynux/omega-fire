@@ -29,6 +29,7 @@ from omega_fire.interfaces.tui.screens.export_audit_screen import ExportAuditScr
 from omega_fire.interfaces.tui.screens.export_blacklist_screen import ExportBlacklistScreen
 from omega_fire.interfaces.tui.screens.export_blocklist_file_screen import ExportBlocklistFileScreen
 from omega_fire.interfaces.tui.screens.export_f2b_stats_screen import ExportF2bStatsScreen
+from omega_fire.interfaces.tui.screens.exports_screen import ExportsScreen
 from omega_fire.interfaces.tui.screens.export_jail_screen import ExportJailScreen
 from omega_fire.interfaces.tui.screens.export_rules_screen import ExportRulesScreen
 from omega_fire.interfaces.tui.screens.export_state_screen import ExportStateScreen
@@ -39,7 +40,10 @@ from omega_fire.interfaces.tui.screens.jail_transfer_screen import JailTransferS
 from omega_fire.interfaces.tui.screens.jails_status_screen import JailsStatusScreen
 from omega_fire.interfaces.tui.screens.live_tail_screen import LiveTailScreen
 from omega_fire.interfaces.tui.screens.lnav_screen import LnavScreen
+from omega_fire.interfaces.tui.screens.log_favorites_screen import LogFavoritesScreen
+from omega_fire.interfaces.tui.screens.log_library_screen import LogLibraryScreen
 from omega_fire.interfaces.tui.screens.log_stats_screen import LogStatsScreen
+from omega_fire.interfaces.tui.screens.log_view_screen import LogViewScreen
 from omega_fire.interfaces.tui.screens.list_banned_ips_screen import ListBannedIpsScreen
 from omega_fire.interfaces.tui.screens.list_rules_screen import ListRulesScreen
 from omega_fire.interfaces.tui.screens.purge_all_jails_screen import PurgeAllJailsScreen
@@ -66,178 +70,210 @@ from omega_fire.interfaces.tui.support.direct_actions import (
     reload_config,
     rescan_system,
 )
+from omega_fire.shared.i18n import N_, _
 
 _FAIL2BAN_SERVICE_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("4.10.1", "Verifier le statut du service & persistance", "",
-                direct_action=fail2ban_service_status, direct_action_title="4.10 Statut du service Fail2ban"),
-    SectionItem("4.10.2", "Demarrer le service", "",
-                direct_action=fail2ban_service_start, direct_action_title="4.10 Demarrer Fail2ban"),
-    SectionItem("4.10.3", "Stopper le service", "",
-                direct_action=fail2ban_service_stop, direct_action_title="4.10 Stopper Fail2ban",
-                confirm_title="CONFIRMER L'ARRET", confirm_message="Arreter le service Fail2ban ?"),
-    SectionItem("4.10.4", "Redemarrer le service", "",
-                direct_action=fail2ban_service_restart, direct_action_title="4.10 Redemarrer Fail2ban",
-                confirm_title="CONFIRMER LE REDEMARRAGE", confirm_message="Redemarrer le service Fail2ban ?"),
-    SectionItem("4.10.5", "Activer le service au demarrage", "",
-                direct_action=fail2ban_service_enable, direct_action_title="4.10 Activer Fail2ban au demarrage"),
-    SectionItem("4.10.6", "Desactiver le service au demarrage", "",
-                direct_action=fail2ban_service_disable, direct_action_title="4.10 Desactiver Fail2ban au demarrage"),
+    SectionItem("4.10.1", N_("Vérifier le statut du service & persistance"), "",
+                direct_action=fail2ban_service_status, direct_action_title=N_("4.10 Statut du service Fail2ban")),
+    SectionItem("4.10.2", N_("Démarrer le service"), "",
+                direct_action=fail2ban_service_start, direct_action_title=N_("4.10 Démarrer Fail2ban")),
+    SectionItem("4.10.3", N_("Stopper le service"), "",
+                direct_action=fail2ban_service_stop, direct_action_title=N_("4.10 Stopper Fail2ban"),
+                confirm_title=_("CONFIRMER L'ARRÊT"), confirm_message=_("Arrêter le service Fail2ban ?")),
+    SectionItem("4.10.4", N_("Redémarrer le service"), "",
+                direct_action=fail2ban_service_restart, direct_action_title=N_("4.10 Redémarrer Fail2ban"),
+                confirm_title=_("CONFIRMER LE REDÉMARRAGE"), confirm_message=_("Redémarrer le service Fail2ban ?")),
+    SectionItem("4.10.5", N_("Activer le service au démarrage"), "",
+                direct_action=fail2ban_service_enable, direct_action_title=N_("4.10 Activer Fail2ban au démarrage")),
+    SectionItem("4.10.6", N_("Désactiver le service au démarrage"), "",
+                direct_action=fail2ban_service_disable, direct_action_title=N_("4.10 Désactiver Fail2ban au démarrage")),
 )
 
 
 def _fail2ban_service_screen(container):
     return SectionScreen(
         container=container, section_id="4.10",
-        title="GERER LE SERVICE FAIL2BAN", items=_FAIL2BAN_SERVICE_ITEMS,
+        title=_("GÉRER LE SERVICE FAIL2BAN"), items=_FAIL2BAN_SERVICE_ITEMS,
     )
 
-SECTION_1_TITLE = "ETAT DES CAPACITES & DIAGNOSTICS"
+SECTION_1_TITLE = N_("CAPACITÉS & DIAGNOSTICS")
 SECTION_1_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("1.1", "Afficher le registre des capacites", "Liste des composants et leur status",
+    SectionItem("1.1", N_("Afficher le registre des capacités"), _("Liste des composants et leur status"),
                 screen_factory=lambda c: CapabilitiesScreen(container=c, only_issues=False)),
-    SectionItem("1.2", "Detail d'une capacite", "Selection d'un composant",
+    SectionItem("1.2", N_("Détail d'une capacité"), _("Sélection d'un composant"),
                 screen_factory=lambda c: CapabilityPickerScreen(container=c)),
-    SectionItem("1.3", "Re-scanner le systeme", "Relance des probes systeme",
-                direct_action=rescan_system, direct_action_title="1.3 Re-scan du systeme",
-                confirm_title="RE-SCANNER LE SYSTEME",
-                confirm_message="Relancer un scan complet du systeme (nftables, iptables, fail2ban, systemd) ?"),
-    SectionItem("1.4", "Voir les diagnostics recents", "Liste les erreurs et degradations",
+    SectionItem("1.3", N_("Re-scanner le système"), _("Relance des probes système"),
+                direct_action=rescan_system, direct_action_title=N_("1.3 Re-scan du système"),
+                confirm_title=_("RE-SCANNER LE SYSTÈME"),
+                confirm_message=_("Relancer un scan complet du système (nftables, iptables, fail2ban, systemd) ?")),
+    SectionItem("1.4", N_("Voir les diagnostics récents"), _("Liste les erreurs et dégradations"),
                 screen_factory=lambda c: CapabilitiesScreen(container=c, only_issues=True)),
-    SectionItem("1.5", "Voir le journal applicatif", "voir les logs d'evenements applicatif",
+    SectionItem("1.5", N_("Voir le journal applicatif"), _("voir les logs d'événements applicatif"),
                 screen_factory=lambda c: AppLogScreen(container=c)),
-    SectionItem("1.6", "Rechercher dans les diagnostics", "Recherche par mot-cle",
+    SectionItem("1.6", N_("Rechercher dans les diagnostics"), _("Recherche par mot-clé"),
                 screen_factory=lambda c: SearchDiagnosticsScreen(container=c)),
-    SectionItem("1.7", "Exporter l'etat et les diagnostics", "Donnees JSON (brut), TXT (data) ou HTML (visuel)",
+    SectionItem("1.7", N_("Exporter l'état et les diagnostics"), _("Données JSON (brut), TXT (data) ou HTML (visuel)"),
                 screen_factory=lambda c: ExportStateScreen(container=c)),
 )
 
-SECTION_2_TITLE = "GESTION DES IPs (Blacklist unifiee NFt-IPt)"
+SECTION_2_TITLE = N_("GESTION DES IPs (Blacklist unifiée NFt-IPt)")
 SECTION_2_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("2.1", "Bannir une IP", "Bannir une IP unique",
+    SectionItem("2.1", N_("Bannir une IP"), _("Bannir une IP unique"),
                 screen_factory=lambda c: BanIpScreen(container=c)),
-    SectionItem("2.2", "Bannir une liste d'IPs", "Saisie multiple ou fichier",
+    SectionItem("2.2", N_("Bannir une liste d'IPs"), _("Saisie multiple ou fichier"),
                 screen_factory=lambda c: BanIpListScreen(container=c)),
-    SectionItem("2.3", "Debannir une IP", "Debannir une IP unique",
+    SectionItem("2.3", N_("Débannir une IP"), _("Débannir une IP unique"),
                 screen_factory=lambda c: UnbanIpScreen(container=c)),
-    SectionItem("2.4", "Debannir une liste d'IPs", "Saisie multiple ou fichier",
+    SectionItem("2.4", N_("Débannir une liste d'IPs"), _("Saisie multiple ou fichier"),
                 screen_factory=lambda c: UnbanIpListScreen(container=c)),
-    SectionItem("2.5", "Lister les IPs bannies", "Tableau avec filtres",
+    SectionItem("2.5", N_("Lister les IPs bannies"), _("Tableau avec filtres"),
                 screen_factory=lambda c: ListBannedIpsScreen(container=c)),
-    SectionItem("2.6", "Synchroniser les backends NFt-IPt", "Nft <-> Ipt",
+    SectionItem("2.6", N_("Synchroniser les backends NFt-IPt"), _("Nft <-> Ipt"),
                 screen_factory=lambda c: SyncBackendsScreen(container=c)),
-    SectionItem("2.7", "Importer depuis un fichier", "Gestion, Edition des fichiers et IP blocklist",
+    SectionItem("2.7", N_("Importer depuis un fichier"), _("Gestion, Édition des fichiers et IP blocklist"),
                 screen_factory=lambda c: BlocklistFilesScreen(container=c)),
-    SectionItem("2.8", "Exporter vers un fichier", "Transfert des IPs vers fichiers, archives",
+    SectionItem("2.8", N_("Exporter vers un fichier"), _("Transfert des IPs vers fichiers, archives"),
                 screen_factory=lambda c: ExportBlocklistFileScreen(container=c)),
-    SectionItem("2.9", "Nettoyer (Flush) complet", "Vider un ou tous les backends",
+    SectionItem("2.9", N_("Nettoyer (Flush) complet"), _("Vider un ou tous les backends"),
                 screen_factory=lambda c: FlushBackendsScreen(container=c)),
-    SectionItem("2.10", "Interoperabilite des IPs", "Transfert/Injection (Jails, Backends, Fichiers (idem que 4.3)",
+    SectionItem("2.10", N_("Interopérabilité des IPs"), _("Transfert/Injection (Jails, Backends, Fichiers (idem que 4.3)"),
                 screen_factory=lambda c: JailTransferScreen(container=c)),
 )
 
-SECTION_3_TITLE = "GESTION DES REGLES (Politiques / Filtres)"
+SECTION_3_TITLE = N_("GESTION DES RÈGLES (Politiques / Filtres)")
 SECTION_3_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("3.1", "Creer une regle avancee", "Assistant pas-a-pas pour creer une regle",
+    SectionItem("3.1", N_("Créer une règle avancée"), _("Assistant pas-à-pas pour créer une règle"),
                 screen_factory=lambda c: CreateRuleScreen(container=c)),
-    SectionItem("3.2", "Supprimer une regle", "Supression simplifie d'une regle",
+    SectionItem("3.2", N_("Supprimer une règle"), _("Suppression simplifiée d'une règle"),
                 screen_factory=lambda c: DeleteRuleScreen(container=c)),
-    SectionItem("3.3", "Lister les regles", "Tableau avec detail & compteurs par backend",
+    SectionItem("3.3", N_("Lister les règles"), _("Tableau avec détail & compteurs par backend"),
                 screen_factory=lambda c: ListRulesScreen(container=c)),
-    SectionItem("3.4", "Appliquer une politique pre-definie", "Profils activable (sauvegarde-auto de l'etat)",
+    SectionItem("3.4", N_("Appliquer une politique pré-définie"), _("Profils activable (sauvegarde-auto de l'état)"),
                 screen_factory=lambda c: ApplyPresetScreen(container=c)),
-    SectionItem("3.5", "Gestion des tables", "Diagnostic, initialisation, reset des politiques, flush cible ou synchronise",
+    SectionItem("3.5", N_("Gestion des tables"), _("Diagnostic, initialisation, reset des politiques, flush cible ou synchronisé"),
                 screen_factory=lambda c: TableManagementScreen(container=c)),
 )
 
-SECTION_4_TITLE = "GESTION FAIL2BAN (Jails & Transferts)"
+SECTION_4_TITLE = N_("GESTION FAIL2BAN (Jails & Transferts)")
 SECTION_4_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("4.1", "Analyse et Etat des jails", "Tableau recapitulatif + recherche d'IP par jail",
+    SectionItem("4.1", N_("Analyse et État des jails"), _("Tableau récapitulatif + recherche d'IP par jail"),
                 screen_factory=lambda c: JailsStatusScreen(container=c)),
-    SectionItem("4.2", "Bannir / Debannir dans un jail", "Ban et Unban, IP unique ou liste d'IP",
+    SectionItem("4.2", N_("Bannir / Débannir dans un jail"), _("Ban et Unban, IP unique ou liste d'IP"),
                 screen_factory=lambda c: JailBanUnbanScreen(container=c)),
-    SectionItem("4.3", "Interoperabilite des IPs", "Transfert / Import / Export (Jails, Backends, Fichiers)",
+    SectionItem("4.3", N_("Interopérabilité des IPs"), _("Transfert / Import / Export (Jails, Backends, Fichiers)"),
                 screen_factory=lambda c: JailTransferScreen(container=c)),
-    SectionItem("4.4", "Creer un jail", "Assistant de creation",
+    SectionItem("4.4", N_("Créer un jail"), _("Assistant de création"),
                 screen_factory=lambda c: CreateJailScreen(container=c)),
-    SectionItem("4.5", "Supprimer un jail", "choisir le jail et confirmer sa suppression",
+    SectionItem("4.5", N_("Supprimer un jail"), _("choisir le jail et confirmer sa suppression"),
                 screen_factory=lambda c: DeleteJailScreen(container=c)),
-    SectionItem("4.6", "Vider un jail", "Vider toutes les IPs d'un jail",
+    SectionItem("4.6", N_("Vider un jail"), _("Vider toutes les IPs d'un jail"),
                 screen_factory=lambda c: ClearJailScreen(container=c)),
-    SectionItem("4.7", "Vider tous les jails", "PURGE GENERALE - Vider toutes les IPs de tous les jails",
+    SectionItem("4.7", N_("Vider tous les jails"), _("PURGE GÉNÉRALE - Vider toutes les IPs de tous les jails"),
                 screen_factory=lambda c: PurgeAllJailsScreen(container=c)),
-    SectionItem("4.8", "Exporter un jail", "FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML",
+    SectionItem("4.8", N_("Exporter un jail"), _("FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML"),
                 screen_factory=lambda c: ExportJailScreen(container=c)),
-    SectionItem("4.9", "Verifier la configuration Fail2ban", "utilisation de fail2ban-client -d",
+    SectionItem("4.9", N_("Vérifier la configuration Fail2ban"), _("utilisation de fail2ban-client -d"),
                 screen_factory=lambda c: Fail2banDiagnosticsScreen(container=c)),
-    SectionItem("4.10", "Gerer le service Fail2ban", "Controle du service Fail2ban (status, start, stop,...)",
+    SectionItem("4.10", N_("Gérer le service Fail2ban"), _("Contrôle du service Fail2ban (status, start, stop,...)"),
                 screen_factory=_fail2ban_service_screen),
 )
 
-SECTION_5_TITLE = "GESTION DES LOGS (Analyse & Maintenance)"
+SECTION_5_TITLE = N_("GESTION DES LOGS (Analyse & Maintenance)")
 SECTION_5_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("5.1", "Visualiser les logs en direct (Live Tail)", "Tableau de bord temps reel : trafic + stats + logs",
-                screen_factory=lambda c: LiveTailScreen(container=c)),
-    SectionItem("5.2", "Analyser les IPs (Top N)", "Classement des IPs actives",
+    # Version 3.5 (decisions utilisateur 2026-10-28) : Bibliotheque / Favoris / Voir les logs en
+    # tete ; l'ancien 5.1 (Live Tail) et l'ancien 5.9 (lnav) restent en 8.5 et 8.6 ; 5.2 a 5.8
+    # decales en 5.4 a 5.10. Anciens libelles : MENU_5_BEFORE_3_5 ci-dessous.
+    SectionItem("5.1", N_("Bibliothèque"), _("Import des logs : omega-serv automatique, épinglage, SSH"),
+                screen_factory=lambda c: LogLibraryScreen(container=c)),
+    SectionItem("5.2", N_("Favoris"), _("Logs combinés, enregistrés et lancés directement"),
+                screen_factory=lambda c: LogFavoritesScreen(container=c)),
+    SectionItem("5.3", N_("Voir les logs"), _("Un log, lecteur au choix : Simple, Classique, lnav"),
+                screen_factory=lambda c: LogViewScreen(container=c)),
+    SectionItem("5.4", N_("Analyser les IPs (Top N)"), _("Classement des IPs actives"),
                 screen_factory=lambda c: TopIpsScreen(container=c)),
-    SectionItem("5.3", "Supprimer une IP des logs", "Nettoyage cible",
+    SectionItem("5.5", N_("Supprimer une IP des logs"), _("Nettoyage cible"),
                 screen_factory=lambda c: RemoveIpFromLogScreen(container=c)),
-    SectionItem("5.4", "Rotation / Backup des logs", "Compression et archivage",
+    SectionItem("5.6", N_("Rotation / Backup des logs"), _("Compression et archivage"),
                 screen_factory=lambda c: RotateLogsScreen(container=c)),
-    SectionItem("5.5", "Restaurer un backup", "Selection et restauration",
+    SectionItem("5.7", N_("Restaurer un backup"), _("Sélection et restauration"),
                 screen_factory=lambda c: RestoreBackupScreen(container=c)),
-    SectionItem("5.6", "Purge des backups", "Suppression massive",
+    SectionItem("5.8", N_("Purge des backups"), _("Suppression massive"),
                 screen_factory=lambda c: PurgeBackupsScreen(container=c)),
-    SectionItem("5.7", "Nettoyage avance", "Par age ou taille",
+    SectionItem("5.9", N_("Nettoyage avancé"), _("Par âge ou taille"),
                 screen_factory=lambda c: AdvancedCleanupScreen(container=c)),
-    SectionItem("5.8", "Statistiques des logs", "recapitulatifs des evenements des logs",
+    SectionItem("5.10", N_("Statistiques des logs"), _("récapitulatifs des événements des logs"),
                 screen_factory=lambda c: LogStatsScreen(container=c)),
-    SectionItem("5.9", "Visualiser les logs serveurs avec lnav", "Selection multi-fichiers, parsing complet analyse en fusion automatique (8.6 Bis)",
-                screen_factory=lambda c: LnavScreen(container=c)),
 )
 
-SECTION_6_TITLE = "EXPORTS & RAPPORTS (Audit centralise)"
+# Menu 5 avant la version 3.5 : numero -> libelle. Sert a afficher correctement les anciennes
+# entrees de l'historique d'audit (et celles de --legacy-cli, qui garde cette numerotation) :
+# « 5.2 Analyser les IPs (Top N) » ne doit pas s'afficher « 5.2 Favoris ».
+MENU_5_BEFORE_3_5: dict[str, tuple[str, ...]] = {
+    "5.1": (N_("Visualiser les logs en direct (Live Tail)"),),
+    "5.2": (N_("Analyser les IPs (Top N)"),),
+    "5.3": (N_("Supprimer une IP des logs"),),
+    "5.4": (N_("Rotation / Backup des logs"),),
+    "5.5": (N_("Restaurer un backup"),),
+    "5.6": (N_("Purge des backups"),),
+    "5.7": (N_("Nettoyage avancé"),),
+    "5.8": (N_("Statistiques des logs"),),
+    "5.9": (N_("Visualiser les logs serveurs avec lnav"),),
+}
+# Titres courts ecrits dans l'historique par les ecrans et par --legacy-cli -> libelle du menu.
+AUDIT_TITLE_ALIASES: dict[str, str] = {
+    "Live Tail": N_("Visualiser les logs en direct (Live Tail)"),
+    "Top IPs": N_("Analyser les IPs (Top N)"),
+    "Supprimer IP": N_("Supprimer une IP des logs"),
+    "Rotation & Backup Logs": N_("Rotation / Backup des logs"),
+    "Restaurer Backup": N_("Restaurer un backup"),
+    "Purge Backups": N_("Purge des backups"),
+}
+
+SECTION_6_TITLE = N_("EXPORTS & RAPPORTS (Audit centralisé)")
 SECTION_6_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("6.1", "Exporter la Blacklist complete", "FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML",
+    SectionItem("6.1", N_("Exporter la Blacklist complète"), _("FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML"),
                 screen_factory=lambda c: ExportBlacklistScreen(container=c)),
-    SectionItem("6.2", "Exporter les Regles (ruleset)", "Regleset structure",
+    SectionItem("6.2", N_("Exporter les Règles (ruleset)"), _("Regleset structure"),
                 screen_factory=lambda c: ExportRulesScreen(container=c)),
-    SectionItem("6.3", "Exporter un rapport d'audit complet", "Etat, historique, top IPs,...",
+    SectionItem("6.3", N_("Exporter un rapport d'audit complet"), _("État, historique, top IPs,..."),
                 screen_factory=lambda c: ExportAuditScreen(container=c)),
-    SectionItem("6.4", "Exporter les statistiques Fail2Ban", "Jails et bans",
+    SectionItem("6.4", N_("Exporter les statistiques Fail2Ban"), _("Jails et bans"),
                 screen_factory=lambda c: ExportF2bStatsScreen(container=c)),
+    SectionItem("6.5", N_("Voir tous les exports"), _("Ouvrir, copier le chemin, supprimer"),
+                screen_factory=lambda c: ExportsScreen(container=c)),
 )
 
-SECTION_7_TITLE = "SYSTEME & PERSISTANCE (Etat & Sauvegarde)"
+SECTION_7_TITLE = N_("SYSTÈME & PERSISTANCE (État & Sauvegarde)")
 SECTION_7_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("7.1", "Sauvegarder l'etat complet", "Archive tar.gz horodatee",
+    SectionItem("7.1", N_("Sauvegarder l'état complet"), _("Archive tar.gz horodatee"),
                 screen_factory=lambda c: BackupStateScreen(container=c)),
-    SectionItem("7.2", "Restaurer un etat", "Selection d'archive",
+    SectionItem("7.2", N_("Restaurer un état"), _("Sélection d'archive"),
                 screen_factory=lambda c: RestoreStateScreen(container=c)),
-    SectionItem("7.3", "Voir l'historique des actions", "Log applicatif pagine",
+    SectionItem("7.3", N_("Voir l'historique des actions"), _("Log applicatif paginé"),
                 screen_factory=lambda c: ActionHistoryScreen(container=c)),
-    SectionItem("7.4", "Recharger la configuration", "Re-scan sans redemarrage",
-                direct_action=reload_config, direct_action_title="7.4 Recharger config"),
+    SectionItem("7.4", N_("Recharger la configuration"), _("Re-scan sans redémarrage"),
+                direct_action=reload_config, direct_action_title=N_("7.4 Recharger config")),
 )
 
-SECTION_8_TITLE = "MONITORING & STATISTIQUES"
+SECTION_8_TITLE = N_("MONITORING & STATISTIQUES")
 SECTION_8_ITEMS: tuple[SectionItem, ...] = (
-    SectionItem("8.1", "Tableau de bord en temps reel", "Dashboard Live complet (Refresh 2s)",
+    SectionItem("8.1", N_("Tableau de bord en temps réel"), _("Dashboard Live complet (Refresh 2s)"),
                 screen_factory=lambda c: DashboardScreen(container=c)),
-    SectionItem("8.2", "Etat des connexions (Conntrack)", "Sessions actives (snapshots)",
+    SectionItem("8.2", N_("État des connexions (Conntrack)"), _("Sessions actives (snapshots)"),
                 screen_factory=lambda c: ConntrackScreen(container=c)),
-    SectionItem("8.3", "Rapports statistiques (7 jours)", "Graphiques sur 7 jours visu/export",
+    SectionItem("8.3", N_("Rapports statistiques (7 jours)"), _("Graphiques sur 7 jours visu/export"),
                 screen_factory=lambda c: StatsReportScreen(
-                    container=c, period_code="7d", period_label="7 jours",
-                    title="RAPPORT STATISTIQUE — 7 JOURS", period_suffix="7j",
+                    container=c, period_code="7d", period_label=N_("7 jours"),
+                    title=N_("RAPPORT STATISTIQUE — 7 JOURS"), period_suffix="7j",
                 )),
-    SectionItem("8.4", "Rapports statistiques (30 jours)", "Vue macro 30 jours visu/export",
+    SectionItem("8.4", N_("Rapports statistiques (30 jours)"), _("Vue macro 30 jours visu/export"),
                 screen_factory=lambda c: StatsReportScreen(
-                    container=c, period_code="30d", period_label="30 jours",
-                    title="RAPPORT STATISTIQUE — 30 JOURS", period_suffix="30j",
+                    container=c, period_code="30d", period_label=N_("30 jours"),
+                    title=N_("RAPPORT STATISTIQUE — 30 JOURS"), period_suffix="30j",
                 )),
-    SectionItem("8.5", "Visualiser les logs serveurs avec Tail", "Tableau de bord temps reel : trafic + stats + logs (5.1 Bis)",
+    SectionItem("8.5", N_("Visualiser les logs serveurs avec Tail"), _("Tableau de bord temps réel : trafic + stats + logs"),
                 screen_factory=lambda c: LiveTailScreen(container=c)),
-    SectionItem("8.6", "Visualiser les logs serveurs avec lnav", "Selection multi-fichiers, analyse via lnav (fusion automatique)",
+    SectionItem("8.6", N_("Visualiser les logs serveurs avec lnav"), _("Sélection multi-fichiers, analyse via lnav (fusion automatique)"),
                 screen_factory=lambda c: LnavScreen(container=c)),
 )
 

@@ -20,6 +20,7 @@ from omega_fire.application.exceptions import (
     UseCaseExecutionError,
     RollbackError,
 )
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -106,7 +107,7 @@ class PipelineExecutor:
         """
         start_time = datetime.now()
         executed_steps: list[str] = []
-        skipped_steps = [step.name for step, _ in plan.skipped_steps]
+        skipped_steps = [step.name for step, _ignored in plan.skipped_steps]
         
         # Record command started
         if self._audit_hook:
@@ -142,7 +143,7 @@ class PipelineExecutor:
         
         # Check if we're in degraded mode
         if plan.degraded_mode and not self._allow_degraded:
-            error_msg = f"Command '{plan.command_name}' requires degraded mode, but it's not allowed"
+            error_msg = _("La commande « {command_name} » nécessite le mode dégradé, qui n'est pas autorisé").format(command_name=plan.command_name)
             if self._audit_hook:
                 self._audit_hook.record_command_failed(
                     command_name=plan.command_name,
@@ -221,7 +222,7 @@ class PipelineExecutor:
                     )
             except Exception as e:
                 # Step failed — trigger rollback
-                error_msg = f"Step '{step.name}' failed: {e}"
+                error_msg = _("Échec de l'étape « {name} » : {e}").format(name=step.name, e=e)
                 
                 if self._audit_hook:
                     self._audit_hook.record_step_failed(
@@ -245,7 +246,7 @@ class PipelineExecutor:
                 elif not rollback_success and self._audit_hook:
                     self._audit_hook.record_rollback_failed(
                         command_name=plan.command_name,
-                        error_message="Rollback failed for one or more steps",
+                        error_message=_("Échec de l'annulation d'une ou plusieurs étapes"),
                     )
                 
                 return ExecutionResult(
@@ -300,7 +301,7 @@ class PipelineExecutor:
                     if self._audit_hook:
                         self._audit_hook.record_rollback_failed(
                             command_name=plan.command_name,
-                            error_message=f"Rollback for step '{step_name}' failed: {e}",
+                            error_message=_("Échec de l'annulation de l'étape « {step_name} » : {e}").format(step_name=step_name, e=e),
                         )
                     return False
         

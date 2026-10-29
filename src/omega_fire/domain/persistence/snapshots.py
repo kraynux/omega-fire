@@ -176,6 +176,8 @@ class RulesSnapshot:
         destination: Optional[str] = None,
         comment: str = "",
         order: int = 0,
+        chain_name: Optional[str] = None,
+        restorable: bool = False,
     ) -> None:
         """Add a firewall rule to the snapshot.
         
@@ -199,6 +201,11 @@ class RulesSnapshot:
             "destination": destination,
             "comment": comment,
             "order": order,
+            # Depuis 2026-10-28 : vrai nom de chaine et regle recreable a
+            # l'identique ; 7.2 ne reapplique que les regles restorable=True
+            # (absent dans un snapshot plus ancien = non restaurable).
+            "chain_name": chain_name,
+            "restorable": restorable,
         })
         self.count = len(self.rules)
 

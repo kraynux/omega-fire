@@ -20,6 +20,7 @@ from omega_fire.infrastructure.backends.service_manager.exceptions import (
     ServiceControlError,
     ServiceStatusError,
 )
+from omega_fire.shared.i18n import _
 
 
 class OpenRCServiceManager(ServiceManager):
@@ -74,7 +75,7 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="start",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
         
@@ -82,7 +83,7 @@ class OpenRCServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="start",
-                reason="rc-service binary not found",
+                reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
     
@@ -118,7 +119,7 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="stop",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
         
@@ -126,7 +127,7 @@ class OpenRCServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="stop",
-                reason="rc-service binary not found",
+                reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
     
@@ -162,7 +163,7 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="restart",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
         
@@ -170,7 +171,7 @@ class OpenRCServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="restart",
-                reason="rc-service binary not found",
+                reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
     
@@ -206,7 +207,7 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="enable",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
         
@@ -214,7 +215,7 @@ class OpenRCServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="enable",
-                reason="rc-update binary not found",
+                reason=_("Exécutable rc-update introuvable"),
                 manager_type="openrc",
             )
     
@@ -250,7 +251,7 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="disable",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
         
@@ -258,7 +259,7 @@ class OpenRCServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="disable",
-                reason="rc-update binary not found",
+                reason=_("Exécutable rc-update introuvable"),
                 manager_type="openrc",
             )
     
@@ -307,7 +308,7 @@ class OpenRCServiceManager(ServiceManager):
         except FileNotFoundError:
             raise ServiceStatusError(
                 service_name=service_name,
-                reason="rc-service binary not found",
+                reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
     

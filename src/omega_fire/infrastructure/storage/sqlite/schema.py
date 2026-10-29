@@ -8,6 +8,7 @@ This module performs real file I/O and is therefore in infrastructure/.
 """
 from omega_fire.infrastructure.storage.sqlite.connection import DatabaseConnection
 from omega_fire.infrastructure.storage.sqlite.exceptions import DatabaseSchemaError
+from omega_fire.shared.i18n import _
 
 
 # Initial schema SQL
@@ -108,7 +109,7 @@ def create_schema(db: DatabaseConnection) -> None:
             conn.executescript(INITIAL_SCHEMA)
     except Exception as e:
         raise DatabaseSchemaError(
-            reason=f"Failed to create schema: {e}",
+            reason=_("Impossible de créer le schéma : {e}").format(e=e),
         ) from e
 
 
@@ -131,7 +132,7 @@ def drop_schema(db: DatabaseConnection) -> None:
             conn.execute("DROP TABLE IF EXISTS snapshots")
     except Exception as e:
         raise DatabaseSchemaError(
-            reason=f"Failed to drop schema: {e}",
+            reason=_("Impossible de supprimer le schéma : {e}").format(e=e),
         ) from e
 
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -83,7 +84,7 @@ def get_conntrack_status(
             total_count=0,
             by_protocol={},
             by_state={},
-            message="⚠️ Port MonitoringPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés.",
+            message=_("⚠️ Port MonitoringPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
         )
     
     try:
@@ -95,7 +96,7 @@ def get_conntrack_status(
                 total_count=0,
                 by_protocol={},
                 by_state={},
-                message="⚠️ Le port ne supporte pas list_connections().",
+                message=_("⚠️ Le port ne supporte pas list_connections()."),
             )
         
         entries = []
@@ -150,7 +151,7 @@ def get_conntrack_status(
             total_count=len(entries),
             by_protocol=by_protocol,
             by_state=by_state,
-            message=f"{len(entries)} connexion(s) suivie(s) par conntrack.",
+            message=_("{count} connexion(s) suivie(s) par conntrack.").format(count=len(entries)),
         )
     
     except Exception as e:
@@ -159,7 +160,7 @@ def get_conntrack_status(
             total_count=0,
             by_protocol={},
             by_state={},
-            message=f"❌ Erreur lors de la récupération des connexions : {e}",
+            message=_("❌ Erreur lors de la récupération des connexions : {e}").format(e=e),
         )
 
 # Points clés :

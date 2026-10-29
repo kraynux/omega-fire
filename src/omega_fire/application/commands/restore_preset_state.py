@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from omega_fire.application.commands.apply_preset import snapshot_file_for, state_file_for
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -51,7 +52,7 @@ class RestorePresetStateCommand:
         if self._adapter is None:
             return RestorePresetStateResult(
                 success=False,
-                message=f"Aucun backend disponible pour restaurer l'état sur {request.backend}.",
+                message=_("Aucun backend disponible pour restaurer l'état sur {backend}.").format(backend=request.backend),
             )
 
         snapshot_file = snapshot_file_for(request.backend)
@@ -61,8 +62,7 @@ class RestorePresetStateCommand:
         if not snapshot_file.exists():
             return RestorePresetStateResult(
                 success=False,
-                message=f"Aucun état antérieur disponible pour restauration sur {request.backend}. "
-                        f"Rien n'a été modifié. Reconstruisez vos règles via 3.1/3.3 si nécessaire.",
+                message=_("Aucun état antérieur disponible pour restauration sur {backend}. Rien n'a été modifié. Reconstruisez vos règles via 3.1/3.3 si nécessaire.").format(backend=request.backend),
             )
 
         try:
@@ -70,8 +70,7 @@ class RestorePresetStateCommand:
         except Exception as e:
             return RestorePresetStateResult(
                 success=False,
-                message=f"Impossible de lire la sauvegarde de l'état antérieur ({e}). "
-                        f"Rien n'a été modifié.",
+                message=_("Impossible de lire la sauvegarde de l'état antérieur ({e}). Rien n'a été modifié.").format(e=e),
             )
 
         # --- Restauration (flush + reload, jamais de cumul) ---
@@ -80,9 +79,7 @@ class RestorePresetStateCommand:
         except Exception as e:
             return RestorePresetStateResult(
                 success=False,
-                message=f"Échec de la restauration sur {request.backend} : {e}. "
-                        f"Le système peut être dans un état incohérent — vérifiez "
-                        f"manuellement l'état du pare-feu.",
+                message=_("Échec de la restauration sur {backend} : {e}. Le système peut être dans un état incohérent — vérifiez manuellement l'état du pare-feu.").format(backend=request.backend, e=e),
             )
 
         # --- Nettoyage : le snapshot de CE backend vient d'être consommé ---
@@ -99,9 +96,7 @@ class RestorePresetStateCommand:
         return RestorePresetStateResult(
             success=True,
             message=(
-                f"L'état antérieur a été restauré avec succès sur {request.backend}. "
-                f"Pensez à repasser par 3.3 (Lister les règles) pour resynchroniser "
-                f"la base avec l'état réellement actif dans le noyau."
+                _("L'état antérieur a été restauré avec succès sur {backend}. Pensez à repasser par 3.3 (Lister les règles) pour resynchroniser la base avec l'état réellement actif dans le noyau.").format(backend=request.backend)
             ),
         )
 

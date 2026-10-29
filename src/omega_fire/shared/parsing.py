@@ -7,6 +7,7 @@ import re
 from typing import Iterable, Iterator
 
 from omega_fire.shared.exceptions import ParsingError
+from omega_fire.shared.i18n import _
 
 # Regex "large" pour détecter une IPv4 ou IPv6 dans une ligne de log.
 # Elle est volontairement permissive : la validation stricte se fait ensuite
@@ -129,9 +130,9 @@ def require_match(pattern: re.Pattern[str], text: str, context: str = "") -> re.
     """
     match = pattern.search(text)
     if not match:
-        msg = f"Regex ne matche pas"
+        msg = _("Regex ne matche pas")
         if context:
-            msg += f" (contexte: {context})"
+            msg += _(" (contexte: {context})").format(context=context)
         raise ParsingError(msg)
     return match
 

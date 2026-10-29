@@ -18,6 +18,7 @@ Officiële pagina: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 Documentatie, exports en interface beschikbaar in **17 talen** — zie [Talen van de interface](#talen-van-de-interface).  
 **Talen:**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](../pl/README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](../zh-CN/README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](../vi/README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](../id/README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](../ko/README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -100,6 +101,7 @@ Omega-Fire fungeert als een **lokale bedieningspost** voor netwerkbeveiliging. H
 - Weergave van recente diagnoses.
 - Weergave en doorzoeken van het applicatielog.
 - Export van toestand en diagnoses als JSON, TXT of HTML.
+- Categorie **Omega-suite**: omega-serv (gedetecteerde en actieve instanties), omega-waf (extra `magnet` ingeschakeld) en omega-jail (geïnstalleerde jails), zichtbaar in het register, het dashboard en de rapporten.
 
 ### 2. Geïntegreerd IP-beheer
 
@@ -121,12 +123,15 @@ De geïntegreerde blacklist maakt het mogelijk met nftables en iptables te werke
 - Lijst van systeemregels en van regels die door Omega-Fire zijn gemaakt.
 - Verwijderen van een regel via selectie.
 - Automatische opschoning van inactieve regels in de referentiedatabase.
+- Opschonen en opnieuw synchroniseren van de database met de echte firewall, met voorbeeld en voorafgaande back-up, zonder de firewall zelf ooit te wijzigen.
+- Regels van andere tools (UFW, Tailscale, Docker…) herkend aan hun herkomst: ter informatie getoond, nooit vanuit Omega-Fire verwijderd.
+- Beveiliging vóór het toepassen van een beleid of het leegmaken van iptables wanneer andere tools daar regels hebben: overal toepassen, alleen op nftables, of annuleren — gevolgen uitgebreid beschreven in de help.
 - Toepassen van vooraf gedefinieerd beleid.
 - Automatische back-up vóór het toepassen van een beleid.
 - Aanpassen, opslaan en herstellen van een beleid.
 - Aanduiding van het actieve beleid in het statusmenu en het dashboard.
 - Aanduiding van gewijzigde profielen in de vorm `Profiel + CUSTOM`.
-- Tabelbeheer (menu 3.5): alleen-lezen diagnose per backend (aanwezigheid van de tabel, input/output/forward-beleid, aantal regels) met detectie van verschillen tussen backends.
+- Tabelbeheer (menu 3.5): alleen-lezen diagnose per backend (aanwezigheid van de tabel, input/output/forward-beleid, aantal regels) met uitleg van beleid dat per backend verschilt (werkelijk effect, oorzaak en oplossing).
 - Initialisatie van een nftables-tabel bij eerste gebruik, zonder ooit een reeds geconfigureerde chain te overschrijven.
 - Terugzetten van het chainbeleid naar ACCEPT op een backend, om een verweesd restrictief beleid van een eerder profiel te corrigeren.
 - Gericht leegmaken van een backend of gesynchroniseerd leegmaken van alle gedetecteerde backends in één handeling.
@@ -140,20 +145,23 @@ De geïntegreerde blacklist maakt het mogelijk met nftables en iptables te werke
 - Ban en unban, afzonderlijk of meervoudig.
 - Overdracht van IP's tussen jails, backends en bestanden.
 - Begeleid aanmaken van een eigen jail.
-- Vooraf gedefinieerde jail-sjablonen.
-- Verwijderen van een jail.
+- Vooraf gedefinieerde jail-sjablonen, bewerkbaar en verwijderbaar.
+- Herkomst van elke jail: Omega-Fire, omega-jail, de hoofdconfiguratie van fail2ban of een ander bestand.
+- Betrouwbaar verwijderen van een jail, ongeacht de naam van het bestand: waarschuwing voor een jail die door omega-jail is geïnstalleerd, toegelichte weigering voor een jail uit `jail.local` of een gedeeld bestand, standaardfilters van fail2ban worden nooit verwijderd.
 - Leegmaken van een jail of algemene opschoning.
 - Export als JSON, TXT of HTML.
 - Controle en audit van de configuratie.
-- Dienstbeheer: status, starten, stoppen, herstarten, inschakelen en uitschakelen bij het opstarten.
+- Servicebeheer: status, starten, stoppen, herstarten, in- en uitschakelen bij het opstarten; na een start of stop worden het capaciteitenregister en het dashboard bijgewerkt.
 
 ### 5. Logs en onderhoud
 
-- Live Tail met Omega-Fire-dashboard.
-- Weergave van meerdere bestanden met vastgezette items (favoriete bronnen, bewaard tussen twee starts).
-- Integratie van `lnav`: selectie van één of meer bestanden (nummers of handmatige paden, gescheiden door komma's), automatische samenvoeging tot één chronologische weergave, ingebed in een Omega-Fire-header/footer (zie [Navigatie](#navigatie)).
-- Analyse van de meest voorkomende IP's met Top N.
-- Gericht verwijderen van een IP uit LOG- of TXT-bestanden.
+- **Logbibliotheek** (5.1): automatische import van de logs van gedetecteerde omega-serv-instanties, inclusief die van omega-waf, handmatig vastzetten van een pad en ophalen van een externe log via SSH (sleutel of agent, nooit een wachtwoord).
+- **Favorieten** (5.2): logs uit de Bibliotheek combineren, onder een naam met een viewer opslaan en direct starten.
+- **Logs bekijken** (5.3): één log zonder configuratie, met de viewer van je keuze — Eenvoudig (realtime dashboard), Klassiek (laatste regels, daarna live volgen) of `lnav`.
+- `lnav`-integratie: meerdere logs samengevoegd tot één chronologische weergave, ingebed in een Omega-Fire-header/footer (zie [Navigatie](#navigatie)).
+- Analyse van de meest voorkomende IP's met Top N, exporteerbaar om opnieuw in de gerichte opschoning te laden.
+- Gerichte verwijdering van één of meer IP's uit LOG- of TXT-bestanden, met de hand ingevoerd of aangevinkt vanuit een export.
+- Vastgezette bestanden met **aan te vinken presets**: alleen de gebruikelijke paden die echt op de machine aanwezig zijn, worden aangeboden.
 - Rotatie en onmiddellijke of geautomatiseerde back-ups.
 - Herstellen van een back-up.
 - Opschonen op basis van ouderdom, quotum, type of handmatige selectie.
@@ -178,6 +186,10 @@ Beschikbare rapporten:
 - Fail2Ban-statistieken.
 - Systeemtoestand en -diagnose.
 - Statistische rapporten over 7 of 30 dagen.
+- Top N-ranglijst van IP's.
+- Helpgids en FAQ.
+
+**Alle exports bekijken** (6.5): alle geëxporteerde bestanden op één plek, met type, datum en grootte; een HTML-rapport opent in de standaardwebbrowser van de gebruiker, een JSON- of TXT-bestand wordt in Omega-Fire gelezen, zonder terminal of bestandsbeheerder.
 
 HTML-thema's:
 
@@ -187,11 +199,13 @@ HTML-thema's:
 - `light-basic` — licht en sober.
 - `light-alt` — crèmekleurig papier en bosgroen.
 
+Taal van de exports: apart in te stellen in de instellingen (standaard « Zoals de interface »), om een rapport in de taal van de lezer te leveren zonder de taal van de interface te wijzigen.
+
 ### 7. Systeem en persistentie
 
 - Back-up van de volledige toestand: regels, nftables-bans, iptables-bans en Fail2Ban.
 - Aanmaken van `.tar.gz`-archieven met tijdstempel.
-- Lijst en herstel van snapshots.
+- Snapshots weergeven en herstellen: alleen Omega-Fire-regels die identiek opnieuw te maken zijn, worden teruggezet; regels van andere tools worden nooit aangeraakt.
 - Geschiedenis van de acties.
 - Filteren en opschonen van de geschiedenis.
 - Herladen van de configuratie en herscan zonder herstart.
@@ -209,7 +223,17 @@ HTML-thema's:
 
 - Keuze van het actieve thema uit de tien `omega-*`-thema's die met de rest van de suite worden gedeeld (zie [Thema's en terminals](#themas-en-terminals)), bewaard tussen twee starts.
 - Handmatig overschrijven van het weergaveprofiel (automatisch, volledig, standaard, beperkt of alleen mono), toegepast bij de volgende start.
-- Bereikbaar via het hoofdmenu (`9. RÉGLAGES`) of rechtstreeks met de toets `s`.
+- Taal van de interface uit 17 talen (zie [Talen van de interface](#talen-van-de-interface)): alleen de interface start opnieuw; firewallregels, Fail2Ban en diensten blijven ongemoeid.
+- Taal van de HTML- en TXT-exports, los van die van de interface.
+- Aanpasbare mappen voor exports en schermafbeeldingen, met leegmaken na bevestiging.
+- Bereikbaar via het hoofdmenu (`9. INSTELLINGEN`) of rechtstreeks met de toets `s`.
+
+### 10. Help
+
+- **Helpgids**: alle helpbladen samengebracht in de volgorde van de menu's, elk blad opent zijn verwante bladen.
+- **FAQ**: de echte vragen uit de praktijk (regels van andere tools, herstel, Fail2Ban, logs, exports en browser).
+- HTML-export van de gids en de FAQ, in de exporttaal.
+- De toets `a` blijft de help van het huidige scherm.
 
 ---
 
@@ -269,7 +293,7 @@ De productieafhankelijkheden zijn gedefinieerd in `requirements.txt`:
 - `psutil` — systeeminformatie (CPU, geheugen, netwerk, processen) voor het dashboard en de diagnose.
 - `jinja2` — aanmaak van de HTML-exports.
 - `python-dotenv` — omgevingsvariabelen.
-- `pyte` — virtuele terminalemulator, voor het inbedden van `lnav` (menu's 5.9/8.6).
+- `pyte` — virtuele terminalemulator, voor de `lnav`-inbedding (menu 8.6 en de lnav-viewer van 5.2 / 5.3).
 
 De kwaliteitshulpmiddelen (`pytest`, `black`, `flake8`, `mypy`) staan als commentaar in `requirements.txt`: haal het commentaar weg of installeer ze apart als je bijdraagt aan het project (zie [Tests en kwaliteit](#tests-en-kwaliteit)).
 
@@ -454,11 +478,17 @@ Om in plaats daarvan de oude Rich-interface (sequentiële invoer van nummers) te
 ./omega-fire.sh --legacy-cli
 ```
 
+De oude interface blijft die van versie 3.0, in het Frans: oorspronkelijk menu 5 (zonder Bibliotheek, Favorieten of Klassieke viewer), zonder „Alle exports bekijken”, zonder helpgids of FAQ, zonder presets. De Textual-interface bevat de volledige versie 3.5.
+
+### Talen van de interface
+
+17 talen: Frans, Engels, Spaans, Portugees (Brazilië), Italiaans, Duits, Nederlands, Pools, Russisch, Chinees, Vietnamees, Thai, Indonesisch, Japans, Koreaans, Hindi, Arabisch. Keuze in de instellingen (toets `s`, « Langue / Language », een label dat nooit wordt vertaald), toegepast door alleen de interface opnieuw te starten, of eenmalig met `OMEGA_FIRE_LANG=nl ./omega-fire.sh` (door het startscript bewaard via `sudo`). In de Linux-tekstconsole (TTY) worden talen waarvan het schrift ontbreekt in de consolelettertypen (Vietnamees, Chinees, Thai, Japans, Koreaans, Hindi, Arabisch) voor de sessie in het Engels getoond. Arabisch wordt van rechts naar links weergegeven. In het Hindi tonen Terminator, GNOME Terminal, Xfce Terminal en Alacritty uitgelijnde tekst; terminals die verbonden letters zelf samenstellen (Kitty, Ghostty, Konsole) kunnen kaders en kolommen verschuiven. De **taal van de exports** (HTML- en TXT-rapporten) wordt apart ingesteld, standaard « Zoals de interface ». Het toepassingslogboek en de auditgeschiedenis worden in het Frans opgeslagen; de titels van de geschiedenis worden in de gekozen taal getoond. De oude interface (`--legacy-cli`) blijft in het Frans.
+
 ### Algemeen verloop
 
 1. Startscherm (splash), daarna een waarschuwing als de terminal te klein is.
 2. Detectie van de systeemmogelijkheden (eigen, niet-blokkerend scherm).
-3. Hoofdmenu: 8 thematische secties (1-8) plus de instellingen (9).
+3. Hoofdmenu: 8 thematische secties (1-8), de instellingen (9) en de help (10).
 4. Selectie van een sectie en daarna van een actie — elke actie opent een formulier waarvan alle verplichte velden worden gevalideerd voordat je verdergaat.
 5. Uitdrukkelijke bevestiging vóór elke gevoelige of destructieve bewerking (flush, opschoning, herstel...).
 6. Uitvoering op de achtergrond voor trage bewerkingen (de interface blijft tijdens het wachten bruikbaar), daarna terug naar het menu met een samenvatting van het resultaat.
@@ -470,13 +500,13 @@ Om in plaats daarvan de oude Rich-interface (sequentiële invoer van nummers) te
 - Enter: selecteren of bevestigen.
 - Op een rij van een tabel klikken: die selecteren en de betreffende velden vooraf invullen (vast te zetten bron, doeljail enz.).
 - `Esc`: terug naar het vorige scherm (vraagt op het startscherm om bevestiging om af te sluiten).
-- `a`: contextuele hulp — beschrijft de lopende actie, of alle acties van de huidige sectie als er nog geen actiescherm open is.
+- `a`: contextuele help — beschrijft de huidige actie, of alle acties van de huidige sectie als er nog geen actiescherm open is; de volledige gids en de FAQ staan in menu 10.
 - `t`: naar het volgende thema gaan, zonder bevestiging.
 - `r`: de grootte en familie van de terminal opnieuw detecteren.
-- `s`: de instellingen openen (thema, weergaveprofiel).
+- `s`: de instellingen openen (thema, weergaveprofiel, talen, mappen).
 - `q` / `Ctrl+Q`: afsluiten, met bevestiging.
 
-#### Bijzonderheden van het lnav-scherm (5.9 / 8.6)
+#### Bijzonderheden van het lnav-scherm (8.6, en de lnav-viewer van 5.2 / 5.3)
 
 `lnav` is ingebed in een pseudoterminal met een blijvende Omega-Fire-header/footer rond zijn eigen weergave, om elke botsing tussen zijn eigen sneltoetsen en die van Omega-Fire te voorkomen:
 
@@ -603,6 +633,7 @@ Omega-Fire werkt op kritieke systeemcomponenten en moet met voorzichtigheid word
 - Het starten vereist rootrechten via `sudo`.
 - Flush, algemene opschoning en het toepassen van een beleid kunnen destructief zijn.
 - Een vooraf gedefinieerd beleid start vóór de wijziging een automatische back-up.
+- Op iptables / ip6tables wist het toepassen van een beleid of het leegmaken van een backend ook de regels van andere tools (UFW…): Omega-Fire meldt dit en laat je kiezen voordat er iets gebeurt.
 - Maak vóór elke grote wijziging een handmatige back-up.
 - Controleer na elke bewerking de werkelijke toestand van de firewall, de jails en de verbindingen.
 - Test eerst op een wegwerpmachine of -doel.
@@ -614,14 +645,14 @@ Omega-Fire werkt op kritieke systeemcomponenten en moet met voorzichtigheid word
 
 ## Tests en kwaliteit
 
-Het project telt een historische suite van 152 unittests, geschreven vóór de migratie naar Textual: ze dekt het bedrijfsdomein, de orkestratie (`application/`), de infrastructuur en de Rich-interface (`interfaces/cli/`), maar **dekt `interfaces/tui/` nog niet** (de standaard-Textual-interface). Dit archief bevat de map `tests/` niet: haal die zo nodig uit je ontwikkelrepository om ze uit te voeren.
+De suite telt 137 unittests (meer dan 8.000 gecontroleerde gevallen): bedrijfsdomein, orkestratie (`application/`), infrastructuur, en de Textual-schermen die in 3.5 zijn toegevoegd of gecorrigeerd, uitgevoerd met de echte stylesheets (lay-out, volledige trajecten, exporttalen). Dit archief bevat de map `tests/` niet: haal die zo nodig uit je ontwikkelrepository om ze uit te voeren.
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-Omdat de gelaagde architectuur het bedrijfsdomein strikt scheidt van de presentatie (`domain/`, `application/`, `ports/` als `Protocol`, zie [Architectuur](#architectuur)), blijft deze suite ondanks de migratie ongewijzigd geldig: alleen de recentere Textual-interface heeft nog geen eigen dekking.
+De gelaagde architectuur scheidt het bedrijfsdomein strikt van de presentatie (`domain/`, `application/`, `ports/` als `Protocol`, zie [Architectuur](#architectuur)): de meeste tests hebben geen root en geen echte firewall nodig.
 
 Als je bijdraagt aan het project, installeer dan de kwaliteitshulpmiddelen die (als commentaar) in `requirements.txt` staan:
 
@@ -657,7 +688,7 @@ pytest --cov
 
 ### Bekende beperkingen
 
-- De testsuite (152) dekt de na haar geschreven Textual-interface (`interfaces/tui/`) nog niet (zie [Tests en kwaliteit](#tests-en-kwaliteit)).
+- De testsuite dekt de Textual-schermen van 3.5, nog niet alle oudere schermen (zie [Tests en kwaliteit](#tests-en-kwaliteit)).
 - Het mechanisme `ExecutionPlan`/`PipelineStep` is gedeeltelijk nog aanwezig in het project.
 - De precieze beschikbaarheid van de functies hangt af van de binaries, diensten, rechten en configuraties van de hostmachine.
 - De historische Rich-interface (`--legacy-cli`) is niet langer de focus van de actieve ontwikkeling; ze blijft behouden tot de Textual-interface onder reële omstandigheden volledig betrouwbaar is.

@@ -23,13 +23,14 @@ import sys
 import tty
 import termios
 import fcntl
+from omega_fire.shared.i18n import _
 
 # ----------------------------------------------------------------------
 # Display labels (for footer rendering)
 # ----------------------------------------------------------------------
 KEY_UP_DOWN = "↑↓"
-KEY_ENTER = "Enter"
-KEY_ESC = "Esc"
+KEY_ENTER = _("Enter")
+KEY_ESC = _("Esc")
 KEY_A = "a"
 KEY_T = "t"
 KEY_Q = "q"
@@ -37,17 +38,17 @@ KEY_R = "r"
 KEY_D = "d"
 KEY_F = "f"
 
-LABEL_NAVIGATE = "Naviguer"
-LABEL_VALIDATE = "Valider"
-LABEL_ENTER = "Entrer"
-LABEL_BACK = "Retour"
-LABEL_HELP = "Aide"
-LABEL_THEME = "Thème"
-LABEL_MENU = "Menu"
-LABEL_QUIT = "Quitter"
-LABEL_REFRESH = "Rafraîchir"
-LABEL_PAGE_START = "Début"
-LABEL_PAGE_END = "Fin"
+LABEL_NAVIGATE = _("Naviguer")
+LABEL_VALIDATE = _("Valider")
+LABEL_ENTER = _("Entrer")
+LABEL_BACK = _("Retour")
+LABEL_HELP = _("Aide")
+LABEL_THEME = _("Thème")
+LABEL_MENU = _("Menu")
+LABEL_QUIT = _("Quitter")
+LABEL_REFRESH = _("Rafraîchir")
+LABEL_PAGE_START = _("Début")
+LABEL_PAGE_END = _("Fin")
 
 # ----------------------------------------------------------------------
 # Raw escape sequences (for key capture)

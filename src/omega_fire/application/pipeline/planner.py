@@ -14,6 +14,7 @@ from omega_fire.application.pipeline.guards.capability_guard import (
     is_capability_available,
     get_unavailable_capabilities,
 )
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -146,7 +147,7 @@ class PipelinePlanner:
             ValueError: If no steps are provided
         """
         if not steps:
-            raise ValueError(f"Command '{command_name}' has no steps defined")
+            raise ValueError(_("La commande « {command_name} » ne définit aucune étape").format(command_name=command_name))
         
         executable_steps: list[PipelineStep] = []
         skipped_steps: list[tuple[PipelineStep, list[str]]] = []
@@ -193,15 +194,13 @@ class PipelinePlanner:
         # Check if there are any executable steps
         if not plan.has_steps():
             errors.append(
-                f"Command '{plan.command_name}' has no executable steps. "
-                f"All steps were skipped due to missing capabilities."
+                _("La commande « {command_name} » n'a aucune étape exécutable : toutes ont été ignorées faute de capacités.").format(command_name=plan.command_name)
             )
         
         # Check if degraded mode is allowed
         if plan.degraded_mode and not self._allow_partial_execution:
             errors.append(
-                f"Command '{plan.command_name}' requires partial execution, "
-                f"but partial execution is not allowed."
+                _("La commande « {command_name} » ne pourrait s'exécuter qu'en partie, ce qui n'est pas autorisé.").format(command_name=plan.command_name)
             )
         
         return errors

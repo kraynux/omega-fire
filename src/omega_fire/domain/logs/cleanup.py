@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
 from omega_fire.domain.logs.exceptions import InvalidRetentionError
+from omega_fire.shared.i18n import _
 
 
 class RetentionUnit(Enum):
@@ -41,16 +42,16 @@ class RetentionPolicy:
         errors = []
         
         if self.max_age_days < 1:
-            errors.append("max_age_days must be >= 1")
+            errors.append(_("max_age_days doit être >= 1"))
         
         if self.max_archive_age_days < 1:
-            errors.append("max_archive_age_days must be >= 1")
+            errors.append(_("max_archive_age_days doit être >= 1"))
         
         if self.max_total_size_bytes is not None and self.max_total_size_bytes <= 0:
-            errors.append("max_total_size_bytes must be > 0 if set")
+            errors.append(_("max_total_size_bytes doit être > 0 s'il est défini"))
         
         if self.min_free_space_bytes is not None and self.min_free_space_bytes <= 0:
-            errors.append("min_free_space_bytes must be > 0 if set")
+            errors.append(_("min_free_space_bytes doit être > 0 s'il est défini"))
         
         return errors
     
@@ -260,14 +261,14 @@ def plan_cleanup(
     for f in expired_logs:
         if f.path not in reasons:
             files_to_delete.append(f)
-            reasons[f.path] = f"Expired (age: {f.age_days(now):.1f} days, max: {policy.max_age_days} days)"
+            reasons[f.path] = _("Expiré (âge : {value:.1f} jours, max : {max_age_days} jours)").format(value=f.age_days(now), max_age_days=policy.max_age_days)
     
     # Step 2: Identify expired archives
     expired_archives = identify_expired_archives(files, policy.max_archive_age_days, now)
     for f in expired_archives:
         if f.path not in reasons:
             files_to_delete.append(f)
-            reasons[f.path] = f"Archive expired (age: {f.age_days(now):.1f} days, max: {policy.max_archive_age_days} days)"
+            reasons[f.path] = _("Archive expirée (âge : {value:.1f} jours, max : {max_archive_age_days} jours)").format(value=f.age_days(now), max_archive_age_days=policy.max_archive_age_days)
     
     # Step 3: Check total size limit
     if policy.max_total_size_bytes is not None:
@@ -280,7 +281,7 @@ def plan_cleanup(
         for f in oversized:
             if f.path not in reasons:
                 files_to_delete.append(f)
-                reasons[f.path] = "Total size limit exceeded (oldest files removed first)"
+                reasons[f.path] = _("Taille totale maximale dépassée (les fichiers les plus anciens sont supprimés en premier)")
     
     # Compute total size to free
     total_size_to_free = sum(f.size_bytes for f in files_to_delete)
@@ -316,13 +317,13 @@ def validate_retention_parameters(
     errors = []
     
     if max_age_days is not None and max_age_days < 1:
-        errors.append(f"max_age_days must be >= 1 (got {max_age_days})")
+        errors.append(_("max_age_days doit être >= 1 (reçu : {max_age_days})").format(max_age_days=max_age_days))
     
     if max_archive_age_days is not None and max_archive_age_days < 1:
-        errors.append(f"max_archive_age_days must be >= 1 (got {max_archive_age_days})")
+        errors.append(_("max_archive_age_days doit être >= 1 (reçu : {max_archive_age_days})").format(max_archive_age_days=max_archive_age_days))
     
     if max_total_size_bytes is not None and max_total_size_bytes <= 0:
-        errors.append(f"max_total_size_bytes must be > 0 (got {max_total_size_bytes})")
+        errors.append(_("max_total_size_bytes doit être > 0 (reçu : {max_total_size_bytes})").format(max_total_size_bytes=max_total_size_bytes))
     
     if (
         max_age_days is not None
@@ -330,8 +331,7 @@ def validate_retention_parameters(
         and max_archive_age_days < max_age_days
     ):
         errors.append(
-            f"max_archive_age_days ({max_archive_age_days}) should be >= "
-            f"max_age_days ({max_age_days})"
+            _("max_archive_age_days ({max_archive_age_days}) devrait être >= max_age_days ({max_age_days})").format(max_archive_age_days=max_archive_age_days, max_age_days=max_age_days)
         )
     
     return errors

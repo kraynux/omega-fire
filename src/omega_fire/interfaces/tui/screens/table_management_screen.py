@@ -27,8 +27,15 @@ from omega_fire.application.commands.manage_tables import (
     ResetChainPoliciesCommand,
 )
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.application.queries.policy_divergence import describe_policies
+from omega_fire.application.queries.foreign_rules import (
+    describe_foreign_rules,
+    foreign_rules_by_backend,
+)
+from omega_fire.interfaces.tui.screens.choice import ChoiceScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -50,6 +57,21 @@ _NEEDS_BACKEND_CHOICE = (_ACTION_RESET, _ACTION_FLUSH_ONE)
 class TableManagementScreen(OmegaScreen):
     """Diagnostic + 5 actions de gestion des tables firewall."""
 
+    CSS = """
+    /* Trois lignes (une par backend) : hauteur naturelle. Le 1fr commun aux
+       DataTable l'ecrasait a une ligne en 80x24 des que le reste debordait. */
+    TableManagementScreen #status-table {
+        height: auto;
+    }
+
+    TableManagementScreen #tables-actions {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin: 0;
+    }
+    """
+
     def __init__(self, *, container: DependencyContainer) -> None:
         super().__init__()
         self._container = container
@@ -68,32 +90,32 @@ class TableManagementScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("GESTION DES TABLES", classes="omega-title")
+            yield Static(_("GESTION DES TABLES"), classes="omega-title")
 
             if not self._available_backends:
                 yield Static(
-                    "Aucun backend firewall disponible (nftables, iptables et ip6tables non détectés).",
+                    _("Aucun backend firewall disponible (nftables, iptables et ip6tables non détectés)."),
                     classes="omega-hint",
                 )
                 with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
                 yield Footer()
                 return
 
             yield DataTable(id="status-table")
             yield Static("", id="divergence-hint", classes="omega-hint")
 
-            yield Static("Action", classes="omega-subtitle")
+            yield Static(_("Action"), classes="omega-subtitle")
             action_options = [
-                ("Initialiser les tables (nftables, première utilisation)", _ACTION_INIT),
-                ("Réinitialiser les politiques à ACCEPT sur un backend", _ACTION_RESET),
-                ("Vider un backend spécifique", _ACTION_FLUSH_ONE),
-                ("Vider TOUS les backends détectés (synchronisé)", _ACTION_FLUSH_ALL),
-                ("[AVANCÉ] Supprimer complètement la table nftables", _ACTION_DELETE_TABLE),
+                (_("Initialiser les tables (nftables, première utilisation)"), _ACTION_INIT),
+                (_("Réinitialiser les politiques à ACCEPT sur un backend"), _ACTION_RESET),
+                (_("Vider un backend spécifique"), _ACTION_FLUSH_ONE),
+                (_("Vider TOUS les backends détectés (synchronisé)"), _ACTION_FLUSH_ALL),
+                (_("[AVANCÉ] Supprimer complètement la table nftables"), _ACTION_DELETE_TABLE),
             ]
             yield Select(action_options, value=_ACTION_INIT, id="action-select", allow_blank=False)
 
-            yield Static("Backend cible", id="backend-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Backend cible"), id="backend-label", classes="omega-subtitle omega-hidden")
             backend_options = [(name, name) for name in self._available_backends]
             yield Select(
                 backend_options,
@@ -103,21 +125,25 @@ class TableManagementScreen(OmegaScreen):
                 allow_blank=False,
             )
 
-            with Horizontal(classes="omega-actions"):
-                with Container(classes="omega-btn-frame"):
-                    yield Button("Exécuter", id="launch", variant="error")
-                with Container(classes="omega-btn-frame"):
-                    yield Button("Rafraîchir", id="refresh")
-                with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+        # Hors de la zone qui defile : toujours visible en 80x24, meme avec
+        # l'explication des politiques (meme principe que les Reglages).
+        with Horizontal(classes="omega-actions", id="tables-actions"):
+            with Container(classes="omega-btn-frame"):
+                yield Button(_("Exécuter"), id="launch", variant="error")
+            with Container(classes="omega-btn-frame"):
+                yield Button(_("Rafraîchir"), id="refresh")
+            with Container(classes="omega-btn-frame"):
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
         if not self._available_backends:
             return
         table = self.query_one("#status-table", DataTable)
-        table.add_columns("Backend", "Table", "INPUT", "OUTPUT", "FORWARD", "Règles")
+        table.add_columns(_("Backend"), _("Table"), "INPUT", "OUTPUT", "FORWARD", _("Règles"))
         self._refresh_status()
+        # Le focus initial (tableau) fait defiler la zone : titre masque en 80x24.
+        self.call_after_refresh(lambda: self.query_one(".omega-panel").scroll_home(animate=False))
 
     def _policy_cell(self, policies: dict, chain: str) -> Text:
         policy = policies.get(chain) or policies.get(chain.upper())
@@ -134,9 +160,9 @@ class TableManagementScreen(OmegaScreen):
                 table.add_row(entry.backend, "—", "—", "—", "—", "—")
                 continue
             if entry.error:
-                table.add_row(entry.backend, Text(f"erreur : {entry.error}", style="red"), "—", "—", "—", "—")
+                table.add_row(entry.backend, Text(_("erreur : {error}").format(error=entry.error), style="red"), "—", "—", "—", "—")
                 continue
-            table_cell = Text("présente", style="green") if entry.table_exists else Text("absente", style="yellow")
+            table_cell = Text(_("présente"), style="green") if entry.table_exists else Text(_("absente"), style="yellow")
             table.add_row(
                 entry.backend, table_cell,
                 self._policy_cell(entry.policies, "input"),
@@ -145,13 +171,12 @@ class TableManagementScreen(OmegaScreen):
                 str(entry.rule_count),
             )
 
+        # Effet reel, cause et remede (retour utilisateur 2026-10-28) ; jaune seulement
+        # pour une politique DROP orpheline, le seul cas qui bloque a tort.
         hint = self.query_one("#divergence-hint", Static)
-        if result.policy_divergences:
-            hint.update(
-                Text("Divergence(s) de politique entre backends : " + " ; ".join(result.policy_divergences), style="yellow")
-            )
-        else:
-            hint.update("")
+        analysis = result.policy_analysis
+        lines = describe_policies(analysis) if analysis is not None else []
+        hint.update(Text("\n".join(lines), style="yellow" if analysis is not None and analysis.has_alert else ""))
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id != "action-select":
@@ -174,22 +199,22 @@ class TableManagementScreen(OmegaScreen):
 
         if action == _ACTION_INIT:
             if self._adapters.get("nftables") is None:
-                self.app.notify("nftables n'est pas disponible — rien à initialiser.", severity="error")
+                self.app.notify(_("nftables n'est pas disponible — rien à initialiser."), severity="error")
                 return
             self._run(lambda: InitializeTablesCommand(self._adapters["nftables"]).execute())
             return
 
         if action == _ACTION_DELETE_TABLE:
             if self._adapters.get("nftables") is None:
-                self.app.notify("nftables n'est pas disponible — rien à supprimer.", severity="error")
+                self.app.notify(_("nftables n'est pas disponible — rien à supprimer."), severity="error")
                 return
             self.app.push_screen(
                 ConfirmScreen(
-                    title="[AVANCÉ] SUPPRIMER LA TABLE",
+                    title=_("[AVANCÉ] SUPPRIMER LA TABLE"),
                     message=(
-                        "Supprime la table nftables ENTIÈRE (chaînes et hooks compris, pas "
+                        _("Supprime la table nftables ENTIÈRE (chaînes et hooks compris, pas "
                         "seulement les règles). Plus aucun filtrage actif sur ce backend tant "
-                        "qu'elle n'est pas réinitialisée ensuite. Continuer ?"
+                        "qu'elle n'est pas réinitialisée ensuite. Continuer ?")
                     ),
                 ),
                 lambda confirmed: self._run_if_confirmed(
@@ -199,12 +224,35 @@ class TableManagementScreen(OmegaScreen):
             return
 
         if action == _ACTION_FLUSH_ALL:
+            # Garde-fou (2026-10-28) : iptables / ip6tables portent aussi les regles
+            # d'autres outils (UFW...) ; l'utilisateur choisit, en le sachant.
+            foreign = foreign_rules_by_backend(self._adapters)
+            if foreign:
+                choices = [(_("Tous les backends — efface ces règles"), "all", "error")]
+                if self._adapters.get("nftables") is not None:
+                    choices.append((_("Seulement nftables — garde ces règles"), "nftables", "warning"))
+                self.app.push_screen(
+                    ChoiceScreen(
+                        title=_("RÈGLES D'AUTRES OUTILS DÉTECTÉES"),
+                        message=_(
+                            "Vider : {targets}.\nRègles d'autres outils trouvées : {detail}.\n\n"
+                            "Sur iptables / ip6tables, vider = toute la table filter (iptables -F) : "
+                            "ces règles sont effacées, leurs chaînes restent vides et la politique par "
+                            "défaut est inchangée (si elle est DROP, seul ce qui reste autorisé passe). "
+                            "L'outil ne les repose qu'à son prochain rechargement (ex. « ufw reload »).\n"
+                            "Sur nftables, seule la table d'Omega-Fire est vidée. Détails : touche « a »."
+                        ).format(targets=", ".join(self._available_backends), detail=describe_foreign_rules(foreign)),
+                        choices=choices,
+                        help_node="3.5",
+                    ),
+                    self._flush_all_choice,
+                )
+                return
             self.app.push_screen(
                 ConfirmScreen(
-                    title="CONFIRMER LE VIDAGE GLOBAL",
+                    title=_("CONFIRMER LE VIDAGE GLOBAL"),
                     message=(
-                        f"Va vider TOUTES les règles sur TOUS les backends détectés "
-                        f"({', '.join(self._available_backends)}). Continuer ?"
+                        _("Va vider TOUTES les règles sur TOUS les backends détectés ({value}). Continuer ?").format(value=', '.join(self._available_backends))
                     ),
                 ),
                 lambda confirmed: self._run_if_confirmed(
@@ -217,14 +265,27 @@ class TableManagementScreen(OmegaScreen):
         backend = str(self.query_one("#backend-select", Select).value)
         adapter = self._adapters.get(backend)
         if adapter is None:
-            self.app.notify(f"{backend} n'est pas disponible.", severity="error")
+            self.app.notify(_("{backend} n'est pas disponible.").format(backend=backend), severity="error")
             return
 
+        foreign = foreign_rules_by_backend({backend: adapter})
+        foreign_note = ""
+        if foreign:
+            foreign_note = "\n\n" + _("Règles d'autres outils sur ce backend : {detail}.").format(detail=describe_foreign_rules(foreign))
+
         if action == _ACTION_RESET:
+            message = _("Remettre input/output/forward à ACCEPT sur {backend} ?").format(backend=backend)
+            if foreign:
+                message += foreign_note + "\n" + _(
+                    "Ces outils comptent souvent sur une politique DROP (UFW met INPUT en DROP) : "
+                    "à ACCEPT, tout paquet qu'aucune règle ne bloque explicitement est accepté. "
+                    "Détails : touche « a »."
+                )
             self.app.push_screen(
                 ConfirmScreen(
-                    title="CONFIRMER LA RÉINITIALISATION",
-                    message=f"Remettre input/output/forward à ACCEPT sur {backend} ?",
+                    title=_("CONFIRMER LA RÉINITIALISATION"),
+                    message=message,
+                    help_node="3.5",
                 ),
                 lambda confirmed: self._run_if_confirmed(
                     confirmed, lambda: ResetChainPoliciesCommand(adapter, backend).execute()
@@ -235,14 +296,27 @@ class TableManagementScreen(OmegaScreen):
         if action == _ACTION_FLUSH_ONE:
             self.app.push_screen(
                 ConfirmScreen(
-                    title="CONFIRMER LE VIDAGE",
-                    message=f"Vider (flush) toutes les règles de {backend} ?",
+                    title=_("CONFIRMER LE VIDAGE"),
+                    help_node="3.5",
+                    message=_("Vider (flush) toutes les règles de {backend} ?").format(backend=backend) + (
+                        foreign_note + "\n" + _(
+                            "Elles seront effacées avec celles d'Omega-Fire (iptables -F vide toute la "
+                            "table filter) ; l'outil ne les repose qu'à son prochain rechargement "
+                            "(ex. « ufw reload »). Détails : touche « a »."
+                        ) if foreign else ""
+                    ),
                 ),
                 lambda confirmed: self._run_if_confirmed(
                     confirmed, lambda: FlushBackendTableCommand(adapter, backend).execute()
                 ),
             )
             return
+
+    def _flush_all_choice(self, choice: str | None) -> None:
+        if choice == "all":
+            self._run(lambda: FlushAllTablesSyncCommand(self._adapters).execute())
+        elif choice == "nftables":
+            self._run(lambda: FlushAllTablesSyncCommand({"nftables": self._adapters.get("nftables")}).execute())
 
     def _run_if_confirmed(self, confirmed: bool | None, execute) -> None:
         if not confirmed:

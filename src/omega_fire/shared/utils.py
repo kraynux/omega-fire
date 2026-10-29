@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from omega_fire.shared.exceptions import ValidationError
+from omega_fire.shared.i18n import _
 
 
 # --- Validation de ports -------------------------------------------------
@@ -27,9 +28,9 @@ def validate_port(value: int | str) -> int:
     try:
         port = int(value)
     except (TypeError, ValueError) as exc:
-        raise ValidationError(f"Port invalide (non entier): {value!r}") from exc
+        raise ValidationError(_("Port invalide (non entier): {value!r}").format(value=value)) from exc
     if not 1 <= port <= 65535:
-        raise ValidationError(f"Port hors plage (1-65535): {port}")
+        raise ValidationError(_("Port hors plage (1-65535): {port}").format(port=port))
     return port
 
 
@@ -44,11 +45,11 @@ def validate_port_range(value: str) -> tuple[int, int]:
         return port, port
     parts = value.split("-", 1)
     if len(parts) != 2:
-        raise ValidationError(f"Plage de ports mal formée: {value!r}")
+        raise ValidationError(_("Plage de ports mal formée: {value!r}").format(value=value))
     start = validate_port(parts[0].strip())
     end = validate_port(parts[1].strip())
     if start > end:
-        raise ValidationError(f"Plage inversée: {start} > {end}")
+        raise ValidationError(_("Plage inversée: {start} > {end}").format(start=start, end=end))
     return start, end
 
 
@@ -63,7 +64,7 @@ def parse_iso_datetime(value: str) -> datetime:
     Retourne un datetime UTC si aucun fuseau n'est précisé.
     """
     if not _ISO_DATE_RE.match(value):
-        raise ValidationError(f"Format de date invalide: {value!r}")
+        raise ValidationError(_("Format de date invalide: {value!r}").format(value=value))
     normalized = value.replace(" ", "T")
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
         try:
@@ -71,7 +72,7 @@ def parse_iso_datetime(value: str) -> datetime:
             return dt.replace(tzinfo=timezone.utc)
         except ValueError:
             continue
-    raise ValidationError(f"Date ininterprétable: {value!r}")
+    raise ValidationError(_("Date ininterprétable: {value!r}").format(value=value))
 
 
 # --- Chemins & fichiers --------------------------------------------------

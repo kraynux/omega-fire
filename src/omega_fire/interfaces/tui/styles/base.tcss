@@ -248,6 +248,87 @@ Screen {
     align: center middle;
 }
 
+/* Modale de choix (screens/choice.py) : plus large, message defilant,
+   options empilees (libelles longs une fois traduits). */
+ChoiceScreen {
+    align: center middle;
+}
+
+/* Modale de cases a cocher (screens/checklist.py) : meme boite, la liste defile. */
+CheckListScreen, ExportPickerScreen {
+    align: center middle;
+}
+
+ExportPickerScreen .omega-choice-box {
+    width: 92;
+}
+
+ExportPickerScreen #export-files {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+CheckListScreen #checklist {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+.omega-checklist-actions {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    margin: 0;
+}
+
+.omega-choice-box {
+    width: 76;
+    max-width: 95%;
+    height: 95%;
+    max-height: 40;
+}
+
+.omega-choice-title {
+    width: 100%;
+}
+
+.omega-choice-message {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+.omega-choice-buttons {
+    width: 100%;
+    height: auto;
+}
+
+.omega-choice-buttons .omega-btn-frame {
+    width: 100%;
+}
+
+.omega-choice-buttons Button {
+    width: 100%;
+    background: $surface;
+    border: none;
+    color: $foreground;
+}
+
+.omega-choice-buttons Button.-error {
+    color: $error;
+}
+
+.omega-choice-buttons Button.-warning {
+    color: $warning;
+}
+
+.omega-choice-buttons Button.-primary {
+    color: $primary;
+}
+
+.omega-choice-buttons Button:hover,
+.omega-choice-buttons Button:focus {
+    background: $accent;
+}
+
 .omega-progress-panel {
     align: center middle;
     width: 1fr;
@@ -296,6 +377,29 @@ Screen {
 
 DataTable {
     height: 1fr;
+}
+
+/* Retour utilisateur 2026-10-28 (modeles de jail 4.4 invisibles) : dans une zone qui
+   defile, le 1fr ci-dessus ecrase le tableau a une ligne (l'en-tete seul). Ecrans
+   reperes par un balayage de tous les ecrans avec donnees : hauteur naturelle,
+   plafonnee (le tableau defile au-dela). */
+BlocklistFilesScreen #files-table,
+BlocklistFilesScreen #pinned-table,
+ConntrackScreen #connections-table,
+RestoreBackupScreen #automations-table,
+PurgeBackupsScreen #rules-table,
+RotateLogsScreen #automations-table {
+    height: auto;
+    max-height: 14;
+}
+
+/* Retour utilisateur 2026-10-28 (1.6 colle a gauche) : dans un formulaire centre, un tableau
+   en pleine largeur annule le centrage — l'ecran sautait a gauche des que le tableau
+   apparaissait. Meme largeur que le formulaire (70), comme 5.4. */
+RestoreBackupScreen #automations-table,
+PurgeBackupsScreen #rules-table,
+RotateLogsScreen #automations-table {
+    width: 70;
 }
 
 ToggleButton > .toggle--button {

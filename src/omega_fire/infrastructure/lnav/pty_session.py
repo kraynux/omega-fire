@@ -28,6 +28,7 @@ import subprocess
 import termios
 import time
 from pathlib import Path
+from omega_fire.shared.i18n import _
 
 CONFIG_DIR = Path(__file__).resolve().parent
 LNAV_BINARY = "lnav"
@@ -39,7 +40,7 @@ def spawn_lnav(rows: int, cols: int, log_paths: list[Path]) -> tuple[int, int]:
     """Ouvre un pty et y lance lnav sur les fichiers donnés (fusionnés
     automatiquement par lnav si plusieurs). Retourne (master_fd, pid)."""
     if not log_paths:
-        raise ValueError("au moins un fichier de log est requis")
+        raise ValueError(_("au moins un fichier de log est requis"))
 
     master_fd, slave_fd = pty.openpty()
 

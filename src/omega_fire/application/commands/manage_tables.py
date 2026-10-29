@@ -39,6 +39,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from omega_fire.application.commands.apply_preset import state_file_for
+from omega_fire.application.queries.foreign_rules import foreign_rules_by_backend
+from omega_fire.application.queries.policy_divergence import PolicyAnalysis, analyze_policies
+from omega_fire.shared.i18n import _
 
 _BASE_CHAINS_NFT = ("input", "output", "forward")
 _BASE_CHAINS_IPT = ("INPUT", "OUTPUT", "FORWARD")
@@ -70,6 +74,8 @@ class TablesStatusResult:
     ApplyPresetAllBackendsResult.outcomes)."""
     entries: list[TableStatusEntry]
     policy_divergences: list[str] = field(default_factory=list)
+    # Effet reel, cause et remede (application/queries/policy_divergence.py).
+    policy_analysis: Optional[PolicyAnalysis] = None
 
 
 class GetTablesStatusQuery:
@@ -101,7 +107,22 @@ class GetTablesStatusQuery:
                 policies=status["policies"],
                 rule_count=status["rule_count"],
             ))
-        return TablesStatusResult(entries=entries, policy_divergences=self._detect_divergences(entries))
+        return TablesStatusResult(
+            entries=entries,
+            policy_divergences=self._detect_divergences(entries),
+            policy_analysis=analyze_policies(entries, foreign_rules_by_backend(self._adapters), self._preset_backends()),
+        )
+
+    @staticmethod
+    def _preset_backends() -> set[str]:
+        backends: set[str] = set()
+        for backend in _TARGET_BACKENDS:
+            try:
+                if state_file_for(backend).exists():
+                    backends.add(backend)
+            except Exception:
+                continue
+        return backends
 
     @staticmethod
     def _detect_divergences(entries: list[TableStatusEntry]) -> list[str]:
@@ -137,10 +158,10 @@ class InitializeTablesCommand:
                     self._adapter.set_chain_policy(chain, "accept")
                     created.append(chain)
         except Exception as e:
-            return TableActionResult(False, f"Échec de l'initialisation : {e}")
+            return TableActionResult(False, _("Échec de l'initialisation : {e}").format(e=e))
         if not created:
-            return TableActionResult(True, "Table et chaînes déjà initialisées — rien à faire.")
-        return TableActionResult(True, f"Chaîne(s) initialisée(s) (policy accept) : {', '.join(created)}.")
+            return TableActionResult(True, _("Table et chaînes déjà initialisées — rien à faire."))
+        return TableActionResult(True, _("Chaîne(s) initialisée(s) (policy accept) : {value}.").format(value=', '.join(created)))
 
 
 class ResetChainPoliciesCommand:
@@ -162,14 +183,16 @@ class ResetChainPoliciesCommand:
             for chain in chains:
                 self._adapter.set_chain_policy(chain, policy_word)
         except Exception as e:
-            return TableActionResult(False, f"Échec de la réinitialisation des politiques sur {self._backend} : {e}")
-        return TableActionResult(True, f"Politiques remises à ACCEPT sur {self._backend} (input/output/forward).")
+            return TableActionResult(False, _("Échec de la réinitialisation des politiques sur {backend} : {e}").format(backend=self._backend, e=e))
+        return TableActionResult(True, _("Politiques remises à ACCEPT sur {backend} (input/output/forward).").format(backend=self._backend))
 
 
 class FlushBackendTableCommand:
     """Cas d'usage 3.5.4 : vide UN backend precis (delegue a
-    adapter.flush(), deja existant — scope deja limite a la table
-    qu'Omega-Fire possede sur ce backend, jamais un flush global)."""
+    adapter.flush(), deja existant). nftables : seule la table
+    d'Omega-Fire (inet filter). iptables / ip6tables : TOUTE la table
+    filter, regles des autres outils (UFW...) comprises — l'ecran 3.5
+    le signale avant (application/queries/foreign_rules.py)."""
 
     def __init__(self, adapter: Any, backend: str):
         self._adapter = adapter
@@ -179,8 +202,8 @@ class FlushBackendTableCommand:
         try:
             count = self._adapter.flush()
         except Exception as e:
-            return TableActionResult(False, f"Échec du vidage de {self._backend} : {e}")
-        return TableActionResult(True, f"{self._backend} vidé ({count} règle(s) retirée(s)).")
+            return TableActionResult(False, _("Échec du vidage de {backend} : {e}").format(backend=self._backend, e=e))
+        return TableActionResult(True, _("{backend} vidé ({count} règle(s) retirée(s)).").format(backend=self._backend, count=count))
 
 
 class FlushAllTablesSyncCommand:
@@ -188,9 +211,10 @@ class FlushAllTablesSyncCommand:
     flush synchronise que apply_preset_all_backends.py::
     ApplyPresetToAllBackendsCommand (retour utilisateur 2026-09-24),
     rendu reutilisable INDEPENDAMMENT d'une application de profil.
-    Equivalent controle de `nft flush ruleset`, mais SCOPE UNIQUEMENT
-    aux tables qu'Omega-Fire possede sur chaque backend detecte — jamais
-    les tables d'un autre outil sur le meme systeme. Best-effort par
+    Equivalent controle de `nft flush ruleset`, mais limite cote
+    nftables a la table d'Omega-Fire. Cote iptables / ip6tables, le
+    vidage porte sur toute la table filter, regles des autres outils
+    comprises (signale par l'ecran 3.5 avant confirmation). Best-effort par
     backend : un echec sur l'un n'empeche jamais de tenter les autres."""
 
     def __init__(self, adapters: dict[str, Any]):
@@ -199,7 +223,7 @@ class FlushAllTablesSyncCommand:
     def execute(self) -> TableActionResult:
         target_backends = [name for name in _TARGET_BACKENDS if self._adapters.get(name) is not None]
         if not target_backends:
-            return TableActionResult(False, "Aucun backend firewall disponible.")
+            return TableActionResult(False, _("Aucun backend firewall disponible."))
 
         flushed: list[str] = []
         errors: list[str] = []
@@ -211,10 +235,10 @@ class FlushAllTablesSyncCommand:
                 errors.append(f"{backend} ({e})")
 
         if not flushed:
-            return TableActionResult(False, "Échec sur tous les backends : " + "; ".join(errors))
-        message = f"Backend(s) vidé(s) : {', '.join(flushed)}."
+            return TableActionResult(False, _("Échec sur tous les backends : ") + "; ".join(errors))
+        message = _("Backend(s) vidé(s) : {value}.").format(value=', '.join(flushed))
         if errors:
-            message += " Échec(s) : " + "; ".join(errors) + "."
+            message += _(" Échec(s) : ") + "; ".join(errors) + "."
         return TableActionResult(True, message)
 
 
@@ -234,11 +258,11 @@ class DeleteTableCommand:
         try:
             self._adapter.delete_table()
         except Exception as e:
-            return TableActionResult(False, f"Échec de la suppression de la table : {e}")
+            return TableActionResult(False, _("Échec de la suppression de la table : {e}").format(e=e))
         return TableActionResult(
             True,
-            "Table nftables (inet filter) supprimée — plus aucun filtrage actif sur ce "
-            "backend tant qu'elle n'est pas réinitialisée (3.5.2).",
+            _("Table nftables (inet filter) supprimée — plus aucun filtrage actif sur ce "
+            "backend tant qu'elle n'est pas réinitialisée (3.5.2)."),
         )
 
 

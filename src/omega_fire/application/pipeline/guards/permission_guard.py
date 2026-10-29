@@ -11,6 +11,7 @@ os.getuid(), but a custom checker can be provided for testing.
 import os
 from typing import Callable, Optional
 from omega_fire.application.exceptions import PermissionDeniedError
+from omega_fire.shared.i18n import _
 
 
 # Type alias for permission checker functions
@@ -55,8 +56,7 @@ def check_permission(
     if not check_fn():
         raise PermissionDeniedError(
             required_permission="root",
-            reason=f"Action '{action_name}' requires root privileges. "
-                   f"Please run with sudo or as root user."
+            reason=_("L'action « {action_name} » nécessite les droits root. Lancez omega-fire avec sudo ou en tant que root.").format(action_name=action_name)
         )
 
 

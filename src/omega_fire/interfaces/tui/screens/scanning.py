@@ -13,6 +13,7 @@ from textual.app import ComposeResult
 from textual.containers import Center, Middle
 from textual.screen import Screen
 from textual.widgets import LoadingIndicator, Static
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -32,7 +33,7 @@ class ScanningScreen(Screen[None]):
         with Middle(), Center():
             yield LoadingIndicator()
         with Middle(), Center():
-            yield Static("Analyse du systeme en cours...", classes="omega-splash-prompt")
+            yield Static(_("Analyse du système en cours..."), classes="omega-splash-prompt")
 
     def on_mount(self) -> None:
         def _work() -> None:

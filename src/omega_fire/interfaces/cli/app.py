@@ -350,7 +350,7 @@ def _build_layout(state: NavigationState) -> Layout:
     term_w = get_terminal_width()
     term_h = get_terminal_height()
     header_text = Text()
-    header_text.append("🛡 OMEGA-FIRE v3.0", style=theme_registry.get_style("menu.title"))
+    header_text.append("🛡 OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title"))
     theme_name = theme_registry.get_active().display_name
     header_text.append(f"  │  {theme_name}  │  {term_w}x{term_h}",
                        style=theme_registry.get_style("text.muted"))

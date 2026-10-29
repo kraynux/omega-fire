@@ -19,6 +19,7 @@ from omega_fire.domain.fail2ban.exceptions import (
     IPAlreadyBannedError,
 )
 from omega_fire.shared.networking import IPAddress
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -43,26 +44,26 @@ class JailBanCommand:
 
     def execute(self, request: JailBanRequest) -> JailBanResult:
         if self._port is None:
-            return JailBanResult(success=False, message="Fail2ban indisponible.")
+            return JailBanResult(success=False, message=_("Fail2ban indisponible."))
 
         try:
             ip = IPAddress(request.ip)
         except ValueError as e:
-            return JailBanResult(success=False, message=f"Adresse IP invalide : {e}")
+            return JailBanResult(success=False, message=_("Adresse IP invalide : {e}").format(e=e))
 
         try:
             self._port.ban_ip(request.jail_name, ip)
         except IPAlreadyBannedError:
             return JailBanResult(
                 success=False,
-                message=f"IP {request.ip} déjà bannie dans '{request.jail_name}'.",
+                message=_("IP {ip} déjà bannie dans '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name),
             )
         except JailNotFoundError:
-            return JailBanResult(success=False, message=f"Jail '{request.jail_name}' introuvable.")
+            return JailBanResult(success=False, message=_("Jail '{jail_name}' introuvable.").format(jail_name=request.jail_name))
         except Exception as e:
             return JailBanResult(success=False, message=str(e))
 
-        return JailBanResult(success=True, message=f"IP {request.ip} bannie dans '{request.jail_name}'.")
+        return JailBanResult(success=True, message=_("IP {ip} bannie dans '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name))
 
 
 # <-- INFO DEV ---------------------------------------------------------

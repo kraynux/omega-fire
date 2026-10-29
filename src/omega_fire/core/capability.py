@@ -8,6 +8,7 @@ capability registry.
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
+from omega_fire.shared.i18n import retranslate
 from omega_fire.core.enums import CapabilityStatus
 
 
@@ -170,7 +171,8 @@ class Capability:
         return {
             "id": self.id,
             "status": self.status.value,
-            "reason": self.reason,
+            # Motif recompose dans la langue active (celle de l'export pendant un export).
+            "reason": retranslate(self.reason),
             "detail": self.detail,
             "last_checked": self.last_checked.isoformat(),
             "category": self.category,

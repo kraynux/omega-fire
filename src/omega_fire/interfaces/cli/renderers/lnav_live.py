@@ -43,6 +43,7 @@ from omega_fire.infrastructure.lnav import (
     resize_pty,
     spawn_lnav,
 )
+from omega_fire.shared.i18n import _
 
 HEADER_ROWS = 1
 FOOTER_ROWS = 3  # séparateur + raccourcis + statut, comme le footer classique de l'appli (renderers/frame.py)
@@ -54,7 +55,7 @@ HIDE_CURSOR = CSI + "?25l"
 SHOW_CURSOR = CSI + "?25h"
 CLEAR_SCREEN = CSI + "2J"
 
-MENU_LABEL = "8.6 Visualiser les logs serveurs (lnav)"
+MENU_LABEL = _("8.6 Visualiser les logs serveurs (lnav)")
 
 MAX_DRAIN_SECONDS = 0.02  # plafond dur : on rend la main au clavier au
                           # moins toutes les 20ms, même si lnav continue
@@ -294,10 +295,10 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
 
         theme_name = theme_registry.get_active().display_name
 
-        header_plain = f"🛡  OMEGA-FIRE  │  Thème: {theme_name}  │  {MENU_LABEL}"
+        header_plain = _("🛡  OMEGA-FIRE  │  Thème: {theme_name}  │  {MENU_LABEL}").format(theme_name=theme_name, MENU_LABEL=MENU_LABEL)
         header_line = (
-            title_style.render("🛡  OMEGA-FIRE")
-            + muted_style.render(f"  │  Thème: {theme_name}  │  ")
+            title_style.render(_("🛡  OMEGA-FIRE"))
+            + muted_style.render(_("  │  Thème: {theme_name}  │  ").format(theme_name=theme_name))
             + heading_style.render(MENU_LABEL)
             + muted_style.render(" " * max(cols - len(header_plain), 0))
         )
@@ -305,27 +306,27 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
         sep_line = border_style.render("─" * cols)
 
         shortcuts_plain = (
-            "📋 Analyse lnav  │  [↑↓] Naviguer  │  [←→] Défiler  │  [g/G] Début/Fin  │  "
-            "[Ctrl-C] Marquer+Copier  │  [t]hème  │  [Ctrl-Q] Quitter"
+            _("📋 Analyse lnav  │  [↑↓] Naviguer  │  [←→] Défiler  │  [g/G] Début/Fin  │  "
+            "[Ctrl-C] Marquer+Copier  │  [t]hème  │  [Ctrl-Q] Quitter")
         )
         shortcuts_line = (
-            muted_style.render("📋 Analyse lnav  │  ")
-            + link_style.render("[↑↓] Naviguer")
+            muted_style.render(_("📋 Analyse lnav  │  "))
+            + link_style.render(_("[↑↓] Naviguer"))
             + muted_style.render("  │  ")
-            + link_style.render("[←→] Défiler")
+            + link_style.render(_("[←→] Défiler"))
             + muted_style.render("  │  ")
-            + link_style.render("[g/G] Début/Fin")
+            + link_style.render(_("[g/G] Début/Fin"))
             + muted_style.render("  │  ")
-            + link_style.render("[Ctrl-C] Marquer+Copier")
+            + link_style.render(_("[Ctrl-C] Marquer+Copier"))
             + muted_style.render("  │  ")
-            + link_style.render("[t]hème")
+            + link_style.render(_("[t]hème"))
             + muted_style.render("  │  ")
-            + link_style.render("[Ctrl-Q] Quitter")
+            + link_style.render(_("[Ctrl-Q] Quitter"))
             + muted_style.render(" " * max(cols - len(shortcuts_plain), 0))
         )
 
         names = ", ".join(p.name for p in log_paths)
-        status_line = muted_style.render(pad_line(f"Fichiers ({len(log_paths)}) : {names}", cols))
+        status_line = muted_style.render(pad_line(_("Fichiers ({count}) : {names}").format(count=len(log_paths), names=names), cols))
 
         buf = (
             move_to(1) + header_line
@@ -391,7 +392,7 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
 
     try:
         while True:
-            r, _, _ = select.select([master_fd, stdin_fd], [], [], 0.05)
+            r, _ignored, _ignored = select.select([master_fd, stdin_fd], [], [], 0.05)
 
             # Priorité au clavier : on vide tout ce qui est en attente
             # côté stdin d'abord et on le transmet immédiatement, avant
@@ -452,7 +453,7 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
                     responder.feed(data)
                     relay_osc52(data, out_fd)
                     stream.feed(data.decode("utf-8", errors="replace"))
-                    more, _, _ = select.select([master_fd], [], [], 0.002)
+                    more, _ignored, _ignored = select.select([master_fd], [], [], 0.002)
                     if master_fd not in more:
                         break
 

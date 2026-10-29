@@ -31,6 +31,7 @@ from omega_fire.domain.rules.presets import (
     get_preset,
     list_available_presets,
 )
+from omega_fire.shared.i18n import _
 
 
 class RulesService:
@@ -96,22 +97,22 @@ class RulesService:
         if port_start is not None and port_end is not None:
             if port_start > port_end:
                 raise InvalidRuleError(
-                    f"port {port_start}-{port_end}",
-                    "Port range is invalid (start > end)"
+                    _("port {port_start}-{port_end}").format(port_start=port_start, port_end=port_end),
+                    _("Plage de ports invalide (début > fin)")
                 )
         
         # Validate port requires protocol
         if port_start is not None and protocol is None:
             raise InvalidRuleError(
-                f"port {port_start}",
-                "Port specification requires a protocol (TCP or UDP)"
+                _("port {port_start}").format(port_start=port_start),
+                _("Indiquer un port nécessite un protocole (TCP ou UDP)")
             )
         
         # Validate port range for ICMP
         if protocol == RuleProtocol.ICMP and (port_start is not None or port_end is not None):
             raise InvalidRuleError(
-                f"ICMP with ports",
-                "ICMP protocol does not support port specification"
+                _("ICMP avec ports"),
+                _("Le protocole ICMP n'utilise pas de ports")
             )
         
         # Create the rule
@@ -293,7 +294,7 @@ class RulesService:
                 raise ConflictingRuleError(
                     self._rule_description(new_rule),
                     self._rule_description(existing),
-                    "Duplicate rule detected"
+                    _("Règle en double détectée")
                 )
     
     def _rules_conflict(self, rule1: FirewallRule, rule2: FirewallRule) -> bool:

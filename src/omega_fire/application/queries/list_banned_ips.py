@@ -6,6 +6,7 @@ It retrieves the current state of all banned IPs across all backends.
 """
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus
+from omega_fire.shared.i18n import _
 
 
 def list_all_banned_ips(registry: CapabilityRegistry) -> str:
@@ -27,21 +28,21 @@ def list_all_banned_ips(registry: CapabilityRegistry) -> str:
         available_backends.append("fail2ban")
     
     if not available_backends:
-        return "⚠️ Aucun backend disponible. Impossible de lister les IPs bannies."
+        return _("⚠️ Aucun backend disponible. Impossible de lister les IPs bannies.")
     
     # In a real implementation, this would call infrastructure adapters
     # For now, return a placeholder message
-    lines = ["═══ IPs BANNIES ═══", ""]
-    lines.append(f"Backends disponibles : {', '.join(available_backends)}")
+    lines = [_("═══ IPs BANNIES ═══"), ""]
+    lines.append(_("Backends disponibles : {value}").format(value=', '.join(available_backends)))
     lines.append("")
-    lines.append("⚠️ Liste des IPs bannies à implémenter via infrastructure adapters")
+    lines.append(_("⚠️ Liste des IPs bannies à implémenter via infrastructure adapters"))
     lines.append("")
-    lines.append("Implémentation prévue :")
-    lines.append("  1. Appeler infrastructure.backends.nftables.adapter.list_bans()")
-    lines.append("  2. Appeler infrastructure.backends.iptables.adapter.list_bans()")
-    lines.append("  3. Appeler infrastructure.backends.fail2ban.adapter.list_bans()")
-    lines.append("  4. Fusionner les résultats")
-    lines.append("  5. Formater pour l'affichage")
+    lines.append(_("Implémentation prévue :"))
+    lines.append(_("  1. Appeler infrastructure.backends.nftables.adapter.list_bans()"))
+    lines.append(_("  2. Appeler infrastructure.backends.iptables.adapter.list_bans()"))
+    lines.append(_("  3. Appeler infrastructure.backends.fail2ban.adapter.list_bans()"))
+    lines.append(_("  4. Fusionner les résultats"))
+    lines.append(_("  5. Formater pour l'affichage"))
     
     return "\n".join(lines)
 
@@ -57,13 +58,13 @@ def list_banned_ips_by_backend(registry: CapabilityRegistry, backend: str) -> st
         Formatted string with banned IPs for the specified backend
     """
     if not registry.is_available(backend):
-        return f"⚠️ Backend '{backend}' non disponible."
+        return _("⚠️ Backend '{backend}' non disponible.").format(backend=backend)
     
-    lines = [f"═══ IPs BANNIES ({backend.upper()}) ═══", ""]
-    lines.append(f"⚠️ Liste des IPs bannies pour {backend} à implémenter")
+    lines = [_("═══ IPs BANNIES ({value}) ═══").format(value=backend.upper()), ""]
+    lines.append(_("⚠️ Liste des IPs bannies pour {backend} à implémenter").format(backend=backend))
     lines.append("")
-    lines.append(f"Implémentation prévue :")
-    lines.append(f"  Appeler infrastructure.backends.{backend}.adapter.list_bans()")
+    lines.append(_("Implémentation prévue :"))
+    lines.append(_("  Appeler infrastructure.backends.{backend}.adapter.list_bans()").format(backend=backend))
     
     return "\n".join(lines)
 

@@ -34,6 +34,7 @@ from omega_fire.application.queries.audit_report.health_section import (
 from omega_fire.application.queries.audit_report.anomalies_section import (
     collect_anomalies,
 )
+from omega_fire.shared.i18n import _
 
 _AUDIT_EXPORT_ACTION_TITLE = "6.3 Export d'audit complet"
 
@@ -60,46 +61,41 @@ def _build_executive_summary(report: AuditReportData) -> str:
     lines = []
 
     lines.append(
-        f"Capacités : {report.capabilities.total_available} disponible(s), "
-        f"{report.capabilities.total_missing} manquante(s), "
-        f"{report.capabilities.total_degraded} dégradée(s)."
+        _("Capacités : {total_available} disponible(s), {total_missing} manquante(s), {total_degraded} dégradée(s).").format(total_available=report.capabilities.total_available, total_missing=report.capabilities.total_missing, total_degraded=report.capabilities.total_degraded)
     )
     lines.append(
-        f"Règles actuelles : {report.rules_inventory.total_count} au total, "
-        f"{report.rules_inventory.enabled_count} active(s)."
+        _("Règles actuelles : {total_count} au total, {enabled_count} active(s).").format(total_count=report.rules_inventory.total_count, enabled_count=report.rules_inventory.enabled_count)
     )
     
     if report.sync_info.found:
-        lines.append(f"Dernière synchronisation : {report.sync_info.last_sync_at}.")
+        lines.append(_("Dernière synchronisation : {last_sync_at}.").format(last_sync_at=report.sync_info.last_sync_at))
     else:
-        lines.append("Aucune synchronisation enregistrée.")
+        lines.append(_("Aucune synchronisation enregistrée."))
 
     total_ips = sum(inv.active_count for inv in report.ip_inventory)
-    lines.append(f"IPs bannies actuellement (photo à date) : {total_ips} au total.")
+    lines.append(_("IPs bannies actuellement (photo à date) : {total_ips} au total.").format(total_ips=total_ips))
     if report.ip_internal_duplicate_count > 0:
-        lines.append(f"⚠ {report.ip_internal_duplicate_count} doublon(s) IP détecté(s) au sein d'un même backend.")
+        lines.append(_("⚠ {ip_internal_duplicate_count} doublon(s) IP détecté(s) au sein d'un même backend.").format(ip_internal_duplicate_count=report.ip_internal_duplicate_count))
     if report.ip_cross_backend_count > 0:
-        lines.append(f"ℹ {report.ip_cross_backend_count} IP(s) présente(s) dans plusieurs backends simultanément (normal après une synchronisation).")
+        lines.append(_("ℹ {ip_cross_backend_count} IP(s) présente(s) dans plusieurs backends simultanément (normal après une synchronisation).").format(ip_cross_backend_count=report.ip_cross_backend_count))
 
     lines.append(
-        f"Fail2ban : {report.fail2ban_summary.total_jails} jail(s), "
-        f"{report.fail2ban_summary.total_currently_banned} IP(s) bannie(s) actuellement."
+        _("Fail2ban : {total_jails} jail(s), {total_currently_banned} IP(s) bannie(s) actuellement.").format(total_jails=report.fail2ban_summary.total_jails, total_currently_banned=report.fail2ban_summary.total_currently_banned)
     )
 
     if report.anomalies:
         critical = sum(1 for a in report.anomalies if a.severity == "critical")
         warning = len(report.anomalies) - critical
         lines.append(
-            f"⚠ {len(report.anomalies)} anomalie(s) détectée(s) "
-            f"({critical} critique(s), {warning} avertissement(s))."
+            _("⚠ {count} anomalie(s) détectée(s) ({critical} critique(s), {warning} avertissement(s)).").format(count=len(report.anomalies), critical=critical, warning=warning)
         )
     else:
-        lines.append("✔ Aucune anomalie détectée.")
+        lines.append(_("✔ Aucune anomalie détectée."))
 
     if report.db_integrity.integrity_ok:
-        lines.append("✔ Intégrité base de données : OK.")
+        lines.append(_("✔ Intégrité base de données : OK."))
     else:
-        lines.append(f"⚠ Intégrité base de données : {report.db_integrity.integrity_details}.")
+        lines.append(_("⚠ Intégrité base de données : {integrity_details}.").format(integrity_details=report.db_integrity.integrity_details))
 
     if report.disk_usage.warning:
         lines.append(f"⚠ {report.disk_usage.warning}.")

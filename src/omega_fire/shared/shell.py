@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 
 from omega_fire.shared.exceptions import ShellCommandError
+from omega_fire.shared.i18n import _
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +38,7 @@ class ShellResult:
             context: contexte optionnel pour le message d'erreur.
         """
         if not self.success:
-            msg = f"Commande échouée (rc={self.return_code})"
+            msg = _("Commande échouée (rc={return_code})").format(return_code=self.return_code)
             if context:
                 msg = f"{context}: {msg}"
             raise ShellCommandError(
@@ -97,7 +98,7 @@ def run_shell(
 
     except subprocess.TimeoutExpired as exc:
         raise ShellCommandError(
-            f"Timeout dépassé ({timeout}s)",
+            _("Timeout dépassé ({timeout}s)").format(timeout=timeout),
             command=command,
             return_code=None,
             stdout=exc.stdout or "",
@@ -105,13 +106,13 @@ def run_shell(
         ) from exc
     except FileNotFoundError as exc:
         raise ShellCommandError(
-            f"Commande introuvable: {command!r}",
+            _("Commande introuvable: {command!r}").format(command=command),
             command=command,
             return_code=None,
         ) from exc
     except OSError as exc:
         raise ShellCommandError(
-            f"Erreur OS lors de l'exécution: {exc}",
+            _("Erreur OS lors de l'exécution: {exc}").format(exc=exc),
             command=command,
             return_code=None,
         ) from exc

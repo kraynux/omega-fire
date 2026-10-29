@@ -7,6 +7,7 @@ or configuration. They are caught by the application layer
 and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class IptablesError(CoreError):
@@ -19,7 +20,7 @@ class IptCommandError(IptablesError):
     """Raised when an iptables command fails."""
     def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
         super().__init__(
-            f"iptables command failed (exit {returncode}): {command}",
+            _("Échec de la commande iptables (code {returncode}) : {command}").format(returncode=returncode, command=command),
             {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
         )
         self.command = command
@@ -31,7 +32,7 @@ class IptParseError(IptablesError):
     """Raised when iptables output cannot be parsed."""
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
-            f"Failed to parse iptables output: {reason}",
+            _("Sortie d'iptables illisible : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -42,7 +43,7 @@ class IptChainNotFoundError(IptablesError):
     """Raised when a referenced iptables chain does not exist."""
     def __init__(self, chain_name: str, table: str = "filter", context: dict = None):
         super().__init__(
-            f"iptables chain '{chain_name}' not found in table '{table}'",
+            _("Chaîne iptables « {chain_name} » introuvable dans la table « {table} »").format(chain_name=chain_name, table=table),
             {**(context or {}), "chain_name": chain_name, "table": table},
         )
         self.chain_name = chain_name
@@ -53,7 +54,7 @@ class IptRuleNotFoundError(IptablesError):
     """Raised when a referenced iptables rule does not exist."""
     def __init__(self, rule_num: int, chain_name: str = "", context: dict = None):
         super().__init__(
-            f"iptables rule #{rule_num} not found in chain '{chain_name}'",
+            _("Règle iptables n° {rule_num} introuvable dans la chaîne « {chain_name} »").format(rule_num=rule_num, chain_name=chain_name),
             {**(context or {}), "rule_num": rule_num, "chain_name": chain_name},
         )
         self.rule_num = rule_num
@@ -64,7 +65,7 @@ class IptPermissionError(IptablesError):
     """Raised when iptables operations require elevated privileges."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission denied for iptables operation: {operation}. Run as root.",
+            _("Permission refusée pour l'opération iptables : {operation}. Lancez omega-fire en root.").format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

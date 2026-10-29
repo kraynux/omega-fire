@@ -12,6 +12,7 @@ that can be consumed by any layer.
 from typing import Any
 from omega_fire.core.capability import Capability, create_capability
 from omega_fire.core.enums import CapabilityStatus
+from omega_fire.shared.i18n import N_, _, lazy
 
 
 class CapabilityMapper:
@@ -37,7 +38,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.MISSING,
-                reason=f"Composant non installé : {message}" if message else "Binaire introuvable sur le système",
+                reason=lazy(N_("Composant non installé : {message}"), message=message) if message else lazy(N_("Binaire introuvable sur le système")),
                 detail={"path": path, "message": message},
                 category=category,
             )
@@ -46,7 +47,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.DISQUALIFIED,
-                reason=f"Binaire présent mais non fonctionnel : {message}",
+                reason=lazy(N_("Binaire présent mais non fonctionnel : {message}"), message=message),
                 detail={"path": path, "message": message},
                 category=category,
             )
@@ -54,7 +55,7 @@ class CapabilityMapper:
         return create_capability(
             capability_id=capability_id,
             status=CapabilityStatus.AVAILABLE,
-            reason=f"Binaire opérationnel ({path})",
+            reason=lazy(N_("Binaire opérationnel ({path})"), path=path),
             detail={"path": path, "message": message},
             category=category,
         )
@@ -78,7 +79,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.MISSING,
-                reason=f"Gestionnaire de services indisponible : {message}",
+                reason=lazy(N_("Gestionnaire de services indisponible : {message}"), message=message),
                 detail={"state": state, "message": message},
                 category=category,
             )
@@ -88,7 +89,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.MISSING,
-                reason=f"Service non installé sur le système ({message})" if message else "Service introuvable",
+                reason=lazy(N_("Service non installé sur le système ({message})"), message=message) if message else lazy(N_("Service introuvable")),
                 detail={"state": state, "message": message},
                 category=category,
             )
@@ -98,7 +99,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.DEGRADED,
-                reason=f"Service installé mais INACTIF (arrêté) : {message}",
+                reason=lazy(N_("Service installé mais INACTIF (arrêté) : {message}"), message=message),
                 detail={
                     "state": state,
                     "active": active,
@@ -113,7 +114,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.AVAILABLE,
-                reason=f"Service actif (attention : désactivé au démarrage) : {message}",
+                reason=lazy(N_("Service actif (attention : désactivé au démarrage) : {message}"), message=message),
                 detail={
                     "state": state,
                     "active": active,
@@ -127,7 +128,7 @@ class CapabilityMapper:
         return create_capability(
             capability_id=capability_id,
             status=CapabilityStatus.AVAILABLE,
-            reason=f"Service actif et activé au démarrage : {message}",
+            reason=lazy(N_("Service actif et activé au démarrage : {message}"), message=message),
             detail={
                 "state": state,
                 "active": active,
@@ -152,7 +153,7 @@ class CapabilityMapper:
             return create_capability(
                 capability_id=capability_id,
                 status=CapabilityStatus.MISSING,
-                reason=f"Modules noyau indisponibles : {message}",
+                reason=lazy(N_("Modules noyau indisponibles : {message}"), message=message),
                 detail={"modules": modules, "message": message},
                 category=category,
             )
@@ -160,7 +161,7 @@ class CapabilityMapper:
         return create_capability(
             capability_id=capability_id,
             status=CapabilityStatus.AVAILABLE,
-            reason=f"Modules noyau disponibles : {', '.join(modules)}",
+            reason=lazy(N_("Modules noyau disponibles : {value}"), value=', '.join(modules)),
             detail={"modules": modules, "message": message},
             category=category,
         )

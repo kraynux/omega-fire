@@ -21,6 +21,7 @@ from omega_fire.infrastructure.backends.service_manager.exceptions import (
     ServiceStatusError,
 )
 from omega_fire.infrastructure.probe.exceptions import ProbeExecutionError
+from omega_fire.shared.i18n import N_, lazy
 
 
 class ServiceProbe:
@@ -89,7 +90,7 @@ class ServiceProbe:
                     "active": status.active,
                     "enabled": status.enabled,
                     "state": status.state,
-                    "message": f"Service '{service_name}' is {status.state}",
+                    "message": lazy(N_("Service « {service_name} » : {state}"), service_name=service_name, state=status.state),
                 }
             
             except ServiceNotFoundError:
@@ -99,7 +100,7 @@ class ServiceProbe:
                     "active": False,
                     "enabled": False,
                     "state": "not_found",
-                    "message": f"Service '{service_name}' not found",
+                    "message": lazy(N_("Service « {service_name} » introuvable"), service_name=service_name),
                 }
         
         except NoServiceManagerDetectedError:
@@ -109,7 +110,7 @@ class ServiceProbe:
                 "active": False,
                 "enabled": False,
                 "state": "no_manager",
-                "message": "No service manager detected",
+                "message": lazy(N_("Aucun gestionnaire de services détecté")),
             }
         
         except Exception as e:
@@ -119,7 +120,7 @@ class ServiceProbe:
                 "active": False,
                 "enabled": False,
                 "state": "error",
-                "message": f"Service probe error: {e}",
+                "message": lazy(N_("Erreur de la sonde de service : {e}"), e=e),
             }
     
     def is_service_active(self, service_name: str) -> bool:

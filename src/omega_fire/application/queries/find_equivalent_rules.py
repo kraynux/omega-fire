@@ -16,6 +16,7 @@ from typing import Optional
 from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -59,7 +60,7 @@ class FindEquivalentRulesQuery:
             return FindEquivalentRulesResult(
                 success=False,
                 rules=[],
-                message=f"Erreur technique lors de la recherche de règles équivalentes : {e}",
+                message=_("Erreur technique lors de la recherche de règles équivalentes : {e}").format(e=e),
             )
 
         return FindEquivalentRulesResult(success=True, rules=rules)

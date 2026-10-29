@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -42,7 +43,7 @@ class LogStatsSummary:
     total_bans: int = 0
     peak_hour: str = "--:--"
     peak_count: int = 0
-    top_jail_name: str = "Aucun"
+    top_jail_name: str = field(default_factory=lambda: _("Aucun"))
     top_jails: List[JailStat] = field(default_factory=list)
     top_ips: List[IpStat] = field(default_factory=list)
     hourly_series: List[int] = field(default_factory=lambda: [0] * 24)

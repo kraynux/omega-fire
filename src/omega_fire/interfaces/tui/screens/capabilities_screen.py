@@ -14,6 +14,7 @@ from textual.widgets import Button, Footer, Header, Static
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.widgets.capabilities_table import CapabilitiesTable
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -31,13 +32,13 @@ class CapabilitiesScreen(OmegaScreen):
         self._only_issues = only_issues
 
     def compose(self) -> ComposeResult:
-        title = "DIAGNOSTICS RECENTS" if self._only_issues else "REGISTRE DES CAPACITES"
+        title = _("DIAGNOSTICS RÉCENTS") if self._only_issues else _("REGISTRE DES CAPACITÉS")
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(title, classes="omega-title")
             yield CapabilitiesTable(id="capabilities-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -50,7 +51,7 @@ class CapabilitiesScreen(OmegaScreen):
             self.query_one("#capabilities-table", CapabilitiesTable).display = False
             self.mount(
                 Static(
-                    "Aucun incident ni diagnostic d'erreur. Tout le systeme est operationnel.",
+                    _("Aucun incident ni diagnostic d'erreur. Tout le système est opérationnel."),
                     classes="omega-hint",
                 ),
                 after=self.query_one(".omega-title"),

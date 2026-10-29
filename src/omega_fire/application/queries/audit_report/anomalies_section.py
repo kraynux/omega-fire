@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.queries.audit_report.models import Anomaly
+from omega_fire.shared.i18n import _
 
 # Sous-ensemble de infrastructure/probe/known_services.py::KNOWN_SERVICES
 # ["security_network"] — outils de pare-feu/sécurité concurrents dont la
@@ -32,10 +33,9 @@ def _check_rules_enabled_without_ref(rule_repository: Any) -> list[Anomaly]:
     for rule in rules:
         if getattr(rule, "enabled", False) and not getattr(rule, "external_ref", None):
             anomalies.append(Anomaly(
-                category="Règles",
+                category=_("Règles"),
                 description=(
-                    f"Règle #{getattr(rule, 'id', '?')} marquée active mais "
-                    f"jamais appliquée au noyau (external_ref manquant)."
+                    _("Règle #{value} marquée active mais jamais appliquée au noyau (external_ref manquant).").format(value=getattr(rule, 'id', '?'))
                 ),
                 severity="warning",
             ))
@@ -71,10 +71,9 @@ def _check_rules_missing_from_live(rule_repository: Any, adapters: dict[str, Any
             continue
         if str(ref) not in live_refs_by_backend[backend]:
             anomalies.append(Anomaly(
-                category="Règles",
+                category=_("Règles"),
                 description=(
-                    f"Règle #{getattr(rule, 'id', '?')} ({backend}) référencée "
-                    f"en base mais absente du noyau — retirée manuellement ?"
+                    _("Règle #{value} ({backend}) référencée en base mais absente du noyau — retirée manuellement ?").format(value=getattr(rule, 'id', '?'), backend=backend)
                 ),
                 severity="critical",
             ))
@@ -95,10 +94,10 @@ def _check_fail2ban_consistency(registry: Any) -> list[Anomaly]:
         and service and service.status != CapabilityStatus.AVAILABLE
     ):
         anomalies.append(Anomaly(
-            category="Fail2ban",
+            category=_("Fail2ban"),
             description=(
-                "fail2ban-client est installé, mais le service fail2ban "
-                "n'est pas actif — les jails configurées ne sont pas appliquées."
+                _("fail2ban-client est installé, mais le service fail2ban "
+                "n'est pas actif — les jails configurées ne sont pas appliquées.")
             ),
             severity="critical",
         ))
@@ -141,10 +140,9 @@ def _check_bans_missing_from_live(ban_repository: Any, adapters: dict[str, Any])
             continue
         if ip not in live_ips_by_backend[backend]:
             anomalies.append(Anomaly(
-                category="Bans",
+                category=_("Bans"),
                 description=(
-                    f"IP {ip} marquée bannie en base ({backend}) mais absente "
-                    f"du live — levée manuellement ?"
+                    _("IP {ip} marquée bannie en base ({backend}) mais absente du live — levée manuellement ?").format(ip=ip, backend=backend)
                 ),
                 severity="warning",
             ))
@@ -173,10 +171,9 @@ def _check_unused_backends(registry: Any, rule_repository: Any, ban_repository: 
         cap = registry.get(backend_id)
         if cap and cap.status == CapabilityStatus.AVAILABLE and backend_id not in used_backends:
             anomalies.append(Anomaly(
-                category="Backends",
+                category=_("Backends"),
                 description=(
-                    f"Backend '{backend_id}' détecté disponible mais jamais "
-                    f"utilisé (aucune règle, aucun ban)."
+                    _("Backend '{backend_id}' détecté disponible mais jamais utilisé (aucune règle, aucun ban).").format(backend_id=backend_id)
                 ),
                 severity="warning",
             ))
@@ -200,11 +197,9 @@ def _check_conflicting_firewall_tools(registry: Any) -> list[Anomaly]:
     if active_tools:
         tools_str = ", ".join(active_tools)
         anomalies.append(Anomaly(
-            category="Sécurité réseau",
+            category=_("Sécurité réseau"),
             description=(
-                f"Outil(s) de gestion de pare-feu détecté(s) en parallèle "
-                f"d'Omega-Fire : {tools_str}. Risque de conflit ou "
-                f"d'écrasement de règles — envisager de n'en garder qu'un seul."
+                _("Outil(s) de gestion de pare-feu détecté(s) en parallèle d'Omega-Fire : {tools_str}. Risque de conflit ou d'écrasement de règles — envisager de n'en garder qu'un seul.").format(tools_str=tools_str)
             ),
             severity="warning",
         ))

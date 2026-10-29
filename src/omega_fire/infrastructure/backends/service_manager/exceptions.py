@@ -7,6 +7,7 @@ These express failures in detecting or controlling system services
 and translated into capability status updates in the registry.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class ServiceManagerError(CoreError):
@@ -29,7 +30,7 @@ class NoServiceManagerDetectedError(ServiceManagerError):
     """
     def __init__(self, context: dict = None):
         super().__init__(
-            "No service manager detected on this system",
+            _("Aucun gestionnaire de services détecté sur ce système"),
             manager_type=None,
             context=context,
         )
@@ -43,7 +44,7 @@ class ServiceManagerDetectionError(ServiceManagerError):
     """
     def __init__(self, reason: str, manager_type: str = None, context: dict = None):
         super().__init__(
-            f"Service manager detection failed: {reason}",
+            _("Échec de la détection du gestionnaire de services : {reason}").format(reason=reason),
             manager_type=manager_type,
             context=context,
         )
@@ -58,7 +59,7 @@ class ServiceNotFoundError(ServiceManagerError):
     """
     def __init__(self, service_name: str, manager_type: str = None, context: dict = None):
         super().__init__(
-            f"Service '{service_name}' not found",
+            _("Service « {service_name} » introuvable").format(service_name=service_name),
             manager_type=manager_type,
             context={**(context or {}), "service_name": service_name},
         )
@@ -80,7 +81,7 @@ class ServiceControlError(ServiceManagerError):
         context: dict = None,
     ):
         super().__init__(
-            f"Failed to {operation} service '{service_name}': {reason}",
+            _("Échec de l'opération {operation} sur le service « {service_name} » : {reason}").format(operation=operation, service_name=service_name, reason=reason),
             manager_type=manager_type,
             context={
                 **(context or {}),
@@ -108,7 +109,7 @@ class ServiceStatusError(ServiceManagerError):
         context: dict = None,
     ):
         super().__init__(
-            f"Failed to get status of service '{service_name}': {reason}",
+            _("Impossible de lire l'état du service « {service_name} » : {reason}").format(service_name=service_name, reason=reason),
             manager_type=manager_type,
             context={
                 **(context or {}),
@@ -128,7 +129,7 @@ class UnsupportedServiceManagerError(ServiceManagerError):
     """
     def __init__(self, detected_type: str, context: dict = None):
         super().__init__(
-            f"Unsupported service manager type: {detected_type}",
+            _("Unsupported service manager type: {detected_type}").format(detected_type=detected_type),
             manager_type=detected_type,
             context=context,
         )

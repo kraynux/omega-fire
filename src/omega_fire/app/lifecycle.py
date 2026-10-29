@@ -4,6 +4,7 @@ import signal
 import sys
 from typing import Optional
 from rich.console import Console
+from omega_fire.shared.i18n import _
 
 class ApplicationLifecycle:
     """Manages the application lifecycle."""
@@ -17,16 +18,16 @@ class ApplicationLifecycle:
         self._running = True
         signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._handle_sigterm)
-        self.console.print("[green]Application started.[/green]")
+        self.console.print(_("[green]Application démarrée.[/green]"))
 
     def _handle_sigint(self, signum, frame):
         """Handle Ctrl+C."""
-        self.console.print("\n[yellow]Interrupted by user (Ctrl+C)[/yellow]")
+        self.console.print(_("\n[yellow]Interrompu par l'utilisateur (Ctrl+C)[/yellow]"))
         self._running = False
 
     def _handle_sigterm(self, signum, frame):
         """Handle termination signal."""
-        self.console.print("\n[yellow]Termination signal received[/yellow]")
+        self.console.print(_("\n[yellow]Signal d'arrêt reçu[/yellow]"))
         self._running = False
 
     def is_running(self) -> bool:
@@ -44,7 +45,7 @@ class ApplicationLifecycle:
     def stop(self) -> None:
         """Stop the application."""
         self._running = False
-        self.console.print("[yellow]Application stopped.[/yellow]")
+        self.console.print(_("[yellow]Application arrêtée.[/yellow]"))
 
 def create_lifecycle(console: Optional[Console] = None) -> ApplicationLifecycle:
     """Factory function to create an ApplicationLifecycle."""

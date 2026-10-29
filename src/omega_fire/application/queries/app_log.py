@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 # ----------------------------------------------------------------------
@@ -44,7 +45,7 @@ def read_app_log(
             if entries:
                 return _format_log_entries(entries, keyword)
         except Exception as e:
-            return f"⚠️ Erreur lors de la lecture via le port : {e}\n\n" + _fallback_read(max_lines, keyword)
+            return _("⚠️ Erreur lors de la lecture via le port : {e}\n\n").format(e=e) + _fallback_read(max_lines, keyword)
 
     # Fallback: direct file reading (temporary until port is fully wired)
     return _fallback_read(max_lines, keyword)
@@ -52,9 +53,9 @@ def read_app_log(
 
 def _format_log_entries(entries: list, keyword: str) -> str:
     """Format log entries from AuditPort without hardcoded colors."""
-    header = "📋 Journal applicatif\n═══════════════════════\n\n"
+    header = _("📋 Journal applicatif\n═══════════════════════\n\n")
     if keyword:
-        header += f"Filtre : '{keyword}'\n\n"
+        header += _("Filtre : '{keyword}'\n\n").format(keyword=keyword)
 
     # Filtrage par mot-clé si nécessaire
     if keyword:
@@ -78,14 +79,14 @@ def _format_log_entries(entries: list, keyword: str) -> str:
         actor = getattr(entry, 'actor', 'system')
         target = getattr(entry, 'target', 'N/A')
         success = getattr(entry, 'success', True)
-        status_text = "OK" if success else "ÉCHEC"
+        status_text = "OK" if success else _("ÉCHEC")
 
-        content.append(f"[{ts}] [{status_text}] {action} (acteur: {actor}, cible: {target})")
+        content.append(_("[{ts}] [{status_text}] {action} (acteur: {actor}, cible: {target})").format(ts=ts, status_text=status_text, action=action, actor=actor, target=target))
 
     if not content:
-        return header + "Aucune entrée d'audit trouvée."
+        return header + _("Aucune entrée d'audit trouvée.")
 
-    return header + "\n".join(content) + f"\n\n({len(content)} entrée(s))"
+    return header + "\n".join(content) + _("\n\n({count} entrée(s))").format(count=len(content))
 
 
 def _fallback_read(max_lines: int, keyword: str) -> str:
@@ -94,11 +95,11 @@ def _fallback_read(max_lines: int, keyword: str) -> str:
     
     if log_path is None or not log_path.exists():
         return (
-            "📋 Journal applicatif\n"
+            _("📋 Journal applicatif\n"
             "═══════════════════════\n\n"
             "ℹ️ Aucun journal d'audit ou fichier de log enregistré pour le moment.\n"
             "Les événements s'afficheront ici au fur et à mesure des actions exécutées (ex: ban, sync, rescan).\n\n"
-            "Chemins vérifiés :\n"
+            "Chemins vérifiés :\n")
             + "\n".join(f"  • {p}" for p in DEFAULT_LOG_PATHS)
         )
     
@@ -114,15 +115,15 @@ def _fallback_read(max_lines: int, keyword: str) -> str:
         
         if not lines:
             if keyword:
-                return f"🔍 Aucune entrée trouvée pour '{keyword}' dans {log_path.name}."
-            return f"📋 Le journal {log_path.name} est vide."
+                return _("🔍 Aucune entrée trouvée pour '{keyword}' dans {name}.").format(keyword=keyword, name=log_path.name)
+            return _("📋 Le journal {name} est vide.").format(name=log_path.name)
         
         return _format_raw_lines(lines, log_path.name, keyword)
     
     except PermissionError:
-        return f"❌ Permission refusée pour lire {log_path}.\nEssayez avec sudo ou vérifiez les permissions."
+        return _("❌ Permission refusée pour lire {log_path}.\nEssayez avec sudo ou vérifiez les permissions.").format(log_path=log_path)
     except Exception as e:
-        return f"❌ Erreur lors de la lecture de {log_path} : {e}"
+        return _("❌ Erreur lors de la lecture de {log_path} : {e}").format(log_path=log_path, e=e)
 
 
 
@@ -136,9 +137,9 @@ def _find_log_file() -> Optional[Path]:
 
 def _format_log_entries(entries: list, keyword: str) -> str:
     """Format log entries from AuditPort."""
-    header = "📋 Journal applicatif\n═══════════════════════\n\n"
+    header = _("📋 Journal applicatif\n═══════════════════════\n\n")
     if keyword:
-        header += f"Filtre : '{keyword}'\n\n"
+        header += _("Filtre : '{keyword}'\n\n").format(keyword=keyword)
     
     content = []
     for entry in entries:
@@ -161,19 +162,19 @@ def _format_log_entries(entries: list, keyword: str) -> str:
         elif isinstance(entry, dict):
             level = entry.get('level', 'INFO')
         else:
-            level = 'INFO'
+            level = _('INFO')
         
         content.append(f"[{ts}] [{level}] {msg}")
     
-    return header + "\n".join(content) + f"\n\n({len(content)} entrée(s))"
+    return header + "\n".join(content) + _("\n\n({count} entrée(s))").format(count=len(content))
 
 
 def _format_raw_lines(lines: list, filename: str, keyword: str) -> str:
     """Format raw log lines from file."""
-    header = f"📋 Journal applicatif : {filename}\n"
+    header = _("📋 Journal applicatif : {filename}\n").format(filename=filename)
     header += "═" * 40 + "\n\n"
     if keyword:
-        header += f"Filtre : '{keyword}'\n\n"
+        header += _("Filtre : '{keyword}'\n\n").format(keyword=keyword)
     
     content = []
     for line in lines:
@@ -181,7 +182,7 @@ def _format_raw_lines(lines: list, filename: str, keyword: str) -> str:
         if line:
             content.append(line)
     
-    return header + "\n".join(content) + f"\n\n({len(content)} ligne(s))"
+    return header + "\n".join(content) + _("\n\n({count} ligne(s))").format(count=len(content))
 
 
 # <-- INFO DEV ---------------------------------------------------------

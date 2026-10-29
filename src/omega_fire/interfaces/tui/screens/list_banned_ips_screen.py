@@ -12,6 +12,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, DataTable, Footer, Header, Select, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -45,23 +46,23 @@ class ListBannedIpsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("IPs BANNIES", classes="omega-title")
+            yield Static(_("IPs BANNIES"), classes="omega-title")
             with Horizontal(classes="omega-actions"):
-                options = [("Tous les backends", _ALL_BACKENDS)] + [
+                options = [(_("Tous les backends"), _ALL_BACKENDS)] + [
                     (name, name) for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Filtrer", id="filter", variant="primary")
+                    yield Button(_("Filtrer"), id="filter", variant="primary")
             yield Static("", id="result-hint", classes="omega-hint")
             yield DataTable(id="bans-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
         table = self.query_one("#bans-table", DataTable)
-        table.add_columns("Adresse IP", "Backend", "Source / Commentaire")
+        table.add_columns(_("Adresse IP"), _("Backend"), _("Source / Commentaire"))
         self._refresh(list(self._supported_backends))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -105,9 +106,9 @@ class ListBannedIpsScreen(OmegaScreen):
         table.clear()
         hint = self.query_one("#result-hint", Static)
         if not all_bans:
-            hint.update("Aucune IP bannie trouvee.")
+            hint.update(_("Aucune IP bannie trouvée."))
             return
-        hint.update(f"{len(all_bans)} IP(s) bannie(s).")
+        hint.update(_("{count} IP(s) bannie(s).").format(count=len(all_bans)))
 
         variables = self.app.get_css_variables()
         for entry in all_bans:

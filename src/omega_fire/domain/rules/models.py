@@ -65,6 +65,10 @@ class FirewallRule:
     external_ref: Optional[str] = None  # Technical backend identifier (nft handle, iptables line number) — NOT the DB id
     origin: str = "imported"  # "managed" (created by Omega-Fire) or "imported" (detected via backend sync)
     interface: Optional[str] = None  # Network interface name (e.g. "eth0"); None = ANY
+    # Lus dans le noyau, jamais en base : vrai nom de chaine (ufw-before-input...)
+    # et regle recreable a l'identique par 7.2 (infrastructure/backends/rule_fidelity.py).
+    chain_name: Optional[str] = None
+    restorable: bool = False
     def is_port_range(self) -> bool:
         """Check if this rule specifies a port range."""
         return self.port_start is not None and self.port_end is not None

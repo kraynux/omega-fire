@@ -21,6 +21,7 @@ from omega_fire.infrastructure.backends.service_manager.exceptions import (
     ServiceControlError,
     ServiceStatusError,
 )
+from omega_fire.shared.i18n import _
 
 
 class RunitServiceManager(ServiceManager):
@@ -82,7 +83,7 @@ class RunitServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="start",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="runit",
                 )
         
@@ -90,7 +91,7 @@ class RunitServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="start",
-                reason="sv binary not found",
+                reason=_("Exécutable sv introuvable"),
                 manager_type="runit",
             )
     
@@ -128,7 +129,7 @@ class RunitServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="stop",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="runit",
                 )
         
@@ -136,7 +137,7 @@ class RunitServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="stop",
-                reason="sv binary not found",
+                reason=_("Exécutable sv introuvable"),
                 manager_type="runit",
             )
     
@@ -174,7 +175,7 @@ class RunitServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="restart",
-                    reason=result.stderr.strip() or f"Exit code {result.returncode}",
+                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="runit",
                 )
         
@@ -182,7 +183,7 @@ class RunitServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="restart",
-                reason="sv binary not found",
+                reason=_("Exécutable sv introuvable"),
                 manager_type="runit",
             )
     
@@ -223,14 +224,14 @@ class RunitServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="enable",
-                reason=f"Permission denied: {e}",
+                reason=_("Permission refusée : {e}").format(e=e),
                 manager_type="runit",
             )
         except OSError as e:
             raise ServiceControlError(
                 service_name=service_name,
                 operation="enable",
-                reason=f"Failed to create symlink: {e}",
+                reason=_("Impossible de créer le lien symbolique : {e}").format(e=e),
                 manager_type="runit",
             )
     
@@ -263,14 +264,14 @@ class RunitServiceManager(ServiceManager):
             raise ServiceControlError(
                 service_name=service_name,
                 operation="disable",
-                reason=f"Permission denied: {e}",
+                reason=_("Permission refusée : {e}").format(e=e),
                 manager_type="runit",
             )
         except OSError as e:
             raise ServiceControlError(
                 service_name=service_name,
                 operation="disable",
-                reason=f"Failed to remove symlink: {e}",
+                reason=_("Impossible de supprimer le lien symbolique : {e}").format(e=e),
                 manager_type="runit",
             )
     
@@ -319,7 +320,7 @@ class RunitServiceManager(ServiceManager):
         except FileNotFoundError:
             raise ServiceStatusError(
                 service_name=service_name,
-                reason="sv binary not found",
+                reason=_("Exécutable sv introuvable"),
                 manager_type="runit",
             )
     

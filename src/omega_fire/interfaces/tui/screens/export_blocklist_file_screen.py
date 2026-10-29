@@ -26,6 +26,7 @@ from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.ban_ip_list_screen import _extract_valid_ips
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -84,57 +85,57 @@ class ExportBlocklistFileScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("EXPORTER LES IPs BANNIES", classes="omega-title")
+            yield Static(_("EXPORTER LES IPs BANNIES"), classes="omega-title")
 
-            yield Static("Destination", classes="omega-subtitle")
+            yield Static(_("Destination"), classes="omega-subtitle")
             yield Select(
                 [
-                    (f"Fichier par defaut ({DEFAULT_BLOCKLIST_FILE.name})", _DST_DEFAULT),
-                    ("Sauvegarde horodatee (nouveau fichier)", _DST_BACKUP),
-                    ("Parcourir var/blocklist/", _DST_BROWSE),
-                    ("Fichier recent", _DST_RECENT),
-                    ("Chemin manuel", _DST_MANUAL),
-                    ("Fichier epingle", _DST_PINNED),
+                    (_("Fichier par défaut ({name})").format(name=DEFAULT_BLOCKLIST_FILE.name), _DST_DEFAULT),
+                    (_("Sauvegarde horodatee (nouveau fichier)"), _DST_BACKUP),
+                    (_("Parcourir var/blocklist/"), _DST_BROWSE),
+                    (_("Fichier récent"), _DST_RECENT),
+                    (_("Chemin manuel"), _DST_MANUAL),
+                    (_("Fichier épinglé"), _DST_PINNED),
                 ],
                 value=_DST_DEFAULT,
                 id="dest-select",
             )
 
-            yield Static("Fichier dans var/blocklist/", id="browse-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._browse_select_options(), id="browse-select", classes="omega-hidden")
+            yield Static(_("Fichier dans var/blocklist/"), id="browse-label", classes="omega-subtitle omega-hidden")
+            yield Select(self._browse_select_options(), id="browse-select", classes="omega-hidden", prompt=_("Sélectionner"))
 
-            yield Static("Fichier recent", id="recent-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._recent_select_options(), id="recent-select", classes="omega-hidden")
+            yield Static(_("Fichier récent"), id="recent-label", classes="omega-subtitle omega-hidden")
+            yield Select(self._recent_select_options(), id="recent-select", classes="omega-hidden", prompt=_("Sélectionner"))
 
-            yield Static("Chemin complet", id="manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Chemin complet"), id="manual-label", classes="omega-subtitle omega-hidden")
             yield Input(id="manual-input", classes="omega-hidden")
 
-            yield Static("Fichier epingle", id="pinned-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._pinned_select_options(), id="pinned-select", classes="omega-hidden")
+            yield Static(_("Fichier épinglé"), id="pinned-label", classes="omega-subtitle omega-hidden")
+            yield Select(self._pinned_select_options(), id="pinned-select", classes="omega-hidden", prompt=_("Sélectionner"))
             with Horizontal(classes="omega-actions", id="pinned-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer les epingles", id="manage-pins")
+                    yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static("Mode d'ecriture", id="mode-label", classes="omega-subtitle")
+            yield Static(_("Mode d'écriture"), id="mode-label", classes="omega-subtitle")
             yield Select(
-                [("Ecraser (remplace tout)", "w"), ("Rajouter (ajoute a la fin)", "a"),
-                 ("Incrementer (nouvelles IP uniquement)", "inc")],
+                [(_("Écraser (remplace tout)"), "w"), (_("Rajouter (ajoute à la fin)"), "a"),
+                 (_("Incrementer (nouvelles IP uniquement)"), "inc")],
                 value="w",
                 id="mode-select",
             )
 
-            yield Static("Backend(s) source", classes="omega-subtitle")
+            yield Static(_("Backend(s) source"), classes="omega-subtitle")
             yield Select(
-                [("Tous les backends", _ALL_BACKENDS)] + [(n, n) for n in self._supported_backends],
+                [(_("Tous les backends"), _ALL_BACKENDS)] + [(n, n) for n in self._supported_backends],
                 value=_ALL_BACKENDS,
                 id="backend-select",
             )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Exporter", id="launch", variant="primary")
+                    yield Button(_("Exporter"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def _browse_select_options(self) -> list[tuple[str, str]]:
@@ -197,7 +198,7 @@ class ExportBlocklistFileScreen(OmegaScreen):
         elif dest == _DST_BROWSE:
             selected = self.query_one("#browse-select", Select).value
             if selected is None or selected == Select.BLANK:
-                self.app.notify("Choisissez un fichier.", severity="warning")
+                self.app.notify(_("Choisissez un fichier."), severity="warning")
                 return
             file_path = os.path.join(str(BLOCKLIST_DIR), str(selected))
             write_mode = str(self.query_one("#mode-select", Select).value)
@@ -205,7 +206,7 @@ class ExportBlocklistFileScreen(OmegaScreen):
         elif dest == _DST_RECENT:
             selected = self.query_one("#recent-select", Select).value
             if selected is None or selected == Select.BLANK:
-                self.app.notify("Choisissez un fichier recent.", severity="warning")
+                self.app.notify(_("Choisissez un fichier récent."), severity="warning")
                 return
             file_path = str(selected)
             write_mode = str(self.query_one("#mode-select", Select).value)
@@ -213,14 +214,14 @@ class ExportBlocklistFileScreen(OmegaScreen):
         elif dest == _DST_MANUAL:
             file_path = self.query_one("#manual-input", Input).value.strip()
             if not file_path:
-                self.app.notify("Saisissez un chemin de fichier.", severity="warning")
+                self.app.notify(_("Saisissez un chemin de fichier."), severity="warning")
                 return
             write_mode = str(self.query_one("#mode-select", Select).value)
 
         elif dest == _DST_PINNED:
             selected = self.query_one("#pinned-select", Select).value
             if selected is None or selected == Select.BLANK:
-                self.app.notify("Choisissez un fichier epingle (ou epinglez-en un).", severity="warning")
+                self.app.notify(_("Choisissez un fichier épinglé (ou épinglez-en un)."), severity="warning")
                 return
             file_path = str(selected)
             write_mode = str(self.query_one("#mode-select", Select).value)
@@ -265,7 +266,7 @@ class ExportBlocklistFileScreen(OmegaScreen):
                     new_items[clean_ip] = line
 
         if not new_items:
-            self.app.notify("Aucune IP a exporter.", severity="warning")
+            self.app.notify(_("Aucune IP à exporter."), severity="warning")
             return
 
         already_present_count = 0
@@ -303,13 +304,12 @@ class ExportBlocklistFileScreen(OmegaScreen):
                     with open(file_path, "a", encoding="utf-8") as f:
                         f.write("\n".join(lines) + "\n")
         except Exception as e:
-            self.app.notify(f"Erreur ecriture : {e}", severity="error")
+            self.app.notify(_("Erreur écriture : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
             return
 
         self.app.notify(
-            f"[{mode_label}] {added_count} nouvelle(s) IP(s) ecrite(s), {already_present_count} deja presente(s), "
-            f"dans '{file_path}'.",
+            _("[{mode_label}] {added_count} nouvelle(s) IP(s) écrite(s), {already_present_count} déjà présente(s), dans '{file_path}'.").format(mode_label=mode_label, added_count=added_count, already_present_count=already_present_count, file_path=file_path),
         )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

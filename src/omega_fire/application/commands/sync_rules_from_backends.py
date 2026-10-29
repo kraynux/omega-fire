@@ -24,6 +24,7 @@ from typing import Any
 
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -116,7 +117,7 @@ class SyncRulesFromBackendsCommand:
                 added=added,
                 disabled=disabled,
                 unchanged=unchanged,
-                message=f"Erreur technique lors de la synchronisation : {e}",
+                message=_("Erreur technique lors de la synchronisation : {e}").format(e=e),
             )
 
         return SyncRulesResult(
@@ -125,8 +126,7 @@ class SyncRulesFromBackendsCommand:
             disabled=disabled,
             unchanged=unchanged,
             message=(
-                f"{added} règle(s) importée(s), {disabled} désactivée(s), "
-                f"{unchanged} déjà à jour."
+                _("{added} règle(s) importée(s), {disabled} désactivée(s), {unchanged} déjà à jour.").format(added=added, disabled=disabled, unchanged=unchanged)
             ),
         )
 

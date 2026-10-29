@@ -26,6 +26,15 @@ from omega_fire.infrastructure.backends.nftables.exceptions import (
     NftCommandError,
     NftPermissionError,
 )
+from omega_fire.shared.i18n import _
+
+
+_IPTABLES_NFT_WARNING = re.compile(r"table\s+(\S+)\s+(\S+)\s+is managed by iptables-nft")
+
+
+def iptables_nft_tables(text: str) -> set[tuple[str, str]]:
+    """(famille, table) signalées par nft comme gérées par iptables-nft."""
+    return set(_IPTABLES_NFT_WARNING.findall(text))
 
 
 class NftablesAdapter:
@@ -56,6 +65,9 @@ class NftablesAdapter:
                 timeout=self._timeout,
                 check=False,
             )
+
+            # Gardé pour list_rules() : nft y écrit l'avertissement « managed by iptables-nft ».
+            self._last_stderr = result.stderr or ""
 
             if result.returncode != 0:
                 stderr = result.stderr.strip()
@@ -322,12 +334,19 @@ class NftablesAdapter:
             return []
         parsed = self._parser.parse_ruleset(output)
 
-        # Exclusion de la table de compatibilité iptables-nft (ip/filter) —
-        # voir docstring ci-dessus : déjà représentée intégralement par
-        # IptablesAdapter.list_rules(), jamais par ce backend.
+        # Exclusion des tables de compatibilité iptables-nft — voir docstring
+        # ci-dessus. nft les signale lui-même (« # Warning: table ip6 filter is
+        # managed by iptables-nft, do not touch! », sur stderr) : ip/ip6 × filter,
+        # nat, mangle… Constaté 2026-10-28 avec UFW : seule ip/filter était
+        # exclue, ip6 filter était donc compté deux fois (nftables + ip6tables).
+        # Sans avertissement (nft ancien) : ip/filter et ip6/filter, les tables
+        # lues par iptables -S et ip6tables -S.
+        compat_tables = iptables_nft_tables(getattr(self, "_last_stderr", "") + "\n" + output)
+        if not compat_tables:
+            compat_tables = {("ip", "filter"), ("ip6", "filter")}
         parsed = [
             p for p in parsed
-            if not (p.get("family") == "ip" and p.get("table") == "filter")
+            if (p.get("family"), p.get("table")) not in compat_tables
         ]
 
         return self._mapper.map_rules(parsed)
@@ -830,7 +849,7 @@ class NftablesAdapter:
         preset = self._resolve_policy(policy_name)
         if preset is None:
             raise PolicyNotFoundError(
-                policy_name, "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
+                policy_name, _("aucun profil FirewallPreset ne correspond (domain/rules/presets.py)")
             )
         self.apply_preset(preset)
         return sum(len(self._build_preset_rule_commands("inet", "filter", r)) for r in preset.rules)

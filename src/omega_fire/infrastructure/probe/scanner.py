@@ -8,6 +8,8 @@ detect what is available on the current system.
 This module is the entry point for system detection and is called
 during application startup to populate the capability registry.
 """
+import os
+from pathlib import Path
 from typing import Optional, Any
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
@@ -15,6 +17,32 @@ from omega_fire.infrastructure.probe.command_probe import CommandProbe
 from omega_fire.infrastructure.probe.service_probe import ServiceProbe
 from omega_fire.infrastructure.probe.capability_mapper import CapabilityMapper
 from omega_fire.infrastructure.probe.exceptions import ScannerError
+from omega_fire.shared.i18n import N_, _, lazy
+
+
+def _instance_running(instance) -> bool:
+    """Unite systemd active, sinon un processus `omega_serv` lance depuis ce dossier."""
+    import subprocess
+    if instance.systemd_unit:
+        try:
+            result = subprocess.run(["systemctl", "is-active", "--quiet", instance.systemd_unit],
+                                    capture_output=True, timeout=3)
+            return result.returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return False
+    proc = Path("/proc")
+    try:
+        pids = [entry for entry in proc.iterdir() if entry.name.isdigit()]
+    except OSError:
+        return False
+    for entry in pids:
+        try:
+            cmdline = (entry / "cmdline").read_bytes()
+            if b"omega_serv" in cmdline and Path(os.readlink(entry / "cwd")).resolve() == instance.root:
+                return True
+        except OSError:
+            continue
+    return False
 
 
 class SystemScanner:
@@ -62,42 +90,48 @@ class SystemScanner:
             self._scan_backends()
             registered += 3
         except Exception as e:
-            errors.append(f"Backend scan failed: {e}")
+            errors.append(_("Échec du scan des backends : {e}").format(e=e))
         
         # Scan fail2ban
         try:
             self._scan_fail2ban()
             registered += 3  # fail2ban_client + fail2ban_service
         except Exception as e:
-            errors.append(f"Fail2ban scan failed: {e}")
+            errors.append(_("Échec du scan de fail2ban : {e}").format(e=e))
         
         # Scan conntrack
         try:
             self._scan_conntrack()
             registered += 1
         except Exception as e:
-            errors.append(f"Conntrack scan failed: {e}")
+            errors.append(_("Échec du scan de conntrack : {e}").format(e=e))
         
         # Scan service manager
         try:
             self._scan_service_manager()
             registered += 1
         except Exception as e:
-            errors.append(f"Service manager scan failed: {e}")
+            errors.append(_("Échec du scan du gestionnaire de services : {e}").format(e=e))
 
         # Scan known services (system, servers, remote desktop, security)
         try:
             known_registered = self._scan_known_services()
             registered += known_registered
         except Exception as e:
-            errors.append(f"Known services scan failed: {e}")
+            errors.append(_("Échec du scan des services connus : {e}").format(e=e))
+
+        # Suite omega : omega-serv, omega-waf, omega-jail (point 7, version 3.5)
+        try:
+            registered += self._scan_omega_suite()
+        except Exception as e:
+            errors.append(_("Échec du scan de la suite omega : {e}").format(e=e))
 
         # Scan user-defined resources (NEW)
         try:
             user_registered = self._load_user_config_capabilities()
             registered += user_registered
         except Exception as e:
-            errors.append(f"User config scan failed: {e}")
+            errors.append(_("Échec du scan de la configuration utilisateur : {e}").format(e=e))
         
         # Count capabilities by status
         for cap in self._registry.list_all():
@@ -149,7 +183,7 @@ class SystemScanner:
                         capability = create_capability(
                             capability_id=cap_id,
                             status=CapabilityStatus.AVAILABLE,
-                            reason="Processus détecté sur le système",
+                            reason=lazy(N_("Processus détecté sur le système")),
                             detail={"process": process_name},
                             category=category,
                         )
@@ -157,7 +191,7 @@ class SystemScanner:
                         capability = create_capability(
                             capability_id=cap_id,
                             status=CapabilityStatus.MISSING,
-                            reason="Processus non détecté sur le système",
+                            reason=lazy(N_("Processus non détecté sur le système")),
                             detail={"process": process_name},
                             category=category,
                         )
@@ -165,7 +199,7 @@ class SystemScanner:
                     capability = create_capability(
                         capability_id=cap_id,
                         status=CapabilityStatus.MISSING,
-                        reason="Vérification impossible",
+                        reason=lazy(N_("Vérification impossible")),
                         detail={"process": process_name},
                         category=category,
                     )
@@ -272,14 +306,14 @@ class SystemScanner:
             f2b_control_capability = create_capability(
                 capability_id="fail2ban_service_control",
                 status=CapabilityStatus.AVAILABLE,
-                reason="Gestionnaire de service et Fail2ban détectés sur le système",
+                reason=lazy(N_("Gestionnaire de service et Fail2ban détectés sur le système")),
                 category="service",
             )
         else:
             f2b_control_capability = create_capability(
                 capability_id="fail2ban_service_control",
                 status=CapabilityStatus.MISSING,
-                reason="Fail2ban ou le gestionnaire de service est absent",
+                reason=lazy(N_("Fail2ban ou le gestionnaire de service est absent")),
                 category="service",
             )
 
@@ -288,6 +322,74 @@ class SystemScanner:
         else:
             self._registry.register(f2b_control_capability)
     
+    def _register(self, capability) -> None:
+        if self._registry.is_registered(capability.id):
+            self._registry.update(capability)
+        else:
+            self._registry.register(capability)
+
+    def _scan_omega_suite(self, jail_d_dir: Path = Path("/etc/fail2ban/jail.d")) -> int:
+        """Outils de la suite omega (point 7, version 3.5), en lecture seule :
+        - omega_serv : instances detectees (unites systemd, registre d'instances) ; DEGRADED si
+          aucune n'est en service ;
+        - omega_waf : extra `magnet` active dans une instance (omega-waf avec lighttpd seul : non
+          detecte) ;
+        - omega_jail : jails installes par omega-jail (jail.d/omega-jail-*.conf)."""
+        from omega_fire.core.capability import create_capability
+        from omega_fire.infrastructure.probe.omega_serv_detector import (
+            detect_omega_serv_instances,
+            magnet_info,
+        )
+
+        instances = detect_omega_serv_instances()
+        names = ", ".join(instance.name for instance in instances)
+        roots = [str(instance.root) for instance in instances]
+        if not instances:
+            serv = create_capability(
+                capability_id="omega_serv", status=CapabilityStatus.MISSING, category="omega_suite",
+                reason=lazy(N_("Aucune instance omega-serv détectée (service systemd omega-serv*.service ou "
+                               "registre d'instances) ; une instance lancée à la main n'est pas vue")))
+        else:
+            running = [instance for instance in instances if _instance_running(instance)]
+            serv = create_capability(
+                capability_id="omega_serv",
+                status=CapabilityStatus.AVAILABLE if running else CapabilityStatus.DEGRADED,
+                category="omega_suite", detail={"instances": roots},
+                reason=lazy(N_("{count} instance(s) détectée(s), {running} en service : {names}"),
+                            count=len(instances), running=len(running), names=names))
+        self._register(serv)
+
+        with_magnet = [(instance, magnet_info(instance)) for instance in instances]
+        with_magnet = [(instance, magnet) for instance, magnet in with_magnet if magnet is not None]
+        if with_magnet:
+            waf = create_capability(
+                capability_id="omega_waf", status=CapabilityStatus.AVAILABLE, category="omega_suite",
+                detail={"scripts": [str(m.script) for _i, m in with_magnet if m.script]},
+                reason=lazy(N_("Extra magnet activé (omega-waf) dans {count} instance(s) : {names}"),
+                            count=len(with_magnet), names=", ".join(i.name for i, _m in with_magnet)))
+        else:
+            waf = create_capability(
+                capability_id="omega_waf", status=CapabilityStatus.MISSING, category="omega_suite",
+                reason=lazy(N_("Extra magnet d'omega-serv non activé (omega-waf avec lighttpd seul : non détecté)")))
+        self._register(waf)
+
+        try:
+            jail_files = sorted(jail_d_dir.glob("omega-jail-*.conf"))
+        except OSError:
+            jail_files = []
+        if jail_files:
+            jail = create_capability(
+                capability_id="omega_jail", status=CapabilityStatus.AVAILABLE, category="omega_suite",
+                detail={"files": [str(path) for path in jail_files]},
+                reason=lazy(N_("{count} jail(s) installé(s) par omega-jail ({path})"),
+                            count=len(jail_files), path=str(jail_d_dir)))
+        else:
+            jail = create_capability(
+                capability_id="omega_jail", status=CapabilityStatus.MISSING, category="omega_suite",
+                reason=lazy(N_("Aucun jail omega-jail installé ({path}/omega-jail-*.conf)"), path=str(jail_d_dir)))
+        self._register(jail)
+        return 3
+
     def _scan_conntrack(self) -> None:
         """Scan conntrack command."""
         ct_result = self._command_probe.probe_command(
@@ -318,7 +420,7 @@ class SystemScanner:
             sm_capability = create_capability(
                 capability_id="service_manager",
                 status=CapabilityStatus.MISSING,
-                reason="No service manager detected on this system",
+                reason=lazy(N_("Aucun gestionnaire de services détecté sur ce système")),
                 category="service",
             )
         else:
@@ -327,7 +429,7 @@ class SystemScanner:
             sm_capability = create_capability(
                 capability_id="service_manager",
                 status=CapabilityStatus.AVAILABLE,
-                reason=f"Service manager detected: {detected_type.value}",
+                reason=lazy(N_("Service manager detected: {value}"), value=detected_type.value),
                 detail={"type": detected_type.value},
                 category="service",
             )
@@ -372,7 +474,7 @@ class SystemScanner:
                 capability = create_capability(
                     capability_id=cap_id,
                     status=CapabilityStatus.AVAILABLE,
-                    reason="Déclaré par l'utilisateur (fichier existant)",
+                    reason=lazy(N_("Déclaré par l'utilisateur (fichier existant)")),
                     detail={"path": str(path)},
                     category="log",
                 )
@@ -380,7 +482,7 @@ class SystemScanner:
                 capability = create_capability(
                     capability_id=cap_id,
                     status=CapabilityStatus.MISSING,
-                    reason="Déclaré par l'utilisateur mais fichier introuvable",
+                    reason=lazy(N_("Déclaré par l'utilisateur mais fichier introuvable")),
                     detail={"path": str(path)},
                     category="log",
                 )
@@ -404,7 +506,7 @@ class SystemScanner:
                     capability = create_capability(
                         capability_id=cap_id,
                         status=CapabilityStatus.AVAILABLE,
-                        reason="Déclaré par l'utilisateur (processus détecté)",
+                        reason=lazy(N_("Déclaré par l'utilisateur (processus détecté)")),
                         detail={"process": server_name},
                         category="web_server",
                     )
@@ -412,7 +514,7 @@ class SystemScanner:
                     capability = create_capability(
                         capability_id=cap_id,
                         status=CapabilityStatus.MISSING,
-                        reason="Déclaré par l'utilisateur mais processus non détecté",
+                        reason=lazy(N_("Déclaré par l'utilisateur mais processus non détecté")),
                         detail={"process": server_name},
                         category="web_server",
                     )
@@ -420,7 +522,7 @@ class SystemScanner:
                 capability = create_capability(
                     capability_id=cap_id,
                     status=CapabilityStatus.MISSING,
-                    reason="Déclaré par l'utilisateur (vérification impossible)",
+                    reason=lazy(N_("Déclaré par l'utilisateur (vérification impossible)")),
                     detail={"process": server_name},
                     category="web_server",
                 )
@@ -444,7 +546,7 @@ class SystemScanner:
                     capability = create_capability(
                         capability_id=cap_id,
                         status=CapabilityStatus.AVAILABLE,
-                        reason=f"Déclaré par l'utilisateur (port {port} ouvert)",
+                        reason=lazy(N_("Déclaré par l'utilisateur (port {port} ouvert)"), port=port),
                         detail={"port": port},
                         category="monitoring",
                     )
@@ -452,7 +554,7 @@ class SystemScanner:
                     capability = create_capability(
                         capability_id=cap_id,
                         status=CapabilityStatus.MISSING,
-                        reason=f"Déclaré par l'utilisateur mais port {port} fermé",
+                        reason=lazy(N_("Déclaré par l'utilisateur mais port {port} fermé"), port=port),
                         detail={"port": port},
                         category="monitoring",
                     )
@@ -460,7 +562,7 @@ class SystemScanner:
                 capability = create_capability(
                     capability_id=cap_id,
                     status=CapabilityStatus.MISSING,
-                    reason=f"Déclaré par l'utilisateur (vérification impossible)",
+                    reason=lazy(N_("Déclaré par l'utilisateur (vérification impossible)")),
                     detail={"port": port},
                     category="monitoring",
                 )

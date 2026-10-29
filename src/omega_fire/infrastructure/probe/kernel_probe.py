@@ -9,6 +9,7 @@ therefore in infrastructure/.
 import os
 from typing import Optional
 from omega_fire.infrastructure.probe.exceptions import ProbeExecutionError
+from omega_fire.shared.i18n import N_, lazy
 
 
 class KernelProbe:
@@ -49,13 +50,13 @@ class KernelProbe:
             return {
                 "available": True,
                 "modules": modules,
-                "message": f"nftables kernel support detected: {', '.join(modules)}",
+                "message": lazy(N_("Prise en charge de nftables par le noyau détectée : {value}"), value=', '.join(modules)),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": "nftables kernel support not detected",
+                "message": lazy(N_("Prise en charge de nftables par le noyau non détectée")),
             }
     
     def check_iptables_support(self) -> dict:
@@ -86,13 +87,13 @@ class KernelProbe:
             return {
                 "available": True,
                 "modules": modules,
-                "message": f"iptables kernel support detected: {', '.join(modules)}",
+                "message": lazy(N_("Prise en charge d'iptables par le noyau détectée : {value}"), value=', '.join(modules)),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": "iptables kernel support not detected",
+                "message": lazy(N_("Prise en charge d'iptables par le noyau non détectée")),
             }
     
     def check_netfilter_support(self) -> dict:
@@ -123,13 +124,13 @@ class KernelProbe:
             return {
                 "available": True,
                 "modules": modules,
-                "message": f"netfilter kernel support detected: {', '.join(modules)}",
+                "message": lazy(N_("Prise en charge de netfilter par le noyau détectée : {value}"), value=', '.join(modules)),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": "netfilter kernel support not detected",
+                "message": lazy(N_("Prise en charge de netfilter par le noyau non détectée")),
             }
     
     def probe_kernel(self, backend: str = "netfilter") -> dict:
@@ -151,7 +152,7 @@ class KernelProbe:
             return {
                 "available": False,
                 "modules": [],
-                "message": f"Unknown backend: {backend}",
+                "message": lazy(N_("Backend inconnu : {backend}"), backend=backend),
             }
 
 

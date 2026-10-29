@@ -7,6 +7,7 @@ or mapping operations. They are caught by the application layer
 and translated into capability status updates in the registry.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class ProbeError(CoreError):
@@ -34,7 +35,7 @@ class ProbeExecutionError(ProbeError):
         context: dict = None,
     ):
         super().__init__(
-            f"Probe '{probe_name}' execution failed: {reason}",
+            _("Échec de la sonde « {probe_name} » : {reason}").format(probe_name=probe_name, reason=reason),
             probe_name=probe_name,
             context={**(context or {}), "reason": reason},
         )
@@ -54,7 +55,7 @@ class ProbeTimeoutError(ProbeError):
         context: dict = None,
     ):
         super().__init__(
-            f"Probe '{probe_name}' timed out after {timeout_seconds}s",
+            _("Sonde « {probe_name} » interrompue après {timeout_seconds} s").format(probe_name=probe_name, timeout_seconds=timeout_seconds),
             probe_name=probe_name,
             context={**(context or {}), "timeout_seconds": timeout_seconds},
         )
@@ -74,7 +75,7 @@ class CapabilityMappingError(ProbeError):
         context: dict = None,
     ):
         super().__init__(
-            f"Failed to map probe '{probe_name}' to capability: {reason}",
+            _("Impossible de rattacher la sonde « {probe_name} » à une capacité : {reason}").format(probe_name=probe_name, reason=reason),
             probe_name=probe_name,
             context={**(context or {}), "reason": reason},
         )
@@ -95,7 +96,7 @@ class ScannerError(ProbeError):
         context: dict = None,
     ):
         super().__init__(
-            f"Scanner failed: {reason}",
+            _("Échec du scan : {reason}").format(reason=reason),
             probe_name="scanner",
             context={
                 **(context or {}),

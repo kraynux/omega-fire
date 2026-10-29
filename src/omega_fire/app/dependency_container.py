@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Optional, TYPE_CHECKING
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.core.capability_registry import CapabilityRegistry
@@ -266,12 +267,52 @@ class DependencyContainer:
         return JsonSettingsStore(RUNTIME_DIR / "settings.json")
 
     @property
+    def language_catalog(self) -> Any:
+        return self._get_or_create("language_catalog", self._create_language_catalog)
+
+    def _create_language_catalog(self) -> Any:
+        from omega_fire.infrastructure.i18n.gettext_language_catalog import GettextLanguageCatalog
+        return GettextLanguageCatalog()
+
+    @property
     def terminal_detector(self) -> Any:
         return self._get_or_create("terminal_detector", self._create_terminal_detector)
 
     def _create_terminal_detector(self) -> Any:
         from omega_lib.infrastructure.terminal.detector import SystemTerminalDetector
         return SystemTerminalDetector()
+
+    @property
+    def project_root(self) -> Path:
+        from omega_fire.infrastructure.config.paths import VAR_DIR
+        return VAR_DIR.parent
+
+    @property
+    def default_exports_dir(self) -> Path:
+        from omega_fire.infrastructure.config.paths import EXPORTS_DIR
+        return EXPORTS_DIR
+
+    def _configured_dir(self, key: str, default: Path) -> Path:
+        """Dossier choisi dans Reglages (cle `key` du fichier de reglages), sinon `default`.
+        Un chemin relatif part de la racine du projet, quel que soit le dossier courant."""
+        try:
+            override = (self.settings_store.get(key, "") or "").strip()
+        except (OSError, ValueError):
+            override = ""
+        if not override:
+            return default
+        path = Path(override).expanduser()
+        return path if path.is_absolute() else self.project_root / path
+
+    @property
+    def exports_dir(self) -> Path:
+        """Dossier d'exports effectif (Reglages -> Exports), var/exports/ par defaut."""
+        return self._configured_dir("exports_dir_override", self.default_exports_dir)
+
+    @property
+    def screenshots_dir(self) -> Path:
+        """Dossier de captures effectif (Reglages -> Captures d'ecran), var/screenshots/ par defaut."""
+        return self._configured_dir("screenshots_dir_override", self.default_screenshots_dir)
 
     @property
     def default_screenshots_dir(self) -> Path:
@@ -315,7 +356,7 @@ class DependencyContainer:
         elif backend == "ip6tables":
             return self.ip6tables_adapter
         else:
-            raise ValueError(f"Unknown firewall backend: {backend}")
+            raise ValueError(_("Backend de pare-feu inconnu : {backend}").format(backend=backend))
     
     def get_blacklist_port(self) -> Any:
         return self.nftables_adapter  # Simplified for now
@@ -334,7 +375,7 @@ class DependencyContainer:
         elif format == "html":
             return self.html_exporter
         else:
-            raise ValueError(f"Unknown export format: {format}")
+            raise ValueError(_("Format d'export inconnu : {format}").format(format=format))
     
     def get_audit_port(self) -> Any:
         return self.audit_logger

@@ -1,0 +1,5 @@
+Catalogues de traduction de l'interface d'omega-fire (OMEGA-FIRE_PLAN-DETAILLE_I18N.md).
+
+Disposition : <langue>/LC_MESSAGES/omega-fire.mo   (ex. en/LC_MESSAGES/omega-fire.mo)
+Une langue apparait dans Reglages -> "Langue / Language" des que son fichier .mo est present.
+Le francais (langue source) ne demande aucun fichier.

@@ -6,6 +6,7 @@ These express business rule violations, not technical failures
 of the fail2ban-client binary. They are caught by application/
 and translated into Results or user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class Fail2banError(Exception):
@@ -24,7 +25,19 @@ class JailNotFoundError(Fail2banError):
     """
     def __init__(self, jail_name: str):
         self.jail_name = jail_name
-        super().__init__(f"Jail '{jail_name}' not found")
+        super().__init__(_("Jail « {jail_name} » introuvable").format(jail_name=jail_name))
+
+
+class JailNotDeletableError(Fail2banError):
+    """Le jail ne peut pas etre supprime sans toucher a d'autres reglages (point 7, version
+    3.5) : defini dans jail.conf / jail.local, ou dans un fichier jail.d partage avec
+    d'autres jails. `blocked` : constante BLOCKED_* de domain/fail2ban/definitions.py."""
+    def __init__(self, jail_name: str, blocked: str, files: tuple[str, ...] = ()):
+        self.jail_name = jail_name
+        self.blocked = blocked
+        self.files = files
+        super().__init__(_("Le jail « {jail_name} » ne peut pas être supprimé ici ({files})").format(
+            jail_name=jail_name, files=", ".join(files)))
 
 
 class InvalidJailConfigError(Fail2banError):
@@ -36,7 +49,7 @@ class InvalidJailConfigError(Fail2banError):
     def __init__(self, jail_name: str, reason: str):
         self.jail_name = jail_name
         self.reason = reason
-        super().__init__(f"Invalid jail config for '{jail_name}': {reason}")
+        super().__init__(_("Configuration invalide pour le jail « {jail_name} » : {reason}").format(jail_name=jail_name, reason=reason))
 
 
 class JailAlreadyExistsError(Fail2banError):
@@ -46,7 +59,7 @@ class JailAlreadyExistsError(Fail2banError):
     """
     def __init__(self, jail_name: str):
         self.jail_name = jail_name
-        super().__init__(f"Jail '{jail_name}' already exists")
+        super().__init__(_("Le jail « {jail_name} » existe déjà").format(jail_name=jail_name))
 
 
 class JailDisabledError(Fail2banError):
@@ -56,7 +69,7 @@ class JailDisabledError(Fail2banError):
     """
     def __init__(self, jail_name: str):
         self.jail_name = jail_name
-        super().__init__(f"Jail '{jail_name}' is disabled")
+        super().__init__(_("Le jail « {jail_name} » est désactivé").format(jail_name=jail_name))
 
 
 class InvalidIPForJailError(Fail2banError):
@@ -68,7 +81,7 @@ class InvalidIPForJailError(Fail2banError):
         self.ip = ip
         self.jail_name = jail_name
         self.reason = reason
-        super().__init__(f"Invalid IP {ip} for jail '{jail_name}': {reason}")
+        super().__init__(_("IP {ip} invalide pour le jail « {jail_name} » : {reason}").format(ip=ip, jail_name=jail_name, reason=reason))
 
 
 class IPAlreadyBannedError(Fail2banError):
@@ -81,7 +94,7 @@ class IPAlreadyBannedError(Fail2banError):
     def __init__(self, ip: str, jail_name: str):
         self.ip = ip
         self.jail_name = jail_name
-        super().__init__(f"IP {ip} is already banned in jail '{jail_name}'")
+        super().__init__(_("L'IP {ip} est déjà bannie dans le jail « {jail_name} »").format(ip=ip, jail_name=jail_name))
 
 
 class IPNotFoundError(Fail2banError):
@@ -94,7 +107,7 @@ class IPNotFoundError(Fail2banError):
     def __init__(self, ip: str, jail_name: str):
         self.ip = ip
         self.jail_name = jail_name
-        super().__init__(f"IP {ip} not found in jail '{jail_name}'")
+        super().__init__(_("IP {ip} introuvable dans le jail « {jail_name} »").format(ip=ip, jail_name=jail_name))
 
 
 class TransferError(Fail2banError):
@@ -106,7 +119,7 @@ class TransferError(Fail2banError):
     def __init__(self, jail_name: str, reason: str):
         self.jail_name = jail_name
         self.reason = reason
-        super().__init__(f"Transfer error from jail '{jail_name}': {reason}")
+        super().__init__(_("Erreur de transfert depuis le jail « {jail_name} » : {reason}").format(jail_name=jail_name, reason=reason))
 
 
 class InvalidParameterError(Fail2banError):
@@ -119,7 +132,7 @@ class InvalidParameterError(Fail2banError):
         self.value = value
         self.reason = reason
         super().__init__(
-            f"Invalid parameter '{parameter}' (value={value}): {reason}"
+            _("Paramètre « {parameter} » invalide (valeur={value}) : {reason}").format(parameter=parameter, value=value, reason=reason)
         )
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :

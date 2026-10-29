@@ -21,6 +21,7 @@ from textual.widgets import Button, Footer, Header, Input, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.widgets.capabilities_table import CapabilitiesTable
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -29,6 +30,27 @@ if TYPE_CHECKING:
 class SearchDiagnosticsScreen(OmegaScreen):
     """Recherche par mot-cle dans le registre de capacites."""
 
+    # Retour utilisateur 2026-10-28 : le tableau des resultats, en pleine largeur (motifs
+    # longs), annulait le centrage du formulaire — tout collait a gauche. Formulaire dans son
+    # propre bloc centre, tableau en dessous sur toute la largeur.
+    CSS = """
+    SearchDiagnosticsScreen #search-form {
+        width: 100%;
+        height: auto;
+        align-horizontal: center;
+    }
+
+    SearchDiagnosticsScreen #search-form > Input {
+        width: 70;
+        margin-bottom: 1;
+    }
+
+    SearchDiagnosticsScreen #search-form > .omega-actions {
+        width: 70;
+        align: center middle;
+    }
+    """
+
     def __init__(self, *, container: DependencyContainer) -> None:
         super().__init__()
         self._container = container
@@ -36,13 +58,14 @@ class SearchDiagnosticsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("RECHERCHER DANS LES DIAGNOSTICS", classes="omega-title")
-            yield Input(placeholder="Mot-cle (id, raison ou details techniques)", id="query-input")
-            with Horizontal(classes="omega-actions"):
-                with Container(classes="omega-btn-frame"):
-                    yield Button("Rechercher", id="search", variant="primary")
-                with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+            with Vertical(id="search-form"):
+                yield Static(_("RECHERCHER DANS LES DIAGNOSTICS"), classes="omega-title")
+                yield Input(placeholder=_("Mot-clé (id, raison ou détails techniques)"), id="query-input")
+                with Horizontal(classes="omega-actions"):
+                    with Container(classes="omega-btn-frame"):
+                        yield Button(_("Rechercher"), id="search", variant="primary")
+                    with Container(classes="omega-btn-frame"):
+                        yield Button(_("Retour"), id="back")
             yield Static("", id="result-hint", classes="omega-hint")
             yield CapabilitiesTable(id="capabilities-table")
         yield Footer()
@@ -75,6 +98,6 @@ class SearchDiagnosticsScreen(OmegaScreen):
 
         hint = self.query_one("#result-hint", Static)
         if not capabilities:
-            hint.update(f"Aucun diagnostic ou composant ne correspond a '{keyword}'." if keyword else "Aucun diagnostic.")
+            hint.update(_("Aucun diagnostic ou composant ne correspond à '{keyword}'.").format(keyword=keyword) if keyword else _("Aucun diagnostic."))
         else:
-            hint.update(f"{len(capabilities)} resultat(s) pour '{keyword}'." if keyword else f"{len(capabilities)} capacite(s).")
+            hint.update(_("{count} résultat(s) pour '{keyword}'.").format(count=len(capabilities), keyword=keyword) if keyword else _("{count} capacité(s).").format(count=len(capabilities)))

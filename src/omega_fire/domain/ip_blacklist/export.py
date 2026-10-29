@@ -11,6 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus
+from omega_fire.shared.i18n import _
 
 
 class ExportFormat(Enum):
@@ -107,7 +108,7 @@ def _apply_scope(
     
     elif scope == ExportScope.BY_BACKEND:
         if not backend_filter:
-            raise ValueError("backend_filter is required for BY_BACKEND scope")
+            raise ValueError(_("backend_filter est obligatoire pour la portée BY_BACKEND"))
         return [e for e in entries if e.backend == backend_filter and e.is_active()]
     
     elif scope == ExportScope.BY_DATE_RANGE:

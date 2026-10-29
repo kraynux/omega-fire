@@ -33,6 +33,7 @@ from omega_fire.domain.fail2ban.transfer import (
 )
 from omega_fire.domain.ip_blacklist.models import BanEntry
 from omega_fire.shared.networking import IPAddress
+from omega_fire.shared.i18n import _
 
 
 class Fail2banService:
@@ -213,7 +214,7 @@ class Fail2banService:
             raise InvalidIPForJailError(
                 ip,
                 jail_name,
-                f"Invalid IP format: {e}"
+                _("Format d'IP invalide : {e}").format(e=e)
             ) from e
         
         # Update runtime stats (in real usage, infrastructure will
@@ -251,7 +252,7 @@ class Fail2banService:
             raise InvalidIPForJailError(
                 ip,
                 jail_name,
-                f"Invalid IP format: {e}"
+                _("Format d'IP invalide : {e}").format(e=e)
             ) from e
         
         # Update runtime stats

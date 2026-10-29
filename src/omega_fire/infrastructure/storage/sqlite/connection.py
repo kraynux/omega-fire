@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from omega_fire.infrastructure.storage.sqlite.exceptions import (
     DatabaseConnectionError,
 )
+from omega_fire.shared.i18n import _
 
 
 class DatabaseConnection:
@@ -118,7 +119,7 @@ class DatabaseConnection:
         if self._connection is None:
             raise DatabaseConnectionError(
                 db_path=str(self._db_path),
-                reason="Connection not established. Call connect() first.",
+                reason=_("Connexion non établie : appeler connect() d'abord."),
             )
         return self._connection
     

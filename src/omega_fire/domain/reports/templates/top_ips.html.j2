@@ -1,0 +1,58 @@
+{# Export Top N des IPs (5.4, version 3.5). Contexte attendu :
+  page_title, heading, source_label, source_value, period_label, period_value,
+  generated_at, total_ips, columns (en-tetes), table_rows (cellules deja mises en
+  forme cote Python, comme le tableau de l'ecran).
+#}
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block terminal_title %}omega-fire -- top-ips-report{% endblock %}
+
+{% block extra_style %}
+        .reco-grid { grid-template-columns: 1fr 1fr 1fr; }
+        td.ip-cell { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; color: var(--text-heading); font-weight: 600; }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ heading }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM EXPORT]</span> {{ _("Rapport d'exportation généré le {when}.").format(when=generated_at) }}
+            </div>
+
+            <div class="reco-grid">
+                <div class="reco-item">
+                    <span class="label">{{ source_label }}</span>
+                    <span class="value" style="color: var(--status-success-text);">{{ source_value }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">{{ period_label }}</span>
+                    <span class="value">{{ period_value }}</span>
+                </div>
+                <div class="reco-item">
+                    <span class="label">{{ _("Nombre d'IPs") }}</span>
+                    <span class="value">{{ total_ips }}</span>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            {% for column in columns %}<th>{{ column }}</th>{% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in table_rows %}
+                        <tr>
+                            {% for cell in row %}<td{% if loop.index == 2 %} class="ip-cell"{% endif %}>{{ cell }}</td>{% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer-note">
+                {{ _("Omega-Fire CLI Framework — Document de Rapport d'Exportation.") }}
+            </div>
+{% endblock %}

@@ -188,6 +188,12 @@ class Fail2banPort(Protocol):
         """
         ...
 
+    def jail_definitions(self) -> dict:
+        """Ou est defini chaque jail et par qui (version 3.5) : {nom: JailDefinition}
+        (domain/fail2ban/definitions.py). Par defaut vide : une implementation qui ne lit pas
+        la configuration sur disque n'a pas a la fournir."""
+        return {}
+
     @abstractmethod
     def list_configured_jail_files(self, jail_d_dir: str = "/etc/fail2ban/jail.d") -> dict[str, str]:
         """Liste les jails configurés sur disque (jail_d_dir), indépendamment

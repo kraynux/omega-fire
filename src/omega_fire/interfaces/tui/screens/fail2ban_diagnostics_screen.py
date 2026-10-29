@@ -21,11 +21,12 @@ from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "4.9 Verification de la configuration Fail2ban"
+_ACTION_TITLE = "4.9 Vérification de la configuration Fail2ban"
 _JAIL_D_DIR = "/etc/fail2ban/jail.d"
 _SOCKET_PATH = "/var/run/fail2ban/fail2ban.sock"
 _SQLITE_DB_PATH = "/var/lib/fail2ban/fail2ban.sqlite3"
@@ -41,21 +42,21 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("DIAGNOSTIC & CONFIGURATION FAIL2BAN", classes="omega-title")
+            yield Static(_("DIAGNOSTIC & CONFIGURATION FAIL2BAN"), classes="omega-title")
             yield DataTable(id="system-table")
             yield DataTable(id="jails-table")
             yield Static(id="box-summary", classes="omega-dash-box")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Rafraichir", id="refresh", variant="primary")
+                    yield Button(_("Rafraîchir"), id="refresh", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#system-table", DataTable).add_columns("Composant / Indicateur", "Valeur / Etat")
+        self.query_one("#system-table", DataTable).add_columns(_("Composant / Indicateur"), _("Valeur / État"))
         self.query_one("#jails-table", DataTable).add_columns(
-            "Nom Jail", "Statut", "IPs Ban", "Filtre Source", "Log Surveille", "Regles (r/find/ban)"
+            _("Nom Jail"), _("Statut"), _("IPs Ban"), _("Filtre Source"), _("Log Surveille"), _("Règles (r/find/ban)")
         )
         self._refresh()
 
@@ -96,12 +97,12 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
             pass
 
         socket_ok = os.path.exists(_SOCKET_PATH)
-        sqlite_size = "Absent"
+        sqlite_size = _("Absent")
         if os.path.exists(_SQLITE_DB_PATH):
             try:
                 sqlite_size = f"{os.path.getsize(_SQLITE_DB_PATH) / (1024 * 1024):.2f} MB"
             except Exception:
-                sqlite_size = "Present"
+                sqlite_size = _("Présent")
 
         service_running = False
         if fail2ban_port is not None and hasattr(fail2ban_port, "is_available"):
@@ -112,13 +113,13 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
 
         # --- 2. Audit de la syntaxe configuration ---
         syntax_ok = False
-        syntax_output = "Port Fail2banPort non disponible."
+        syntax_output = _("Port Fail2banPort non disponible.")
         if fail2ban_port is not None and hasattr(fail2ban_port, "verify_config"):
             try:
                 syntax_ok, errors = fail2ban_port.verify_config()
-                syntax_output = "OK (Aucune erreur de syntaxe detectee)" if syntax_ok else ("\n".join(errors) or "Erreur de configuration")
+                syntax_output = _("OK (Aucune erreur de syntaxe détectée)") if syntax_ok else ("\n".join(errors) or _("Erreur de configuration"))
             except Exception as e:
-                syntax_output = f"Impossible de tester la syntaxe : {e}"
+                syntax_output = _("Impossible de tester la syntaxe : {e}").format(e=e)
 
         # --- 3. Extraction et diagnostic des jails ---
         active_jails_data: dict[str, dict] = {}
@@ -179,18 +180,18 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         # --- Rendu ---
         sys_table = self.query_one("#system-table", DataTable)
         sys_table.clear()
-        sys_table.add_row("Version de Fail2ban", f2b_version)
-        sys_table.add_row("Statut du Demon", Text("Actif (En execution)", style=colors["available"]) if service_running else Text("Inactif / Deconnecte", style=colors["danger"]))
-        sys_table.add_row("Socket Unix (/var/run/fail2ban/)", Text("Accessible", style=colors["available"]) if socket_ok else Text("Inaccessible / Absent", style=colors["danger"]))
-        sys_table.add_row("Base SQLite (/var/lib/fail2ban/)", sqlite_size)
-        sys_table.add_row("Test de syntaxe global (-t)", Text("Valide", style=colors["available"]) if syntax_ok else Text("Erreur detectee", style=colors["danger"]))
+        sys_table.add_row(_("Version de Fail2ban"), f2b_version)
+        sys_table.add_row(_("Statut du Démon"), Text(_("Actif (En exécution)"), style=colors["available"]) if service_running else Text(_("Inactif / Déconnecté"), style=colors["danger"]))
+        sys_table.add_row(_("Socket Unix (/var/run/fail2ban/)"), Text(_("Accessible"), style=colors["available"]) if socket_ok else Text(_("Inaccessible / Absent"), style=colors["danger"]))
+        sys_table.add_row(_("Base SQLite (/var/lib/fail2ban/)"), sqlite_size)
+        sys_table.add_row(_("Test de syntaxe global (-t)"), Text(_("Valide"), style=colors["available"]) if syntax_ok else Text(_("Erreur détectée"), style=colors["danger"]))
 
         jails_table = self.query_one("#jails-table", DataTable)
         jails_table.clear()
         total_banned_global = 0
         if jail_files_info:
             for item in jail_files_info:
-                st = Text("Actif", style=colors["available"]) if item["active"] else Text("Inactif", style="dim")
+                st = Text("Actif", style=colors["available"]) if item["active"] else Text(_("Inactif"), style="dim")
                 ban_str = str(item["banned"]) if item["active"] else "-"
                 if item["active"]:
                     total_banned_global += item["banned"]
@@ -200,35 +201,34 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
                              style=colors["main"] if item["log_ok"] else colors["warning"])
                 jails_table.add_row(item["name"], st, ban_str, f_str, l_str, item["params"])
         else:
-            jails_table.add_row("(Aucun)", "Inactif", "0", "-", "-", "-")
+            jails_table.add_row("(Aucun)", _("Inactif"), "0", "-", "-", "-")
 
         content = Text()
-        content.append("Bilan du Diagnostic de Sante\n\n", style=colors["heading"])
+        content.append(_("Bilan du Diagnostic de Santé\n\n"), style=colors["heading"])
         if service_running:
-            content.append("✔ Le service Fail2ban est actif et repond correctement au socket.\n", style=colors["available"])
+            content.append(_("✔ Le service Fail2ban est actif et répond correctement au socket.\n"), style=colors["available"])
         else:
-            content.append("❌ Le service Fail2ban ne repond pas. Verifiez s'il est demarre.\n", style=colors["danger"])
+            content.append(_("❌ Le service Fail2ban ne répond pas. Vérifiez s'il est démarré.\n"), style=colors["danger"])
 
         if syntax_ok:
-            content.append("✔ La verification de syntaxe 'fail2ban-client -t' a reussi.\n", style=colors["available"])
+            content.append(_("✔ La vérification de syntaxe 'fail2ban-client -t' a réussi.\n"), style=colors["available"])
         else:
-            content.append(f"❌ Erreur de syntaxe dans la configuration : {syntax_output}\n", style=colors["danger"])
+            content.append(_("❌ Erreur de syntaxe dans la configuration : {syntax_output}\n").format(syntax_output=syntax_output), style=colors["danger"])
 
         missing_filters = {i["filter"] for i in jail_files_info if not i["filter_ok"] and i["filter"] != "Inconnu"}
         if missing_filters:
-            content.append(f"⚠ Certains filtres sont introuvables dans filter.d : {', '.join(missing_filters)}\n", style=colors["warning"])
+            content.append(_("⚠ Certains filtres sont introuvables dans filter.d : {value}\n").format(value=', '.join(missing_filters)), style=colors["warning"])
         else:
-            content.append("✔ Tous les filtres declares sont bien presents dans /etc/fail2ban/filter.d/.\n", style=colors["available"])
+            content.append(_("✔ Tous les filtres déclarés sont bien présents dans /etc/fail2ban/filter.d/.\n"), style=colors["available"])
 
         missing_logs = {i["logpath"] for i in jail_files_info if not i["log_ok"] and i["logpath"] != "Inconnu"}
         if missing_logs:
-            content.append(f"⚠ Certains journaux surveilles n'existent pas sur le disque : {', '.join(missing_logs)}\n", style=colors["warning"])
+            content.append(_("⚠ Certains journaux surveilles n'existent pas sur le disque : {value}\n").format(value=', '.join(missing_logs)), style=colors["warning"])
         else:
-            content.append("✔ Tous les fichiers journaux cibles existent physiquement.\n", style=colors["available"])
+            content.append(_("✔ Tous les fichiers journaux cibles existent physiquement.\n"), style=colors["available"])
 
         content.append(
-            f"\nSynthese globale : {len(jail_files_info)} Jail(s) repertorie(s), "
-            f"{len(active_jails_data)} actif(s), {total_banned_global} IP(s) actuellement bannie(s).",
+            _("\nSynthèse globale : {count} Jail(s) répertorié(s), {count2} actif(s), {total_banned_global} IP(s) actuellement bannie(s).").format(count=len(jail_files_info), count2=len(active_jails_data), total_banned_global=total_banned_global),
             style=colors["main"],
         )
         self.query_one("#box-summary", Static).update(content)

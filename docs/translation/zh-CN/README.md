@@ -18,6 +18,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 文档、导出和界面提供 **17 种语言** —— 参见 [界面语言](#界面语言)。  
 **语言：**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](../nl/README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](../pl/README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](../vi/README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](../id/README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](../ko/README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -101,6 +102,7 @@ Omega-Fire 是网络安全的**本地操作平台**。它会自动检测机器�
 - 查看最近的诊断信息。
 - 查看并搜索应用日志。
 - 将状态和诊断信息导出为 JSON、TXT 或 HTML。
+- **omega 套件** 类别：omega-serv（已检测到且正在运行的实例）、omega-waf（已启用 `magnet` 扩展）和 omega-jail（已安装的 jail），在注册表、仪表盘和报告中可见。
 
 ### 2. 统一的 IP 管理
 
@@ -122,12 +124,15 @@ Omega-Fire 是网络安全的**本地操作平台**。它会自动检测机器�
 - 列出系统规则以及 Omega-Fire 创建的规则。
 - 通过选择删除某条规则。
 - 自动清理参照库中的无效规则。
+- 将数据库与实际防火墙进行清理和重新同步，带预览和事先备份，绝不修改防火墙本身。
+- 其他工具（UFW、Tailscale、Docker…）的规则按来源识别：仅供参考显示，绝不从 Omega-Fire 中删除。
+- 当其他工具在 iptables 中有规则时，应用策略或清空 iptables 前的保护：全部应用、仅应用于 nftables 或取消——后果在帮助中有详细说明。
 - 应用预定义策略。
 - 在应用策略前自动备份。
 - 自定义、保存并恢复某个策略。
 - 在状态菜单和仪表盘中标识当前激活的策略。
 - 以 `Profil + CUSTOM`（配置文件 + 自定义）的形式标记被修改过的配置文件。
-- 表管理（菜单 3.5）：按后端只读诊断（表是否存在、input/output/forward 策略、规则数量），并检测各后端之间的策略差异。
+- 表管理（菜单 3.5）：按后端进行只读诊断（表是否存在、input/output/forward 策略、规则数量），并解释各后端之间不同的策略（实际效果、原因和解决办法）。
 - 首次使用时初始化 nftables 表，绝不覆盖已配置的链。
 - 将某个后端的链策略重置为 ACCEPT，修复旧策略遗留下来的孤立限制性策略。
 - 清空指定后端，或一次性同步清空所有检测到的后端。
@@ -141,20 +146,23 @@ Omega-Fire 是网络安全的**本地操作平台**。它会自动检测机器�
 - 单个或批量的封禁/解封操作。
 - 在 jail、后端和文件之间转移 IP。
 - 引导式创建自定义 jail。
-- 预定义的 jail 模板。
-- 删除某个 jail。
+- 预定义的 jail 模板，可修改、可删除。
+- 每个 jail 的来源：Omega-Fire、omega-jail、fail2ban 主配置或其他文件。
+- 可靠地删除 jail，无论其文件名为何：对 omega-jail 安装的 jail 给出警告，对来自 `jail.local` 或共享文件的 jail 说明拒绝原因，fail2ban 的标准过滤器绝不删除。
 - 清空某个 jail 或执行全面清空。
 - 导出为 JSON、TXT 或 HTML。
 - 校验并审计配置。
-- 控制服务：状态查看、启动、停止、重启、开机自启的启用与禁用。
+- 控制服务：状态查看、启动、停止、重启、开机自启的启用与禁用；启动或停止后，能力注册表和仪表盘会随之更新。
 
 ### 5. 日志与维护
 
-- 带有 Omega-Fire 仪表盘的实时日志追踪（Live Tail）。
-- 支持多文件显示，并可收藏常用来源（在两次启动之间保持持久化）。
-- 集成 `lnav`：可选择一个或多个文件（用编号或手动输入路径，以逗号分隔），自动合并为一个按时间排序的单一视图，并封装在 Omega-Fire 的页眉/页脚中（参见[导航](#使用方法)）。
-- 使用 Top N 分析出现频率最高的 IP。
-- 在 LOG 或 TXT 文件中针对性清理某个 IP。
+- **日志库**（5.1）：自动导入已检测到的 omega-serv 实例的日志（包括 omega-waf 的日志），手动固定路径，以及通过 SSH 获取远程日志（密钥或代理，绝不使用密码）。
+- **收藏**（5.2）：组合日志库中的日志，以一个名称和查看器保存，并可直接启动。
+- **查看日志**（5.3）：无需配置即可查看一个日志，查看器任选——简单（实时仪表盘）、经典（先显示最后几行，再实时跟踪）或 `lnav`。
+- 集成 `lnav`：多个日志合并为一个按时间排序的视图，并封装在 Omega-Fire 的页眉/页脚中（参见[导航](#使用方法)）。
+- 使用 Top N 分析最常出现的 IP，可导出后重新载入到定向清理中。
+- 在 LOG 或 TXT 文件中定向清理一个或多个 IP，可手动输入，也可从导出中勾选。
+- 固定文件支持**可勾选的预设**：只提供本机上实际存在的常用路径。
 - 立即或自动化的日志轮转与备份。
 - 恢复某个备份。
 - 按存留时间、配额、类型或手动选择进行清理。
@@ -179,6 +187,10 @@ Omega-Fire 是网络安全的**本地操作平台**。它会自动检测机器�
 - Fail2Ban 统计信息。
 - 系统状态与诊断信息。
 - 7 天或 30 天的统计报告。
+- IP 的 Top N 排行。
+- 帮助指南和 FAQ。
+
+**查看所有导出**（6.5）：所有导出文件集中在一处，显示类型、日期和大小；HTML 报告在用户的默认网页浏览器中打开，JSON 或 TXT 文件直接在 Omega-Fire 中阅读，无需终端或文件管理器。
 
 HTML 主题：
 
@@ -188,11 +200,13 @@ HTML 主题：
 - `light-basic` — 明亮简洁。
 - `light-alt` — 米色纸张与森林绿。
 
+导出语言：在设置中单独设置（默认“与界面相同”），可以按读者的语言提交报告，而不改变界面语言。
+
 ### 7. 系统与持久化
 
 - 备份完整状态：规则、nftables 封禁记录、iptables 封禁记录和 Fail2Ban 记录。
 - 创建带时间戳的 `.tar.gz` 归档文件。
-- 列出并恢复快照。
+- 列出并恢复快照：只重新放回可完全相同重建的 Omega-Fire 规则，其他工具的规则绝不触碰。
 - 操作历史记录。
 - 筛选并清理历史记录。
 - 无需重启即可重新加载配置并重新扫描。
@@ -210,7 +224,17 @@ HTML 主题：
 
 - 从与套件其余工具共享的十种 `omega-*` 主题中选择当前主题（参见[主题与终端](#主题与终端)），并在两次启动之间保持持久化。
 - 手动覆盖渲染模式（自动、完整、标准、精简或纯 ASCII 单色），在下次启动时生效。
-- 可从主菜单（`9. RÉGLAGES`）或直接通过按键 `s` 访问。
+- 界面语言，共 17 种（参见[界面语言](#界面语言)）：只重启界面，不影响防火墙规则、Fail2Ban 和各项服务。
+- HTML 和 TXT 导出的语言，独立于界面语言。
+- 可修改的导出目录和截图目录，确认后可清空。
+- 可从主菜单（`9. 设置`）或直接通过按键 `s` 访问。
+
+### 10. 帮助
+
+- **帮助指南**：所有帮助页面按菜单顺序汇集，每个页面都可打开其相关页面。
+- **FAQ**：实际使用中遇到的问题（其他工具的规则、恢复、Fail2Ban、日志、导出和浏览器）。
+- 以导出语言将指南和 FAQ 导出为 HTML。
+- `a` 键仍是当前屏幕的帮助。
 
 ---
 
@@ -270,7 +294,7 @@ Omega-Fire 通过标准库 `sqlite3` 使用 SQLite，不依赖任何外部 ORM�
 - `psutil` — 供仪表盘和诊断使用的系统信息（CPU、内存、网络、进程）。
 - `jinja2` — 生成 HTML 导出文件。
 - `python-dotenv` — 环境变量管理。
-- `pyte` — 虚拟终端模拟器，用于封装 `lnav`（菜单 5.9/8.6）。
+- `pyte` — 虚拟终端模拟器，用于封装 `lnav`（菜单 8.6 以及 5.2 / 5.3 的 lnav 查看器）。
 
 质量工具（`pytest`、`black`、`flake8`、`mypy`）在 `requirements.txt` 中以注释形式列出：如果您要为项目贡献代码，请取消注释或单独安装它们（参见[测试与质量](#测试与质量)）。
 
@@ -455,11 +479,17 @@ fire
 ./omega-fire.sh --legacy-cli
 ```
 
+旧版界面仍为 3.0 版本的界面，使用法语：原始菜单 5（没有日志库、收藏和经典查看器），没有“查看所有导出”，没有帮助指南和 FAQ，也没有预设。Textual 界面提供完整的 3.5 版本。
+
+### 界面语言
+
+17 种语言：法语、英语、西班牙语、葡萄牙语（巴西）、意大利语、德语、荷兰语、波兰语、俄语、中文、越南语、泰语、印度尼西亚语、日语、韩语、印地语、阿拉伯语。在设置中选择（按键 `s`，“Langue / Language”，该标签从不翻译），仅重启界面即可生效；也可临时使用 `OMEGA_FIRE_LANG=zh_CN ./omega-fire.sh`（启动脚本会在 `sudo` 下保留该变量）。在 Linux 文本控制台（TTY）中，控制台字体缺少其文字的语言（越南语、中文、泰语、日语、韩语、印地语、阿拉伯语）在本次会话中以英语显示。阿拉伯语从右向左显示。显示印地语时，Terminator、GNOME Terminal、Xfce Terminal 和 Alacritty 能对齐文本；自行组合连字的终端（Kitty、Ghostty、Konsole）可能使边框和列错位。**导出语言**（HTML 和 TXT 报告）单独设置，默认“与界面相同”。应用日志和审计历史仍以法语记录；历史中的标题以所选语言显示。旧界面（`--legacy-cli`）保持法语。
+
 ### 总体流程
 
 1. 启动画面（splash），随后如果终端过小会显示警告。
 2. 系统能力检测（专用界面，不会阻塞）。
-3. 主菜单：8 个主题分区（1-8）加上设置（9）。
+3. 主菜单：8 个主题分区（1-8）、设置（9）和帮助（10）。
 4. 选择一个分区，再选择一个操作——每个操作会打开一个表单，所有必填字段在继续之前都会被校验。
 5. 在任何敏感或具有破坏性的操作（清空、清除、恢复……）之前都会要求明确确认。
 6. 耗时操作会在后台执行（等待期间界面仍可使用），完成后返回菜单并显示结果摘要。
@@ -471,13 +501,13 @@ fire
 - 回车键：选择或确认。
 - 点击表格中的某一行：选中该行并预填相关字段（要收藏的来源、目标 jail 等）。
 - `Esc`：返回上一个界面（从主界面按下时会要求确认退出）。
-- `a`：上下文帮助——详细说明当前操作，如果尚未打开任何操作界面，则显示当前分区的全部操作说明。
+- `a`：上下文帮助——详细说明当前操作；如果尚未打开任何操作界面，则列出当前分区的全部操作；完整指南和 FAQ 位于菜单 10。
 - `t`：切换到下一个主题，无需确认。
 - `r`：重新检测终端的大小和类型。
-- `s`：打开设置（主题、渲染模式）。
+- `s`：打开设置（主题、渲染模式、语言、目录）。
 - `q` / `Ctrl+Q`：退出，需要确认。
 
-#### lnav 界面的特殊之处（5.9 / 8.6）
+#### lnav 界面的特殊之处（8.6，以及 5.2 / 5.3 的 lnav 查看器）
 
 `lnav` 被封装在一个伪终端中，其自身视图外围始终保留 Omega-Fire 的页眉/页脚，以避免其原生快捷键与 Omega-Fire 的快捷键发生冲突：
 
@@ -604,6 +634,7 @@ Omega-Fire 操作的是系统中的关键组件，使用时务必谨慎。
 - 启动需要通过 `sudo` 获取 root 权限。
 - 清空操作、全面清除以及应用策略都可能具有破坏性。
 - 应用预定义策略前会自动触发一次备份。
+- 在 iptables / ip6tables 上，应用策略或清空后端也会删除其他工具（UFW…）的规则：Omega-Fire 会提示这一点，并在执行前让您选择。
 - 在每次重大变更之前请手动进行一次备份。
 - 每次操作之后请核实防火墙、jail 和连接的真实状态。
 - 请先在一台可丢弃的机器或目标上进行测试。
@@ -615,14 +646,14 @@ Omega-Fire 操作的是系统中的关键组件，使用时务必谨慎。
 
 ## 测试与质量
 
-项目拥有一套历史悠久的 152 个单元测试套件，编写于 Textual 迁移之前：它覆盖了业务领域、编排层（`application/`）、基础设施以及 Rich 界面（`interfaces/cli/`），但**尚未覆盖 `interfaces/tui/`**（默认的 Textual 界面）。此归档包中不包含 `tests/` 目录：如需运行测试，请从您的开发仓库中获取该目录。
+测试套件包含 137 个单元测试（超过 8000 个已验证用例）：业务领域、编排（`application/`）、基础设施，以及 3.5 中新增或修正的 Textual 界面，均使用真实样式表运行（布局、完整流程、导出语言）。此归档不包含 `tests/` 文件夹：如需运行，请从您的开发仓库中获取。
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-由于分层架构严格将业务领域与展示层分离（`domain/`、`application/`、以 `Protocol` 定义的 `ports/`，参见[架构](#架构)），这套测试即使经历了迁移也无需改动、依然有效：只有较新的 Textual 界面尚未拥有自己专属的测试覆盖。
+分层架构将业务领域与展示层严格分离（`domain/`、`application/`、以 `Protocol` 形式定义的 `ports/`，参见[架构](#架构)）：大多数测试既不需要 root，也不需要真实的防火墙。
 
 如果您要为项目贡献代码，请安装 `requirements.txt` 中以注释形式声明的质量工具：
 
@@ -658,7 +689,7 @@ pytest --cov
 
 ### 已知局限
 
-- 152 个测试组成的套件尚未覆盖 Textual 界面（`interfaces/tui/`），该界面是在测试套件编写之后才出现的（参见[测试与质量](#测试与质量)）。
+- 测试套件覆盖了 3.5 的 Textual 界面，但尚未覆盖全部旧界面（参见[测试与质量](#测试与质量)）。
 - `ExecutionPlan`/`PipelineStep` 机制在项目中仍部分保留。
 - 各项功能的实际可用性取决于宿主机器上的二进制程序、服务、权限和配置情况。
 - 旧版 Rich 界面（`--legacy-cli`）已不再是当前活跃开发的重点；保留它是为了在 Textual 界面于真实环境中被充分验证可靠之前提供过渡。

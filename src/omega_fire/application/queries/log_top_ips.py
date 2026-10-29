@@ -4,6 +4,7 @@
 This query provides read-only access to the top IPs from logs.
 """
 from omega_fire.core.capability_registry import CapabilityRegistry
+from omega_fire.shared.i18n import _
 
 
 def get_top_ips_from_logs(registry: CapabilityRegistry) -> str:
@@ -15,13 +16,13 @@ def get_top_ips_from_logs(registry: CapabilityRegistry) -> str:
     Returns:
         Formatted string with top IPs
     """
-    lines = ["═══ TOP IPs (Logs) ═══", ""]
-    lines.append("⚠️ Top IPs à implémenter via infrastructure adapter")
+    lines = [_("═══ TOP IPs (Logs) ═══"), ""]
+    lines.append(_("⚠️ Top IPs à implémenter via infrastructure adapter"))
     lines.append("")
-    lines.append("Implémentation prévue :")
-    lines.append("  1. Lire les logs via infrastructure.logging")
-    lines.append("  2. Analyser et compter les IPs")
-    lines.append("  3. Retourner le top N")
+    lines.append(_("Implémentation prévue :"))
+    lines.append(_("  1. Lire les logs via infrastructure.logging"))
+    lines.append(_("  2. Analyser et compter les IPs"))
+    lines.append(_("  3. Retourner le top N"))
     
     return "\n".join(lines)
 

@@ -28,6 +28,7 @@ from omega_fire.domain.persistence.exceptions import (
     EmptyBackupError,
     InvalidSnapshotError,
 )
+from omega_fire.shared.i18n import _
 
 
 class BackupRequest:
@@ -63,7 +64,7 @@ class BackupRequest:
         
         if self.scope == SnapshotScope.CUSTOM:
             if not (self.include_blacklist or self.include_rules or self.include_fail2ban):
-                errors.append("Custom scope must include at least one component")
+                errors.append(_("Une portée personnalisée doit inclure au moins un élément"))
         
         return errors
     
@@ -161,6 +162,8 @@ def build_rules_snapshot(rules: list[FirewallRule]) -> RulesSnapshot:
             destination=rule.dest_cidr,
             comment=rule.comment or "",
             order=index,
+            chain_name=getattr(rule, "chain_name", None),
+            restorable=bool(getattr(rule, "restorable", False)),
         )
     
     return snapshot
@@ -266,7 +269,7 @@ def plan_backup(
     
     # Check for empty backup
     if content.is_empty():
-        raise EmptyBackupError("No data available to backup")
+        raise EmptyBackupError(_("Aucune donnée à sauvegarder"))
     
     # Build metadata
     snapshot_id = create_snapshot_id(request.timestamp)
@@ -291,7 +294,7 @@ def plan_backup(
     if not snapshot.is_valid():
         raise InvalidSnapshotError(
             snapshot_id,
-            "Snapshot validation failed after construction"
+            _("Le snapshot construit n'a pas passé la validation")
         )
     
     return BackupResult(
@@ -321,23 +324,23 @@ def validate_backup_data(
     
     # Check for None values (data not provided)
     if banned_ips is None and rules is None and jails is None:
-        errors.append("No data provided for backup")
+        errors.append(_("Aucune donnée fournie pour la sauvegarde"))
     
     # Check for invalid entries
     if banned_ips is not None:
         for i, ban in enumerate(banned_ips):
             if not ban.ip:
-                errors.append(f"Ban entry {i} has empty IP")
+                errors.append(_("Le bannissement n° {i} n'a pas d'IP").format(i=i))
     
     if rules is not None:
         for i, rule in enumerate(rules):
             if not rule.backend:
-                errors.append(f"Rule {i} has empty backend")
+                errors.append(_("La règle n° {i} n'a pas de backend").format(i=i))
     
     if jails is not None:
         for i, jail in enumerate(jails):
             if not jail.name:
-                errors.append(f"Jail {i} has empty name")
+                errors.append(_("Le jail n° {i} n'a pas de nom").format(i=i))
     
     return errors
 

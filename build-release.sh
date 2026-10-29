@@ -66,9 +66,12 @@ fi
 
 # pyproject.toml est vide (omega-fire n'utilise pas cet outillage, voir
 # DECISIONS_ARCHITECTURE.md) — la version vit dans OMEGA_FIRE_VERSION
-# (application/queries/dashboard_snapshot.py), seule source de verite
-# actuelle pour ce numero.
-VERSION="$(grep -m1 '^OMEGA_FIRE_VERSION' "$PROJECT_ROOT/src/omega_fire/application/queries/dashboard_snapshot.py" | sed -E 's/OMEGA_FIRE_VERSION = "(.*)"/\1/')"
+# (core/constants.py depuis la 3.5), seule source de verite pour ce numero.
+VERSION="$(grep -m1 '^OMEGA_FIRE_VERSION' "$PROJECT_ROOT/src/omega_fire/core/constants.py" | sed -E 's/OMEGA_FIRE_VERSION = "(.*)"/\1/')"
+if [ -z "$VERSION" ]; then
+    err "OMEGA_FIRE_VERSION introuvable dans src/omega_fire/core/constants.py."
+    exit 1
+fi
 ARCHIVE_NAME="omega-fire-${VERSION}.tar.gz"
 
 STAGING_DIR="$(mktemp -d)"
@@ -92,7 +95,26 @@ rsync -a \
     --exclude='*~' --exclude='*.bak' --exclude='*.swp' \
     --exclude='.coverage' --exclude='htmlcov/' \
     --exclude='build-release.sh' --exclude='omega-fire-*.tar.gz' --exclude='omega-fire.tar.gz' \
+    --exclude='/tools/' --exclude='/tests/' \
+    --exclude='*.po' --exclude='*.pot' \
     "$PROJECT_ROOT/" "$DEST/"
+
+# Langues de l'interface (OMEGA-FIRE_PLAN-DETAILLE_I18N.md) : chaque .po est compile en .mo
+# dans l'archive ; les .po/.pot (sources de traduction) et tools/ ne sont pas livres.
+LOCALE_DIR="$PROJECT_ROOT/src/omega_fire/locale"
+if compgen -G "$LOCALE_DIR/*/LC_MESSAGES/omega-fire.po" > /dev/null; then
+    if ! command -v msgfmt > /dev/null; then
+        err "msgfmt introuvable (paquet gettext) : impossible de compiler les langues."
+        exit 1
+    fi
+    info "Compilation des langues de l'interface..."
+    for po in "$LOCALE_DIR"/*/LC_MESSAGES/omega-fire.po; do
+        lang="$(basename "$(dirname "$(dirname "$po")")")"
+        mkdir -p "$DEST/src/omega_fire/locale/$lang/LC_MESSAGES"
+        msgfmt --check -o "$DEST/src/omega_fire/locale/$lang/LC_MESSAGES/omega-fire.mo" "$po" \
+            || { err "Catalogue invalide : $po"; exit 1; }
+    done
+fi
 
 info "Vendoring d'omega-lib (dependance obligatoire, non publiee sur PyPI)..."
 mkdir -p "$DEST/vendor/omega-lib"

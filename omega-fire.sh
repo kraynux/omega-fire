@@ -48,8 +48,10 @@ if [ "$EUID" -ne 0 ]; then
     
     # Demande de mot de passe sudo (--preserve-env pour ne pas perdre la
     # locale UTF-8 forcée ci-dessus : sudo réinitialise l'environnement
-    # par défaut, ce qui provoquerait le même souci d'affichage sous root)
-    exec sudo --preserve-env=LANG,LC_ALL "$0" "$@"
+    # par défaut, ce qui provoquerait le même souci d'affichage sous root).
+    # OMEGA_FIRE_LANG : voie de secours pour la langue de l'interface
+    # (OMEGA_FIRE_LANG=fr ./omega-fire.sh), perdue par sudo sans cette mention.
+    exec sudo --preserve-env=LANG,LC_ALL,OMEGA_FIRE_LANG "$0" "$@"
     exit $?
 fi
 

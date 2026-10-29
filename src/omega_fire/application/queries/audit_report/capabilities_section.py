@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from omega_fire.shared.i18n import retranslate
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.queries.audit_report.models import (
     CapabilitiesSection,
@@ -33,7 +34,8 @@ def collect_capabilities_section(registry: Any) -> CapabilitiesSection:
         {
             "id": cap.id,
             "status": cap.status.name,
-            "reason": getattr(cap, "reason", ""),
+            # Motif redige au scan : recompose dans la langue de l'export (shared/i18n.LazyText).
+            "reason": retranslate(getattr(cap, "reason", "")),
             "category": getattr(cap, "category", ""),
         }
         for cap in capabilities

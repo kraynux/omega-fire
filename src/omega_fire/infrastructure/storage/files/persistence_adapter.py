@@ -20,6 +20,7 @@ from omega_fire.infrastructure.storage.files.archive_store import (
     ArchiveStoreError,
 )
 from omega_fire.infrastructure.exceptions import StorageError
+from omega_fire.shared.i18n import _
 
 
 class FileBackupAdapter:
@@ -59,7 +60,7 @@ class FileBackupAdapter:
             StorageError: if archive creation fails.
         """
         if not source_paths:
-            raise StorageError("create_backup: source_paths must not be empty")
+            raise StorageError(_("create_backup : la liste des chemins source (source_paths) ne doit pas être vide"))
 
         if archive_name is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -73,7 +74,7 @@ class FileBackupAdapter:
             )
             info = self._archive_store.get_archive_info(archive_path)
         except ArchiveStoreError as e:
-            raise StorageError(f"Failed to create backup: {e}") from e
+            raise StorageError(_("Impossible de créer la sauvegarde : {e}").format(e=e)) from e
 
         return BackupInfo(
             path=archive_path,
@@ -96,7 +97,7 @@ class FileBackupAdapter:
         try:
             self._archive_store.extract_archive(backup.path, dest_dir)
         except ArchiveStoreError as e:
-            raise StorageError(f"Failed to restore backup {backup.path}: {e}") from e
+            raise StorageError(_("Impossible de restaurer la sauvegarde {path} : {e}").format(path=backup.path, e=e)) from e
 
     def list_backups(self, backup_dir: Path) -> list[BackupInfo]:
         """List available backup archives, most recent first.
@@ -123,7 +124,7 @@ class FileBackupAdapter:
                     )
                 )
         except ArchiveStoreError as e:
-            raise StorageError(f"Failed to list backups in {backup_dir}: {e}") from e
+            raise StorageError(_("Impossible de lister les sauvegardes de {backup_dir} : {e}").format(backup_dir=backup_dir, e=e)) from e
 
         return sorted(infos, key=lambda b: b.created_at, reverse=True)
 
@@ -177,7 +178,7 @@ class FileBackupAdapter:
                 origin=origin,
             )
         except PersistenceError as e:
-            raise StorageError(f"Failed to build snapshot content: {e}") from e
+            raise StorageError(_("Impossible de construire le contenu du snapshot : {e}").format(e=e)) from e
 
         domain_snapshot = backup_result.snapshot
         snapshot_id = domain_snapshot.metadata.snapshot_id
@@ -197,7 +198,7 @@ class FileBackupAdapter:
                 source_paths=[temp_json_path],
             )
         except ArchiveStoreError as e:
-            raise StorageError(f"Failed to compress snapshot: {e}") from e
+            raise StorageError(_("Impossible de compresser le snapshot : {e}").format(e=e)) from e
         finally:
             temp_json_path.unlink(missing_ok=True)
 
@@ -241,9 +242,7 @@ class FileBackupAdapter:
         from application/ to retrieve the data, then apply it via the
         appropriate backend adapters."""
         raise NotImplementedError(
-            "restore_snapshot() requires backend adapters to apply the "
-            "restored state — use get_snapshot_content() and apply the "
-            "result via application/commands/restore_state.py instead."
+            _("restore_snapshot() a besoin des adaptateurs de backends pour appliquer l'état restauré — utiliser plutôt get_snapshot_content() puis application/commands/restore_state.py.")
         )
 
     def delete_snapshot(self, snapshot_id: str) -> None:
@@ -275,7 +274,7 @@ class FileBackupAdapter:
         try:
             domain_snapshot = self._read_snapshot_archive(archive_path)
         except Exception as e:
-            raise StorageError(f"Failed to read snapshot {snapshot_id} for update: {e}") from e
+            raise StorageError(_("Impossible de lire le snapshot {snapshot_id} pour le mettre à jour : {e}").format(snapshot_id=snapshot_id, e=e)) from e
 
         domain_snapshot.metadata.description = new_description
         json_data = self._serialize_domain_snapshot(domain_snapshot)
@@ -295,7 +294,7 @@ class FileBackupAdapter:
                 source_paths=[temp_json_path],
             )
         except ArchiveStoreError as e:
-            raise StorageError(f"Failed to recompress snapshot {snapshot_id}: {e}") from e
+            raise StorageError(_("Impossible de recompresser le snapshot {snapshot_id} : {e}").format(snapshot_id=snapshot_id, e=e)) from e
         finally:
             temp_json_path.unlink(missing_ok=True)
 
@@ -327,7 +326,7 @@ class FileBackupAdapter:
             self._archive_store.extract_archive(archive_path, Path(tmp_dir))
             json_files = list(Path(tmp_dir).glob("*.json"))
             if not json_files:
-                raise StorageError(f"No JSON content found in {archive_path}")
+                raise StorageError(_("Aucun contenu JSON dans {archive_path}").format(archive_path=archive_path))
             data = json.loads(json_files[0].read_text(encoding="utf-8"))
             return self._deserialize_domain_snapshot(data)
 

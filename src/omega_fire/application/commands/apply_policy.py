@@ -3,6 +3,7 @@
 
 Application command for applying a firewall policy.
 """
+from omega_fire.shared.i18n import _
 
 
 def apply_policy_command() -> str:
@@ -11,7 +12,7 @@ def apply_policy_command() -> str:
     Returns:
         Status message
     """
-    return "⚠️ Application de politique à implémenter"
+    return _("⚠️ Application de politique à implémenter")
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle : Command pour appliquer une politique

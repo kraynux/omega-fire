@@ -9,6 +9,7 @@ This module performs file I/O and is therefore in infrastructure/.
 from pathlib import Path
 from typing import Any, Union
 from omega_fire.domain.reports.serializers import report_to_serializable
+from omega_fire.shared.i18n import _
 
 
 class TxtExporter:
@@ -109,7 +110,7 @@ class TxtExporter:
         # Header
         lines.append(self.separator)
         lines.append(f"  {data.get('title', 'Report')}")
-        lines.append(f"  Generated: {data.get('generated_at', 'N/A')}")
+        lines.append(_("  Generated: {value}").format(value=data.get('generated_at', 'N/A')))
         lines.append(self.separator)
         lines.append("")
         
@@ -129,7 +130,7 @@ class TxtExporter:
         # Metadata
         if data.get("metadata"):
             lines.append(self.separator)
-            lines.append("Metadata:")
+            lines.append(_("Metadata:"))
             lines.append(self._format_data(data["metadata"]))
         
         return "\n".join(lines)

@@ -7,28 +7,28 @@ execution via application/commands/export_report.py::plan_export_report."""
 from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
-from omega_fire.infrastructure.config.paths import EXPORTS_DIR
+from omega_fire.interfaces.tui.export_language import export_translation
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _, translating_as
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "1.7 Exporter l'etat et les diagnostics"
+_ACTION_TITLE = "1.7 Exporter l'état et les diagnostics"
 
 _HTML_THEMES: dict[str, str] = {
-    "omega-base": "Omega-base (sombre bleu nuit / cyan - defaut)",
-    "omega-burn": "Omega-burn (sombre braise rouge-orange)",
-    "omega-neon": "Omega-neon (sombre cyberpunk cyan/magenta)",
-    "light-basic": "Light-basic (clair sobre, rapport professionnel)",
-    "light-alt": "Light-alt (clair papier creme / vert foret)",
+    "omega-base": _("Omega-base (sombre bleu nuit / cyan - défaut)"),
+    "omega-burn": _("Omega-burn (sombre braise rouge-orange)"),
+    "omega-neon": _("Omega-neon (sombre cyberpunk cyan/magenta)"),
+    "light-basic": _("Light-basic (clair sobre, rapport professionnel)"),
+    "light-alt": _("Light-alt (clair papier crème / vert forêt)"),
 }
 
 
@@ -42,32 +42,32 @@ class ExportStateScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("EXPORTER L'ETAT SYSTEME", classes="omega-title")
+            yield Static(_("EXPORTER L'ÉTAT SYSTÈME"), classes="omega-title")
 
-            yield Static("Format", classes="omega-subtitle")
+            yield Static(_("Format"), classes="omega-subtitle")
             yield Select(
-                [("JSON (donnees brutes structurees)", "json"),
-                 ("HTML (rapport visuel lisible)", "html"),
-                 ("TXT (rapport texte brut)", "txt")],
+                [(_("JSON (données brutes structurées)"), "json"),
+                 (_("HTML (rapport visuel lisible)"), "html"),
+                 (_("TXT (rapport texte brut)"), "txt")],
                 value="html",
                 id="format-select",
             )
 
-            yield Static("Theme HTML", id="theme-label", classes="omega-subtitle")
+            yield Static(_("Thème HTML"), id="theme-label", classes="omega-subtitle")
             yield Select(
                 [(label, name) for name, label in _HTML_THEMES.items()],
                 value="omega-base",
                 id="theme-select",
             )
 
-            yield Static("Chemin de destination", classes="omega-subtitle")
+            yield Static(_("Chemin de destination"), classes="omega-subtitle")
             yield Input(id="path-input")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Exporter", id="launch", variant="primary")
+                    yield Button(_("Exporter"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -84,7 +84,7 @@ class ExportStateScreen(OmegaScreen):
 
     def _refresh_default_path(self, fmt: str) -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_path = Path(EXPORTS_DIR) / f"rapport_systeme_{timestamp}.{fmt}"
+        default_path = self._container.exports_dir / f"rapport_systeme_{timestamp}.{fmt}"
         self.query_one("#path-input", Input).value = str(default_path)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -98,27 +98,28 @@ class ExportStateScreen(OmegaScreen):
         theme_name = str(self.query_one("#theme-select", Select).value) if fmt == "html" else "omega-base"
         destination = self.query_one("#path-input", Input).value.strip()
         if not destination:
-            self.app.notify("Saisissez un chemin de destination.", severity="warning")
+            self.app.notify(_("Saisissez un chemin de destination."), severity="warning")
             return
 
         try:
-            from omega_fire.application.commands.export_report import plan_export_report
+            with translating_as(export_translation(self, self._container)):
+                from omega_fire.application.commands.export_report import plan_export_report
 
-            plan = plan_export_report(
-                report_name="Rapport d'etat systeme Omega-Fire",
-                format=fmt,
-                destination=destination,
-                registry=self._container.capability_registry,
-                theme_name=theme_name,
-            )
-            for step in plan.steps:
-                if step.execute:
-                    step.execute()
+                plan = plan_export_report(
+                    report_name=_("Rapport d'état système Omega-Fire"),
+                    format=fmt,
+                    destination=destination,
+                    registry=self._container.capability_registry,
+                    theme_name=theme_name,
+                )
+                for step in plan.steps:
+                    if step.execute:
+                        step.execute()
         except Exception as e:
-            self.app.notify(f"Echec de l'export : {e}", severity="error")
+            self.app.notify(_("Échec de l'export : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
             return
 
-        self.app.notify(f"Rapport exporte : {destination}", severity="information")
+        self.app.notify(_("Rapport exporté : {destination}").format(destination=destination), severity="information")
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

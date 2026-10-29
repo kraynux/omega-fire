@@ -28,6 +28,7 @@ already applied to menus 5.4/5.5/5.6, 3.1, 3.2, 3.4.
 """
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -82,7 +83,7 @@ class BanIpCommand:
 
         if self._adapter is None:
             for ip in request.ips:
-                result.errors.append((ip, f"Backend '{request.backend}' indisponible."))
+                result.errors.append((ip, _("Backend '{backend}' indisponible.").format(backend=request.backend)))
             return result
 
         current_ips = self._list_current_ips()
@@ -99,7 +100,7 @@ class BanIpCommand:
                     current_ips.add(ip)
                     self._persist_ban(ip, request.backend, request.comment)
                 else:
-                    result.errors.append((ip, "Le backend a refusé le bannissement."))
+                    result.errors.append((ip, _("Le backend a refusé le bannissement.")))
             except Exception as e:
                 error_text = str(e)
                 if "File exists" in error_text or "already exists" in error_text:

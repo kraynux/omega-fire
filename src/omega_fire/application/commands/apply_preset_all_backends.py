@@ -45,6 +45,7 @@ from omega_fire.application.commands.apply_preset import (
     ApplyPresetRequest,
 )
 from omega_fire.application.commands.backup_state import _collect_banned_ips, _collect_jails
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -108,7 +109,7 @@ class ApplyPresetToAllBackendsCommand:
             return ApplyPresetAllBackendsResult(
                 success=False,
                 outcomes=[],
-                snapshot_warning="Aucun backend firewall disponible pour appliquer un profil.",
+                snapshot_warning=_("Aucun backend firewall disponible pour appliquer un profil."),
             )
 
         snapshot_warning = None
@@ -116,7 +117,7 @@ class ApplyPresetToAllBackendsCommand:
             try:
                 self._capture_full_snapshot(request.preset, target_backends)
             except Exception as e:
-                snapshot_warning = f"snapshot complet non créé ({e})"
+                snapshot_warning = _("snapshot complet non créé ({e})").format(e=e)
 
         # --- Flush global SYNCHRONISE, avant de reconstruire QUOI QUE CE
         # SOIT sur AUCUN backend (retour utilisateur 2026-09-24) ---
@@ -203,8 +204,7 @@ class ApplyPresetToAllBackendsCommand:
             rules=rules,
             jails=jails,
             description=(
-                f"Auto — avant application du profil '{preset.name}' "
-                f"sur {', '.join(target_backends)}"
+                f"Auto — avant application du profil '{preset.name}' sur {', '.join(target_backends)}"
             ),
             origin="auto_preset",
         )

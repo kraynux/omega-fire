@@ -28,6 +28,7 @@ from omega_fire.domain.rules.models import (
 )
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -115,14 +116,14 @@ class CreateRuleCommand:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=f"Erreur technique lors de la vérification des doublons : {e}",
+                message=_("Erreur technique lors de la vérification des doublons : {e}").format(e=e),
             )
 
         if duplicate_id is not None:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=f"Une règle identique existe déjà en base (ID #{duplicate_id}).",
+                message=_("Une règle identique existe déjà en base (ID #{duplicate_id}).").format(duplicate_id=duplicate_id),
                 duplicate_of=duplicate_id,
             )
 
@@ -157,7 +158,7 @@ class CreateRuleCommand:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=f"Erreur technique lors de l'enregistrement : {e}",
+                message=_("Erreur technique lors de l'enregistrement : {e}").format(e=e),
             )
 
         # --- 3. Application au backend live ---
@@ -167,9 +168,7 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    f"La règle '{request.name}' a été créée et enregistrée (ID #{new_id}), "
-                    f"mais AUCUN backend n'est disponible pour l'appliquer. "
-                    f"Elle reste inactive tant que {request.backend} n'est pas accessible."
+                    _("La règle '{name}' a été créée et enregistrée (ID #{new_id}), mais AUCUN backend n'est disponible pour l'appliquer. Elle reste inactive tant que {backend} n'est pas accessible.").format(name=request.name, new_id=new_id, backend=request.backend)
                 ),
             )
 
@@ -181,9 +180,7 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    f"La règle '{request.name}' a été enregistrée (ID #{new_id}) mais son "
-                    f"application sur {request.backend} a échoué : {e}. "
-                    f"Elle reste inactive dans le noyau."
+                    _("La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué : {e}. Elle reste inactive dans le noyau.").format(name=request.name, new_id=new_id, backend=request.backend, e=e)
                 ),
             )
 
@@ -193,8 +190,7 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    f"La règle '{request.name}' a été enregistrée (ID #{new_id}) mais son "
-                    f"application sur {request.backend} a échoué. Elle reste inactive dans le noyau."
+                    _("La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué. Elle reste inactive dans le noyau.").format(name=request.name, new_id=new_id, backend=request.backend)
                 ),
             )
 
@@ -212,10 +208,7 @@ class CreateRuleCommand:
                     rule_id=new_id,
                     applied=True,
                     message=(
-                        f"La règle '{request.name}' a été créée et appliquée sur "
-                        f"{request.backend} (ID #{new_id}), mais son identifiant technique "
-                        f"n'a pas pu être enregistré. Sa suppression via 3.2 pourrait ne pas "
-                        f"la retirer automatiquement du noyau."
+                        _("La règle '{name}' a été créée et appliquée sur {backend} (ID #{new_id}), mais son identifiant technique n'a pas pu être enregistré. Sa suppression via 3.2 pourrait ne pas la retirer automatiquement du noyau.").format(name=request.name, backend=request.backend, new_id=new_id)
                     ),
                 )
 
@@ -224,8 +217,7 @@ class CreateRuleCommand:
             rule_id=new_id,
             applied=True,
             message=(
-                f"La règle '{request.name}' a été créée et appliquée avec succès sur "
-                f"{request.backend} (ID #{new_id})."
+                _("La règle '{name}' a été créée et appliquée avec succès sur {backend} (ID #{new_id}).").format(name=request.name, backend=request.backend, new_id=new_id)
             ),
         )
 

@@ -18,15 +18,21 @@ from omega_fire.application.commands.apply_preset_all_backends import (
     ApplyPresetAllBackendsRequest,
     ApplyPresetToAllBackendsCommand,
 )
+from omega_fire.application.queries.foreign_rules import (
+    describe_foreign_rules,
+    foreign_rules_by_backend,
+)
 from omega_fire.domain.rules.presets import get_preset, list_presets
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens.choice import ChoiceScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "3.4 Appliquer une politique predefinie"
+_ACTION_TITLE = "3.4 Appliquer une politique prédéfinie"
 
 
 def _active_preset_keys(container: DependencyContainer) -> set[str]:
@@ -56,15 +62,15 @@ class ApplyPresetScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("APPLIQUER UNE POLITIQUE PREDEFINIE", classes="omega-title")
+            yield Static(_("APPLIQUER UNE POLITIQUE PRÉDÉFINIE"), classes="omega-title")
 
             if self._active_keys:
                 names = [get_preset(k).name if get_preset(k) else k for k in self._active_keys]
-                yield Static(f"Profil(s) actif(s) : {', '.join(names)}", classes="omega-hint")
+                yield Static(_("Profil(s) actif(s) : {value}").format(value=', '.join(names)), classes="omega-hint")
             else:
-                yield Static("Aucun profil actuellement actif (regles personnalisees).", classes="omega-hint")
+                yield Static(_("Aucun profil actuellement actif (règles personnalisées)."), classes="omega-hint")
 
-            yield Static("Profil", classes="omega-subtitle")
+            yield Static(_("Profil"), classes="omega-subtitle")
             presets = list_presets()
             yield Select(
                 [(p.name, p.key) for p in presets],
@@ -75,9 +81,9 @@ class ApplyPresetScreen(OmegaScreen):
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Appliquer", id="launch", variant="error")
+                    yield Button(_("Appliquer"), id="launch", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_select_changed(self, event: Select.Changed) -> None:
@@ -96,7 +102,7 @@ class ApplyPresetScreen(OmegaScreen):
         key = str(self.query_one("#preset-select", Select).value)
         preset = get_preset(key)
         if preset is None:
-            self.app.notify("Profil introuvable.", severity="error")
+            self.app.notify(_("Profil introuvable."), severity="error")
             return
 
         available_backends = []
@@ -107,30 +113,67 @@ class ApplyPresetScreen(OmegaScreen):
             if registry.is_available("iptables"):
                 available_backends.append("iptables")
         if not available_backends:
-            self.app.notify("Aucun backend firewall disponible (nftables/iptables non detectes).", severity="error")
+            self.app.notify(_("Aucun backend firewall disponible (nftables/iptables non détectés)."), severity="error")
+            return
+
+        adapters = self._firewall_adapters()
+        targets = [name for name, adapter in adapters.items() if adapter is not None]
+
+        # Garde-fou (retour utilisateur 2026-10-28) : sur iptables / ip6tables, un
+        # profil vide TOUTE la table filter, regles des autres outils comprises.
+        # L'utilisateur decide, en sachant ce qu'il efface (detail dans l'aide 3.4).
+        foreign = foreign_rules_by_backend(adapters)
+        if foreign:
+            choices = [(_("Tous les backends — efface ces règles"), "all", "error")]
+            if adapters.get("nftables") is not None:
+                choices.append((_("Seulement nftables — garde ces règles"), "nftables", "warning"))
+            self.app.push_screen(
+                ChoiceScreen(
+                    title=_("RÈGLES D'AUTRES OUTILS DÉTECTÉES"),
+                    message=_(
+                        "Le profil « {name} » va remplacer les règles d'Omega-Fire sur : {targets}.\n\n"
+                        "Règles d'autres outils trouvées : {detail}.\n\n"
+                        "• Tous les backends : sur iptables / ip6tables, le profil vide toute la table "
+                        "filter (iptables -F, -X). Ces règles et leurs chaînes sont effacées, la "
+                        "politique par défaut devient celle du profil. L'outil ne les repose qu'à son "
+                        "prochain rechargement (ex. « ufw reload », redémarrage de Tailscale).\n"
+                        "• Seulement nftables : les règles des autres outils restent en place ; les deux "
+                        "pare-feu s'appliquent ensemble, un paquet doit être accepté par les deux.\n\n"
+                        "Une sauvegarde automatique est tentée avant application. Détails : touche « a »."
+                    ).format(name=preset.name, targets=", ".join(targets), detail=describe_foreign_rules(foreign)),
+                    choices=choices,
+                    help_node="3.4",
+                ),
+                lambda choice: self._apply_choice(choice, preset, adapters),
+            )
             return
 
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LE BASCULEMENT",
+                title=_("CONFIRMER LE BASCULEMENT"),
                 message=(
-                    f"Le profil '{preset.name}' va REMPLACER toutes les regles actives sur : "
-                    f"{', '.join(available_backends)}.\nUne sauvegarde automatique sera tentee avant application."
+                    _("Le profil '{name}' va REMPLACER toutes les règles actives sur : {value}.\nUne sauvegarde automatique sera tentée avant application.").format(name=preset.name, value=', '.join(targets))
                 ),
             ),
-            lambda confirmed: self._apply_if_confirmed(confirmed, preset),
+            lambda confirmed: self._apply_choice("all" if confirmed else None, preset, adapters),
         )
 
-    def _apply_if_confirmed(self, confirmed: bool | None, preset) -> None:
-        if not confirmed:
-            return
-
+    def _firewall_adapters(self) -> dict[str, object]:
         adapters: dict[str, object] = {}
         for name in ("nftables", "iptables", "ip6tables"):
             try:
                 adapters[name] = self._container.get_firewall_port(name)
             except Exception:
                 adapters[name] = None
+        return adapters
+
+    def _apply_choice(self, choice: str | None, preset, firewall_adapters: dict[str, object]) -> None:
+        if choice not in ("all", "nftables"):
+            return
+
+        adapters: dict[str, object] = dict(firewall_adapters)
+        if choice == "nftables":
+            adapters["iptables"] = adapters["ip6tables"] = None
         try:
             adapters["fail2ban"] = self._container.get_fail2ban_port()
         except Exception:
@@ -163,7 +206,7 @@ class ApplyPresetScreen(OmegaScreen):
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(f"Echec de l'application du profil : {error}", severity="error")
+            self.app.notify(_("Échec de l'application du profil : {error}").format(error=error), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
 
-        self.run_blocking(_execute, _on_done, busy_message="Application du profil en cours...", on_error=_on_error)
+        self.run_blocking(_execute, _on_done, busy_message=_("Application du profil en cours..."), on_error=_on_error)

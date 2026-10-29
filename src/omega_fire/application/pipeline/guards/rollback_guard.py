@@ -11,6 +11,7 @@ from typing import Optional
 
 from omega_fire.application.pipeline.planner import PipelineStep
 from omega_fire.application.exceptions import RollbackError
+from omega_fire.shared.i18n import _
 
 
 @dataclass(slots=True)
@@ -46,7 +47,7 @@ class RollbackGuard:
         if not executed_steps:
             return RollbackGuardResult(
                 can_rollback=False,
-                reason="No steps were executed, nothing to rollback",
+                reason=_("Aucune étape exécutée, rien à annuler"),
             )
 
         rollbackable = [s for s in executed_steps if s.rollback is not None]
@@ -54,14 +55,14 @@ class RollbackGuard:
         if not rollbackable:
             return RollbackGuardResult(
                 can_rollback=False,
-                reason="No executed step has a rollback function defined",
+                reason=_("Aucune étape exécutée ne prévoit d'annulation"),
             )
 
         affected = [s.name for s in rollbackable]
 
         return RollbackGuardResult(
             can_rollback=True,
-            reason=f"Rollback available for {len(rollbackable)} step(s)",
+            reason=_("Annulation possible pour {count} étape(s)").format(count=len(rollbackable)),
             affected_steps=affected,
         )
 

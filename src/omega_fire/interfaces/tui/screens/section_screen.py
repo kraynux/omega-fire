@@ -21,6 +21,7 @@ from omega_fire.interfaces.cli.help_text import get_help_entry
 from omega_fire.interfaces.tui.screens._base import OmegaScreen, format_help_entry
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -64,13 +65,13 @@ class SectionScreen(OmegaScreen):
                 for item in self._items:
                     with Container(classes="omega-btn-frame"):
                         yield Button(
-                            f"{item.action_id}  {item.label}",
+                            _("{action_id}  {label}").format(action_id=item.action_id, label=_(item.label)),
                             id=_widget_id(item.action_id),
                             tooltip=item.description or None,
                         )
-                menu.border_title = f"SECTION {self._section_id}"
+                menu.border_title = _("SECTION {section_id}").format(section_id=self._section_id)
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def help_content(self) -> tuple[str, str]:
@@ -87,16 +88,16 @@ class SectionScreen(OmegaScreen):
         if section_entry is not None:
             lines.append(format_help_entry(section_entry))
             lines.append("")
-        lines.append("[b]Detail de chaque action :[/b]")
+        lines.append(_("[b]Détail de chaque action :[/b]"))
         for item in self._items:
             lines.append("")
-            lines.append(f"[b]{item.action_id}  {item.label}[/b]")
+            lines.append(f"[b]{item.action_id}  {_(item.label)}[/b]")
             item_entry = get_help_entry(item.action_id)
             if item_entry is not None:
                 lines.append(format_help_entry(item_entry))
             elif item.description:
                 lines.append(item.description)
-        return f"SECTION {self._section_id} — {self._title}", "\n".join(lines)
+        return _("SECTION {section_id} — {title}").format(section_id=self._section_id, title=self._title), "\n".join(lines)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -128,7 +129,7 @@ class SectionScreen(OmegaScreen):
             return
 
         self.app.notify(
-            "Cet ecran n'est pas encore migre (voir la feuille de route, Phase 3).",
+            _("Cet écran n'est pas encore migré (voir la feuille de route, Phase 3)."),
             title=item.action_id,
             severity="information",
         )
@@ -157,7 +158,7 @@ class SectionScreen(OmegaScreen):
             )
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(f"Echec de l'action : {error}", severity="error")
+            self.app.notify(_("Échec de l'action : {error}").format(error=error), severity="error")
             log_action_result(
                 self._container,
                 item.direct_action_title or f"{item.action_id} {item.label}",
@@ -167,6 +168,7 @@ class SectionScreen(OmegaScreen):
 
         self.run_blocking(
             _execute, _on_done,
-            busy_message=f"{item.direct_action_title or item.label}...",
+            # Libelle traduit a l'affichage ; l'historique d'audit garde le texte source (N_).
+            busy_message=f"{_(item.direct_action_title or item.label)}...",
             on_error=_on_error,
         )

@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class JsonStoreError(CoreError):
@@ -56,7 +57,7 @@ class JsonStore:
             return file_path
         
         except Exception as e:
-            raise JsonStoreError(f"Failed to save JSON to {relative_path}: {e}") from e
+            raise JsonStoreError(_("Impossible d'enregistrer le JSON dans {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
     
     def load(self, relative_path: str) -> Any:
         """Load data from a JSON file.
@@ -74,17 +75,17 @@ class JsonStore:
             file_path = self._base_dir / relative_path
             
             if not file_path.exists():
-                raise JsonStoreError(f"File not found: {relative_path}")
+                raise JsonStoreError(_("Fichier introuvable : {relative_path}").format(relative_path=relative_path))
             
             content = file_path.read_text(encoding="utf-8")
             return json.loads(content)
         
         except json.JSONDecodeError as e:
-            raise JsonStoreError(f"Invalid JSON in {relative_path}: {e}") from e
+            raise JsonStoreError(_("JSON invalide dans {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
         except Exception as e:
             if isinstance(e, JsonStoreError):
                 raise
-            raise JsonStoreError(f"Failed to load JSON from {relative_path}: {e}") from e
+            raise JsonStoreError(_("Impossible de lire le JSON de {relative_path} : {e}").format(relative_path=relative_path, e=e)) from e
     
     def exists(self, relative_path: str) -> bool:
         """Check if a JSON file exists.

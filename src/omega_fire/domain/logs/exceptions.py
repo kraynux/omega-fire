@@ -6,6 +6,7 @@ These express business rule violations, not technical failures
 of file reading or log parsing. They are caught by application/
 and translated into Results or user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class LogsError(Exception):
@@ -23,7 +24,7 @@ class LogNotFoundError(LogsError):
     """
     def __init__(self, log_path: str):
         self.log_path = log_path
-        super().__init__(f"Log file not found: {log_path}")
+        super().__init__(_("Fichier journal introuvable : {log_path}").format(log_path=log_path))
 
 
 class LogParseError(LogsError):
@@ -37,7 +38,7 @@ class LogParseError(LogsError):
         self.line_number = line_number
         self.reason = reason
         super().__init__(
-            f"Parse error in {log_path} at line {line_number}: {reason}"
+            _("Erreur de lecture de {log_path} à la ligne {line_number} : {reason}").format(log_path=log_path, line_number=line_number, reason=reason)
         )
 
 
@@ -50,7 +51,7 @@ class InvalidLogFormatError(LogsError):
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(f"Invalid log format for {log_path}: {reason}")
+        super().__init__(_("Format de journal invalide pour {log_path} : {reason}").format(log_path=log_path, reason=reason))
 
 
 class LogAnalysisError(LogsError):
@@ -62,7 +63,7 @@ class LogAnalysisError(LogsError):
     def __init__(self, analysis_type: str, reason: str):
         self.analysis_type = analysis_type
         self.reason = reason
-        super().__init__(f"Log analysis error ({analysis_type}): {reason}")
+        super().__init__(_("Erreur d'analyse du journal ({analysis_type}) : {reason}").format(analysis_type=analysis_type, reason=reason))
 
 
 class LogRotationError(LogsError):
@@ -74,7 +75,7 @@ class LogRotationError(LogsError):
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(f"Log rotation error for {log_path}: {reason}")
+        super().__init__(_("Erreur de rotation du journal {log_path} : {reason}").format(log_path=log_path, reason=reason))
 
 
 class LogCleanupError(LogsError):
@@ -86,7 +87,7 @@ class LogCleanupError(LogsError):
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(f"Log cleanup error for {log_path}: {reason}")
+        super().__init__(_("Erreur de nettoyage du journal {log_path} : {reason}").format(log_path=log_path, reason=reason))
 
 
 class BackupNotFoundError(LogsError):
@@ -96,7 +97,7 @@ class BackupNotFoundError(LogsError):
     """
     def __init__(self, backup_path: str):
         self.backup_path = backup_path
-        super().__init__(f"Backup not found: {backup_path}")
+        super().__init__(_("Sauvegarde introuvable : {backup_path}").format(backup_path=backup_path))
 
 
 class InvalidRetentionError(LogsError):
@@ -110,7 +111,7 @@ class InvalidRetentionError(LogsError):
         self.value = value
         self.reason = reason
         super().__init__(
-            f"Invalid retention parameter '{parameter}' (value={value}): {reason}"
+            _("Paramètre de conservation « {parameter} » invalide (valeur={value}) : {reason}").format(parameter=parameter, value=value, reason=reason)
         )
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :

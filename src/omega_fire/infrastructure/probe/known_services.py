@@ -54,6 +54,14 @@ KNOWN_SERVICES: dict[str, list[str]] = {
 }
 
 
+
+# Suite omega (point 7, version 3.5) : capacites detectees par scanner._scan_omega_suite
+# (instances, config magnet, fichiers jail.d) et non par pgrep — d'ou une liste a part,
+# que le tableau de bord affiche mais que _scan_known_services ne parcourt pas.
+OMEGA_SUITE_CAPABILITIES: dict[str, list[str]] = {
+    "omega_suite": ["omega_serv", "omega_waf", "omega_jail"],
+}
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Liste fixe des services/process connus qu'Omega-Fire recherche via

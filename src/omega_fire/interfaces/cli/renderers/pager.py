@@ -24,6 +24,7 @@ from rich.text import Text
 from omega_fire.interfaces.cli import keybindings as kb
 from omega_fire.interfaces.cli.renderers.styles import get_terminal_height
 from omega_fire.interfaces.cli.themes.registry import theme_registry
+from omega_fire.shared.i18n import _
 
 
 class _PagerQuit(Exception):
@@ -67,7 +68,7 @@ def _build_nav_bar(page: int, total_pages: int) -> Text:
     sep_s = theme_registry.get_style("footer.separator")
 
     bar = Text()
-    bar.append(f"Page {page}/{total_pages}", style=label_s)
+    bar.append(_("Page {page}/{total_pages}").format(page=page, total_pages=total_pages), style=label_s)
 
     def _entry(key: str, label: str) -> None:
         bar.append("  │  ", style=sep_s)
@@ -75,8 +76,8 @@ def _build_nav_bar(page: int, total_pages: int) -> Text:
         bar.append(f" {label}", style=label_s)
 
     _entry(kb.KEY_D, kb.LABEL_PAGE_START)
-    _entry("◀", "Précédent")
-    _entry("▶", "Suivant")
+    _entry("◀", _("Précédent"))
+    _entry("▶", _("Suivant"))
     _entry(kb.KEY_F, kb.LABEL_PAGE_END)
     _entry(kb.KEY_Q, kb.LABEL_QUIT)
     return bar

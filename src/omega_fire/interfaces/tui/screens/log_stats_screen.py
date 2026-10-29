@@ -20,11 +20,12 @@ from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from omega_fire.infrastructure.logging.stats.log_aggregator import LogAggregator
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_PERIODS: dict[str, str] = {"24h": "24h", "7d": "7 jours", "30d": "30 jours"}
+_PERIODS: dict[str, str] = {"24h": "24h", "7d": _("7 jours"), "30d": _("30 jours")}
 _CHART_HEIGHT = 4
 _CHART_BLOCKS = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
 
@@ -41,17 +42,17 @@ class LogStatsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("STATISTIQUES DES LOGS", classes="omega-title")
+            yield Static(_("STATISTIQUES DES LOGS"), classes="omega-title")
             yield Static("", id="stats-hint", classes="omega-hint")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button("24h", id="period-24h")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("7 jours", id="period-7d")
+                    yield Button(_("7 jours"), id="period-7d")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("30 jours", id="period-30d")
+                    yield Button(_("30 jours"), id="period-30d")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Rafraichir", id="refresh", variant="primary")
+                    yield Button(_("Rafraîchir"), id="refresh", variant="primary")
 
             with Horizontal(id="kpi-row"):
                 yield Static(id="kpi-events", classes="omega-dash-box dash-box-short")
@@ -66,12 +67,12 @@ class LogStatsScreen(OmegaScreen):
                 yield DataTable(id="top-jails-table")
 
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#top-ips-table", DataTable).add_columns("#", "Adresse IP", "Bans", "Dernier Ban")
-        self.query_one("#top-jails-table", DataTable).add_columns("Jail / Service", "Statut", "Bans", "Part")
+        self.query_one("#top-ips-table", DataTable).add_columns("#", _("Adresse IP"), _("Bans"), _("Dernier Ban"))
+        self.query_one("#top-jails-table", DataTable).add_columns(_("Jail / Service"), _("Statut"), _("Bans"), _("Part"))
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -101,22 +102,22 @@ class LogStatsScreen(OmegaScreen):
         summary = self._aggregator.get_summary(period_code=self._period)
 
         self.query_one("#stats-hint", Static).update(
-            f"Periode : {_PERIODS[self._period]}  │  Source : {summary.data_source}"
+            _("Période : {value}  │  Source : {data_source}").format(value=_PERIODS[self._period], data_source=summary.data_source)
         )
 
         self.query_one("#kpi-events", Static).update(
-            Text(f"Evenements\n\n{summary.total_events}\n", style=colors["heading"])
-            + Text(f"Logs scannes ({summary.data_source})", style="dim")
+            Text(_("Événements\n\n{total_events}\n").format(total_events=summary.total_events), style=colors["heading"])
+            + Text(_("Logs scannes ({data_source})").format(data_source=summary.data_source), style="dim")
         )
         self.query_one("#kpi-bans", Static).update(
-            Text(f"Total Bans\n\n{summary.total_bans}", style=colors["heading"])
+            Text(_("Total Bans\n\n{total_bans}").format(total_bans=summary.total_bans), style=colors["heading"])
         )
         self.query_one("#kpi-top-jail", Static).update(
-            Text(f"Top Jail\n\n{summary.top_jail_name}", style=colors["heading"])
+            Text(_("Top Jail\n\n{top_jail_name}").format(top_jail_name=summary.top_jail_name), style=colors["heading"])
         )
         self.query_one("#kpi-peak", Static).update(
-            Text(f"Heure de Pointe\n\n{summary.peak_hour}\n", style=colors["heading"])
-            + Text(f"Pic ({summary.peak_count} evts)", style="dim")
+            Text(_("Heure de Pointe\n\n{peak_hour}\n").format(peak_hour=summary.peak_hour), style=colors["heading"])
+            + Text(_("Pic ({peak_count} evts)").format(peak_count=summary.peak_count), style="dim")
         )
 
         self.query_one("#box-chart", Static).update(self._render_chart(colors, summary.hourly_series))
@@ -129,7 +130,7 @@ class LogStatsScreen(OmegaScreen):
         jails_table = self.query_one("#top-jails-table", DataTable)
         jails_table.clear()
         for jail in summary.top_jails[:8]:
-            status = Text("● Actif", style=colors["main"]) if jail.is_active else Text("○ Archive", style="dim")
+            status = Text(_("● Actif"), style=colors["main"]) if jail.is_active else Text(_("○ Archive"), style="dim")
             bar_filled = int(jail.percentage / 10)
             part = f"{'█' * bar_filled}{'░' * (10 - bar_filled)} {jail.percentage}%"
             jails_table.add_row(jail.name, status, str(jail.total_bans), part)
@@ -164,7 +165,7 @@ class LogStatsScreen(OmegaScreen):
         chart_width = len(lines[0].plain) if lines else available_width
 
         content = Text()
-        content.append(f"Distribution Horaire (24h) — Max: {max_val} bans/h\n\n", style=colors["heading"])
+        content.append(_("Distribution Horaire (24h) — Max: {max_val} bans/h\n\n").format(max_val=max_val), style=colors["heading"])
         for line in lines:
             content.append_text(line)
             content.append("\n")

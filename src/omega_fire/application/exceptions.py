@@ -7,6 +7,7 @@ They are NOT domain exceptions (business rules) nor infrastructure exceptions
 (technical failures). They are caught by interfaces/ and translated into
 user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class ApplicationError(Exception):
@@ -24,7 +25,7 @@ class CapabilityUnavailableError(ApplicationError):
         self.capability_id = capability_id
         self.status = status
         self.reason = reason
-        message = f"Capability '{capability_id}' is {status}"
+        message = _("Capacité « {capability_id} » : {status}").format(capability_id=capability_id, status=status)
         if reason:
             message += f": {reason}"
         super().__init__(message)
@@ -39,9 +40,9 @@ class UseCaseExecutionError(ApplicationError):
         self.use_case_name = use_case_name
         self.reason = reason
         self.step_name = step_name
-        message = f"Use case '{use_case_name}' failed"
+        message = _("Échec de l'opération « {use_case_name} »").format(use_case_name=use_case_name)
         if step_name:
-            message += f" at step '{step_name}'"
+            message += _(" à l'étape « {step_name} »").format(step_name=step_name)
         message += f": {reason}"
         super().__init__(message)
 
@@ -55,7 +56,7 @@ class PermissionDeniedError(ApplicationError):
     def __init__(self, required_permission: str, reason: str = ""):
         self.required_permission = required_permission
         self.reason = reason
-        message = f"Permission denied: {required_permission} required"
+        message = _("Permission refusée : {required_permission} requis").format(required_permission=required_permission)
         if reason:
             message += f" ({reason})"
         super().__init__(message)
@@ -69,7 +70,7 @@ class InvalidRequestError(ApplicationError):
     def __init__(self, request_type: str, errors: list[str]):
         self.request_type = request_type
         self.errors = errors
-        message = f"Invalid request '{request_type}': {'; '.join(errors)}"
+        message = _("Requête « {request_type} » invalide : {value}").format(request_type=request_type, value='; '.join(errors))
         super().__init__(message)
 
 
@@ -82,7 +83,7 @@ class RollbackError(ApplicationError):
     def __init__(self, step_name: str, reason: str):
         self.step_name = step_name
         self.reason = reason
-        super().__init__(f"Rollback failed for step '{step_name}': {reason}")
+        super().__init__(_("Échec de l'annulation de l'étape « {step_name} » : {reason}").format(step_name=step_name, reason=reason))
 
 
 class DegradedModeError(ApplicationError):
@@ -94,7 +95,7 @@ class DegradedModeError(ApplicationError):
     def __init__(self, action_name: str, reason: str):
         self.action_name = action_name
         self.reason = reason
-        super().__init__(f"Action '{action_name}' blocked in degraded mode: {reason}")
+        super().__init__(_("Action « {action_name} » bloquée en mode dégradé : {reason}").format(action_name=action_name, reason=reason))
 
 
 class PipelineExecutionError(ApplicationError):
@@ -106,7 +107,7 @@ class PipelineExecutionError(ApplicationError):
     def __init__(self, pipeline_name: str, reason: str):
         self.pipeline_name = pipeline_name
         self.reason = reason
-        super().__init__(f"Pipeline '{pipeline_name}' failed: {reason}")
+        super().__init__(_("Échec de l'enchaînement « {pipeline_name} » : {reason}").format(pipeline_name=pipeline_name, reason=reason))
 
 
 class StepExecutionError(ApplicationError):
@@ -118,7 +119,7 @@ class StepExecutionError(ApplicationError):
         self.step_name = step_name
         self.reason = reason
         self.can_retry = can_retry
-        message = f"Step '{step_name}' failed: {reason}"
+        message = _("Échec de l'étape « {step_name} » : {reason}").format(step_name=step_name, reason=reason)
         if can_retry:
             message += " (retryable)"
         super().__init__(message)
@@ -132,7 +133,7 @@ class HookExecutionError(ApplicationError):
     def __init__(self, hook_name: str, reason: str):
         self.hook_name = hook_name
         self.reason = reason
-        super().__init__(f"Hook '{hook_name}' failed: {reason}")
+        super().__init__(_("Échec du traitement associé « {hook_name} » : {reason}").format(hook_name=hook_name, reason=reason))
 
 
 class BackendNotAvailableError(ApplicationError):
@@ -144,7 +145,7 @@ class BackendNotAvailableError(ApplicationError):
     def __init__(self, backend_name: str, reason: str = ""):
         self.backend_name = backend_name
         self.reason = reason
-        message = f"Backend '{backend_name}' is not available"
+        message = _("Le backend « {backend_name} » n'est pas disponible").format(backend_name=backend_name)
         if reason:
             message += f": {reason}"
         super().__init__(message)
@@ -157,7 +158,23 @@ class UnknownThemeError(ApplicationError):
     """
     def __init__(self, theme_name: str):
         self.theme_name = theme_name
-        super().__init__(f"Theme inconnu : '{theme_name}'")
+        super().__init__(_("Thème inconnu : '{theme_name}'").format(theme_name=theme_name))
+
+
+class UnknownLanguageError(ApplicationError):
+    """Langue demandee absente des catalogues proposes (application/commands/select_language.py)."""
+    def __init__(self, language_code: str):
+        self.language_code = language_code
+        super().__init__(_("langue inconnue : {language_code!r}").format(language_code=language_code))
+
+
+class UnsafeDirectoryError(ApplicationError):
+    """Dossier qu'on refuse de vider (application/commands/clear_directory.py) : systeme,
+    personnel, ou contenant l'installation - omega-fire tourne en root."""
+    def __init__(self, path: str, reason: str):
+        self.path = path
+        self.reason = reason
+        super().__init__(_("Dossier refusé ({reason}) : {path}").format(reason=reason, path=path))
 
 
 class PartialExecutionError(ApplicationError):
@@ -171,8 +188,7 @@ class PartialExecutionError(ApplicationError):
         self.succeeded_steps = succeeded_steps
         self.failed_steps = failed_steps
         message = (
-            f"Operation '{operation_name}' partially failed: "
-            f"{len(succeeded_steps)} succeeded, {len(failed_steps)} failed"
+            _("Opération « {operation_name} » en partie échouée : {count} réussie(s), {count2} en échec").format(operation_name=operation_name, count=len(succeeded_steps), count2=len(failed_steps))
         )
         super().__init__(message)
 
@@ -208,3 +224,4 @@ class PartialExecutionError(ApplicationError):
 # - application/pipeline/rollback.py lèvera RollbackError
 # - interfaces/cli/actions.py capturera ces exceptions et les traduira en messages utilisateur
 #---------------------------------------------------------------------->
+

@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 from omega_fire.application.pipeline.planner import PipelineStep, ExecutionPlan, create_step
 from omega_fire.application.exceptions import InvalidRequestError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -32,10 +33,10 @@ class ExportReportRequest:
         """Validate the request."""
         errors: list[str] = []
         if not self.report_name:
-            errors.append("Report name is required")
+            errors.append(_("Le nom du rapport est obligatoire"))
         valid_formats = ("json", "txt", "html", "csv")
         if self.format not in valid_formats:
-            errors.append(f"Invalid format: {self.format}. Must be one of {valid_formats}")
+            errors.append(_("Format invalide : {format}. Valeurs possibles : {valid_formats}").format(format=self.format, valid_formats=valid_formats))
         return errors
 
     def is_valid(self) -> bool:
@@ -49,7 +50,7 @@ class ExportReportCommand:
     REQUIRES_CAPABILITIES: list[str] = []
     REQUIRES_PERMISSIONS: list[str] = []
     COMMAND_NAME = "export_report"
-    DESCRIPTION = "Export a report to file"
+    DESCRIPTION = _("Exporter un rapport dans un fichier")
 
     def __init__(self, request: ExportReportRequest):
         self._request = request
@@ -116,15 +117,15 @@ class ExportReportCommand:
         val_lower = val_str.lower()
 
         if real_status == "AVAILABLE" or "service actif" in val_lower or "binaire disponible" in val_lower or val_str == "Actif":
-            return "success", "DISPONIBLE"
+            return "success", _("DISPONIBLE")
         elif real_status == "DEGRADED" or "inactif" in val_lower or "degraded" in val_lower:
-            return "warning", "DÉGRADÉ"
+            return "warning", _("DÉGRADÉ")
         elif details_val is False or details_val is None or details_val == "" or real_status == "MISSING":
-            return "danger", "NON INSTALLÉ"
+            return "danger", _("NON INSTALLÉ")
         elif real_status == "DISQUALIFIED":
-            return "danger", "DISQUALIFIÉ"
+            return "danger", _("DISQUALIFIÉ")
         else:
-            return "success", "DISPONIBLE"
+            return "success", _("DISPONIBLE")
 
     @staticmethod
     def _get_status_from_details(details_val: Any) -> str:
@@ -217,15 +218,15 @@ class ExportReportCommand:
             
             lines = []
             lines.append("================================================================================")
-            lines.append("                        OMEGA-FIRE SYSTEM DIAGNOSTIC REPORT                     ")
+            lines.append(_("                        OMEGA-FIRE SYSTEM DIAGNOSTIC REPORT                     "))
             lines.append("================================================================================")
-            lines.append(f" Titre          : {report_data['title']}")
-            lines.append(f" Date / Heure   : {report_data['generated_at']}")
-            lines.append(f" Statut Global  : {report_data['summary']['status']}")
-            lines.append(f" Total Modules  : {report_data['summary']['total_capabilities']}")
+            lines.append(_(" Titre          : {title}").format(title=report_data['title']))
+            lines.append(_(" Date / Heure   : {generated_at}").format(generated_at=report_data['generated_at']))
+            lines.append(_(" Statut Global  : {status}").format(status=report_data['summary']['status']))
+            lines.append(_(" Total Modules  : {total_capabilities}").format(total_capabilities=report_data['summary']['total_capabilities']))
             lines.append("--------------------------------------------------------------------------------")
             lines.append("")
-            lines.append("[ DÉTAIL DES CAPACITÉS ET MODULES ]")
+            lines.append(_("[ DÉTAIL DES CAPACITÉS ET MODULES ]"))
             lines.append("")
 
             for name, details in items:
@@ -234,32 +235,32 @@ class ExportReportCommand:
                 real_status = self._get_status_from_details(details)
                 
                 if real_status == "AVAILABLE" or "service actif" in val_lower or "binaire disponible" in val_lower or val_str_raw == "Actif":
-                    status_str = "[ DISPONIBLE ]"
+                    status_str = _("[ DISPONIBLE ]")
                 elif real_status == "DEGRADED" or "inactif" in val_lower or "degraded" in val_lower:
-                    status_str = "[ DÉGRADÉ ]"
+                    status_str = _("[ DÉGRADÉ ]")
                 elif details is False or details is None or details == "" or real_status == "MISSING":
-                    status_str = "[ NON INSTALLÉ ]"
+                    status_str = _("[ NON INSTALLÉ ]")
                 elif real_status == "DISQUALIFIED":
-                    status_str = "[ DISQUALIFIÉ ]"
+                    status_str = _("[ DISQUALIFIÉ ]")
                 else:
-                    status_str = "[ DISPONIBLE ]"
+                    status_str = _("[ DISPONIBLE ]")
 
                 # 2. Formate le JSON sur plusieurs lignes si c'est un dictionnaire/liste
                 lines.append(f"● {name}")
-                lines.append(f"  ├─ Statut : {status_str}")
+                lines.append(_("  ├─ Statut : {status_str}").format(status_str=status_str))
                 
                 if isinstance(details, (dict, list)):
-                    lines.append("  └─ Spécifications :")
+                    lines.append(_("  └─ Spécifications :"))
                     formatted_json = json.dumps(details, indent=4, ensure_ascii=False)
                     for line in formatted_json.splitlines():
                         lines.append(f"        {line}")
                 else:
-                    lines.append(f"  └─ Spécifications : {details}")
+                    lines.append(_("  └─ Spécifications : {details}").format(details=details))
 
                 lines.append("")
 
             lines.append("--------------------------------------------------------------------------------")
-            lines.append(f"-- Fin du rapport texte Omega-Fire CLI [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --")
+            lines.append(_("-- Fin du rapport texte Omega-Fire CLI [{value}] --").format(value=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             dest_path.write_text("\n".join(lines), encoding="utf-8")
 

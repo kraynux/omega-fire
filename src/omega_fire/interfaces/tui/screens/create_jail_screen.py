@@ -31,11 +31,12 @@ from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.screens.jail_presets_screen import JailPresetsScreen
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "4.4 Creation et configuration de Jail Fail2ban"
+_ACTION_TITLE = "4.4 Création et configuration de Jail Fail2ban"
 _MODE_CUSTOM = "custom"
 _MODE_PRESET = "preset"
 _LOG_MANUAL = "__manual__"
@@ -61,69 +62,71 @@ class CreateJailScreen(OmegaScreen):
         self._preset_command = ManageJailPresetsCommand(JsonStore(RUNTIME_DIR))
 
     def _preset_options(self) -> list[tuple[str, str]]:
-        return [(f"{p['name']} — {p['desc']}", p["name"]) for p in self._preset_command.list_presets()]
+        return [(_("{name} — {desc}").format(name=p['name'], desc=_(p['desc']) if p['desc'] else ""), p["name"]) for p in self._preset_command.list_presets()]
 
     def _log_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [("Chemin manuel", _LOG_MANUAL)]
+        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _LOG_MANUAL)]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
-            yield Static("CREER UN JAIL FAIL2BAN", classes="omega-title")
+            yield Static(_("CRÉER UN JAIL FAIL2BAN"), classes="omega-title")
+            yield Static("", id="omega-jail-hint", classes="omega-hint omega-hidden")
             if self._fail2ban_port is None:
-                yield Static("Port Fail2ban indisponible (conteneur non initialise).", classes="omega-hint")
+                yield Static(_("Port Fail2ban indisponible (conteneur non initialisé)."), classes="omega-hint")
                 with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
                 yield Footer()
                 return
 
-            yield Static("Mode de creation", classes="omega-subtitle")
+            yield Static(_("Mode de création"), classes="omega-subtitle")
             yield Select(
-                [("Sur-mesure (assistant)", _MODE_CUSTOM), ("Modele / Preset", _MODE_PRESET)],
+                [(_("Sur-mesure (assistant)"), _MODE_CUSTOM), (_("Modèle / Preset"), _MODE_PRESET)],
                 value=_MODE_CUSTOM,
                 id="mode-select",
             )
 
             # --- Bloc PRESET ---
-            yield Static("Modele", id="preset-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._preset_options(), id="preset-select", classes="omega-hidden")
+            yield Static(_("Modèle"), id="preset-label", classes="omega-subtitle omega-hidden")
+            yield Select(self._preset_options(), id="preset-select", classes="omega-hidden", prompt=_("Sélectionner"))
             with Horizontal(classes="omega-actions", id="preset-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer les modeles", id="manage-presets")
+                    yield Button(_("Gérer les modèles"), id="manage-presets")
 
             # --- Bloc SUR-MESURE ---
-            yield Static("Nom du jail", id="name-label", classes="omega-subtitle")
-            yield Input(placeholder="ex. my-app-jail", id="name-input")
+            yield Static(_("Nom du jail"), id="name-label", classes="omega-subtitle")
+            yield Input(placeholder=_("ex. my-app-jail"), id="name-input")
 
-            yield Static("Source du log a surveiller", id="log-source-label", classes="omega-subtitle")
-            yield Select(self._log_options(), id="log-select")
+            yield Static(_("Source du log à surveiller"), id="log-source-label", classes="omega-subtitle")
+            yield Select(self._log_options(), id="log-select", prompt=_("Sélectionner"))
             with Horizontal(classes="omega-actions", id="pins-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer les epingles", id="manage-pins")
-            yield Static("Chemin manuel", id="log-manual-label", classes="omega-subtitle omega-hidden")
+                    yield Button(_("Gérer les épingles"), id="manage-pins")
+            yield Static(_("Chemin manuel"), id="log-manual-label", classes="omega-subtitle omega-hidden")
             yield Input(id="log-manual-input", classes="omega-hidden")
 
-            yield Static("Ports concernes", id="port-label", classes="omega-subtitle")
+            yield Static(_("Ports concernés"), id="port-label", classes="omega-subtitle")
             yield Input(value="http,https", id="port-input")
 
-            yield Static("Nom du filtre Fail2ban (vide = identique au nom du jail)", id="filter-label", classes="omega-subtitle")
+            yield Static(_("Nom du filtre Fail2ban (vide = identique au nom du jail)"), id="filter-label", classes="omega-subtitle")
             yield Input(id="filter-input")
 
-            yield Static("Max Retry", id="retry-label", classes="omega-subtitle")
+            yield Static(_("Tentatives max"), id="retry-label", classes="omega-subtitle")
             yield Input(value="5", id="retry-input")
-            yield Static("Findtime", id="find-label", classes="omega-subtitle")
+            yield Static(_("Findtime"), id="find-label", classes="omega-subtitle")
             yield Input(value="10m", id="find-input")
-            yield Static("Bantime", id="ban-label", classes="omega-subtitle")
+            yield Static(_("Bantime"), id="ban-label", classes="omega-subtitle")
             yield Input(value="1h", id="ban-input")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Creer le jail", id="launch", variant="primary", disabled=True)
+                    yield Button(_("Créer le jail"), id="launch", variant="primary", disabled=True)
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
+        self._show_omega_jail_hint()
         if self._fail2ban_port is None:
             return
         log_options = self._log_options()
@@ -138,7 +141,7 @@ class CreateJailScreen(OmegaScreen):
             status = get_jail_status(fail2ban_port=self._fail2ban_port)
             return {j.name.lower() for j in status.jails}
 
-        self.run_blocking(_fetch_existing_names, self._on_names_loaded, busy_message="Verification des jails existants...")
+        self.run_blocking(_fetch_existing_names, self._on_names_loaded, busy_message=_("Vérification des jails existants..."))
 
     def _on_names_loaded(self, existing_names: set[str]) -> None:
         self._existing_names = existing_names
@@ -197,18 +200,18 @@ class CreateJailScreen(OmegaScreen):
 
     def _launch(self) -> None:
         if not self._names_loaded:
-            self.app.notify("Verification des jails existants encore en cours, patientez.", severity="warning")
+            self.app.notify(_("Vérification des jails existants encore en cours, patientez."), severity="warning")
             return
         mode = str(self.query_one("#mode-select", Select).value)
 
         if mode == _MODE_PRESET:
             preset_name = self.query_one("#preset-select", Select).value
             if preset_name is None or preset_name == Select.BLANK:
-                self.app.notify("Aucun modele disponible ou selectionne.", severity="warning")
+                self.app.notify(_("Aucun modèle disponible ou sélectionné."), severity="warning")
                 return
             preset = next((p for p in self._preset_command.list_presets() if p["name"] == str(preset_name)), None)
             if preset is None:
-                self.app.notify("Modele introuvable.", severity="error")
+                self.app.notify(_("Modèle introuvable."), severity="error")
                 return
             jail_name = preset["name"]
             if jail_name.lower() in self._existing_names:
@@ -222,10 +225,10 @@ class CreateJailScreen(OmegaScreen):
         else:
             jail_name = self.query_one("#name-input", Input).value.strip()
             if not jail_name:
-                self.app.notify("Le nom du jail est requis.", severity="warning")
+                self.app.notify(_("Le nom du jail est requis."), severity="warning")
                 return
             if jail_name.lower() in self._existing_names:
-                self.app.notify(f"Un jail nomme '{jail_name}' existe deja.", severity="error")
+                self.app.notify(_("Un jail nommé '{jail_name}' existe déjà.").format(jail_name=jail_name), severity="error")
                 return
             jail_name = re.sub(r"[^a-zA-Z0-9_-]", "", jail_name)
 
@@ -235,7 +238,7 @@ class CreateJailScreen(OmegaScreen):
             else:
                 log_path = str(log_select)
             if not log_path:
-                self.app.notify("Le chemin du log est requis.", severity="warning")
+                self.app.notify(_("Le chemin du log est requis."), severity="warning")
                 return
 
             port_spec = self.query_one("#port-input", Input).value.strip() or "http,https"
@@ -246,12 +249,10 @@ class CreateJailScreen(OmegaScreen):
 
         config_filepath = f"/etc/fail2ban/jail.d/{jail_name}.conf"
         summary = (
-            f"Nom : {jail_name}\nFichier : {config_filepath}\nLog : {log_path}\n"
-            f"Ports : {port_spec}\nFiltre : {filter_name}\n"
-            f"Max Retry : {max_retry} | Findtime : {find_time} | Bantime : {ban_time}"
+            _("Nom : {jail_name}\nFichier : {config_filepath}\nLog : {log_path}\nPorts : {port_spec}\nFiltre : {filter_name}\nMax Retry : {max_retry} | Findtime : {find_time} | Bantime : {ban_time}").format(jail_name=jail_name, config_filepath=config_filepath, log_path=log_path, port_spec=port_spec, filter_name=filter_name, max_retry=max_retry, find_time=find_time, ban_time=ban_time)
         )
         self.app.push_screen(
-            ConfirmScreen(title="CONFIRMER LA CREATION DU JAIL", message=summary),
+            ConfirmScreen(title=_("CONFIRMER LA CRÉATION DU JAIL"), message=summary),
             lambda confirmed: self._create_if_confirmed(
                 confirmed, jail_name, log_path, filter_name, port_spec, max_retry, find_time, ban_time, config_filepath,
             ),
@@ -276,19 +277,39 @@ class CreateJailScreen(OmegaScreen):
         def _on_done(result) -> None:
             filter_written, created_info = result
             if filter_written:
-                self.app.notify(f"Filtre automatique cree dans '/etc/fail2ban/filter.d/{filter_name}.conf'.")
+                self.app.notify(_("Filtre automatique créé dans '/etc/fail2ban/filter.d/{filter_name}.conf'.").format(filter_name=filter_name))
 
-            self.app.notify(f"Configuration jail enregistree dans '{config_filepath}'.")
+            self.app.notify(_("Configuration jail enregistrée dans '{config_filepath}'.").format(config_filepath=config_filepath))
             if created_info.active:
-                self.app.notify(f"Service Fail2ban recharge. Le jail '{jail_name}' est desormais ACTIF.")
+                self.app.notify(_("Service Fail2ban recharge. Le jail '{jail_name}' est désormais ACTIF.").format(jail_name=jail_name))
             else:
-                self.app.notify(f"Configuration ecrite mais le jail '{jail_name}' n'apparait pas encore actif.", severity="warning")
+                self.app.notify(_("Configuration écrite mais le jail '{jail_name}' n'apparaît pas encore actif.").format(jail_name=jail_name), severity="warning")
 
             log_action_result(self._container, _ACTION_TITLE, status="success")
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(f"Erreur lors de l'installation du jail : {error}", severity="error")
+            self.app.notify(_("Erreur lors de l'installation du jail : {error}").format(error=error), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
 
-        self.run_blocking(_execute, _on_done, busy_message=f"Creation du jail '{jail_name}'...", on_error=_on_error)
+        self.run_blocking(_execute, _on_done, busy_message=_("Création du jail '{jail_name}'...").format(jail_name=jail_name), on_error=_on_error)
+
+    def _show_omega_jail_hint(self) -> None:
+        """Version 3.5 (point 7) : omega-serv present mais aucun jail omega-jail — signaler que
+        omega-jail installe en une commande les jails adaptes a omega-serv / omega-waf, plutot
+        que de recopier son catalogue ici (seuils et chemins resolus par omega-jail)."""
+        from pathlib import Path
+
+        from omega_fire.infrastructure.probe.omega_serv_detector import detect_omega_serv_instances
+        try:
+            installed = any(Path("/etc/fail2ban/jail.d").glob("omega-jail-*.conf"))
+            serv = bool(detect_omega_serv_instances())
+        except OSError:
+            return
+        if serv and not installed:
+            hint = self.query_one("#omega-jail-hint", Static)
+            hint.update(_("omega-serv est installé : omega-jail installe en une commande les jails adaptés à "
+                          "omega-serv et omega-waf (WAF, Active Defense, scans, force brute), chemins et "
+                          "seuils déjà réglés."))
+            hint.set_class(False, "omega-hidden")
+

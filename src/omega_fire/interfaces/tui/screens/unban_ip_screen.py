@@ -19,6 +19,7 @@ from omega_fire.application.commands.unban_ip_all_backends import (
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -49,25 +50,25 @@ class UnbanIpScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("DEBANNIR UNE IP", classes="omega-title")
+            yield Static(_("DÉBANNIR UNE IP"), classes="omega-title")
 
-            yield Static("Adresse IP", classes="omega-subtitle")
-            yield Input(placeholder="ex. 192.168.1.10", id="ip-input")
+            yield Static(_("Adresse IP"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 192.168.1.10"), id="ip-input")
 
-            yield Static("Backend(s) cible(s)", classes="omega-subtitle")
+            yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
             if self._supported_backends:
-                options = [("Tous les backends (recommande)", _ALL_BACKENDS)] + [
-                    (f"Uniquement {name} (diagnostic)", name) for name in self._supported_backends
+                options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
-                yield Static("Aucun backend disponible.", classes="omega-hint")
+                yield Static(_("Aucun backend disponible."), classes="omega-hint")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Debannir", id="launch", variant="primary")
+                    yield Button(_("Débannir"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -78,17 +79,17 @@ class UnbanIpScreen(OmegaScreen):
             return
 
         if not self._supported_backends:
-            self.app.notify("Aucun backend disponible pour le debannissement.", severity="error")
+            self.app.notify(_("Aucun backend disponible pour le débannissement."), severity="error")
             return
 
         raw_ip = self.query_one("#ip-input", Input).value.strip()
         if not raw_ip:
-            self.app.notify("Saisissez une adresse IP.", severity="warning")
+            self.app.notify(_("Saisissez une adresse IP."), severity="warning")
             return
         try:
             ip = str(ipaddress.ip_address(raw_ip))
         except ValueError:
-            self.app.notify(f"Format d'adresse IP invalide : '{raw_ip}'.", severity="warning")
+            self.app.notify(_("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip), severity="warning")
             return
 
         backend_choice = str(self.query_one("#backend-select", Select).value)
@@ -98,8 +99,8 @@ class UnbanIpScreen(OmegaScreen):
 
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LE DEBANNISSEMENT",
-                message=f"IP : {ip}\nBackend(s) : {', '.join(target_backends)}",
+                title=_("CONFIRMER LE DÉBANNISSEMENT"),
+                message=_("IP : {ip}\nBackend(s) : {value}").format(ip=ip, value=', '.join(target_backends)),
             ),
             lambda confirmed: self._unban_if_confirmed(confirmed, ip, target_backends),
         )
@@ -122,11 +123,11 @@ class UnbanIpScreen(OmegaScreen):
 
         for backend, outcome in result.outcomes.items():
             if outcome.unbanned:
-                self.app.notify(f"IP {ip} debannie avec succes.", title=backend, severity="information")
+                self.app.notify(_("IP {ip} débannie avec succès.").format(ip=ip), title=backend, severity="information")
             elif outcome.already_free:
-                self.app.notify(f"IP {ip} n'etait pas bannie (deja libre).", title=backend, severity="warning")
+                self.app.notify(_("IP {ip} n'était pas bannie (déjà libre).").format(ip=ip), title=backend, severity="warning")
             for failed_ip, reason in outcome.errors:
-                self.app.notify(f"Echec pour {failed_ip} : {reason}", title=backend, severity="error")
+                self.app.notify(_("Échec pour {failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
 
         log_action_result(self._container, _ACTION_TITLE, status="success" if result.success else "failure")
         self.dismiss()

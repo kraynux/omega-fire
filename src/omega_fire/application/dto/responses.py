@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass(slots=True)
@@ -43,19 +44,19 @@ class PlanResponse:
     def to_display(self) -> str:
         lines: list[str] = []
         if self.success:
-            lines.append(f"✅ {self.command_name} exécuté avec succès")
+            lines.append(_("✅ {command_name} exécuté avec succès").format(command_name=self.command_name))
         else:
-            lines.append(f"❌ {self.command_name} échoué")
+            lines.append(_("❌ {command_name} échoué").format(command_name=self.command_name))
         if self.executed_steps:
-            lines.append(f"   Steps exécutés : {', '.join(self.executed_steps)}")
+            lines.append(_("   Steps exécutés : {value}").format(value=', '.join(self.executed_steps)))
         if self.skipped_steps:
-            lines.append(f"   Steps ignorés : {', '.join(self.skipped_steps)}")
+            lines.append(_("   Steps ignorés : {value}").format(value=', '.join(self.skipped_steps)))
         if self.failed_step:
-            lines.append(f"   Step en erreur : {self.failed_step}")
+            lines.append(_("   Step en erreur : {failed_step}").format(failed_step=self.failed_step))
         if self.error_message:
-            lines.append(f"   Erreur : {self.error_message}")
+            lines.append(_("   Erreur : {error_message}").format(error_message=self.error_message))
         if self.degraded_mode:
-            lines.append("   ⚠️ Mode dégradé actif")
+            lines.append(_("   ⚠️ Mode dégradé actif"))
         return "\n".join(lines)
 
 
@@ -86,11 +87,11 @@ class BanOperationResponse:
 
     def to_display(self) -> str:
         if self.already_exists:
-            return f"⚠️ {self.ip} est déjà {'bannie' if self.action == 'ban' else 'débannie'}"
+            return _("⚠️ {ip} est déjà {value}").format(ip=self.ip, value=_('bannie') if self.action == 'ban' else _('débannie'))
         if self.success:
             symbol = "🚫" if self.action == "ban" else "✅"
-            return f"{symbol} {self.ip} {self.action} sur {self.backend}"
-        return f"❌ Échec du {self.action} de {self.ip} : {self.message}"
+            return _("{symbol} {ip} {action} sur {backend}").format(symbol=symbol, ip=self.ip, action=self.action, backend=self.backend)
+        return _("❌ Échec du {action} de {ip} : {message}").format(action=self.action, ip=self.ip, message=self.message)
 
 
 @dataclass(slots=True)
@@ -107,8 +108,8 @@ class SyncOperationResponse:
     def to_display(self) -> str:
         prefix = "🔍 [DRY RUN] " if self.dry_run else ""
         if self.success:
-            return f"{prefix}✅ Sync {self.source} → {self.destination} : {self.ips_synced} IPs"
-        return f"❌ Échec sync : {self.message}"
+            return _("{prefix}✅ Sync {source} → {destination} : {ips_synced} IPs").format(prefix=prefix, source=self.source, destination=self.destination, ips_synced=self.ips_synced)
+        return _("❌ Échec sync : {message}").format(message=self.message)
 
 
 @dataclass(slots=True)
@@ -120,8 +121,8 @@ class ValidationResponse:
 
     def to_display(self) -> str:
         if self.is_valid:
-            return "✅ Validation réussie"
-        lines = ["❌ Erreurs de validation :"]
+            return _("✅ Validation réussie")
+        lines = [_("❌ Erreurs de validation :")]
         for err in self.errors:
             lines.append(f"   • {err}")
         for warn in self.warnings:

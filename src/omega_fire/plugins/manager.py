@@ -23,6 +23,7 @@ from omega_fire.plugins.exceptions import (
     PluginNotFoundError,
 )
 from omega_fire.plugins.loader import PluginLoader, PluginManifest
+from omega_fire.shared.i18n import _
 
 
 # ----------------------------------------------------------------------
@@ -228,7 +229,7 @@ class PluginManager:
                 raise PluginConflictError(
                     plugin_info.manifest.name,
                     other_info.manifest.name,
-                    f"Capacités en conflit : {', '.join(common_caps)}"
+                    _("Capacités en conflit : {value}").format(value=', '.join(common_caps))
                 )
     
     def get_plugin(self, plugin_name: str) -> PluginInfo:

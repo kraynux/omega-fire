@@ -1,10 +1,11 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Builtin plugin for conntrack monitoring."""
+from omega_fire.shared.i18n import _
 
 PLUGIN_NAME = "conntrack"
 PLUGIN_VERSION = "1.0.0"
-PLUGIN_AUTHOR = "Omega-Fire Team"
-PLUGIN_DESCRIPTION = "Monitoring des connexions via conntrack"
+PLUGIN_AUTHOR = _("Omega-Fire Team")
+PLUGIN_DESCRIPTION = _("Monitoring des connexions via conntrack")
 PLUGIN_CAPABILITIES = ["conntrack_monitoring", "conntrack_stats"]
 PLUGIN_DEPENDENCIES = []
 PLUGIN_HOOKS = ["on_connection_established", "on_connection_closed"]

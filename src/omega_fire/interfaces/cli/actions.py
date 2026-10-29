@@ -3897,10 +3897,13 @@ def action_3_5_table_management(ctx: ActionContext) -> None:
                 str(entry.rule_count),
             )
         ctx.console.print(status_table)
-        if status_result.policy_divergences:
-            ctx.console.print(_warning("Divergence(s) de politique détectée(s) entre backends :"))
-            for note in status_result.policy_divergences:
-                ctx.console.print(_warning(f"  • {note}"))
+        # Effet reel, cause et remede (2026-10-28) ; meme texte que le TUI, en francais
+        # ici (--legacy-cli n'installe jamais de langue).
+        if status_result.policy_analysis is not None:
+            from omega_fire.application.queries.policy_divergence import describe_policies
+            show = _warning if status_result.policy_analysis.has_alert else _info
+            for line in describe_policies(status_result.policy_analysis):
+                ctx.console.print(show(line))
         ctx.console.print()
 
         # ─── ÉTAPE 2 : Choix ───
@@ -6592,6 +6595,12 @@ def _manage_fail2ban_service(ctx: ActionContext, action: str) -> None:
         ctx.console.print(_success(f"✔ Service Fail2ban {label} avec succès."))
     except Exception as e:
         ctx.console.print(_error(f"Échec de la commande de service : {e}"))
+        return
+    if action in ("start", "stop", "restart"):
+        # Version 3.5 : meme mise a jour du registre des capacites que l'interface Textual.
+        from omega_fire.interfaces.tui.support.direct_actions import _refresh_registry_after
+        ctx.console.print(_info(_refresh_registry_after(
+            getattr(ctx, "container", None), fail2ban_port, expect_up=action != "stop")))
 # -------------------------------------------------------------------------
 def action_4_10_manage_fail2ban_service(ctx: ActionContext) -> None:
     """4.10 — Contrôle du service Fail2ban (Statut, Démarrer, Stopper, Redémarrer, Activer/Désactiver au boot)."""

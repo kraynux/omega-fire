@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from enum import Enum
 from ipaddress import ip_network
 from typing import Optional
+from omega_fire.shared.i18n import _
 
 
 COMMENT_PREFIX = "#"
@@ -74,7 +75,7 @@ def classify_line(raw: str, line_number: int = 0) -> ParsedLine:
             line_number=line_number,
             raw=raw,
             kind=LineKind.INVALID,
-            reason="Plusieurs valeurs ou texte libre sur une seule ligne (une IP par ligne).",
+            reason=_("Plusieurs valeurs ou texte libre sur une seule ligne (une IP par ligne)."),
         )
 
     try:
@@ -91,7 +92,7 @@ def classify_line(raw: str, line_number: int = 0) -> ParsedLine:
             line_number=line_number,
             raw=raw,
             kind=LineKind.INVALID,
-            reason=f"'{candidate}' n'est pas une adresse IP ou un réseau CIDR valide.",
+            reason=_("'{candidate}' n'est pas une adresse IP ou un réseau CIDR valide.").format(candidate=candidate),
         )
 
 

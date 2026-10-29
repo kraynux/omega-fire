@@ -108,7 +108,7 @@ class Frame:
         return parts
 
     def _render_header(self, extra: Optional[str] = None) -> Text:
-        title = Text("🛡  OMEGA-FIRE v3.0", style=theme_registry.get_style("menu.title"))
+        title = Text("🛡  OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title"))
         theme_name = theme_registry.get_active().display_name
         theme_text = Text(f"  │  Thème: {theme_name}  │  ", style=theme_registry.get_style("text.muted"))
         

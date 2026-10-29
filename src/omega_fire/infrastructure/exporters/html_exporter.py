@@ -9,6 +9,7 @@ This module performs file I/O and is therefore in infrastructure/.
 from pathlib import Path
 from typing import Any, Union
 from omega_fire.domain.reports.serializers import report_to_serializable
+from omega_fire.shared.i18n import _, html_dir, html_lang, ngettext
 
 
 class HtmlExporter:
@@ -40,10 +41,12 @@ class HtmlExporter:
                     loader=FileSystemLoader(str(self.templates_dir)),
                     autoescape=True,
                 )
+                # Textes des modeles : {{ _("...") }}, traduits AU RENDU dans la langue active
+                # (langue des exports pendant un export, lot N) - jamais figes au chargement.
+                self._env.globals.update(_=_, ngettext=ngettext, html_lang=html_lang, html_dir=html_dir)
             except ImportError:
                 raise RuntimeError(
-                    "Jinja2 is required for HTML export. "
-                    "Install it with: pip install jinja2"
+                    _("L'export HTML nécessite Jinja2. Installation : pip install jinja2")
                 )
         return self._env
     

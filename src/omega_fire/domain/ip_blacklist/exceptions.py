@@ -5,6 +5,7 @@ Pure domain exceptions. These express business rule violations,
 not technical failures. They are caught by application/ and
 translated into Results or user-facing messages.
 """
+from omega_fire.shared.i18n import _
 
 
 class IPBlacklistError(Exception):
@@ -24,7 +25,7 @@ class IPAlreadyBannedError(IPBlacklistError):
     def __init__(self, ip: str, backend: str):
         self.ip = ip
         self.backend = backend
-        super().__init__(f"IP {ip} is already banned on {backend}")
+        super().__init__(_("L'IP {ip} est déjà bannie sur {backend}").format(ip=ip, backend=backend))
 
 
 class IPNotFoundError(IPBlacklistError):
@@ -35,7 +36,7 @@ class IPNotFoundError(IPBlacklistError):
     """
     def __init__(self, ip: str):
         self.ip = ip
-        super().__init__(f"IP {ip} not found in blacklist")
+        super().__init__(_("IP {ip} absente de la blacklist").format(ip=ip))
 
 
 class InvalidIPError(IPBlacklistError):
@@ -46,7 +47,7 @@ class InvalidIPError(IPBlacklistError):
     """
     def __init__(self, ip: str):
         self.ip = ip
-        super().__init__(f"Invalid IP address format: {ip}")
+        super().__init__(_("Format d'adresse IP invalide : {ip}").format(ip=ip))
 
 
 class IPFamilyMismatchError(IPBlacklistError):
@@ -66,7 +67,7 @@ class IPFamilyMismatchError(IPBlacklistError):
         self.expected_version = expected_version
         self.backend = backend
         super().__init__(
-            f"IP {ip} is not IPv{expected_version} — incompatible with backend '{backend}'"
+            _("L'IP {ip} n'est pas en IPv{expected_version} — incompatible avec le backend « {backend} »").format(ip=ip, expected_version=expected_version, backend=backend)
         )
 
 # <-- INFO DEV ---------------------------------------------------------

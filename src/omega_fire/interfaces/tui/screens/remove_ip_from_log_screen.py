@@ -16,18 +16,58 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
 from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
-from omega_fire.infrastructure.config.paths import DEFAULT_PINNED_FILES, RUNTIME_DIR, _PROJECT_ROOT
+from omega_fire.infrastructure.config.paths import BLOCKLIST_DIR, DEFAULT_PINNED_FILES, RUNTIME_DIR, _PROJECT_ROOT
+from omega_fire.infrastructure.exporters.export_catalog import ip_list_exports
+from omega_fire.infrastructure.exporters.top_ips_exporter import read_exported_ips
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens.checklist import CheckListScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
+from omega_fire.interfaces.tui.screens.export_picker import ExportPickerScreen
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "5.3 Supprimer IP"
+_ACTION_TITLE = "5.5 Supprimer une IP des logs"
 _SRC_MANUAL = "__manual__"
+_IP_SEPARATORS = re.compile(r"[\s,;]+")
+
+
+def parse_ip_list(raw: str) -> tuple[list[str], list[str]]:
+    """Version 3.5 : plusieurs IPs separees par virgule, espace ou point-virgule.
+    Retourne (IPs valides sans doublon, saisies invalides)."""
+    valid: list[str] = []
+    invalid: list[str] = []
+    for token in _IP_SEPARATORS.split(raw.strip()):
+        if not token:
+            continue
+        try:
+            ip = str(ipaddress.ip_address(token))
+        except ValueError:
+            invalid.append(token)
+            continue
+        if ip not in valid:
+            valid.append(ip)
+    return valid, invalid
+
+
+def split_lines_by_ips(lines: list[str], ips: list[str]) -> tuple[dict[str, int], list[str]]:
+    """(lignes retirees par IP, lignes conservees). Une ligne qui contient plusieurs des
+    IPs n'est comptee qu'une fois, pour la premiere IP de la liste."""
+    patterns = [(ip, re.compile(rf"(?<![\w.:]){re.escape(ip)}(?![\w:]|\.\d)")) for ip in ips]
+    counts = {ip: 0 for ip in ips}
+    kept: list[str] = []
+    for line in lines:
+        for ip, pattern in patterns:
+            if pattern.search(line):
+                counts[ip] += 1
+                break
+        else:
+            kept.append(line)
+    return counts, kept
 
 
 class RemoveIpFromLogScreen(OmegaScreen):
@@ -43,30 +83,33 @@ class RemoveIpFromLogScreen(OmegaScreen):
         )
 
     def _source_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [("Chemin manuel", _SRC_MANUAL)]
+        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _SRC_MANUAL)]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("SUPPRIMER UNE IP DES LOGS", classes="omega-title")
+            yield Static(_("SUPPRIMER UNE IP DES LOGS"), classes="omega-title")
 
-            yield Static("Fichier source", classes="omega-subtitle")
-            yield Select(self._source_options(), id="source-select")
+            yield Static(_("Fichier source"), classes="omega-subtitle")
+            yield Select(self._source_options(), id="source-select", prompt=_("Sélectionner"))
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer les epingles", id="manage-pins")
+                    yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static("Chemin manuel", id="manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Chemin manuel"), id="manual-label", classes="omega-subtitle omega-hidden")
             yield Input(value="var/log/access.log", id="manual-input", classes="omega-hidden")
 
-            yield Static("Adresse IP a retirer", classes="omega-subtitle")
+            yield Static(_("Adresse(s) IP à retirer (séparées par des virgules)"), classes="omega-subtitle")
             yield Input(id="ip-input")
+            with Horizontal(classes="omega-actions"):
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Charger depuis un export"), id="load-export")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Rechercher et supprimer", id="launch", variant="error")
+                    yield Button(_("Rechercher et supprimer"), id="launch", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -87,6 +130,9 @@ class RemoveIpFromLogScreen(OmegaScreen):
             return
         if event.button.id == "manage-pins":
             self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_source_select)
+            return
+        if event.button.id == "load-export":
+            self._pick_export()
             return
         if event.button.id != "launch":
             return
@@ -112,67 +158,105 @@ class RemoveIpFromLogScreen(OmegaScreen):
         else:
             selected_file = str(source)
         if not selected_file:
-            self.app.notify("Saisissez un chemin de fichier.", severity="warning")
+            self.app.notify(_("Saisissez un chemin de fichier."), severity="warning")
             return
 
         target_path = self._resolve_target_path(selected_file)
         if target_path is None:
-            self.app.notify(f"Fichier introuvable : {selected_file}", severity="error")
+            self.app.notify(_("Fichier introuvable : {selected_file}").format(selected_file=selected_file), severity="error")
             return
 
-        target_ip = self.query_one("#ip-input", Input).value.strip()
-        if not target_ip:
-            self.app.notify("Saisissez une adresse IP.", severity="warning")
+        target_ips, invalid = parse_ip_list(self.query_one("#ip-input", Input).value)
+        if invalid:
+            self.app.notify(_("Format d'adresse IP invalide : {values}").format(values=", ".join(invalid)),
+                            severity="warning")
             return
-        try:
-            ipaddress.ip_address(target_ip)
-        except ValueError:
-            self.app.notify("Format d'adresse IP invalide.", severity="warning")
+        if not target_ips:
+            self.app.notify(_("Saisissez une adresse IP."), severity="warning")
             return
 
         try:
             with open(target_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
         except Exception as e:
-            self.app.notify(f"Impossible de lire le fichier : {e}", severity="error")
+            self.app.notify(_("Impossible de lire le fichier : {e}").format(e=e), severity="error")
             return
 
-        matched_lines = []
-        cleaned_lines = []
-        pattern = re.compile(rf'\b{re.escape(target_ip)}\b')
-        for line in lines:
-            if pattern.search(line):
-                matched_lines.append(line)
-            else:
-                cleaned_lines.append(line)
-
-        occurrences = len(matched_lines)
+        counts, cleaned_lines = split_lines_by_ips(lines, target_ips)
+        occurrences = sum(counts.values())
         if occurrences == 0:
-            self.app.notify(f"L'adresse IP {target_ip} n'a pas ete trouvee dans '{target_path.name}'.", severity="warning")
+            self.app.notify(_("Aucune de ces IPs n'a été trouvée dans '{name}'.").format(name=target_path.name),
+                            severity="warning")
             return
 
+        found = [ip for ip in target_ips if counts[ip]]
+        missing = [ip for ip in target_ips if not counts[ip]]
+        details = "\n".join(_("  {ip} : {count} ligne(s)").format(ip=ip, count=counts[ip]) for ip in found)
+        if missing:
+            details += "\n" + _("Absentes du fichier : {values}").format(values=", ".join(missing))
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LA SUPPRESSION",
-                message=(
-                    f"Fichier : {target_path.name}\nIP : {target_ip}\n"
-                    f"{occurrences} occurrence(s) trouvee(s), {len(cleaned_lines)} ligne(s) restante(s) apres purge."
-                ),
+                title=_("CONFIRMER LA SUPPRESSION"),
+                message=_("Fichier : {name}\n{details}\n{occurrences} ligne(s) retirée(s), {count} ligne(s) "
+                          "restante(s) après purge.").format(
+                    name=target_path.name, details=details, occurrences=occurrences, count=len(cleaned_lines)),
             ),
-            lambda confirmed: self._delete_if_confirmed(confirmed, target_path, target_ip, occurrences, cleaned_lines),
+            lambda confirmed: self._delete_if_confirmed(confirmed, target_path, found, occurrences, cleaned_lines),
         )
 
-    def _delete_if_confirmed(self, confirmed: bool | None, target_path: Path, target_ip: str, occurrences: int, cleaned_lines: list[str]) -> None:
+    def _delete_if_confirmed(self, confirmed: bool | None, target_path: Path, target_ips: list[str], occurrences: int, cleaned_lines: list[str]) -> None:
         if not confirmed:
             return
         try:
             with open(target_path, "w", encoding="utf-8") as f:
                 f.writelines(cleaned_lines)
         except Exception as e:
-            self.app.notify(f"Erreur lors de l'ecriture dans le fichier : {e}", severity="error")
+            self.app.notify(_("Erreur lors de l'écriture dans le fichier : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
             return
 
-        self.app.notify(f"{occurrences} occurrence(s) de {target_ip} retiree(s) de {target_path.name}.")
+        self.app.notify(_("{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s)).").format(
+            occurrences=occurrences, name=target_path.name, count=len(target_ips)))
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()
+
+    def _pick_export(self) -> None:
+        """Version 3.5 : recharger les IPs d'un export (5.4 Top N, 6.1, 4.8) au lieu de
+        les recopier a la main."""
+        files = ip_list_exports(self._container.exports_dir, BLOCKLIST_DIR)
+        if not files:
+            self.app.notify(_("Aucun export d'IPs trouvé : exportez d'abord un résultat en 5.4."),
+                            severity="warning")
+            return
+        self.app.push_screen(
+            ExportPickerScreen(title=_("CHARGER UNE LISTE D'IPs"),
+                               message=_("Exports contenant des IPs, Top N (5.4) en premier."), files=files),
+            self._pick_ips,
+        )
+
+    def _pick_ips(self, path: Path | None) -> None:
+        if path is None:
+            return
+        try:
+            ips = read_exported_ips(path)
+        except OSError as e:
+            self.app.notify(_("Impossible de lire le fichier : {e}").format(e=e), severity="error")
+            return
+        if not ips:
+            self.app.notify(_("Aucune IP dans '{name}'.").format(name=path.name), severity="warning")
+            return
+        current, _invalid = parse_ip_list(self.query_one("#ip-input", Input).value)
+        self.app.push_screen(
+            CheckListScreen(
+                title=_("IPs À RETIRER DES LOGS"),
+                message=_("{name} — cochez les IPs à retirer du fichier source.").format(name=path.name),
+                items=[(ip, ip) for ip in ips],
+                checked=set(current),
+            ),
+            self._apply_picked_ips,
+        )
+
+    def _apply_picked_ips(self, ips: list[str] | None) -> None:
+        if ips is None:
+            return
+        self.query_one("#ip-input", Input).value = ", ".join(ips)

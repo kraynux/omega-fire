@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from omega_fire.infrastructure.exceptions import StorageError
 from omega_fire.ports.persistence import BackupInfo
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -29,11 +30,11 @@ class RestoreBackupRequest:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.backup_path:
-            errors.append("backup_path must not be empty")
+            errors.append(_("Le chemin de la sauvegarde (backup_path) ne doit pas être vide"))
         elif not Path(self.backup_path).exists():
-            errors.append(f"Backup file not found: {self.backup_path}")
+            errors.append(_("Fichier de sauvegarde introuvable : {backup_path}").format(backup_path=self.backup_path))
         if self.mode not in ("append", "overwrite"):
-            errors.append(f"Invalid mode: {self.mode}")
+            errors.append(_("Mode invalide : {mode}").format(mode=self.mode))
         return errors
 
     def is_valid(self) -> bool:
@@ -76,12 +77,12 @@ class RestoreBackupCommand:
         try:
             self._port.restore_backup(backup, dest_dir=self._temp_dir)
         except StorageError as e:
-            return RestoreBackupResult(success=False, message=f"Échec de l'extraction : {e}")
+            return RestoreBackupResult(success=False, message=_("Échec de l'extraction : {e}").format(e=e))
 
         extracted_files = list(self._temp_dir.glob("*"))
         if not extracted_files:
             shutil.rmtree(self._temp_dir, ignore_errors=True)
-            return RestoreBackupResult(success=False, message="L'archive extraite est vide.")
+            return RestoreBackupResult(success=False, message=_("L'archive extraite est vide."))
 
         extracted_file = extracted_files[0]
         target_file = target_dir / extracted_file.name
@@ -96,11 +97,11 @@ class RestoreBackupCommand:
                         backup_dir=Path("var/backups"),
                         source_paths=[target_file],
                         components=["safety_auto"],
-                        metadata={"reason": "Sauvegarde automatique avant écrasement (5.5)"},
+                        metadata={"reason": "Sauvegarde automatique avant écrasement (restauration d'un backup)"},
                     )
                     safety_backup_path = safety_info.path
                 shutil.copy2(extracted_file, target_file)
-                summary = "Remplacement complet (écrasement)"
+                summary = _("Remplacement complet (écrasement)")
             else:
                 if target_file.exists():
                     if target_dir_name == "logs":
@@ -113,7 +114,7 @@ class RestoreBackupCommand:
                         )
                         with open(target_file, "a", encoding="utf-8") as dst:
                             dst.write(separator + content)
-                        summary = "Fusion incrémentale (ajout, logs)"
+                        summary = _("Fusion incrémentale (ajout, logs)")
                     else:
                         # Blocklist/exports : fusion sans doublon.
                         with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -143,19 +144,18 @@ class RestoreBackupCommand:
                                 dst.write("\n" + "\n".join(lines_to_add) + "\n")
 
                         diag = (
-                            f" ({len(lines_to_add)} nouvelle(s) entrée(s) ajoutée(s), "
-                            f"{len(new_lines) - len(lines_to_add)} déjà présente(s) ignorée(s))"
+                            _(" ({count} nouvelle(s) entrée(s) ajoutée(s), {value} déjà présente(s) ignorée(s))").format(count=len(lines_to_add), value=len(new_lines) - len(lines_to_add))
                         )
-                        summary = "Fusion incrémentale (ajout, sans doublon)"
+                        summary = _("Fusion incrémentale (ajout, sans doublon)")
                 else:
                     shutil.copy2(extracted_file, target_file)
-                    summary = "Fusion incrémentale (fichier cible créé, aucun doublon possible)"
+                    summary = _("Fusion incrémentale (fichier cible créé, aucun doublon possible)")
         finally:
             shutil.rmtree(self._temp_dir, ignore_errors=True)
 
         return RestoreBackupResult(
             success=True,
-            message=f"Restauration effectuée avec succès : {summary}.{diag}",
+            message=_("Restauration effectuée avec succès : {summary}.{diag}").format(summary=summary, diag=diag),
             target_file=target_file,
             safety_backup_path=safety_backup_path,
         )

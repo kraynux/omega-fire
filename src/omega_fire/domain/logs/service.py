@@ -44,6 +44,7 @@ from omega_fire.domain.logs.cleanup import (
     plan_cleanup,
     validate_retention_parameters,
 )
+from omega_fire.shared.i18n import _
 
 
 class LogsService:
@@ -62,7 +63,7 @@ class LogsService:
             raise LogParseError(
                 log_path or "unknown",
                 0,
-                f"Parsing failed: {e}"
+                _("Échec de la lecture : {e}").format(e=e)
             ) from e
     
     def analyze_entries(
@@ -83,7 +84,7 @@ class LogsService:
         except Exception as e:
             raise LogAnalysisError(
                 "stats_computation",
-                f"Analysis failed: {e}"
+                _("Échec de l'analyse : {e}").format(e=e)
             ) from e
     
     def get_top_ips(
@@ -137,7 +138,7 @@ class LogsService:
         if errors:
             raise LogRotationError(
                 log_path,
-                f"Invalid rotation policy: {'; '.join(errors)}"
+                _("Politique de rotation invalide : {value}").format(value='; '.join(errors))
             )
         
         try:
@@ -154,7 +155,7 @@ class LogsService:
         except Exception as e:
             raise LogRotationError(
                 log_path,
-                f"Rotation planning failed: {e}"
+                _("Échec de la préparation de la rotation : {e}").format(e=e)
             ) from e
     
     def plan_cleanup(
@@ -182,15 +183,15 @@ class LogsService:
             raise InvalidRetentionError(
                 "retention_policy",
                 policy,
-                f"Invalid retention policy: {'; '.join(errors)}"
+                _("Politique de conservation invalide : {value}").format(value='; '.join(errors))
             )
         
         try:
             return plan_cleanup(files=files, policy=policy, now=now)
         except Exception as e:
             raise LogCleanupError(
-                "multiple files",
-                f"Cleanup planning failed: {e}"
+                _("multiple files"),
+                _("Échec de la préparation du nettoyage : {e}").format(e=e)
             ) from e
     
     def validate_retention_parameters(

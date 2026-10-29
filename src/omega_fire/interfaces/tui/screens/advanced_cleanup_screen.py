@@ -26,11 +26,12 @@ from omega_fire.infrastructure.config.paths import (
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "5.7 Nettoyage Avance"
+_ACTION_TITLE = "5.9 Nettoyage avancé"
 
 _TARGET_DIRS: dict[str, list[Path]] = {
     "logs": [LOGS_DIR],
@@ -51,51 +52,51 @@ class AdvancedCleanupScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("NETTOYAGE AVANCE DES FICHIERS", classes="omega-title")
+            yield Static(_("NETTOYAGE AVANCÉ DES FICHIERS"), classes="omega-title")
             yield Static(
-                "app.log et audit.log sont toujours exclus (fichiers actifs) — voir 1.5 / 7.3.",
+                _("app.log et audit.log sont toujours exclus (fichiers actifs) — voir 1.5 / 7.3."),
                 classes="omega-hint",
             )
 
-            yield Static("Dossier cible", classes="omega-subtitle")
+            yield Static(_("Dossier cible"), classes="omega-subtitle")
             yield Select(
                 [
-                    ("Tous les logs (var/logs/)", "logs"),
-                    ("Cache temporaire (var/cache/)", "cache"),
-                    ("Fichiers d'exports (var/exports/)", "exports"),
-                    ("Archives de backups (var/backups/)", "backups"),
-                    ("Tout l'environnement runtime (var/)", "all"),
+                    (_("Tous les logs (var/logs/)"), "logs"),
+                    (_("Cache temporaire (var/cache/)"), "cache"),
+                    (_("Fichiers d'exports (var/exports/)"), "exports"),
+                    (_("Archives de backups (var/backups/)"), "backups"),
+                    (_("Tout l'environnement runtime (var/)"), "all"),
                 ],
                 value="logs",
                 id="target-select",
             )
 
-            yield Static("Critere de filtrage", classes="omega-subtitle")
+            yield Static(_("Critère de filtrage"), classes="omega-subtitle")
             yield Select(
                 [
-                    ("Age (fichiers plus anciens que X jours)", "age"),
-                    ("Taille minimale (fichiers plus grands que X MB)", "size"),
-                    ("Extension (ex: .log, .tmp, .gz, .json)", "extension"),
-                    ("Age + Taille combines", "both"),
+                    (_("Âge (fichiers plus anciens que X jours)"), "age"),
+                    (_("Taille minimale (fichiers plus grands que X MB)"), "size"),
+                    (_("Extension (ex: .log, .tmp, .gz, .json)"), "extension"),
+                    (_("Âge + Taille combinés"), "both"),
                 ],
                 value="age",
                 id="criteria-select",
             )
 
-            yield Static("Age minimum (jours)", id="age-label", classes="omega-subtitle")
+            yield Static(_("Âge minimum (jours)"), id="age-label", classes="omega-subtitle")
             yield Input(value="30", id="age-input")
 
-            yield Static("Taille minimale (MB)", id="size-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Taille minimale (MB)"), id="size-label", classes="omega-subtitle omega-hidden")
             yield Input(value="5.0", id="size-input", classes="omega-hidden")
 
-            yield Static("Extension recherchee", id="ext-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Extension recherchée"), id="ext-label", classes="omega-subtitle omega-hidden")
             yield Input(value="log", id="ext-input", classes="omega-hidden")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Analyser", id="analyze", variant="primary")
+                    yield Button(_("Analyser"), id="analyze", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -172,14 +173,14 @@ class AdvancedCleanupScreen(OmegaScreen):
                 continue
 
         if not matching:
-            self.app.notify("Aucun fichier ne correspond a vos criteres de filtrage.", severity="warning")
+            self.app.notify(_("Aucun fichier ne correspond à vos critères de filtrage."), severity="warning")
             return
 
         total_mb = sum(f.stat().st_size for f in matching) / (1024 * 1024)
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LE NETTOYAGE",
-                message=f"Supprimer definitivement {len(matching)} fichier(s) ({total_mb:.2f} MB) ?",
+                title=_("CONFIRMER LE NETTOYAGE"),
+                message=_("Supprimer définitivement {count} fichier(s) ({total_mb:.2f} MB) ?").format(count=len(matching), total_mb=total_mb),
             ),
             lambda confirmed: self._delete_if_confirmed(confirmed, matching, total_mb),
         )
@@ -196,12 +197,12 @@ class AdvancedCleanupScreen(OmegaScreen):
                 deleted_count += 1
             except Exception as e:
                 error_count += 1
-                self.app.notify(f"Erreur pour '{f.name}' : {e}", severity="error")
+                self.app.notify(_("Erreur pour '{name}' : {e}").format(name=f.name, e=e), severity="error")
 
         if deleted_count:
-            self.app.notify(f"Nettoyage termine : {deleted_count} fichier(s) supprime(s), {total_mb:.2f} MB liberes.")
+            self.app.notify(_("Nettoyage terminé : {deleted_count} fichier(s) supprimé(s), {total_mb:.2f} MB libérés.").format(deleted_count=deleted_count, total_mb=total_mb))
         if error_count:
-            self.app.notify(f"{error_count} erreur(s) lors de la suppression.", severity="error")
+            self.app.notify(_("{error_count} erreur(s) lors de la suppression.").format(error_count=error_count), severity="error")
 
         log_action_result(self._container, _ACTION_TITLE, status="success" if deleted_count else "failure")
         self.dismiss()

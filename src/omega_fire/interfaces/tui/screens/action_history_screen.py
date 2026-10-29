@@ -24,6 +24,7 @@ from omega_fire.application.queries.read_audit_history import (
 )
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.purge_audit_history_screen import PurgeAuditHistoryScreen
+from omega_fire.shared.i18n import _, action_title
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -44,28 +45,28 @@ class ActionHistoryScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("HISTORIQUE DES ACTIONS", classes="omega-title")
-            yield Input(placeholder="Filtrer par mot-cle (vide = aucun filtre)", id="filter-input")
+            yield Static(_("HISTORIQUE DES ACTIONS"), classes="omega-title")
+            yield Input(placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"), id="filter-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Filtrer", id="filter")
+                    yield Button(_("Filtrer"), id="filter")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer / Purger", id="manage", variant="error")
+                    yield Button(_("Gérer / Purger"), id="manage", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
 
             yield DataTable(id="history-table")
             yield Static("", id="page-hint", classes="omega-hint")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("< Page precedente", id="prev")
+                    yield Button(_("< Page précédente"), id="prev")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Page suivante >", id="next")
+                    yield Button(_("Page suivante >"), id="next")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#history-table", DataTable).add_columns("Heure", "Action", "Acteur", "Resultat", "Details")
+        self.query_one("#history-table", DataTable).add_columns(_("Heure"), _("Action"), _("Acteur"), _("Résultat"), _("Détails"))
         # call_after_refresh (pas un appel direct) : tant que la mise en
         # page initiale n'a pas eu lieu, `#history-table`.size.height
         # renvoie une valeur provisoire trop petite (avant que le CSS
@@ -118,7 +119,7 @@ class ActionHistoryScreen(OmegaScreen):
             # Text(...) : voir restore_state_screen.py::_refresh (meme
             # correctif, meme raison - MarkupError si {e} contient des
             # crochets).
-            self.query_one("#page-hint", Static).update(Text(f"Registre d'audit indisponible : {e}"))
+            self.query_one("#page-hint", Static).update(Text(_("Registre d'audit indisponible : {e}").format(e=e)))
             return
 
         result = ReadAuditHistoryQuery(audit_port).execute(
@@ -133,8 +134,8 @@ class ActionHistoryScreen(OmegaScreen):
 
         entries = result.entries
         if not entries:
-            filter_suffix = f" (filtre : '{self._keyword}')" if self._keyword else ""
-            self.query_one("#page-hint", Static).update(f"Aucune entree d'audit trouvee.{filter_suffix}")
+            filter_suffix = _(" (filtre : '{keyword}')").format(keyword=self._keyword) if self._keyword else ""
+            self.query_one("#page-hint", Static).update(_("Aucune entrée d'audit trouvée.{filter_suffix}").format(filter_suffix=filter_suffix))
             self._update_nav_buttons(page=0, total_pages=0)
             return
 
@@ -145,25 +146,24 @@ class ActionHistoryScreen(OmegaScreen):
         page_entries = entries[start_idx:start_idx + page_size]
 
         for entry in page_entries:
-            badge = Text("OK", style=colors["available"]) if entry.success else Text("ECHEC", style=colors["danger"])
+            badge = Text("OK", style=colors["available"]) if entry.success else Text(_("ÉCHEC"), style=colors["danger"])
             parts = []
             if entry.target and entry.target != "N/A":
-                parts.append(f"cible: {entry.target}")
+                parts.append(_("cible: {target}").format(target=entry.target))
             if entry.error_message:
-                parts.append(f"erreur: {entry.error_message}")
+                parts.append(_("erreur: {error_message}").format(error_message=entry.error_message))
             details = " | ".join(parts) if parts else "-"
             table.add_row(
                 entry.timestamp.strftime("%d/%m %H:%M:%S"),
-                entry.action,
+                action_title(entry.action),
                 entry.actor,
                 badge,
                 details,
             )
 
-        filter_label = f" — Filtre : '{self._keyword}'" if self._keyword else ""
+        filter_label = _(" — Filtre : '{keyword}'").format(keyword=self._keyword) if self._keyword else ""
         self.query_one("#page-hint", Static).update(
-            f"Page {self._page + 1}/{total_pages}{filter_label}  │  "
-            f"{len(entries)} entree(s) au total (limite de lecture : 500)."
+            _("Page {value}/{total_pages}{filter_label}  │  {count} entrée(s) au total (limite de lecture : 500).").format(value=self._page + 1, total_pages=total_pages, filter_label=filter_label, count=len(entries))
         )
         self._update_nav_buttons(page=self._page, total_pages=total_pages)
 

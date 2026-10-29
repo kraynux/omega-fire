@@ -8,6 +8,7 @@ audit logs, snapshots.
 This module performs real file I/O and is therefore in infrastructure/.
 """
 import sqlite3
+from pathlib import Path
 from datetime import datetime
 from typing import Optional
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
@@ -509,6 +510,22 @@ class RuleRepository:
                 reason=str(e),
             ) from e
     
+    def backup_database(self, dest: Path) -> None:
+        """Copie complete et coherente de la base (API backup SQLite, WAL compris),
+        avant un nettoyage (3.2 « Nettoyer et resynchroniser la base »)."""
+        try:
+            target = sqlite3.connect(str(dest))
+            try:
+                self._db.get_connection().backup(target)
+            finally:
+                target.close()
+        except Exception as e:
+            raise RepositoryError(
+                repository="RuleRepository",
+                operation="backup_database",
+                reason=str(e),
+            ) from e
+
     def _row_to_rule(self, row: sqlite3.Row) -> FirewallRule:
         raw_chain = row["chain"]
         try:

@@ -15,6 +15,7 @@ from omega_fire.infrastructure.backends.conntrack.exceptions import (
     ConntrackCommandError,
     ConntrackPermissionError,
 )
+from omega_fire.shared.i18n import _
 
 
 class ConntrackAdapter:
@@ -92,9 +93,9 @@ class ConntrackAdapter:
                 note = ""
                 if "invalid parameters" in stderr.lower():
                     note = (
-                        "Incompatibilité probable entre conntrack-tools et ce noyau (pas un bug "
+                        _("Incompatibilité probable entre conntrack-tools et ce noyau (pas un bug "
                         "Omega-Fire — la commande système échoue identiquement en root, en dehors "
-                        "de l'application)"
+                        "de l'application)")
                     )
                 raise ConntrackCommandError(
                     command=" ".join(cmd),

@@ -21,6 +21,7 @@ from omega_fire.interfaces.tui.screens.section_screen import SectionScreen
 from omega_fire.interfaces.tui.screens.settings_screen import SettingsScreen
 from omega_fire.interfaces.tui.section_registry import SECTIONS
 from omega_fire.interfaces.tui.widgets.home_wordmark import HomeWordmark
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -35,18 +36,24 @@ if TYPE_CHECKING:
 # seul le rendait introuvable sans le savoir a l'avance — retour
 # utilisateur reel ("Menu reglages a disparu").
 _MENU_ITEMS: tuple[tuple[str, str], ...] = (
-    ("1", "ÉTAT DES CAPACITÉS & DIAGNOSTICS"),
-    ("2", "GESTION DES IPs"),
-    ("3", "GESTION DES RÈGLES"),
-    ("4", "GESTION FAIL2BAN"),
-    ("5", "GESTION DES LOGS"),
-    ("6", "EXPORTS & RAPPORTS"),
-    ("7", "SYSTÈME & PERSISTANCE"),
-    ("8", "MONITORING & STATISTIQUES"),
-    ("9", "RÉGLAGES"),
+    ("1", _("CAPACITÉS & DIAGNOSTICS")),
+    ("2", _("GESTION DES IPs")),
+    ("3", _("GESTION DES RÈGLES")),
+    ("4", _("GESTION FAIL2BAN")),
+    ("5", _("GESTION DES LOGS")),
+    ("6", _("EXPORTS & RAPPORTS")),
+    ("7", _("SYSTÈME & PERSISTANCE")),
+    ("8", _("MONITORING & STATISTIQUES")),
+    ("9", _("RÉGLAGES")),
+    ("10", _("AIDE")),
 )
 
 _SETTINGS_ITEM_ID = "9"
+# Version 3.5 (decision utilisateur 2026-10-28) : bouton AIDE dans la meme colonne ; il
+# ouvre le guide d'aide centralise (toutes les fiches, comme omega-serv), la touche `a`
+# restant l'aide de l'ecran courant.
+_HELP_ITEM_ID = "10"
+_ITEM_ICONS = {_SETTINGS_ITEM_ID: "⚙", _HELP_ITEM_ID: "?"}
 
 
 def _widget_id(item_id: str) -> str:
@@ -68,9 +75,9 @@ class HomeScreen(Screen[None]):
     dismiss() (rien "en dessous" de cet ecran)."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("escape", "back", "Retour", show=True),
-        Binding("up", "focus_previous_item", "Monter", show=False),
-        Binding("down", "focus_next_item", "Descendre", show=False),
+        Binding("escape", "back", _("Retour"), show=True),
+        Binding("up", "focus_previous_item", _("Monter"), show=False),
+        Binding("down", "focus_next_item", _("Descendre"), show=False),
     ]
 
     def __init__(self, *, container: DependencyContainer) -> None:
@@ -85,23 +92,23 @@ class HomeScreen(Screen[None]):
             with Center():
                 with Vertical(classes="omega-home-menu") as menu:
                     for item_id, label in _MENU_ITEMS:
-                        # "9" (Reglages) n'est pas une section du CLI d'origine,
-                        # menu_icon() n'a donc pas d'entree pour elle (renverrait
+                        # "9" (Reglages) et "10" (Aide) ne sont pas des sections du CLI d'origine,
+                        # menu_icon() n'a donc pas d'entree pour eux (renverrait
                         # le repli "[?]") - icone dediee au lieu d'emprunter celle
                         # (deja utilisee) de la section 3.
-                        icon = "⚙" if item_id == _SETTINGS_ITEM_ID else menu_icon(item_id)
+                        icon = _ITEM_ICONS.get(item_id) or menu_icon(item_id)
                         with Container(classes="omega-btn-frame"):
-                            yield Button(f"{item_id}. {icon} {label}", id=_widget_id(item_id))
-                menu.border_title = "MENU PRINCIPAL"
+                            yield Button(_("{item_id}. {icon} {label}").format(item_id=item_id, icon=icon, label=label), id=_widget_id(item_id))
+                menu.border_title = _("MENU PRINCIPAL")
         yield Footer()
 
     def help_content(self) -> tuple[str, str]:
         return (
-            "MENU PRINCIPAL",
-            "Choisissez une section (1-8) ou Reglages (9). Quitter (`q`) "
-            "est accessible par raccourci global, voir le pied d'ecran. "
-            "Appuyez sur `a` a nouveau dans une section pour voir le detail "
-            "des actions qu'elle contient.",
+            _("MENU PRINCIPAL"),
+            _("Choisissez une section (1-8), Réglages (9) ou Aide (10). Quitter (`q`) "
+            "est accessible par raccourci global, voir le pied d'écran. "
+            "Appuyez sur `a` à nouveau dans une section pour voir le détail "
+            "des actions qu'elle contient."),
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -109,13 +116,17 @@ class HomeScreen(Screen[None]):
         if section_id == _SETTINGS_ITEM_ID:
             self.app.push_screen(SettingsScreen(container=self._container))
             return
+        if section_id == _HELP_ITEM_ID:
+            from omega_fire.interfaces.tui.screens.guide_screens import GuideMenuScreen
+            self.app.push_screen(GuideMenuScreen(container=self._container))
+            return
         screen = self._screen_for(section_id)
         if screen is not None:
             self.app.push_screen(screen)
         else:
             self.app.notify(
-                "Cet ecran n'est pas encore migre (voir la feuille de route, Phase 3).",
-                title=f"Section {section_id}",
+                _("Cet écran n'est pas encore migré (voir la feuille de route, Phase 3)."),
+                title=_("Section {section_id}").format(section_id=section_id),
                 severity="information",
             )
 
@@ -137,4 +148,5 @@ class HomeScreen(Screen[None]):
         if section is None:
             return None
         title, items = section
-        return SectionScreen(container=self._container, section_id=item_id, title=title, items=items)
+        # Titre source marque (section_registry, N_) : traduit a l'affichage.
+        return SectionScreen(container=self._container, section_id=item_id, title=_(title), items=items)

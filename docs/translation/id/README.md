@@ -18,6 +18,7 @@ Halaman resmi: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 Dokumentasi, ekspor & antarmuka tersedia dalam **17 bahasa** — lihat [Bahasa antarmuka](#bahasa-antarmuka).  
 **Bahasa:**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](../nl/README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](../pl/README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](../zh-CN/README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](../vi/README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](../ko/README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -100,6 +101,7 @@ Omega-Fire berperan sebagai **pos kendali lokal** untuk keamanan jaringan. Aplik
 - Melihat diagnostik terbaru.
 - Melihat dan mencari di log aplikasi.
 - Mengekspor status dan diagnostik ke JSON, TXT, atau HTML.
+- Kategori **Suite omega**: omega-serv (instans yang terdeteksi dan berjalan), omega-waf (ekstra `magnet` aktif) dan omega-jail (jail yang terpasang), terlihat di registri, dashboard, dan laporan.
 
 ### 2. Manajemen IP terpadu
 
@@ -121,12 +123,15 @@ Blacklist terpadu memungkinkan bekerja dengan nftables dan iptables dari satu la
 - Daftar aturan sistem dan aturan yang dibuat oleh Omega-Fire.
 - Menghapus aturan melalui pemilihan.
 - Pembersihan otomatis aturan nonaktif di basis referensi.
+- Pembersihan dan sinkronisasi ulang basis data dengan firewall sebenarnya, dengan pratinjau dan cadangan terlebih dahulu, tanpa pernah mengubah firewall itu sendiri.
+- Aturan dari alat lain (UFW, Tailscale, Docker…) dikenali dari asalnya: ditampilkan sebagai informasi, tidak pernah dihapus dari Omega-Fire.
+- Pengaman sebelum menerapkan kebijakan atau mengosongkan iptables saat alat lain memiliki aturan di sana: terapkan di semua tempat, hanya di nftables, atau batalkan — konsekuensinya dijelaskan rinci di bantuan.
 - Menerapkan kebijakan bawaan.
 - Cadangan otomatis sebelum menerapkan kebijakan.
 - Menyesuaikan, menyimpan, dan memulihkan kebijakan.
 - Penanda kebijakan aktif di menu status dan dashboard.
 - Penanda profil yang diubah dalam bentuk `Profil + CUSTOM`.
-- Manajemen tabel (menu 3.5): diagnostik hanya-baca per backend (keberadaan tabel, kebijakan input/output/forward, jumlah aturan) dengan deteksi perbedaan antar-backend.
+- Pengelolaan tabel (menu 3.5): diagnostik hanya baca per backend (keberadaan tabel, kebijakan input/output/forward, jumlah aturan) dengan penjelasan kebijakan yang berbeda antar-backend (efek nyata, penyebab, dan solusi).
 - Inisialisasi tabel nftables pada penggunaan pertama, tanpa pernah menimpa chain yang sudah dikonfigurasi.
 - Mengatur ulang kebijakan chain ke ACCEPT di suatu backend, untuk memperbaiki kebijakan restriktif yatim yang ditinggalkan profil sebelumnya.
 - Pengosongan terarah satu backend atau pengosongan tersinkron semua backend yang terdeteksi dalam satu tindakan.
@@ -140,20 +145,23 @@ Blacklist terpadu memungkinkan bekerja dengan nftables dan iptables dari satu la
 - Ban dan unban tunggal atau ganda.
 - Memindahkan IP antara jail, backend, dan file.
 - Pembuatan jail kustom terpandu.
-- Templat jail bawaan.
-- Menghapus jail.
+- Templat jail bawaan, dapat diubah dan dihapus.
+- Asal setiap jail: Omega-Fire, omega-jail, konfigurasi utama fail2ban, atau file lain.
+- Penghapusan jail yang andal, apa pun nama filenya: peringatan untuk jail yang dipasang oleh omega-jail, penolakan beserta alasan untuk jail dari `jail.local` atau dari file bersama, filter standar fail2ban tidak pernah dihapus.
 - Mengosongkan jail atau pembersihan umum.
 - Ekspor ke JSON, TXT, atau HTML.
 - Pemeriksaan dan audit konfigurasi.
-- Kontrol layanan: status, mulai, berhenti, mulai ulang, aktifkan dan nonaktifkan saat boot.
+- Kontrol layanan: status, mulai, berhenti, mulai ulang, aktifkan dan nonaktifkan saat boot; setelah dimulai atau dihentikan, registri kemampuan dan dashboard diperbarui.
 
 ### 5. Log dan pemeliharaan
 
-- Live Tail dengan dashboard Omega-Fire.
-- Tampilan banyak file dengan item yang disematkan (sumber favorit, tersimpan di antara dua kali peluncuran).
-- Integrasi `lnav`: memilih satu atau beberapa file (nomor atau path manual, dipisahkan koma), penggabungan otomatis menjadi satu tampilan kronologis, dibungkus header/footer Omega-Fire (lihat [Navigasi](#navigasi)).
-- Analisis IP yang paling sering muncul dengan Top N.
-- Pembersihan terarah satu IP di file LOG atau TXT.
+- **Pustaka log** (5.1): impor otomatis log dari instans omega-serv yang terdeteksi, termasuk log omega-waf, penyematan path secara manual, dan pengambilan log jarak jauh melalui SSH (kunci atau agen, tidak pernah kata sandi).
+- **Favorit** (5.2): menggabungkan log dari Pustaka, menyimpannya dengan nama dan penampil, lalu menjalankannya langsung.
+- **Lihat log** (5.3): satu log tanpa konfigurasi, dengan penampil pilihan Anda — Sederhana (dashboard waktu nyata), Klasik (baris terakhir lalu diikuti langsung) atau `lnav`.
+- Integrasi `lnav`: beberapa log digabungkan menjadi satu tampilan kronologis, dibungkus header/footer Omega-Fire (lihat [Navigasi](#navigasi)).
+- Analisis IP yang paling sering muncul dengan Top N, dapat diekspor untuk dimuat ulang ke pembersihan terarah.
+- Pembersihan terarah satu atau beberapa IP di file LOG atau TXT, diketik manual atau dicentang dari sebuah ekspor.
+- File tersemat dengan **preset yang bisa dicentang**: hanya path umum yang benar-benar ada di mesin yang ditawarkan.
 - Rotasi dan pencadangan segera atau otomatis.
 - Memulihkan cadangan.
 - Pembersihan berdasarkan usia, kuota, jenis, atau pilihan manual.
@@ -178,6 +186,10 @@ Laporan yang tersedia:
 - Statistik Fail2Ban.
 - Status dan diagnostik sistem.
 - Laporan statistik 7 atau 30 hari.
+- Peringkat Top N IP.
+- Panduan bantuan dan FAQ.
+
+**Lihat semua ekspor** (6.5): semua file yang diekspor di satu tempat, dengan jenis, tanggal, dan ukuran; laporan HTML terbuka di peramban web bawaan pengguna, file JSON atau TXT dibaca di dalam Omega-Fire, tanpa terminal maupun pengelola file.
 
 Tema HTML:
 
@@ -187,11 +199,13 @@ Tema HTML:
 - `light-basic` — terang dan sederhana.
 - `light-alt` — kertas krem dan hijau hutan.
 
+Bahasa ekspor: diatur terpisah di pengaturan (bawaan « Sama dengan antarmuka »), untuk menyerahkan laporan dalam bahasa pembacanya tanpa mengubah bahasa antarmuka.
+
 ### 7. Sistem dan persistensi
 
 - Pencadangan seluruh status: aturan, blokir nftables, blokir iptables, dan Fail2Ban.
 - Pembuatan arsip `.tar.gz` bercap waktu.
-- Daftar dan pemulihan snapshot.
+- Daftar dan pemulihan snapshot: hanya aturan Omega-Fire yang dapat dibuat ulang secara identik yang dipasang kembali; aturan alat lain tidak pernah disentuh.
 - Riwayat tindakan.
 - Penyaringan dan pembersihan riwayat.
 - Memuat ulang konfigurasi dan memindai ulang tanpa memulai ulang.
@@ -209,7 +223,17 @@ Tema HTML:
 
 - Memilih tema aktif dari sepuluh tema `omega-*` yang dipakai bersama seluruh suite (lihat [Tema dan terminal](#tema-dan-terminal)), tersimpan di antara dua kali peluncuran.
 - Menimpa profil tampilan secara manual (otomatis, lengkap, standar, ringkas, atau hanya mono), diterapkan pada peluncuran berikutnya.
-- Dapat diakses dari menu utama (`9. RÉGLAGES`) atau langsung dengan tombol `s`.
+- Bahasa antarmuka dari 17 bahasa (lihat [Bahasa antarmuka](#bahasa-antarmuka)): hanya antarmuka yang dimulai ulang; aturan firewall, Fail2Ban, dan layanan tidak tersentuh.
+- Bahasa ekspor HTML dan TXT, terpisah dari bahasa antarmuka.
+- Folder ekspor dan tangkapan layar yang dapat diubah, dengan pengosongan setelah konfirmasi.
+- Dapat diakses dari menu utama (`9. PENGATURAN`) atau langsung dengan tombol `s`.
+
+### 10. Bantuan
+
+- **Panduan bantuan**: semua lembar bantuan dikumpulkan sesuai urutan menu, setiap lembar membuka lembar terkaitnya.
+- **FAQ**: pertanyaan nyata yang ditemui saat digunakan (aturan alat lain, pemulihan, Fail2Ban, log, ekspor, dan peramban).
+- Ekspor HTML panduan dan FAQ, dalam bahasa ekspor.
+- Tombol `a` tetap menjadi bantuan layar saat ini.
 
 ---
 
@@ -269,7 +293,7 @@ Dependensi produksi didefinisikan dalam `requirements.txt`:
 - `psutil` — informasi sistem (CPU, memori, jaringan, proses) untuk dashboard dan diagnostik.
 - `jinja2` — pembuatan ekspor HTML.
 - `python-dotenv` — variabel lingkungan.
-- `pyte` — emulator terminal virtual, untuk membungkus `lnav` (menu 5.9/8.6).
+- `pyte` — emulator terminal virtual, untuk membungkus `lnav` (menu 8.6 dan penampil lnav di 5.2 / 5.3).
 
 Alat kualitas (`pytest`, `black`, `flake8`, `mypy`) dicantumkan sebagai komentar di `requirements.txt`: hapus komentarnya atau pasang secara terpisah jika Anda berkontribusi pada proyek (lihat [Pengujian dan kualitas](#pengujian-dan-kualitas)).
 
@@ -454,11 +478,17 @@ Untuk menjalankan antarmuka Rich lama (input angka berurutan) sebagai gantinya:
 ./omega-fire.sh --legacy-cli
 ```
 
+Antarmuka lama tetap antarmuka versi 3.0, dalam bahasa Prancis: menu 5 asli (tanpa Pustaka, Favorit, atau penampil Klasik), tanpa "Lihat semua ekspor", tanpa panduan bantuan maupun FAQ, tanpa preset. Antarmuka Textual memuat versi 3.5 lengkap.
+
+### Bahasa antarmuka
+
+17 bahasa: Prancis, Inggris, Spanyol, Portugis (Brasil), Italia, Jerman, Belanda, Polandia, Rusia, Tionghoa, Vietnam, Thai, Indonesia, Jepang, Korea, Hindi, Arab. Dipilih di pengaturan (tombol `s`, « Langue / Language », label yang tidak pernah diterjemahkan), diterapkan dengan memulai ulang antarmuka saja, atau sesekali dengan `OMEGA_FIRE_LANG=id ./omega-fire.sh` (dipertahankan melalui `sudo` oleh peluncur). Di konsol teks Linux (TTY), bahasa yang aksaranya tidak ada di font konsol (Vietnam, Tionghoa, Thai, Jepang, Korea, Hindi, Arab) ditampilkan dalam bahasa Inggris selama sesi tersebut. Bahasa Arab ditampilkan dari kanan ke kiri. Dalam bahasa Hindi, Terminator, GNOME Terminal, Xfce Terminal, dan Alacritty menampilkan teks yang rata; terminal yang menyusun sendiri huruf gabungan (Kitty, Ghostty, Konsole) dapat menggeser bingkai dan kolom. **Bahasa ekspor** (laporan HTML dan TXT) diatur terpisah, bawaannya « Sama dengan antarmuka ». Log aplikasi dan riwayat audit tetap dicatat dalam bahasa Prancis; judul riwayat ditampilkan dalam bahasa yang dipilih. Antarmuka lama (`--legacy-cli`) tetap dalam bahasa Prancis.
+
 ### Alur umum
 
 1. Layar pembuka (splash), lalu peringatan jika terminal terlalu kecil.
 2. Deteksi kemampuan sistem (layar khusus, tidak memblokir).
-3. Menu utama: 8 bagian tematik (1-8) ditambah pengaturan (9).
+3. Menu utama: 8 bagian tematik (1-8), pengaturan (9), dan bantuan (10).
 4. Pilih bagian, lalu tindakan — setiap tindakan membuka formulir yang semua kolom wajibnya divalidasi sebelum melanjutkan.
 5. Konfirmasi eksplisit sebelum operasi sensitif atau destruktif apa pun (flush, pembersihan, pemulihan...).
 6. Eksekusi di latar belakang untuk operasi yang lambat (antarmuka tetap dapat dipakai selama menunggu), lalu kembali ke menu dengan ringkasan hasil.
@@ -470,13 +500,13 @@ Untuk menjalankan antarmuka Rich lama (input angka berurutan) sebagai gantinya:
 - Enter: memilih atau memvalidasi.
 - Klik baris tabel: memilihnya dan mengisi otomatis kolom terkait (sumber yang akan disematkan, jail tujuan, dan sebagainya).
 - `Esc`: kembali ke layar sebelumnya (meminta konfirmasi keluar dari layar utama).
-- `a`: bantuan kontekstual — menjelaskan tindakan yang sedang berjalan, atau semua tindakan di bagian saat ini jika belum ada layar tindakan yang dibuka.
+- `a`: bantuan kontekstual — menjelaskan aksi yang sedang berjalan, atau semua aksi di bagian saat ini jika belum ada layar aksi yang terbuka; panduan lengkap dan FAQ ada di menu 10.
 - `t`: beralih ke tema berikutnya, tanpa konfirmasi.
 - `r`: mendeteksi ulang ukuran dan jenis terminal.
-- `s`: membuka pengaturan (tema, profil tampilan).
+- `s`: membuka pengaturan (tema, profil tampilan, bahasa, folder).
 - `q` / `Ctrl+Q`: keluar, dengan konfirmasi.
 
-#### Kekhususan layar lnav (5.9 / 8.6)
+#### Kekhususan layar lnav (8.6, dan penampil lnav di 5.2 / 5.3)
 
 `lnav` dibungkus dalam pseudo-terminal dengan header/footer Omega-Fire yang tetap di sekeliling tampilannya, untuk mencegah bentrokan antara pintasan bawaannya dan pintasan Omega-Fire:
 
@@ -603,6 +633,7 @@ Omega-Fire bekerja pada komponen sistem yang kritis dan harus digunakan dengan h
 - Menjalankan aplikasi memerlukan hak root melalui `sudo`.
 - Flush, pembersihan umum, dan penerapan kebijakan dapat bersifat destruktif.
 - Kebijakan bawaan memicu pencadangan otomatis sebelum perubahan.
+- Di iptables / ip6tables, menerapkan kebijakan atau mengosongkan backend juga menghapus aturan alat lain (UFW…): Omega-Fire memberitahukannya dan membiarkan Anda memilih sebelum bertindak.
 - Lakukan pencadangan manual sebelum setiap perubahan besar.
 - Periksa status nyata firewall, jail, dan koneksi setelah setiap operasi.
 - Uji terlebih dahulu pada mesin atau target sekali pakai.
@@ -614,14 +645,14 @@ Omega-Fire bekerja pada komponen sistem yang kritis dan harus digunakan dengan h
 
 ## Pengujian dan kualitas
 
-Proyek ini memiliki rangkaian historis berisi 152 uji unit, ditulis sebelum migrasi ke Textual: rangkaian ini mencakup domain bisnis, orkestrasi (`application/`), infrastruktur, dan antarmuka Rich (`interfaces/cli/`), tetapi **belum mencakup `interfaces/tui/`** (antarmuka Textual bawaan). Arsip ini tidak berisi folder `tests/`: ambil dari repositori pengembangan Anda jika perlu menjalankannya.
+Rangkaian ini berisi 137 unit test (lebih dari 8.000 kasus diperiksa): domain bisnis, orkestrasi (`application/`), infrastruktur, serta layar Textual yang ditambahkan atau diperbaiki di 3.5, dijalankan dengan stylesheet sebenarnya (tata letak, alur lengkap, bahasa ekspor). Arsip ini tidak menyertakan folder `tests/`: ambil dari repositori pengembangan Anda jika perlu menjalankannya.
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-Karena arsitektur berlapis memisahkan domain bisnis dari presentasi secara ketat (`domain/`, `application/`, `ports/` sebagai `Protocol`, lihat [Arsitektur](#arsitektur)), rangkaian ini tetap valid tanpa perubahan meskipun ada migrasi: hanya antarmuka Textual yang lebih baru yang belum memiliki cakupan khususnya sendiri.
+Arsitektur berlapis memisahkan domain bisnis dari presentasi secara ketat (`domain/`, `application/`, `ports/` sebagai `Protocol`, lihat [Arsitektur](#arsitektur)): sebagian besar tes tidak memerlukan root maupun firewall sungguhan.
 
 Jika Anda berkontribusi pada proyek, pasang alat kualitas yang dideklarasikan (sebagai komentar) di `requirements.txt`:
 
@@ -657,7 +688,7 @@ pytest --cov
 
 ### Keterbatasan yang diketahui
 
-- Rangkaian uji (152) belum mencakup antarmuka Textual (`interfaces/tui/`), yang ditulis setelahnya (lihat [Pengujian dan kualitas](#pengujian-dan-kualitas)).
+- Rangkaian tes mencakup layar Textual 3.5, belum seluruh layar yang lebih lama (lihat [Pengujian dan kualitas](#pengujian-dan-kualitas)).
 - Mekanisme `ExecutionPlan`/`PipelineStep` masih sebagian ada di proyek.
 - Ketersediaan pasti fitur bergantung pada binari, layanan, izin, dan konfigurasi mesin host.
 - Antarmuka Rich historis (`--legacy-cli`) tidak lagi menjadi fokus pengembangan aktif; antarmuka ini dipertahankan sampai antarmuka Textual sepenuhnya andal dalam kondisi nyata.

@@ -20,6 +20,7 @@ from omega_fire.application.queries.audit_report.models import (
     SyncInfo,
     JournalSummary,
 )
+from omega_fire.shared.i18n import action_title
 
 # Préfixes de titres de menu connus, tels qu'utilisés par
 # interfaces/cli/actions.py::_execute_action_flow(ctx, title, logic).
@@ -84,7 +85,10 @@ def collect_journal_summary(audit_logger: Any, since: Optional[datetime]) -> Jou
     error_count = 0
 
     for e in entries:
-        counts[e.action] = counts.get(e.action, 0) + 1
+        # Titre affiche dans la langue de l'export ; deux titres enregistres differemment pour
+        # la meme action (ancien libelle, ancienne langue) sont comptes ensemble.
+        label = action_title(e.action)
+        counts[label] = counts.get(label, 0) + 1
         if not e.success:
             error_count += 1
 

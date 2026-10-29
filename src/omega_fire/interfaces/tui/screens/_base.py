@@ -16,6 +16,7 @@ from textual.binding import Binding, BindingType
 from textual.screen import Screen
 
 from omega_fire.interfaces.cli.help_text import HelpEntry, get_help_entry
+from omega_fire.shared.i18n import _
 
 ResultT = TypeVar("ResultT")
 
@@ -26,17 +27,18 @@ def format_help_entry(entry: HelpEntry) -> str:
     CLI, formate ici pour le TUI. Vit dans _base.py (pas dans
     help_text.py) : ce dernier ne contient explicitement aucun rendu
     Rich, seulement des donnees texte (voir son propre docstring)."""
-    parts = [entry.summary]
+    # Les fiches sont des textes sources marques (help_text.py, N_) : traduites ici.
+    parts = [_(entry.summary)]
     if entry.usage:
-        parts.append("[b]Comment l'utiliser :[/b]\n" + "\n".join(f"  - {u}" for u in entry.usage))
+        parts.append(_("[b]Comment l'utiliser :[/b]\n") + "\n".join(f"  - {_(u)}" for u in entry.usage))
     if entry.consequences:
-        parts.append("[b]Consequences :[/b]\n" + "\n".join(f"  - {c}" for c in entry.consequences))
+        parts.append(_("[b]Conséquences :[/b]\n") + "\n".join(f"  - {_(c)}" for c in entry.consequences))
     if entry.warnings:
-        parts.append("[b]A savoir :[/b]\n" + "\n".join(f"  - {w}" for w in entry.warnings))
+        parts.append(_("[b]À savoir :[/b]\n") + "\n".join(f"  - {_(w)}" for w in entry.warnings))
     if entry.mechanism:
-        parts.append(f"[dim]{entry.mechanism}[/dim]")
+        parts.append(f"[dim]{_(entry.mechanism)}[/dim]")
     if entry.see_also:
-        parts.append(f"[dim]Voir aussi : {', '.join(entry.see_also)}[/dim]")
+        parts.append(_("[dim]Voir aussi : {value}[/dim]").format(value=', '.join(entry.see_also)))
     return "\n\n".join(parts)
 
 
@@ -46,9 +48,9 @@ class OmegaScreen(Screen[None]):
     `quit_confirm.py` n'en heritent pas (voir leurs propres fichiers)."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("escape", "back", "Retour", show=True),
-        Binding("up", "focus_previous_item", "Monter", show=False),
-        Binding("down", "focus_next_item", "Descendre", show=False),
+        Binding("escape", "back", _("Retour"), show=True),
+        Binding("up", "focus_previous_item", _("Monter"), show=False),
+        Binding("down", "focus_next_item", _("Descendre"), show=False),
     ]
 
     # Identifiant de noeud de menu CLI (ex. "4.2") — jamais defini ici,
@@ -85,7 +87,7 @@ class OmegaScreen(Screen[None]):
         if self.node_id:
             entry = get_help_entry(self.node_id)
             if entry is not None:
-                return f"Action {self.node_id}", format_help_entry(entry)
+                return _("Action {node_id}").format(node_id=self.node_id), format_help_entry(entry)
         return None
 
     def run_blocking(
@@ -93,7 +95,7 @@ class OmegaScreen(Screen[None]):
         fn: Callable[[], ResultT],
         on_success: Callable[[ResultT], None],
         *,
-        busy_message: str | None = "Operation en cours...",
+        busy_message: str | None = _("Opération en cours..."),
         on_error: Callable[[Exception], None] | None = None,
     ) -> None:
         """Execute `fn()` dans un thread (jamais sur le thread UI), puis
@@ -122,4 +124,4 @@ class OmegaScreen(Screen[None]):
         if on_error is not None:
             on_error(error)
         else:
-            self.app.notify(f"Erreur : {error}", severity="error")
+            self.app.notify(_("Erreur : {error}").format(error=error), severity="error")

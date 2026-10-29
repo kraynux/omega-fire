@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -36,6 +37,6 @@ class ListPersistedRulesQuery:
         try:
             rules = self._repository.find_all()
         except RepositoryError as e:
-            return ListPersistedRulesResult(success=False, rules=[], message=f"Erreur technique : {e}")
+            return ListPersistedRulesResult(success=False, rules=[], message=_("Erreur technique : {e}").format(e=e))
 
         return ListPersistedRulesResult(success=True, rules=rules)

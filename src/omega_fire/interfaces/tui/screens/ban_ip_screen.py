@@ -31,6 +31,7 @@ from omega_fire.application.commands.ban_ip_all_backends import (
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -61,28 +62,28 @@ class BanIpScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("BANNIR UNE IP", classes="omega-title")
+            yield Static(_("BANNIR UNE IP"), classes="omega-title")
 
-            yield Static("Adresse IP", classes="omega-subtitle")
-            yield Input(placeholder="ex. 192.168.1.10", id="ip-input")
+            yield Static(_("Adresse IP"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 192.168.1.10"), id="ip-input")
 
-            yield Static("Backend(s) cible(s)", classes="omega-subtitle")
+            yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
             if self._supported_backends:
-                options = [("Tous les backends (recommande)", _ALL_BACKENDS)] + [
-                    (f"Uniquement {name} (diagnostic)", name) for name in self._supported_backends
+                options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
-                yield Static("Aucun backend disponible.", classes="omega-hint")
+                yield Static(_("Aucun backend disponible."), classes="omega-hint")
 
-            yield Static("Commentaire (optionnel)", classes="omega-subtitle")
-            yield Input(placeholder="ex. tentative bruteforce SSH", id="comment-input")
+            yield Static(_("Commentaire (optionnel)"), classes="omega-subtitle")
+            yield Input(placeholder=_("ex. tentative bruteforce SSH"), id="comment-input")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Bannir", id="launch", variant="primary")
+                    yield Button(_("Bannir"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -93,12 +94,12 @@ class BanIpScreen(OmegaScreen):
             return
 
         if not self._supported_backends:
-            self.app.notify("Aucun backend disponible pour le bannissement.", severity="error")
+            self.app.notify(_("Aucun backend disponible pour le bannissement."), severity="error")
             return
 
         raw_ip = self.query_one("#ip-input", Input).value.strip()
         if not raw_ip:
-            self.app.notify("Saisissez une adresse IP.", severity="warning")
+            self.app.notify(_("Saisissez une adresse IP."), severity="warning")
             return
         try:
             # Normalisation vers la forme canonique (referentiel §62),
@@ -107,7 +108,7 @@ class BanIpScreen(OmegaScreen):
             # ban/unban anterieur (comparaison SQL "WHERE ip = ?").
             ip = str(ipaddress.ip_address(raw_ip))
         except ValueError:
-            self.app.notify(f"Format d'adresse IP invalide : '{raw_ip}'.", severity="warning")
+            self.app.notify(_("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip), severity="warning")
             return
 
         backend_choice = str(self.query_one("#backend-select", Select).value)
@@ -120,10 +121,9 @@ class BanIpScreen(OmegaScreen):
         backend_label = ", ".join(target_backends)
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LE BANNISSEMENT",
+                title=_("CONFIRMER LE BANNISSEMENT"),
                 message=(
-                    f"IP : {ip}\nBackend(s) : {backend_label}\n"
-                    f"Commentaire : {comment or '(aucun)'}"
+                    _("IP : {ip}\nBackend(s) : {backend_label}\nCommentaire : {value}").format(ip=ip, backend_label=backend_label, value=comment or _('(aucun)'))
                 ),
             ),
             lambda confirmed: self._ban_if_confirmed(confirmed, ip, target_backends, comment),
@@ -149,11 +149,11 @@ class BanIpScreen(OmegaScreen):
 
         for backend, outcome in result.outcomes.items():
             if outcome.banned:
-                self.app.notify(f"IP {ip} bannie avec succes.", title=backend, severity="information")
+                self.app.notify(_("IP {ip} bannie avec succès.").format(ip=ip), title=backend, severity="information")
             elif outcome.already_banned:
-                self.app.notify(f"IP {ip} deja bannie (aucun doublon ajoute).", title=backend, severity="warning")
+                self.app.notify(_("IP {ip} déjà bannie (aucun doublon ajouté).").format(ip=ip), title=backend, severity="warning")
             for failed_ip, reason in outcome.errors:
-                self.app.notify(f"Echec pour {failed_ip} : {reason}", title=backend, severity="error")
+                self.app.notify(_("Échec pour {failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
 
         log_action_result(self._container, _ACTION_TITLE, status="success" if result.success else "failure")
         self.dismiss()

@@ -17,6 +17,7 @@ from omega_fire.domain.reports.builders import (
     ReportSection,
     Report,
 )
+from omega_fire.shared.i18n import _
 
 
 class ReportsService:
@@ -31,7 +32,7 @@ class ReportsService:
         self,
         banned_ips: list[BanEntry],
         include_stats: bool = True,
-        title: str = "Blacklist Report",
+        title: str = _("Blacklist Report"),
     ) -> Report:
         """Build a report of banned IPs.
         
@@ -92,7 +93,7 @@ class ReportsService:
     def build_ruleset_report(
         self,
         rules: list[FirewallRule],
-        title: str = "Firewall Ruleset Report",
+        title: str = _("Firewall Ruleset Report"),
     ) -> Report:
         """Build a report of firewall rules.
         
@@ -142,7 +143,7 @@ class ReportsService:
     def build_fail2ban_report(
         self,
         jails: list[Jail],
-        title: str = "Fail2ban Report",
+        title: str = _("Fail2ban Report"),
     ) -> Report:
         """Build a report of fail2ban jails.
         
@@ -196,7 +197,7 @@ class ReportsService:
         jails: list[Jail],
         top_ips: list[TopIP],
         recent_actions: list[dict],
-        title: str = "Complete Audit Report",
+        title: str = _("Complete Audit Report"),
     ) -> Report:
         """Build a comprehensive audit report.
         
@@ -294,7 +295,7 @@ class ReportsService:
         top_jails: list[dict],
         management: dict,
         rules_evolution: list[tuple[str, int, int]],
-        title: str = "Rapport Statistique",
+        title: str = _("Rapport Statistique"),
     ) -> Report:
         """Build a periodic statistics report (menus 8.3/8.4).
 

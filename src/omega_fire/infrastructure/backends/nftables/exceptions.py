@@ -7,6 +7,7 @@ or configuration. They are caught by the application layer
 and translated into stable error messages.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class NftablesError(CoreError):
@@ -19,7 +20,7 @@ class NftCommandError(NftablesError):
     """Raised when an nft command fails."""
     def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
         super().__init__(
-            f"nft command failed (exit {returncode}): {command}",
+            _("Échec de la commande nft (code {returncode}) : {command}").format(returncode=returncode, command=command),
             {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
         )
         self.command = command
@@ -31,7 +32,7 @@ class NftParseError(NftablesError):
     """Raised when nft output cannot be parsed."""
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
-            f"Failed to parse nft output: {reason}",
+            _("Sortie de nft illisible : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -42,7 +43,7 @@ class NftTableNotFoundError(NftablesError):
     """Raised when a referenced nft table does not exist."""
     def __init__(self, table_name: str, family: str = "inet", context: dict = None):
         super().__init__(
-            f"nft table '{family} {table_name}' not found",
+            _("Table nft « {family} {table_name} » introuvable").format(family=family, table_name=table_name),
             {**(context or {}), "table_name": table_name, "family": family},
         )
         self.table_name = table_name
@@ -53,7 +54,7 @@ class NftChainNotFoundError(NftablesError):
     """Raised when a referenced nft chain does not exist."""
     def __init__(self, chain_name: str, table_name: str = "", context: dict = None):
         super().__init__(
-            f"nft chain '{chain_name}' not found in table '{table_name}'",
+            _("Chaîne nft « {chain_name} » introuvable dans la table « {table_name} »").format(chain_name=chain_name, table_name=table_name),
             {**(context or {}), "chain_name": chain_name, "table_name": table_name},
         )
         self.chain_name = chain_name
@@ -64,7 +65,7 @@ class NftRuleNotFoundError(NftablesError):
     """Raised when a referenced nft rule handle does not exist."""
     def __init__(self, handle: int, chain_name: str = "", context: dict = None):
         super().__init__(
-            f"nft rule handle {handle} not found in chain '{chain_name}'",
+            _("Règle nft (handle {handle}) introuvable dans la chaîne « {chain_name} »").format(handle=handle, chain_name=chain_name),
             {**(context or {}), "handle": handle, "chain_name": chain_name},
         )
         self.handle = handle
@@ -75,7 +76,7 @@ class NftPermissionError(NftablesError):
     """Raised when nft operations require elevated privileges."""
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            f"Permission denied for nft operation: {operation}. Run as root.",
+            _("Permission refusée pour l'opération nft : {operation}. Lancez omega-fire en root.").format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation

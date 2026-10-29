@@ -17,6 +17,7 @@ from textual.widgets import Button, Footer, Header, Input, Select, Static
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -35,28 +36,28 @@ class PurgeAppLogScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("GESTION DU JOURNAL APPLICATIF", classes="omega-title")
+            yield Static(_("GESTION DU JOURNAL APPLICATIF"), classes="omega-title")
             yield Static(
-                "Choisissez un mode de purge. Operation irreversible, confirmation demandee.",
+                _("Choisissez un mode de purge. Opération irréversible, confirmation demandée."),
                 classes="omega-hint",
             )
             yield Select(
                 [
-                    ("Plus de 30 jours", "30d"),
-                    ("Plus de 120 jours", "120d"),
-                    ("Date precise", "date"),
-                    ("N entrees les plus anciennes", "count"),
+                    (_("Plus de 30 jours"), "30d"),
+                    (_("Plus de 120 jours"), "120d"),
+                    (_("Date précise"), "date"),
+                    (_("N entrées les plus anciennes"), "count"),
                 ],
                 value="30d",
                 id="mode-select",
             )
-            yield Input(placeholder="Date limite (JJ/MM/AAAA)", id="date-input", classes="omega-hidden")
-            yield Input(placeholder="Nombre d'entrees les plus anciennes a supprimer", id="count-input", classes="omega-hidden")
+            yield Input(placeholder=_("Date limite (JJ/MM/AAAA)"), id="date-input", classes="omega-hidden")
+            yield Input(placeholder=_("Nombre d'entrées les plus anciennes à supprimer"), id="count-input", classes="omega-hidden")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Supprimer", id="launch", variant="error")
+                    yield Button(_("Supprimer"), id="launch", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -87,32 +88,32 @@ class PurgeAppLogScreen(OmegaScreen):
 
         if mode == "30d":
             older_than = datetime.now() - timedelta(days=30)
-            removal_label = "les entrees de plus de 30 jours"
+            removal_label = _("les entrées de plus de 30 jours")
         elif mode == "120d":
             older_than = datetime.now() - timedelta(days=120)
-            removal_label = "les entrees de plus de 120 jours"
+            removal_label = _("les entrées de plus de 120 jours")
         elif mode == "date":
             raw_date = self.query_one("#date-input", Input).value.strip()
             if not raw_date:
-                self.app.notify("Saisissez une date limite.", severity="warning")
+                self.app.notify(_("Saisissez une date limite."), severity="warning")
                 return
             try:
                 older_than = datetime.strptime(raw_date, "%d/%m/%Y")
             except ValueError:
-                self.app.notify("Format de date invalide (attendu : JJ/MM/AAAA).", severity="error")
+                self.app.notify(_("Format de date invalide (attendu : JJ/MM/AAAA)."), severity="error")
                 return
-            removal_label = f"les entrees anterieures au {raw_date}"
+            removal_label = _("les entrées antérieures au {raw_date}").format(raw_date=raw_date)
         elif mode == "count":
             raw_count = self.query_one("#count-input", Input).value.strip()
             if not raw_count.isdigit() or int(raw_count) <= 0:
-                self.app.notify("Nombre invalide.", severity="warning")
+                self.app.notify(_("Nombre invalide."), severity="warning")
                 return
             count = int(raw_count)
-            removal_label = f"les {count} entrees les plus anciennes"
+            removal_label = _("les {count} entrées les plus anciennes").format(count=count)
 
         self._pending = {"mode": mode, "older_than": older_than, "count": count}
         self.app.push_screen(
-            ConfirmScreen(title="CONFIRMER LA SUPPRESSION", message=f"Vous allez supprimer {removal_label}."),
+            ConfirmScreen(title=_("CONFIRMER LA SUPPRESSION"), message=_("Vous allez supprimer {removal_label}.").format(removal_label=removal_label)),
             self._delete_if_confirmed,
         )
 
@@ -124,11 +125,11 @@ class PurgeAppLogScreen(OmegaScreen):
         try:
             app_logger = self._container.app_logger
         except Exception as e:
-            self.app.notify(f"Logger applicatif indisponible : {e}", severity="error")
+            self.app.notify(_("Logger applicatif indisponible : {e}").format(e=e), severity="error")
             self._pending = None
             return
         if app_logger is None:
-            self.app.notify("Logger applicatif indisponible.", severity="error")
+            self.app.notify(_("Logger applicatif indisponible."), severity="error")
             self._pending = None
             return
 
@@ -138,12 +139,12 @@ class PurgeAppLogScreen(OmegaScreen):
             else:
                 removed = app_logger.clear(older_than=self._pending["older_than"])
         except Exception as e:
-            self.app.notify(f"Erreur lors de la suppression : {e}", severity="error")
+            self.app.notify(_("Erreur lors de la suppression : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
             self._pending = None
             return
 
-        self.app.notify(f"{removed} entree(s) supprimee(s).")
+        self.app.notify(_("{removed} entrée(s) supprimée(s).").format(removed=removed))
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self._pending = None
         self.dismiss()

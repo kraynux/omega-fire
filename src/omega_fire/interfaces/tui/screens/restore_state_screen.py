@@ -16,6 +16,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.snapshot_detail_screen import SnapshotDetailScreen
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -34,17 +35,17 @@ class RestoreStateScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("RESTAURER UN ETAT", classes="omega-title")
+            yield Static(_("RESTAURER UN ÉTAT"), classes="omega-title")
             yield Static("", id="result-hint", classes="omega-hint")
             yield DataTable(id="snapshots-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
         table = self.query_one("#snapshots-table", DataTable)
         table.cursor_type = "row"
-        table.add_columns("Date", "Origine", "Description", "Regles", "IPs", "Jails")
+        table.add_columns(_("Date"), _("Origine"), _("Description"), _("Règles"), _("IPs"), _("Jails"))
         self._refresh()
 
     def _refresh(self) -> None:
@@ -61,14 +62,14 @@ class RestoreStateScreen(OmegaScreen):
             # MarkupError que notify() (retour utilisateur 2026-09-24,
             # voir OmegaFireApp.notify) si {e} contient des crochets
             # (CoreError.context, ou un OSError natif type "[Errno 2] ...").
-            hint.update(Text(f"Impossible de lister les snapshots : {e}"))
+            hint.update(Text(_("Impossible de lister les snapshots : {e}").format(e=e)))
             return
 
         if not snapshots:
-            hint.update("Aucun snapshot disponible. Utilisez d'abord le menu 7.1.")
+            hint.update(_("Aucun snapshot disponible. Utilisez d'abord le menu 7.1."))
             return
 
-        hint.update(f"{len(snapshots)} snapshot(s) — selectionnez une ligne pour agir dessus.")
+        hint.update(_("{count} snapshot(s) — sélectionnez une ligne pour agir dessus.").format(count=len(snapshots)))
         for snap in snapshots:
             self._snapshots_by_id[snap.id] = snap
             origin = Text(_ORIGIN_LABELS.get(snap.origin, (snap.origin or "?").upper()))

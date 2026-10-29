@@ -23,20 +23,30 @@ from omega_fire.application.queries.find_equivalent_rules import (
     FindEquivalentRulesQuery,
     FindEquivalentRulesRequest,
 )
+from omega_fire.application.commands.reconcile_rules import (
+    KNOWN_BACKENDS,
+    ReconcilePlan,
+    ReconcileRulesCommand,
+)
 from omega_fire.application.queries.list_persisted_rules import ListPersistedRulesQuery
+from omega_fire.domain.rules.ownership import rule_owner
+from omega_fire.infrastructure.config.paths import BACKUPS_DIR
+from omega_fire.infrastructure.probe.command_probe import is_command_available
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "3.2 Supprimer une regle"
+_ACTION_TITLE = "3.2 Supprimer une règle"
 
 _FILTER_OMEGA = "omega"
 _FILTER_SYSTEM = "system"
 _FILTER_ALL = "all"
 _FILTER_INACTIVE = "inactive"
+_FILTER_RECONCILE = "reconcile"
 
 
 class DeleteRuleScreen(OmegaScreen):
@@ -49,6 +59,7 @@ class DeleteRuleScreen(OmegaScreen):
         self._omega_rules: list[dict] = []
         self._system_rules: list[dict] = []
         self._inactive_rules: list[dict] = []
+        self._reconcile_plan: ReconcilePlan | None = None
         self._load_rules()
 
     def _load_rules(self) -> None:
@@ -67,13 +78,14 @@ class DeleteRuleScreen(OmegaScreen):
             is_system = getattr(r, "origin", "imported") == "imported"
             item = {
                 "id": r_id,
-                "name": r.comment or f"Regle #{r_id}",
+                "name": r.comment or _("Règle #{r_id}").format(r_id=r_id),
                 "chain": str(getattr(r, "chain", "INPUT")).upper(),
                 "action": str(getattr(r, "action", "ACCEPT")).upper(),
                 "port": str(r.port_start) if r.port_start else "ANY",
                 "backend": getattr(r, "backend", "nftables"),
                 "is_system": is_system,
                 "enabled": bool(getattr(r, "enabled", True)),
+                "owner": rule_owner(r),
             }
             (self._system_rules if is_system else self._omega_rules).append(item)
         self._inactive_rules = [r for r in (self._omega_rules + self._system_rules) if not r["enabled"]]
@@ -81,49 +93,51 @@ class DeleteRuleScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-panel"):
-            yield Static("SUPPRIMER UNE REGLE", classes="omega-title")
+            yield Static(_("SUPPRIMER UNE RÈGLE"), classes="omega-title")
 
             if not (self._omega_rules or self._system_rules):
-                yield Static("Aucune regle enregistree en base de donnees.", classes="omega-hint")
+                yield Static(_("Aucune règle enregistrée en base de données."), classes="omega-hint")
                 with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
                 yield Footer()
                 return
 
-            yield Static("Filtre d'affichage", classes="omega-subtitle")
+            yield Static(_("Filtre d'affichage"), classes="omega-subtitle")
             options = [
-                (f"Regles Omega-Fire ({len(self._omega_rules)})", _FILTER_OMEGA),
-                (f"Regles Systeme importees ({len(self._system_rules)})", _FILTER_SYSTEM),
-                (f"Toutes les regles ({len(self._omega_rules) + len(self._system_rules)})", _FILTER_ALL),
+                (_("Règles Omega-Fire ({count})").format(count=len(self._omega_rules)), _FILTER_OMEGA),
+                (_("Règles Système importées ({count})").format(count=len(self._system_rules)), _FILTER_SYSTEM),
+                (_("Toutes les règles ({value})").format(value=len(self._omega_rules) + len(self._system_rules)), _FILTER_ALL),
             ]
             if self._inactive_rules:
-                options.append((f"Nettoyer les regles INACTIVES ({len(self._inactive_rules)})", _FILTER_INACTIVE))
+                options.append((_("Nettoyer les règles INACTIVES ({count})").format(count=len(self._inactive_rules)), _FILTER_INACTIVE))
+            options.append((_("Nettoyer et resynchroniser la base (pare-feu non modifié)"), _FILTER_RECONCILE))
             yield Select(options, value=_FILTER_OMEGA, id="filter-select")
+            yield Static("", id="reconcile-summary", classes="omega-hint omega-hidden")
 
             yield DataTable(id="rules-table")
 
-            yield Static("ID(s) a supprimer, separes par virgule", id="ids-label", classes="omega-subtitle")
-            yield Input(placeholder="ex. 12,15,18", id="ids-input")
+            yield Static(_("ID(s) à supprimer, séparés par virgule"), id="ids-label", classes="omega-subtitle")
+            yield Input(placeholder=_("ex. 12,15,18"), id="ids-input")
 
-            yield Static("Regles jumelles sur d'autres backends", id="sibling-label", classes="omega-subtitle")
+            yield Static(_("Règles jumelles sur d'autres backends"), id="sibling-label", classes="omega-subtitle")
             yield Select(
-                [("Supprimer aussi sur les backends jumeaux (recommande, coherence)", "with_siblings"),
-                 ("Ne retirer que la/les regle(s) precisee(s) (diagnostic)", "target_only")],
+                [(_("Supprimer aussi sur les backends jumeaux (recommandé, cohérence)"), "with_siblings"),
+                 (_("Ne retirer que la/les règle(s) précisée(s) (diagnostic)"), "target_only")],
                 value="with_siblings",
                 id="sibling-select",
             )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Supprimer", id="launch", variant="error")
+                    yield Button(_("Supprimer"), id="launch", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
         if self._omega_rules or self._system_rules:
             table = self.query_one("#rules-table", DataTable)
-            table.add_columns("ID BDD", "Origine", "Nom", "Chaine", "Action", "Port", "Etat")
+            table.add_columns(_("ID BDD"), _("Origine"), _("Nom"), _("Chaîne"), _("Action"), _("Port"), _("État"))
             self._refresh_table(_FILTER_OMEGA)
 
     def _rules_for_filter(self, filter_key: str) -> list[dict]:
@@ -139,16 +153,21 @@ class DeleteRuleScreen(OmegaScreen):
         table = self.query_one("#rules-table", DataTable)
         table.clear()
         for r in self._rules_for_filter(filter_key):
-            origin = Text("SYSTEME") if r["is_system"] else Text("OMEGA")
-            status = Text("ACTIF") if r["enabled"] else Text("INACTIF")
+            origin = (Text(r["owner"]) if r["owner"]
+                      else Text("SYSTEME") if r["is_system"] else Text("OMEGA"))
+            status = Text(_("ACTIF")) if r["enabled"] else Text(_("INACTIF"))
             table.add_row(str(r["id"]), origin, r["name"], r["chain"], r["action"], r["port"], status, key=str(r["id"]))
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id != "filter-select":
             return
         filter_key = str(event.value)
-        is_inactive_mode = filter_key == _FILTER_INACTIVE
-        self._refresh_table(filter_key)
+        is_inactive_mode = filter_key in (_FILTER_INACTIVE, _FILTER_RECONCILE)
+        if filter_key == _FILTER_RECONCILE:
+            self._show_reconcile_plan()
+        else:
+            self._refresh_table(filter_key)
+        self.query_one("#reconcile-summary", Static).set_class(filter_key != _FILTER_RECONCILE, "omega-hidden")
         self.query_one("#ids-label", Static).set_class(is_inactive_mode, "omega-hidden")
         self.query_one("#ids-input", Input).set_class(is_inactive_mode, "omega-hidden")
         self.query_one("#sibling-label", Static).set_class(is_inactive_mode, "omega-hidden")
@@ -164,12 +183,93 @@ class DeleteRuleScreen(OmegaScreen):
         filter_key = str(self.query_one("#filter-select", Select).value)
         if filter_key == _FILTER_INACTIVE:
             self._launch_bulk_inactive()
+        elif filter_key == _FILTER_RECONCILE:
+            self._launch_reconcile()
         else:
             self._launch_by_ids()
 
+    # --- Nettoyer et resynchroniser la base (retour utilisateur 2026-10-28) ---
+
+    def _reconcile_backends(self) -> dict[str, object]:
+        """Backend absent de la machine (binaire introuvable) -> None : ses lignes seront
+        retirees. Present : son adapter, lu par la commande (lecture en echec = lignes
+        gardees)."""
+        backends: dict[str, object] = {}
+        for name in KNOWN_BACKENDS:
+            if not is_command_available("nft" if name == "nftables" else name):
+                backends[name] = None
+                continue
+            try:
+                backends[name] = self._container.get_firewall_port(name)
+            except Exception:
+                backends[name] = None
+        return backends
+
+    def _show_reconcile_plan(self) -> None:
+        plan = ReconcileRulesCommand(self._container.rule_repository, BACKUPS_DIR / "db").plan(
+            self._reconcile_backends()
+        )
+        self._reconcile_plan = plan
+        lines = [
+            _("Aperçu — seule la base change, aucune règle du pare-feu n'est ajoutée ni retirée."),
+            _("Noyau : {value}").format(value=", ".join(f"{k}={v}" for k, v in plan.live_counts.items()) or "—"),
+            _("À garder : {count}").format(count=len(plan.keep)),
+            _("Doublons à retirer : {count}").format(count=len(plan.duplicates)),
+            _("Absentes du noyau, à retirer : {count}").format(count=len(plan.stale)),
+            _("Backend absent de la machine, à retirer : {count}").format(count=len(plan.unavailable)),
+            _("Règles du noyau à importer : {count}").format(count=len(plan.to_import)),
+        ]
+        for name, error in plan.unreadable.items():
+            lines.append(_("Backend {backend} illisible, ses lignes ne sont pas touchées : {e}").format(backend=name, e=error))
+        self.query_one("#reconcile-summary", Static).update("\n".join(lines))
+
+        table = self.query_one("#rules-table", DataTable)
+        table.clear()
+        for r in plan.to_remove:
+            owner = rule_owner(r)
+            origin = Text(owner) if owner else Text("SYSTEME") if r.origin == "imported" else Text("OMEGA")
+            status = Text(_("ACTIF")) if r.enabled else Text(_("INACTIF"))
+            chain = getattr(r.chain, "value", r.chain)
+            action = getattr(r.action, "value", r.action)
+            table.add_row(
+                str(r.rule_id), origin, r.comment or _("Règle #{r_id}").format(r_id=r.rule_id),
+                str(chain).upper(), str(action).upper(), str(r.port_start) if r.port_start else "ANY",
+                status, key=str(r.rule_id),
+            )
+
+    def _launch_reconcile(self) -> None:
+        plan = self._reconcile_plan
+        if plan is None:
+            return
+        if not plan.has_changes:
+            self.app.notify(_("La base est déjà propre : rien à changer."))
+            return
+        message = _(
+            "Retirer {removed} ligne(s) de la base et importer {imported} règle(s) du noyau ?\n"
+            "Le pare-feu n'est pas modifié. La base est sauvegardée avant, dans {path}."
+        ).format(removed=len(plan.to_remove), imported=len(plan.to_import), path=BACKUPS_DIR / "db")
+        self.app.push_screen(
+            ConfirmScreen(title=_("Nettoyer et resynchroniser la base"), message=message),
+            self._reconcile_if_confirmed,
+        )
+
+    def _reconcile_if_confirmed(self, confirmed: bool | None) -> None:
+        if not confirmed or self._reconcile_plan is None:
+            return
+        result = ReconcileRulesCommand(self._container.rule_repository, BACKUPS_DIR / "db").apply(
+            self._reconcile_plan
+        )
+        self.app.notify(result.message, severity="information" if result.success else "error", timeout=10)
+        log_action_result(
+            self._container, _ACTION_TITLE,
+            status="success" if result.success else "failure",
+            error=None if result.success else result.message,
+        )
+        self.dismiss()
+
     def _launch_bulk_inactive(self) -> None:
         if not self._inactive_rules:
-            self.app.notify("Aucune regle inactive.", severity="warning")
+            self.app.notify(_("Aucune règle inactive."), severity="warning")
             return
         by_origin = {"OMEGA": 0, "SYSTEME": 0}
         by_backend: dict[str, int] = {}
@@ -177,12 +277,11 @@ class DeleteRuleScreen(OmegaScreen):
             by_origin["SYSTEME" if r["is_system"] else "OMEGA"] += 1
             by_backend[r["backend"]] = by_backend.get(r["backend"], 0) + 1
         message = (
-            f"{len(self._inactive_rules)} regle(s) inactive(s) : {by_origin['OMEGA']} Omega-Fire, "
-            f"{by_origin['SYSTEME']} systeme importees.\nBackend : "
+            _("{count} règle(s) inactive(s) : {OMEGA} Omega-Fire, {SYSTEME} système importées.\nBackend : ").format(count=len(self._inactive_rules), OMEGA=by_origin['OMEGA'], SYSTEME=by_origin['SYSTEME'])
             + ", ".join(f"{k}={v}" for k, v in by_backend.items())
         )
         self.app.push_screen(
-            ConfirmScreen(title="CONFIRMER LE NETTOYAGE", message=message),
+            ConfirmScreen(title=_("CONFIRMER LE NETTOYAGE"), message=message),
             self._bulk_delete_if_confirmed,
         )
 
@@ -200,14 +299,14 @@ class DeleteRuleScreen(OmegaScreen):
                 success_count += 1
             else:
                 failure_count += 1
-        self.app.notify(f"Nettoyage termine : {success_count} regle(s) supprimee(s), {failure_count} echec(s).")
+        self.app.notify(_("Nettoyage terminé : {success_count} règle(s) supprimée(s), {failure_count} échec(s).").format(success_count=success_count, failure_count=failure_count))
         log_action_result(self._container, _ACTION_TITLE, status="success" if success_count else "failure")
         self.dismiss()
 
     def _launch_by_ids(self) -> None:
         raw = self.query_one("#ids-input", Input).value.strip()
         if not raw:
-            self.app.notify("Saisissez au moins un ID.", severity="warning")
+            self.app.notify(_("Saisissez au moins un ID."), severity="warning")
             return
         raw_ids = [part.strip() for part in raw.split(",") if part.strip()]
         target_ids: list[int] = []
@@ -218,9 +317,9 @@ class DeleteRuleScreen(OmegaScreen):
             except ValueError:
                 invalid.append(raw_id)
         if invalid:
-            self.app.notify(f"ID(s) invalide(s) ignore(s) : {', '.join(invalid)}.", severity="warning")
+            self.app.notify(_("ID(s) invalide(s) ignore(s) : {value}.").format(value=', '.join(invalid)), severity="warning")
         if not target_ids:
-            self.app.notify("Aucun ID valide fourni.", severity="error")
+            self.app.notify(_("Aucun ID valide fourni."), severity="error")
             return
 
         with_siblings = str(self.query_one("#sibling-select", Select).value) == "with_siblings"
@@ -254,16 +353,37 @@ class DeleteRuleScreen(OmegaScreen):
                 continue
             for sibling in siblings:
                 already_considered.add(sibling.rule_id)
+                if rule_owner(sibling):
+                    # Jamais une regle d'un autre outil (UFW...) comme « jumelle » :
+                    # la comparaison porte sur des champs reduits.
+                    continue
                 sibling_notes.append(f"#{target_id} ({domain_rule.backend}) <-> #{sibling.rule_id} ({sibling.backend})")
                 if with_siblings:
                     ids_to_delete.append(sibling.rule_id)
 
-        message = f"Supprimer {len(ids_to_delete)} regle(s) (ID : {', '.join(str(i) for i in ids_to_delete)}) ?"
+        # Regle d'un autre outil : se gere avec cet outil (ufw, tailscale...), jamais
+        # depuis Omega-Fire (l'outil la recree, ou son jeu de regles devient incoherent).
+        foreign = {
+            i: rule_owner(self._domain_rules_by_id[i]) for i in ids_to_delete
+            if i in self._domain_rules_by_id and rule_owner(self._domain_rules_by_id[i])
+        }
+        if foreign:
+            ids_to_delete = [i for i in ids_to_delete if i not in foreign]
+            self.app.notify(
+                _("Règle(s) {ids} gérée(s) par {tools} : non supprimée(s) ici, à gérer avec l'outil concerné.").format(
+                    ids=", ".join(f"#{i}" for i in foreign), tools=", ".join(sorted(set(foreign.values()))),
+                ),
+                severity="warning", timeout=10,
+            )
+            if not ids_to_delete:
+                return
+
+        message = _("Supprimer {count} règle(s) (ID : {value}) ?").format(count=len(ids_to_delete), value=', '.join(str(i) for i in ids_to_delete))
         if sibling_notes:
-            message += "\nRegles jumelles detectees :\n" + "\n".join(f"  - {n}" for n in sibling_notes[:5])
+            message += _("\nRègles jumelles détectées :\n") + "\n".join(f"  - {n}" for n in sibling_notes[:5])
 
         self.app.push_screen(
-            ConfirmScreen(title="CONFIRMER LA SUPPRESSION", message=message),
+            ConfirmScreen(title=_("CONFIRMER LA SUPPRESSION"), message=message),
             lambda confirmed: self._delete_if_confirmed(confirmed, ids_to_delete),
         )
 

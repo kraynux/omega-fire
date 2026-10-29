@@ -1,0 +1,90 @@
+{# Guide d'aide complet (version 3.5, menu 10 « AIDE » -> Exporter le guide en HTML).
+Contexte attendu (interfaces/tui/screens/guide_screens.py::guide_html_context) :
+  page_title, heading, generated_at, labels (contents, usage, consequences, warnings,
+  see_also), sections : [{title, pages: [{anchor, title, summary, usage, consequences,
+  warnings, mechanism, see_also: [(anchor, id)], lines: [(touche, description)]}]}],
+  faq_title, faq_groups : [{title, entries: [{anchor, question, answer}]}] (vide : pas de FAQ ;
+  sections vide : export de la FAQ seule).
+Textes deja traduits cote Python, dans la langue des exports (translating_as).
+#}
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block terminal_title %}omega-fire -- guide{% endblock %}
+
+{% block extra_style %}
+        .guide-toc { columns: 2; column-gap: 2rem; margin: 1rem 0 2rem; }
+        .guide-toc a, .guide-page a { color: var(--text-heading); text-decoration: none; }
+        .guide-toc a:hover, .guide-page a:hover { text-decoration: underline; }
+        .guide-toc ul { list-style: none; padding-left: 1rem; margin: 0.2rem 0 0.8rem; }
+        .guide-page { border-left: 2px solid var(--border-header); padding: 0.2rem 0 0.2rem 1rem; margin: 1.2rem 0; }
+        .guide-page h3 { margin: 0 0 0.5rem; color: var(--text-heading); }
+        .guide-page h4 { margin: 0.8rem 0 0.3rem; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; }
+        .guide-page ul { margin: 0.2rem 0; padding-left: 1.4rem; }
+        .guide-mechanism { color: var(--text-muted); font-style: italic; }
+        .guide-keys td:first-child { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; white-space: nowrap; }
+        @media (max-width: 700px) { .guide-toc { columns: 1; } }
+{% endblock %}
+
+{% block content %}
+            <h1>{{ heading }}<span class="cursor"></span></h1>
+
+            <div class="note-historique">
+                <span class="note-prefix">[SYSTEM EXPORT]</span> {{ _("Rapport d'exportation généré le {when}.").format(when=generated_at) }}
+            </div>
+
+            <h2>{{ labels.contents }}</h2>
+            <nav class="guide-toc">
+                {% for section in sections %}
+                <div><strong>{{ section.title }}</strong>
+                    <ul>
+                        {% for page in section.pages %}<li><a href="#{{ page.anchor }}">{{ page.title }}</a></li>{% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+                {% if faq_groups %}
+                <div><strong>{{ faq_title }}</strong>
+                    <ul>
+                        {% for group in faq_groups %}<li><a href="#{{ group.entries[0].anchor }}">{{ group.title }}</a></li>{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </nav>
+
+            {% for section in sections %}
+            <h2>{{ section.title }}</h2>
+            {% for page in section.pages %}
+            <section class="guide-page" id="{{ page.anchor }}">
+                <h3>{{ page.title }}</h3>
+                {% if page.summary %}<p>{{ page.summary }}</p>{% endif %}
+                {% if page.lines %}
+                <div class="table-wrapper"><table class="guide-keys"><tbody>
+                    {% for key, description in page.lines %}<tr><td>{{ key }}</td><td>{{ description }}</td></tr>{% endfor %}
+                </tbody></table></div>
+                {% endif %}
+                {% if page.usage %}<h4>{{ labels.usage }}</h4><ul>{% for item in page.usage %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+                {% if page.consequences %}<h4>{{ labels.consequences }}</h4><ul>{% for item in page.consequences %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+                {% if page.warnings %}<h4>{{ labels.warnings }}</h4><ul>{% for item in page.warnings %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+                {% if page.mechanism %}<p class="guide-mechanism">{{ page.mechanism }}</p>{% endif %}
+                {% if page.see_also %}<p>{{ labels.see_also }} : {% for anchor, ref in page.see_also %}<a href="#{{ anchor }}">{{ ref }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+            </section>
+            {% endfor %}
+            {% endfor %}
+
+            {% if faq_groups %}
+            <h2>{{ faq_title }}</h2>
+            {% for group in faq_groups %}
+            <h3>{{ group.title }}</h3>
+            {% for entry in group.entries %}
+            <section class="guide-page" id="{{ entry.anchor }}">
+                <p><strong>{{ entry.question }}</strong></p>
+                <p>{{ entry.answer }}</p>
+            </section>
+            {% endfor %}
+            {% endfor %}
+            {% endif %}
+
+            <div class="footer-note">
+                {{ _("Omega-Fire CLI Framework — Document de Rapport d'Exportation.") }}
+            </div>
+{% endblock %}

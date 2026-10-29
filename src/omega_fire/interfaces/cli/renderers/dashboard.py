@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 from typing import Optional, List, Dict, Any
+from omega_fire.shared.i18n import _
 
 try:
     import termios
@@ -41,13 +42,14 @@ from omega_fire.interfaces.cli.renderers.styles import (
     get_terminal_width,
     get_terminal_height,
 )
-from omega_fire.infrastructure.probe.known_services import KNOWN_SERVICES
+from omega_fire.infrastructure.probe.known_services import KNOWN_SERVICES, OMEGA_SUITE_CAPABILITIES
 # ----------------------------------------------------------------------
 # Mapping des capacités du registre vers les catégories d'affichage UI
 # ----------------------------------------------------------------------
 REFERENCE_CAPABILITIES = {
     "backends": ["nftables", "iptables", "ip6tables", "fail2ban_client"],
     **KNOWN_SERVICES,
+    **OMEGA_SUITE_CAPABILITIES,
 }
 
 STATUS_MAPPING = {
@@ -291,42 +293,41 @@ def _render_system_metrics_box(use_emoji: bool, stats: dict) -> Panel:
     proc_icon = "⚙" if use_emoji else "Proc"
 
     cpu_bar = _render_progress_bar(stats['cpu'])
-    content.append(f"  {cpu_icon}  CPU : {cpu_bar}\n", style=theme_registry.get_style("text.main"))
+    content.append(_("  {cpu_icon}  CPU : {cpu_bar}\n").format(cpu_icon=cpu_icon, cpu_bar=cpu_bar), style=theme_registry.get_style("text.main"))
 
     if stats.get("temps"):
         temp_str = " / ".join(f"{v:.0f}°C" for v in list(stats["temps"].values())[:3])
-        content.append(f"       Temp: {temp_str}\n", style=theme_registry.get_style("text.main"))
+        content.append(_("       Temp: {temp_str}\n").format(temp_str=temp_str), style=theme_registry.get_style("text.main"))
     if stats.get("fans"):
         fan_str = " / ".join(f"{v:.0f} RPM" for v in list(stats["fans"].values())[:2])
-        content.append(f"       Fans: {fan_str}\n", style=theme_registry.get_style("text.main"))
+        content.append(_("       Fans: {fan_str}\n").format(fan_str=fan_str), style=theme_registry.get_style("text.main"))
 
     content.append("\n")
     ram_bar = _render_progress_bar(stats['mem_percent'])
-    content.append(f"  {ram_icon} RAM : {ram_bar}\n", style=theme_registry.get_style("text.main"))
+    content.append(_("  {ram_icon} RAM : {ram_bar}\n").format(ram_icon=ram_icon, ram_bar=ram_bar), style=theme_registry.get_style("text.main"))
     content.append(f"       ({_bytes_to_human(stats['mem_used'])} / {_bytes_to_human(stats['mem_total'])})\n",
                    style=theme_registry.get_style("text.muted"))
 
     content.append("\n")
     disk_bar = _render_progress_bar(stats['disk_percent'])
-    content.append(f"  {disk_icon} Disk: {disk_bar}\n", style=theme_registry.get_style("text.main"))
+    content.append(_("  {disk_icon} Disk: {disk_bar}\n").format(disk_icon=disk_icon, disk_bar=disk_bar), style=theme_registry.get_style("text.main"))
     content.append(f"       ({_bytes_to_human(stats['disk_used'])} / {_bytes_to_human(stats['disk_total'])})\n",
                    style=theme_registry.get_style("text.muted"))
 
     content.append("\n")
-    content.append(f"  {swap_icon} Swap: {stats['swap_percent']:5.1f}% "
-                   f"({_bytes_to_human(stats['swap_used'])} / {_bytes_to_human(stats['swap_total'])})\n",
+    content.append(_("  {swap_icon} Swap: {swap_percent:5.1f}% ({value} / {value2})\n").format(swap_icon=swap_icon, swap_percent=stats['swap_percent'], value=_bytes_to_human(stats['swap_used']), value2=_bytes_to_human(stats['swap_total'])),
                    style=theme_registry.get_style("text.main"))
 
     content.append("\n")
-    content.append(f"  {load_icon} Load: {stats['load_1']:.2f} {stats['load_5']:.2f} {stats['load_15']:.2f}\n",
+    content.append(_("  {load_icon} Load: {load_1:.2f} {load_5:.2f} {load_15:.2f}\n").format(load_icon=load_icon, load_1=stats['load_1'], load_5=stats['load_5'], load_15=stats['load_15']),
                    style=theme_registry.get_style("text.main"))
 
     content.append("\n")
-    content.append(f"  {proc_icon} Processus: {stats['num_processes']}", style=theme_registry.get_style("text.main"))
+    content.append(_("  {proc_icon} Processus: {num_processes}").format(proc_icon=proc_icon, num_processes=stats['num_processes']), style=theme_registry.get_style("text.main"))
 
     return Panel(
         content,
-        title="Système",
+        title=_("Système"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -347,15 +348,15 @@ def _render_counters_box(use_emoji: bool, stats: dict) -> Panel:
     alert_icon = "⚠" if use_emoji else "ALT"
 
     content = Text()
-    content.append(f"  {ban_icon} IPs bannies   : {banned:<5}\n", style=theme_registry.get_style("text.danger"))
-    content.append(f"  {rule_icon} Règles actives: {rules:<5}\n", style=theme_registry.get_style("text.main"))
-    content.append(f"  {jail_icon} Jails actifs  : {jails:<5}\n", style=theme_registry.get_style("text.warning"))
+    content.append(_("  {ban_icon} IPs bannies   : {banned:<5}\n").format(ban_icon=ban_icon, banned=banned), style=theme_registry.get_style("text.danger"))
+    content.append(_("  {rule_icon} Règles actives: {rules:<5}\n").format(rule_icon=rule_icon, rules=rules), style=theme_registry.get_style("text.main"))
+    content.append(_("  {jail_icon} Jails actifs  : {jails:<5}\n").format(jail_icon=jail_icon, jails=jails), style=theme_registry.get_style("text.warning"))
     if alerts > 0:
-        content.append(f"  {alert_icon} Alertes       : {alerts:<5}\n", style=theme_registry.get_style("text.danger"))
+        content.append(_("  {alert_icon} Alertes       : {alerts:<5}\n").format(alert_icon=alert_icon, alerts=alerts), style=theme_registry.get_style("text.danger"))
 
     return Panel(
         content,
-        title="Compteurs Temps Réel",
+        title=_("Compteurs Temps Réel"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -371,31 +372,31 @@ def _render_network_box(use_emoji: bool, stats: dict) -> Panel:
     user_icon = "" if use_emoji else "Usr"
     fw_icon = "🛡" if use_emoji else "FW"
 
-    content.append(f"  {tcp_icon} Connexions TCP (OS) : {stats.get('tcp_established', 0)}\n",
+    content.append(_("  {tcp_icon} Connexions TCP (OS) : {value}\n").format(tcp_icon=tcp_icon, value=stats.get('tcp_established', 0)),
                    style=theme_registry.get_style("text.main"))
     
     conntrack_count = stats.get("conntrack_count", "N/A")
     dropped = stats.get("dropped_packets", 0)
-    content.append(f"  {fw_icon} Sessions Conntrack  : {conntrack_count}\n",
+    content.append(_("  {fw_icon} Sessions Conntrack  : {conntrack_count}\n").format(fw_icon=fw_icon, conntrack_count=conntrack_count),
                    style=theme_registry.get_style("text.info"))
     if dropped > 0:
-        content.append(f"       Paquets dropés  : {dropped}\n", style=theme_registry.get_style("text.danger"))
+        content.append(_("       Paquets dropés  : {dropped}\n").format(dropped=dropped), style=theme_registry.get_style("text.danger"))
 
     users = stats.get("users", [])
     if users:
         user_names = ", ".join(u.name for u in users[:3])
-        content.append(f"  {user_icon} Utilisateurs: {user_names}\n", style=theme_registry.get_style("text.main"))
+        content.append(_("  {user_icon} Utilisateurs: {user_names}\n").format(user_icon=user_icon, user_names=user_names), style=theme_registry.get_style("text.main"))
     else:
-        content.append(f"  {user_icon} Aucun utilisateur connecté\n", style=theme_registry.get_style("text.main"))
+        content.append(_("  {user_icon} Aucun utilisateur connecté\n").format(user_icon=user_icon), style=theme_registry.get_style("text.main"))
 
     sent = _bytes_to_human(stats.get("net_bytes_sent", 0))
     recv = _bytes_to_human(stats.get("net_bytes_recv", 0))
-    content.append(f"  {net_icon} Réseau: ↓{recv}  ↑{sent}\n",
+    content.append(_("  {net_icon} Réseau: ↓{recv}  ↑{sent}\n").format(net_icon=net_icon, recv=recv, sent=sent),
                    style=theme_registry.get_style("text.main"))
 
     return Panel(
         content,
-        title="Réseau & Firewall",
+        title=_("Réseau & Firewall"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -411,11 +412,11 @@ def _render_uptime_box(use_emoji: bool, stats: dict) -> Panel:
     minutes = int((uptime_sec % 3600) // 60)
     uptime_str = f"{days}j {hours}h {minutes}m"
     clock_icon = "🕒" if use_emoji else "Up"
-    content = Text(f"  {clock_icon} Uptime: {uptime_str}", style=theme_registry.get_style("text.main"))
+    content = Text(_("  {clock_icon} Uptime: {uptime_str}").format(clock_icon=clock_icon, uptime_str=uptime_str), style=theme_registry.get_style("text.main"))
 
     return Panel(
         content,
-        title="Disponibilité",
+        title=_("Disponibilité"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -433,20 +434,20 @@ def _render_policy_sync_box(use_emoji: bool, stats: dict) -> Panel:
     sync_icon = "" if use_emoji else "SYN"
 
     content = Text()
-    content.append(f"  {policy_icon} Politique active : ", style=theme_registry.get_style("text.main"))
+    content.append(_("  {policy_icon} Politique active : ").format(policy_icon=policy_icon), style=theme_registry.get_style("text.main"))
     content.append(f"[{policy.upper()}]\n", style=theme_registry.get_style("text.warning"))
     
-    content.append(f"  {sync_icon} Dernière sync    : {last_sync}\n", style=theme_registry.get_style("text.main"))
+    content.append(_("  {sync_icon} Dernière sync    : {last_sync}\n").format(sync_icon=sync_icon, last_sync=last_sync), style=theme_registry.get_style("text.main"))
     if sync_status == "success":
-        content.append(f"       Statut          : ✔ Réussie\n", style=theme_registry.get_style("status.available"))
+        content.append(_("       Statut          : ✔ Réussie\n"), style=theme_registry.get_style("status.available"))
     elif sync_status == "failed":
-        content.append(f"       Statut          : ❌ Échouée\n", style=theme_registry.get_style("status.missing"))
+        content.append(_("       Statut          : ❌ Échouée\n"), style=theme_registry.get_style("status.missing"))
     else:
-        content.append(f"       Statut          : {sync_status}\n", style=theme_registry.get_style("text.muted"))
+        content.append(_("       Statut          : {sync_status}\n").format(sync_status=sync_status), style=theme_registry.get_style("text.muted"))
 
     return Panel(
         content,
-        title="Politique & Synchronisation",
+        title=_("Politique & Synchronisation"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -467,35 +468,35 @@ def _render_bans_alerts_box(use_emoji: bool, stats: dict) -> Panel:
     content = Text()
     
     if last_ban:
-        content.append(f"  {ban_icon} Dernier ban   : {last_ban.get('ip', 'N/A')}\n",
+        content.append(_("  {ban_icon} Dernier ban   : {value}\n").format(ban_icon=ban_icon, value=last_ban.get('ip', 'N/A')),
                       style=theme_registry.get_style("text.danger"))
-        content.append(f"       Backend     : {last_ban.get('backend', 'N/A')}\n",
+        content.append(_("       Backend     : {value}\n").format(value=last_ban.get('backend', 'N/A')),
                       style=theme_registry.get_style("text.muted"))
-        content.append(f"       Timestamp   : {last_ban.get('time', 'N/A')}\n",
+        content.append(_("       Timestamp   : {value}\n").format(value=last_ban.get('time', 'N/A')),
                       style=theme_registry.get_style("text.muted"))
     else:
-        content.append(f"  {ban_icon} Dernier ban   : Aucun\n", style=theme_registry.get_style("text.muted"))
+        content.append(_("  {ban_icon} Dernier ban   : Aucun\n").format(ban_icon=ban_icon), style=theme_registry.get_style("text.muted"))
 
     content.append("\n")
     
     if last_unban:
-        content.append(f"  {unban_icon} Dernier unban : {last_unban.get('ip', 'N/A')}\n",
+        content.append(_("  {unban_icon} Dernier unban : {value}\n").format(unban_icon=unban_icon, value=last_unban.get('ip', 'N/A')),
                       style=theme_registry.get_style("status.available"))
-        content.append(f"       Timestamp   : {last_unban.get('time', 'N/A')}\n",
+        content.append(_("       Timestamp   : {value}\n").format(value=last_unban.get('time', 'N/A')),
                       style=theme_registry.get_style("text.muted"))
 
     content.append("\n")
     
     if active_alerts:
-        content.append(f"  {alert_icon} Alertes F2B   :\n", style=theme_registry.get_style("text.warning"))
+        content.append(_("  {alert_icon} Alertes F2B   :\n").format(alert_icon=alert_icon), style=theme_registry.get_style("text.warning"))
         for alert in active_alerts[:3]:
             content.append(f"       • {alert}\n", style=theme_registry.get_style("text.main"))
     else:
-        content.append(f"  {alert_icon} Alertes F2B   : Aucune\n", style=theme_registry.get_style("text.muted"))
+        content.append(_("  {alert_icon} Alertes F2B   : Aucune\n").format(alert_icon=alert_icon), style=theme_registry.get_style("text.muted"))
 
     return Panel(
         content,
-        title="Bans & Alertes Récentes",
+        title=_("Bans & Alertes Récentes"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -508,17 +509,17 @@ def _render_top_attackers_box(use_emoji: bool, stats: dict) -> Panel:
     top_ips = stats.get("top_attackers", [])
     
     if not top_ips:
-        content = Text("  Aucune attaque détectée", style=theme_registry.get_style("text.muted"))
+        content = Text(_("  Aucune attaque détectée"), style=theme_registry.get_style("text.muted"))
     else:
         content = Text()
         attack_icon = "" if use_emoji else "ATK"
         for i, (ip, count) in enumerate(top_ips[:5], 1):
-            content.append(f"  {i}. {attack_icon} {ip:<15} ({count} tentatives)\n",
+            content.append(_("  {i}. {attack_icon} {ip:<15} ({count} tentatives)\n").format(i=i, attack_icon=attack_icon, ip=ip, count=count),
                           style=theme_registry.get_style("text.danger" if count > 50 else "text.warning"))
 
     return Panel(
         content,
-        title="Top IPs Attaquantes",
+        title=_("Top IPs Attaquantes"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -531,7 +532,7 @@ def _render_recent_actions_box(use_emoji: bool, stats: dict) -> Panel:
     actions = stats.get("recent_actions", [])
     
     if not actions:
-        content = Text("  Aucune action récente", style=theme_registry.get_style("text.muted"))
+        content = Text(_("  Aucune action récente"), style=theme_registry.get_style("text.muted"))
     else:
         content = Text()
         action_icon = "" if use_emoji else "ACT"
@@ -543,7 +544,7 @@ def _render_recent_actions_box(use_emoji: bool, stats: dict) -> Panel:
 
     return Panel(
         content,
-        title="Dernières Actions",
+        title=_("Dernières Actions"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -563,7 +564,7 @@ def _render_firewall_metrics_box(use_emoji: bool, stats: dict) -> Panel:
 
     content = Text()
     
-    content.append(f"  {latency_icon} Latence backends :\n", style=theme_registry.get_style("text.heading"))
+    content.append(_("  {latency_icon} Latence backends :\n").format(latency_icon=latency_icon), style=theme_registry.get_style("text.heading"))
     for backend, ms in latency.items():
         content.append(f"       {backend:<12} : {ms} ms\n", style=theme_registry.get_style("text.main"))
     
@@ -572,20 +573,20 @@ def _render_firewall_metrics_box(use_emoji: bool, stats: dict) -> Panel:
     if ratio:
         drop_pct = ratio.get("drop_percent", 0)
         accept_pct = ratio.get("accept_percent", 100)
-        content.append(f"  {ratio_icon} Ratio Drop/Accept :\n", style=theme_registry.get_style("text.heading"))
-        content.append(f"       Drop   : {drop_pct}%\n", style=theme_registry.get_style("text.danger"))
-        content.append(f"       Accept : {accept_pct}%\n", style=theme_registry.get_style("status.available"))
+        content.append(_("  {ratio_icon} Ratio Drop/Accept :\n").format(ratio_icon=ratio_icon), style=theme_registry.get_style("text.heading"))
+        content.append(_("       Drop   : {drop_pct}%\n").format(drop_pct=drop_pct), style=theme_registry.get_style("text.danger"))
+        content.append(_("       Accept : {accept_pct}%\n").format(accept_pct=accept_pct), style=theme_registry.get_style("status.available"))
     
     content.append("\n")
     
     if jail_load:
-        content.append(f"  {jail_icon} Charge des jails :\n", style=theme_registry.get_style("text.heading"))
+        content.append(_("  {jail_icon} Charge des jails :\n").format(jail_icon=jail_icon), style=theme_registry.get_style("text.heading"))
         for jail_name, count in jail_load[:3]:
-            content.append(f"       {jail_name:<12} : {count} bans\n", style=theme_registry.get_style("text.main"))
+            content.append(_("       {jail_name:<12} : {count} bans\n").format(jail_name=jail_name, count=count), style=theme_registry.get_style("text.main"))
 
     return Panel(
         content,
-        title="Métriques Performance Firewall",
+        title=_("Métriques Performance Firewall"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -607,23 +608,23 @@ def _render_advanced_network_box(use_emoji: bool, stats: dict) -> Panel:
 
     content = Text()
     
-    content.append(f"  {ip_icon} IP réseau (sortante) : {outbound_ip}\n", style=theme_registry.get_style("text.info"))
+    content.append(_("  {ip_icon} IP réseau (sortante) : {outbound_ip}\n").format(ip_icon=ip_icon, outbound_ip=outbound_ip), style=theme_registry.get_style("text.info"))
     
-    content.append(f"\n  {iface_icon} Interfaces   :\n", style=theme_registry.get_style("text.heading"))
+    content.append(_("\n  {iface_icon} Interfaces   :\n").format(iface_icon=iface_icon), style=theme_registry.get_style("text.heading"))
     for iface in interfaces[:4]:
         content.append(f"       {iface['name']:<10} : {iface['ip']}\n", style=theme_registry.get_style("text.main"))
     
-    content.append(f"\n  {gw_icon} Passerelle   : {gateway}\n", style=theme_registry.get_style("text.main"))
+    content.append(_("\n  {gw_icon} Passerelle   : {gateway}\n").format(gw_icon=gw_icon, gateway=gateway), style=theme_registry.get_style("text.main"))
     
-    content.append(f"  {dns_icon} DNS          : ", style=theme_registry.get_style("text.main"))
+    content.append(_("  {dns_icon} DNS          : ").format(dns_icon=dns_icon), style=theme_registry.get_style("text.main"))
     if dns:
         content.append(", ".join(dns[:3]) + "\n", style=theme_registry.get_style("text.main"))
     else:
-        content.append("Non configuré\n", style=theme_registry.get_style("text.muted"))
+        content.append(_("Non configuré\n"), style=theme_registry.get_style("text.muted"))
 
     return Panel(
         content,
-        title="Réseau Avancé",
+        title=_("Réseau Avancé"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -647,26 +648,26 @@ def _render_maintenance_box(use_emoji: bool, stats: dict) -> Panel:
     content = Text()
     
     if last_backup:
-        content.append(f"  {backup_icon} Dernier backup :\n", style=theme_registry.get_style("text.heading"))
-        content.append(f"       Date : {last_backup.get('date', 'N/A')}\n", style=theme_registry.get_style("text.main"))
-        content.append(f"       Taille: {last_backup.get('size', 'N/A')}\n", style=theme_registry.get_style("text.main"))
+        content.append(_("  {backup_icon} Dernier backup :\n").format(backup_icon=backup_icon), style=theme_registry.get_style("text.heading"))
+        content.append(_("       Date : {value}\n").format(value=last_backup.get('date', 'N/A')), style=theme_registry.get_style("text.main"))
+        content.append(_("       Taille: {value}\n").format(value=last_backup.get('size', 'N/A')), style=theme_registry.get_style("text.main"))
         status = last_backup.get('status', 'N/A')
         if status == "ok":
-            content.append(f"       Statut: ✔ OK\n", style=theme_registry.get_style("status.available"))
+            content.append(_("       Statut: ✔ OK\n"), style=theme_registry.get_style("status.available"))
         elif status == "late":
-            content.append(f"       Statut: ⚠ En retard\n", style=theme_registry.get_style("text.warning"))
+            content.append(_("       Statut: ⚠ En retard\n"), style=theme_registry.get_style("text.warning"))
         else:
-            content.append(f"       Statut: ❌ Échoué\n", style=theme_registry.get_style("status.missing"))
+            content.append(_("       Statut: ❌ Échoué\n"), style=theme_registry.get_style("status.missing"))
     else:
-        content.append(f"  {backup_icon} Dernier backup : Aucun\n", style=theme_registry.get_style("text.muted"))
+        content.append(_("  {backup_icon} Dernier backup : Aucun\n").format(backup_icon=backup_icon), style=theme_registry.get_style("text.muted"))
     
     content.append("\n")
     
-    content.append(f"  {config_icon} Intégrité config : ", style=theme_registry.get_style("text.main"))
+    content.append(_("  {config_icon} Intégrité config : ").format(config_icon=config_icon), style=theme_registry.get_style("text.main"))
     if config_integrity == "ok":
         content.append("✔ OK\n", style=theme_registry.get_style("status.available"))
     elif config_integrity == "error":
-        content.append("❌ Erreur\n", style=theme_registry.get_style("status.missing"))
+        content.append(_("❌ Erreur\n"), style=theme_registry.get_style("status.missing"))
     else:
         content.append(f"{config_integrity}\n", style=theme_registry.get_style("text.muted"))
     
@@ -675,18 +676,18 @@ def _render_maintenance_box(use_emoji: bool, stats: dict) -> Panel:
     if plugins:
         active = plugins.get("active", 0)
         errors = plugins.get("errors", 0)
-        content.append(f"  {plugin_icon} Plugins chargés : {active} actifs", style=theme_registry.get_style("text.main"))
+        content.append(_("  {plugin_icon} Plugins chargés : {active} actifs").format(plugin_icon=plugin_icon, active=active), style=theme_registry.get_style("text.main"))
         if errors > 0:
-            content.append(f", {errors} en erreur\n", style=theme_registry.get_style("text.danger"))
+            content.append(_(", {errors} en erreur\n").format(errors=errors), style=theme_registry.get_style("text.danger"))
         else:
             content.append("\n")
     
-    content.append(f"\n  {version_icon} Version Omega-Fire : {version}\n", style=theme_registry.get_style("text.info"))
-    content.append(f"       MAJ registre     : {registry_update}\n", style=theme_registry.get_style("text.muted"))
+    content.append(_("\n  {version_icon} Version Omega-Fire : {version}\n").format(version_icon=version_icon, version=version), style=theme_registry.get_style("text.info"))
+    content.append(_("       MAJ registre     : {registry_update}\n").format(registry_update=registry_update), style=theme_registry.get_style("text.muted"))
 
     return Panel(
         content,
-        title="Maintenance & Santé",
+        title=_("Maintenance & Santé"),
         title_align="left",
         border_style=theme_registry.get_style("border.default"),
         padding=(0, 1),
@@ -705,7 +706,7 @@ def _build_services_layout(
     layout = Layout()
     categories = list(capabilities_state.keys())
     if not categories:
-        layout.update(Text("Aucune capacité détectée", style=theme_registry.get_style("text.muted")))
+        layout.update(Text(_("Aucune capacité détectée"), style=theme_registry.get_style("text.muted")))
         return layout
 
     total_services = sum(len(capabilities_state[cat]) for cat in categories)
@@ -724,7 +725,7 @@ def _build_services_layout(
         remaining_to_cut -= 1
 
     content = Text()
-    content.append("Services détectés\n", style=theme_registry.get_style("text.heading"))
+    content.append(_("Services détectés\n"), style=theme_registry.get_style("text.heading"))
     content.append("─" * 25 + "\n", style=theme_registry.get_style("border.default"))
 
     for cat_key in categories:
@@ -735,6 +736,7 @@ def _build_services_layout(
             "servers": "Serveurs",
             "bureau_distant": "Bureau",
             "security_network": "Sécurité Réseau",
+            "omega_suite": "Suite omega",
         }.get(cat_key, cat_key)
 
         content.append(f"\n── {label} ──\n", style=theme_registry.get_style("text.muted"))
@@ -748,10 +750,10 @@ def _build_services_layout(
             content.append("\n")
 
         if overflow_count > 0:
-            content.append(f"  … +{overflow_count} autre(s) (voir 1.1)\n", style=theme_registry.get_style("text.muted"))
+            content.append(_("  … +{overflow_count} autre(s) (voir 1.1)\n").format(overflow_count=overflow_count), style=theme_registry.get_style("text.muted"))
 
     layout.update(
-        Panel(content, title="Services", border_style=theme_registry.get_style("border.default"), padding=(1, 1))
+        Panel(content, title=_("Services"), border_style=theme_registry.get_style("border.default"), padding=(1, 1))
     )
 
     return layout
@@ -774,14 +776,14 @@ def render_general_state(
 
     def _build_help_legend() -> Panel:
         legend = Text()
-        legend.append("=== AIDE TABLEAU DE BORD ===\n\n", style=theme_registry.get_style("text.heading"))
-        legend.append("• [q] / [m] / [ESC] : Quitter, retour au menu\n", style=theme_registry.get_style("text.main"))
-        legend.append("• [t]               : Basculer vers le thème suivant\n", style=theme_registry.get_style("text.main"))
-        legend.append("• [a]               : Masquer cet écran d'aide\n", style=theme_registry.get_style("text.main"))
-        legend.append("\nLe tableau de bord se rafraîchit automatiquement toutes les 2 secondes.\n", style=theme_registry.get_style("text.muted"))
+        legend.append(_("=== AIDE TABLEAU DE BORD ===\n\n"), style=theme_registry.get_style("text.heading"))
+        legend.append(_("• [q] / [m] / [ESC] : Quitter, retour au menu\n"), style=theme_registry.get_style("text.main"))
+        legend.append(_("• [t]               : Basculer vers le thème suivant\n"), style=theme_registry.get_style("text.main"))
+        legend.append(_("• [a]               : Masquer cet écran d'aide\n"), style=theme_registry.get_style("text.main"))
+        legend.append(_("\nLe tableau de bord se rafraîchit automatiquement toutes les 2 secondes.\n"), style=theme_registry.get_style("text.muted"))
         return Panel(
             legend,
-            title="Aide & Raccourcis",
+            title=_("Aide & Raccourcis"),
             title_align="left",
             border_style=theme_registry.get_style("border.default"),
             padding=(1, 2),
@@ -798,19 +800,19 @@ def render_general_state(
         # Header
         header_texts = []
         shield = "\U0001f6e1 " if use_emoji else ""
-        title_line = Text(f"{shield}OMEGA-FIRE v3.0", style=theme_registry.get_style("menu.title"))
+        title_line = Text(_("{shield}OMEGA-FIRE v3.5").format(shield=shield), style=theme_registry.get_style("menu.title"))
         theme_name = theme.display_name
         term_width = get_terminal_width()
         term_height = get_terminal_height()
-        title_line.append(f"  |  Theme: {theme_name}  |  ", style=theme_registry.get_style("text.muted"))
-        title_line.append(f"Terminal: {term_width}x{term_height}", style=theme_registry.get_style("text.muted"))
+        title_line.append(_("  |  Thème: {theme_name}  |  ").format(theme_name=theme_name), style=theme_registry.get_style("text.muted"))
+        title_line.append(_("Terminal: {term_width}x{term_height}").format(term_width=term_width, term_height=term_height), style=theme_registry.get_style("text.muted"))
         header_texts.append(title_line)
 
         sep_width = max(40, term_width - 4)
         header_texts.append(Text("─" * sep_width, style=theme_registry.get_style("border.default")))
 
         section_title = Text(
-            ">> ETAT GENERAL" if not use_emoji else "▸ ÉTAT GÉNÉRAL",
+            ">> ETAT GENERAL" if not use_emoji else _("▸ ÉTAT GÉNÉRAL"),
             style=theme_registry.get_style("text.heading"),
         )
         header_texts.append(section_title)
@@ -941,7 +943,7 @@ def render_general_state(
     # build_layout() collecte les stats OS + firewall/fail2ban en direct
     # (vrais sous-processus) avant le tout premier affichage — sans
     # spinner, l'écran restait noir pendant ce chargement.
-    with gauge_status(console, "Chargement du tableau de bord..."):
+    with gauge_status(console, _("Chargement du tableau de bord...")):
         initial_layout = build_layout()
 
     try:
@@ -1062,21 +1064,21 @@ def _render_footer_text(mode: str, use_emoji: bool) -> Text:
         footer.append("ide  ", style=label_s)
         footer.append("|  ", style=sep_s)
         footer.append("[esc]", style=key_s)
-        footer.append(" Retour  ", style=label_s)
+        footer.append(_(" Retour  "), style=label_s)
         footer.append("|  ", style=sep_s)
         footer.append("[q]", style=key_s)
         footer.append("uitter", style=label_s)
     elif mode == FrameMode.SUBMENU:
-        footer.append(icon("\U0001f4c2", "[>]") + " Sous-menu", style=ctx_s)
+        footer.append(icon("\U0001f4c2", "[>]") + _(" Sous-menu"), style=ctx_s)
         footer.append(sep, style=sep_s)
         footer.append("[t]", style=key_s)
-        footer.append("hème  ", style=label_s)
+        footer.append(_("hème  "), style=label_s)
         footer.append("|  ", style=sep_s)
         footer.append("[a]", style=key_s)
         footer.append("ide  ", style=label_s)
         footer.append("|  ", style=sep_s)
         footer.append("[m]", style=key_s)
-        footer.append("enu principal  ", style=label_s)
+        footer.append(_("enu principal  "), style=label_s)
         footer.append("|  ", style=sep_s)
         footer.append("[r]", style=key_s)
         footer.append("etour  ", style=label_s)
@@ -1084,18 +1086,18 @@ def _render_footer_text(mode: str, use_emoji: bool) -> Text:
         footer.append("[q]", style=key_s)
         footer.append("uitter", style=label_s)
     elif mode == FrameMode.INPUT:
-        footer.append(icon("\u270f\ufe0f", "[_]") + " Saisie", style=ctx_s)
+        footer.append(icon("\u270f\ufe0f", "[_]") + _(" Saisie"), style=ctx_s)
         footer.append(sep, style=sep_s)
-        footer.append("Enter", style=key_s)
-        footer.append(" Valider  ", style=label_s)
+        footer.append(_("Enter"), style=key_s)
+        footer.append(_(" Valider  "), style=label_s)
         footer.append("|  ", style=sep_s)
-        footer.append("Esc", style=key_s)
-        footer.append(" Annuler  ", style=label_s)
+        footer.append(_("Esc"), style=key_s)
+        footer.append(_(" Annuler  "), style=label_s)
         footer.append("|  ", style=sep_s)
-        footer.append("Tab", style=key_s)
-        footer.append(" Champ suivant", style=label_s)
+        footer.append(_("Tab"), style=key_s)
+        footer.append(_(" Champ suivant"), style=label_s)
     elif mode == FrameMode.CONFIRM:
-        footer.append(icon("\u26a0\ufe0f", "[!]") + " Confirmation", style=ctx_s)
+        footer.append(icon("\u26a0\ufe0f", "[!]") + _(" Confirmation"), style=ctx_s)
         footer.append(sep, style=sep_s)
         footer.append("[o]", style=key_s)
         footer.append("ui  ", style=label_s)
@@ -1103,19 +1105,19 @@ def _render_footer_text(mode: str, use_emoji: bool) -> Text:
         footer.append("[n]", style=key_s)
         footer.append("on  ", style=label_s)
         footer.append("|  ", style=sep_s)
-        footer.append("Esc", style=key_s)
-        footer.append(" Annuler", style=label_s)
+        footer.append(_("Esc"), style=key_s)
+        footer.append(_(" Annuler"), style=label_s)
     elif mode == FrameMode.LIST:
-        footer.append(icon("\U0001f4cb", "[L]") + " Sélection", style=ctx_s)
+        footer.append(icon("\U0001f4cb", "[L]") + _(" Sélection"), style=ctx_s)
         footer.append(sep, style=sep_s)
         footer.append("^v", style=key_s)
-        footer.append(" Naviguer  ", style=label_s)
+        footer.append(_(" Naviguer  "), style=label_s)
         footer.append("|  ", style=sep_s)
-        footer.append("Enter", style=key_s)
-        footer.append(" Valider  ", style=label_s)
+        footer.append(_("Enter"), style=key_s)
+        footer.append(_(" Valider  "), style=label_s)
         footer.append("|  ", style=sep_s)
-        footer.append("Esc", style=key_s)
-        footer.append(" Annuler", style=label_s)
+        footer.append(_("Esc"), style=key_s)
+        footer.append(_(" Annuler"), style=label_s)
 
     return footer
 

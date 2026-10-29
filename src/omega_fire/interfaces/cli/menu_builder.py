@@ -51,7 +51,7 @@ class MenuBuilder:
         # ====================================================================
         section_1 = create_node(
             node_id="1",
-            label="ÉTAT DES CAPACITÉS & DIAGNOSTICS",
+            label="CAPACITÉS & DIAGNOSTICS",
             description="Vue globale des backends et services",
         )
         section_1.add_child(create_node("1.1", "Afficher le registre des capacités", action=actions.get("1.1"), description="Liste des composants et leur status"))

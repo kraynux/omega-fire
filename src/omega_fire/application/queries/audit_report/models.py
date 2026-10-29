@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -77,7 +78,7 @@ class Anomaly:
 class AppHealth:
     """Section 11: application health snapshot."""
     version: str = "N/A"
-    last_backup_info: str = "N/A — non configuré"
+    last_backup_info: str = field(default_factory=lambda: _("N/A — non configuré"))
     config_integrity: str = "N/A"
 
 

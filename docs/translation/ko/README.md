@@ -18,6 +18,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 문서, 내보내기 및 인터페이스를 **17개 언어**로 제공합니다 — [인터페이스 언어](#인터페이스-언어)를 참조하십시오.  
 **언어:**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](../nl/README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](../pl/README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](../zh-CN/README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](../vi/README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](../id/README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -100,6 +101,7 @@ Omega-Fire는 네트워크 보안을 위한 **로컬 조종석** 역할을 합�
 - 최근 진단 결과 조회.
 - 애플리케이션 로그 조회 및 검색.
 - 상태와 진단을 JSON, TXT, HTML로 내보내기.
+- **omega 제품군** 범주: omega-serv(감지되어 실행 중인 인스턴스), omega-waf(`magnet` 확장 활성화), omega-jail(설치된 jail)이 레지스트리, 대시보드, 보고서에 표시됩니다.
 
 ### 2. 통합 IP 관리
 
@@ -121,12 +123,15 @@ Omega-Fire는 네트워크 보안을 위한 **로컬 조종석** 역할을 합�
 - 시스템 규칙과 Omega-Fire가 만든 규칙의 목록.
 - 선택으로 규칙 삭제.
 - 참조 데이터베이스의 비활성 규칙 자동 정리.
+- 실제 방화벽에 맞춰 데이터베이스를 정리하고 다시 동기화합니다. 미리 보기와 사전 백업을 제공하며 방화벽 자체는 절대 수정하지 않습니다.
+- 다른 도구(UFW, Tailscale, Docker…)의 규칙을 출처로 식별: 정보용으로 표시만 하며 Omega-Fire에서 절대 삭제하지 않습니다.
+- 다른 도구가 iptables에 규칙을 가지고 있을 때 정책 적용이나 iptables 비우기 전에 안전장치: 모두 적용, nftables에만 적용, 또는 취소 — 결과는 도움말에 자세히 설명되어 있습니다.
 - 미리 정의된 정책 적용.
 - 정책 적용 전 자동 백업.
 - 정책 사용자 정의, 저장, 복원.
 - 상태 메뉴와 대시보드에서 활성 정책 표시.
 - 수정된 프로필을 `프로필 + CUSTOM` 형태로 표시.
-- 테이블 관리(메뉴 3.5): 백엔드별 읽기 전용 진단(테이블 존재 여부, input/output/forward 정책, 규칙 수)과 백엔드 간 차이 감지.
+- 테이블 관리(메뉴 3.5): 백엔드별 읽기 전용 진단(테이블 존재 여부, input/output/forward 정책, 규칙 수)과 백엔드마다 다른 정책에 대한 설명(실제 효과, 원인, 해결 방법).
 - 처음 사용할 때 nftables 테이블을 초기화하며, 이미 설정된 chain은 결코 덮어쓰지 않음.
 - 이전 프로필이 남긴 고아 제한 정책을 바로잡기 위해 백엔드의 chain 정책을 ACCEPT로 재설정.
 - 특정 백엔드만 비우거나, 감지된 모든 백엔드를 한 번의 동작으로 동기화해 비우기.
@@ -140,20 +145,23 @@ Omega-Fire는 네트워크 보안을 위한 **로컬 조종석** 역할을 합�
 - 개별 또는 다중 ban과 unban.
 - jail, 백엔드, 파일 간 IP 이동.
 - 안내에 따른 사용자 jail 생성.
-- 미리 정의된 jail 템플릿.
-- jail 삭제.
+- 미리 정의된 jail 템플릿, 수정 및 삭제 가능.
+- 각 jail의 출처: Omega-Fire, omega-jail, fail2ban 기본 구성 또는 기타 파일.
+- 파일 이름과 관계없이 확실한 jail 삭제: omega-jail이 설치한 jail에는 경고, `jail.local` 또는 공유 파일의 jail은 이유를 설명하며 거부, fail2ban 표준 필터는 절대 삭제하지 않습니다.
 - jail 비우기 또는 전체 정리.
 - JSON, TXT, HTML로 내보내기.
 - 설정 확인과 감사.
-- 서비스 제어: 상태, 시작, 중지, 재시작, 부팅 시 활성화와 비활성화.
+- 서비스 제어: 상태, 시작, 중지, 재시작, 부팅 시 활성화와 비활성화. 시작이나 중지 후에는 기능 레지스트리와 대시보드가 갱신됩니다.
 
 ### 5. 로그와 유지 관리
 
-- Omega-Fire 대시보드가 있는 Live Tail.
-- 고정 항목(즐겨찾는 소스, 실행 사이에도 유지)이 있는 다중 파일 표시.
-- `lnav` 통합: 하나 이상의 파일 선택(번호 또는 직접 입력한 경로, 쉼표로 구분), 하나의 시간순 보기로 자동 병합, Omega-Fire 헤더/푸터로 감쌈([탐색](#탐색) 참조).
-- Top N으로 가장 자주 나타나는 IP 분석.
-- LOG 또는 TXT 파일에서 특정 IP만 정리.
+- **로그 라이브러리**(5.1): 감지된 omega-serv 인스턴스의 로그(omega-waf 로그 포함) 자동 가져오기, 경로 수동 고정, SSH로 원격 로그 가져오기(키 또는 에이전트, 비밀번호는 절대 사용하지 않음).
+- **즐겨찾기**(5.2): 라이브러리의 로그를 조합해 이름과 뷰어를 지정하여 저장하고 바로 실행합니다.
+- **로그 보기**(5.3): 설정 없이 로그 하나를 원하는 뷰어로 — 단순(실시간 대시보드), 클래식(마지막 줄 표시 후 실시간 추적) 또는 `lnav`.
+- `lnav` 통합: 여러 로그를 하나의 시간순 보기로 병합하고 Omega-Fire 헤더/푸터로 감쌈([탐색](#탐색) 참조).
+- Top N으로 가장 빈번한 IP 분석, 내보내서 대상 지정 정리에 다시 불러올 수 있습니다.
+- LOG 또는 TXT 파일에서 하나 이상의 IP를 대상 지정 정리, 직접 입력하거나 내보내기에서 체크하여 선택.
+- **체크해서 고르는 프리셋**이 있는 고정 파일: 시스템에 실제로 존재하는 일반적인 경로만 제안됩니다.
 - 로테이션과 즉시 또는 자동 백업.
 - 백업 복원.
 - 기간, 할당량, 유형, 수동 선택에 따른 정리.
@@ -178,6 +186,10 @@ Omega-Fire는 네트워크 보안을 위한 **로컬 조종석** 역할을 합�
 - Fail2Ban 통계.
 - 시스템 상태와 진단.
 - 7일 또는 30일 통계 보고서.
+- IP Top N 순위.
+- 도움말 가이드와 FAQ.
+
+**모든 내보내기 보기**(6.5): 내보낸 모든 파일을 한곳에서 유형, 날짜, 크기와 함께 표시. HTML 보고서는 사용자의 기본 웹 브라우저에서 열리고, JSON이나 TXT는 Omega-Fire 안에서 읽을 수 있어 터미널이나 파일 관리자가 필요 없습니다.
 
 HTML 테마:
 
@@ -187,11 +199,13 @@ HTML 테마:
 - `light-basic` — 밝고 차분함.
 - `light-alt` — 크림색 종이와 숲색 초록.
 
+내보내기 언어: 설정에서 따로 지정할 수 있으며(기본값 « 인터페이스와 같음 »), 인터페이스 언어를 바꾸지 않고 읽는 사람의 언어로 보고서를 전달할 수 있습니다.
+
 ### 7. 시스템과 영속성
 
 - 전체 상태 백업: 규칙, nftables 차단, iptables 차단, Fail2Ban.
 - 타임스탬프가 붙은 `.tar.gz` 아카이브 생성.
-- 스냅숏 목록과 복원.
+- 스냅샷 목록과 복원: 동일하게 다시 만들 수 있는 Omega-Fire 규칙만 되돌리며, 다른 도구의 규칙은 절대 건드리지 않습니다.
 - 작업 기록.
 - 기록 필터링과 정리.
 - 재시작 없이 설정 다시 불러오기와 다시 스캔.
@@ -209,7 +223,17 @@ HTML 테마:
 
 - 도구 모음의 나머지와 공유하는 열 가지 `omega-*` 테마 중에서 활성 테마 선택([테마와 터미널](#테마와-터미널) 참조), 실행 사이에도 유지.
 - 렌더링 프로필(자동, 완전, 표준, 축소, mono 전용)을 수동으로 지정하며, 다음 실행부터 적용.
-- 메인 메뉴(`9. RÉGLAGES`) 또는 `s` 키로 바로 열 수 있음.
+- 17개 언어 중 인터페이스 언어 선택([인터페이스 언어](#인터페이스-언어) 참조): 인터페이스만 다시 시작되며 방화벽 규칙, Fail2Ban, 서비스는 건드리지 않습니다.
+- HTML 및 TXT 내보내기 언어, 인터페이스 언어와 별개.
+- 변경 가능한 내보내기 및 스크린샷 폴더, 확인 후 비우기.
+- 메인 메뉴(`9. 설정`) 또는 `s` 키로 바로 열 수 있음.
+
+### 10. 도움말
+
+- **도움말 가이드**: 모든 도움말 시트를 메뉴 순서대로 모았으며, 각 시트에서 관련 시트를 열 수 있습니다.
+- **FAQ**: 실제 사용 중에 나온 질문(다른 도구의 규칙, 복원, Fail2Ban, 로그, 내보내기와 브라우저).
+- 가이드와 FAQ를 내보내기 언어로 HTML 내보내기.
+- `a` 키는 계속 현재 화면의 도움말입니다.
 
 ---
 
@@ -269,7 +293,7 @@ Omega-Fire는 외부 ORM 없이 표준 라이브러리 `sqlite3`를 통해 SQLit
 - `psutil` — 대시보드와 진단을 위한 시스템 정보(CPU, 메모리, 네트워크, 프로세스).
 - `jinja2` — HTML 내보내기 생성.
 - `python-dotenv` — 환경 변수.
-- `pyte` — `lnav`를 감싸기 위한 가상 터미널 에뮬레이터(메뉴 5.9/8.6).
+- `pyte` — `lnav`를 감싸기 위한 가상 터미널 에뮬레이터(메뉴 8.6 및 5.2 / 5.3의 lnav 뷰어).
 
 품질 도구(`pytest`, `black`, `flake8`, `mypy`)는 `requirements.txt`에 주석으로 적혀 있습니다: 프로젝트에 기여한다면 주석을 해제하거나 따로 설치하십시오([테스트와 품질](#테스트와-품질) 참조).
 
@@ -454,11 +478,17 @@ fire
 ./omega-fire.sh --legacy-cli
 ```
 
+기존 인터페이스는 버전 3.0 그대로이며 프랑스어입니다: 원래 메뉴 5(라이브러리, 즐겨찾기, 클래식 뷰어 없음), "모든 내보내기 보기" 없음, 도움말 가이드와 FAQ 없음, 프리셋 없음. Textual 인터페이스에 완전한 버전 3.5가 담겨 있습니다.
+
+### 인터페이스 언어
+
+17개 언어: 프랑스어, 영어, 스페인어, 포르투갈어(브라질), 이탈리아어, 독일어, 네덜란드어, 폴란드어, 러시아어, 중국어, 베트남어, 태국어, 인도네시아어, 일본어, 한국어, 힌디어, 아랍어. 설정에서 선택하며(`s` 키, 번역되지 않는 레이블 « Langue / Language »), 인터페이스만 다시 시작하여 적용합니다. 한 번만 쓰려면 `OMEGA_FIRE_LANG=ko ./omega-fire.sh`를 사용합니다(실행 스크립트가 `sudo`를 거쳐도 유지합니다). Linux 텍스트 콘솔(TTY)에서는 콘솔 글꼴에 문자가 없는 언어(베트남어, 중국어, 태국어, 일본어, 한국어, 힌디어, 아랍어)가 해당 세션 동안 영어로 표시됩니다. 아랍어는 오른쪽에서 왼쪽으로 표시됩니다. 힌디어의 경우 Terminator, GNOME Terminal, Xfce Terminal, Alacritty는 텍스트를 정렬해 표시하며, 결합 문자를 직접 조합하는 터미널(Kitty, Ghostty, Konsole)에서는 테두리와 열이 어긋날 수 있습니다. **내보내기 언어**(HTML 및 TXT 보고서)는 따로 설정하며 기본값은 « 인터페이스와 같음 »입니다. 애플리케이션 로그와 감사 기록은 계속 프랑스어로 저장되며, 기록의 제목은 선택한 언어로 표시됩니다. 이전 인터페이스(`--legacy-cli`)는 프랑스어로 유지됩니다.
+
 ### 전체 흐름
 
 1. 시작 화면(splash), 터미널이 너무 작으면 이어서 경고.
 2. 시스템 기능 감지(전용 화면, 차단하지 않음).
-3. 메인 메뉴: 주제별 8개 섹션(1-8)과 설정(9).
+3. 메인 메뉴: 8개의 주제별 섹션(1-8), 설정(9), 도움말(10).
 4. 섹션을 고른 다음 동작을 선택 — 각 동작은 폼을 열며, 필수 항목은 모두 다음 단계로 넘어가기 전에 검증됩니다.
 5. 민감하거나 파괴적인 작업(flush, 정리, 복원...) 전에는 명시적 확인.
 6. 오래 걸리는 작업은 백그라운드에서 실행되며(기다리는 동안 인터페이스를 계속 쓸 수 있음), 끝나면 결과 요약과 함께 메뉴로 돌아갑니다.
@@ -470,13 +500,13 @@ fire
 - Enter: 선택 또는 확인.
 - 표의 행 클릭: 그 행을 선택하고 관련 항목(고정할 소스, 대상 jail 등)을 미리 채움.
 - `Esc`: 이전 화면으로 돌아가기(홈에서는 종료 확인을 묻음).
-- `a`: 상황별 도움말 — 진행 중인 동작, 또는 동작 화면이 아직 열리지 않았다면 현재 섹션의 모든 동작을 설명합니다.
+- `a`: 상황별 도움말 — 현재 작업을 자세히 설명하거나, 아직 작업 화면이 열려 있지 않으면 현재 섹션의 모든 작업을 설명합니다. 전체 가이드와 FAQ는 메뉴 10에 있습니다.
 - `t`: 확인 없이 다음 테마로 전환.
 - `r`: 터미널의 크기와 종류를 다시 감지.
-- `s`: 설정 열기(테마, 렌더링 프로필).
+- `s`: 설정 열기(테마, 렌더링 프로필, 언어, 폴더).
 - `q` / `Ctrl+Q`: 확인 후 종료.
 
-#### lnav 화면(5.9 / 8.6)의 특징
+#### lnav 화면의 특징(8.6 및 5.2 / 5.3의 lnav 뷰어)
 
 `lnav`는 의사 터미널 안에 들어가며, 그 화면 둘레에 Omega-Fire 헤더/푸터가 계속 표시됩니다. `lnav` 고유 단축키와 Omega-Fire 단축키가 충돌하지 않게 하기 위해서입니다:
 
@@ -603,6 +633,7 @@ Omega-Fire는 시스템의 핵심 구성 요소에 작용하므로 신중하게 
 - 실행하려면 `sudo`를 통한 root 권한이 필요합니다.
 - flush, 전체 정리, 정책 적용은 파괴적일 수 있습니다.
 - 미리 정의된 정책은 변경 전에 자동 백업을 실행합니다.
+- iptables / ip6tables에서는 정책을 적용하거나 백엔드를 비우면 다른 도구(UFW…)의 규칙도 지워집니다: Omega-Fire가 이를 알리고 실행 전에 선택하게 합니다.
 - 큰 변경 전에는 매번 수동으로 백업하십시오.
 - 각 작업 후 방화벽, jail, 연결의 실제 상태를 확인하십시오.
 - 먼저 버려도 되는 머신이나 대상에서 테스트하십시오.
@@ -614,14 +645,14 @@ Omega-Fire는 시스템의 핵심 구성 요소에 작용하므로 신중하게 
 
 ## 테스트와 품질
 
-이 프로젝트에는 Textual 이전 전에 작성된 152개의 단위 테스트로 이루어진 기존 테스트 모음이 있습니다: 비즈니스 도메인, 오케스트레이션(`application/`), 인프라, Rich 인터페이스(`interfaces/cli/`)를 다루지만, **`interfaces/tui/`(기본 Textual 인터페이스)는 아직 다루지 않습니다**. 이 아카이브에는 `tests/` 폴더가 없습니다: 실행해야 한다면 개발 저장소에서 가져오십시오.
+테스트 모음은 137개의 단위 테스트(8,000개 이상의 검증 사례)로 구성됩니다: 비즈니스 도메인, 오케스트레이션(`application/`), 인프라, 그리고 3.5에서 추가되거나 수정된 Textual 화면을 실제 스타일시트로 실행합니다(레이아웃, 전체 흐름, 내보내기 언어). 이 아카이브에는 `tests/` 폴더가 없습니다. 실행이 필요하면 개발 저장소에서 가져오세요.
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-계층형 아키텍처가 비즈니스 도메인과 표현을 엄격히 분리하기 때문에(`domain/`, `application/`, `Protocol`로서의 `ports/`, [아키텍처](#아키텍처) 참조), 이 테스트 모음은 이전 후에도 변경 없이 유효합니다: 더 최근의 Textual 인터페이스만 아직 전용 커버리지가 없습니다.
+계층형 아키텍처는 비즈니스 도메인과 표현 계층을 엄격히 분리합니다(`domain/`, `application/`, `Protocol`로 된 `ports/`, [아키텍처](#아키텍처) 참조): 대부분의 테스트는 root도 실제 방화벽도 필요하지 않습니다.
 
 프로젝트에 기여한다면 `requirements.txt`에 (주석으로) 적힌 품질 도구를 설치하십시오:
 
@@ -657,7 +688,7 @@ pytest --cov
 
 ### 알려진 한계
 
-- 테스트 모음(152개)은 그 이후에 작성된 Textual 인터페이스(`interfaces/tui/`)를 아직 다루지 않습니다([테스트와 품질](#테스트와-품질) 참조).
+- 테스트 모음은 3.5의 Textual 화면을 다루지만, 이전 화면 전체는 아직 다루지 않습니다([테스트와 품질](#테스트와-품질) 참조).
 - `ExecutionPlan`/`PipelineStep` 메커니즘이 프로젝트에 일부 남아 있습니다.
 - 기능을 실제로 쓸 수 있는지는 호스트 머신의 바이너리, 서비스, 권한, 설정에 달려 있습니다.
 - 기존 Rich 인터페이스(`--legacy-cli`)는 더 이상 활발한 개발의 중심이 아니며, Textual 인터페이스가 실제 환경에서 완전히 안정될 때까지 유지됩니다.

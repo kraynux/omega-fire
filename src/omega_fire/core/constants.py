@@ -6,10 +6,14 @@ Conforms to Omega-Fire architecture charter:
 - No business logic (only constants)
 - Provides global constants for the entire application
 """
+from omega_fire.shared.i18n import _
 # Application metadata
 APP_NAME = "Omega-Fire"
 APP_VERSION = "1.0.0"
-APP_DESCRIPTION = "Linux Firewall Manager"
+# Version affichee (header, splash, tableau de bord). APP_VERSION reste la version des
+# metadonnees de snapshot (compatibilite), a ne pas confondre.
+OMEGA_FIRE_VERSION = "3.5"
+APP_DESCRIPTION = _("Gestionnaire de pare-feu Linux")
 # Terminal requirements
 MIN_TERMINAL_WIDTH = 80
 MIN_TERMINAL_HEIGHT = 24

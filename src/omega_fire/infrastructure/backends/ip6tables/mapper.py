@@ -6,6 +6,7 @@ Maps parsed ip6tables data (from parser.py) to domain models (from domain/).
 from typing import Optional
 from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+from omega_fire.infrastructure.backends.rule_fidelity import iptables_rule_restorable
 
 
 class Ip6tMapper:
@@ -81,6 +82,8 @@ class Ip6tMapper:
                 dest_cidr=destination,
                 comment=parsed.get("comment"),
                 external_ref=parsed.get("raw"),
+                chain_name=parsed.get("chain"),
+                restorable=iptables_rule_restorable(parsed.get("raw", "")),
             )
 
         except Exception:

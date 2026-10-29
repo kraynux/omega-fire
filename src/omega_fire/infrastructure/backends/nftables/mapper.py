@@ -7,6 +7,7 @@ This is the bridge between infrastructure parsing and domain objects.
 from typing import Optional
 from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+from omega_fire.infrastructure.backends.rule_fidelity import nft_rule_restorable
 
 
 class NftMapper:
@@ -85,6 +86,10 @@ class NftMapper:
                 dest_cidr=parsed.get("destination"),
                 comment=parsed.get("comment"),
                 external_ref=str(handle) if handle is not None else None,
+                chain_name=parsed.get("chain"),
+                restorable=nft_rule_restorable(
+                    family_str, parsed.get("table", ""), parsed.get("chain", ""), parsed.get("raw", ""),
+                ),
             )
 
         except Exception:

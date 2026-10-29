@@ -1,6 +1,6 @@
 {% extends "_base.html.j2" %}
 
-{% block title %}Rapport d'audit - Omega-Fire{% endblock %}
+{% block title %}{{ _("Rapport d'audit - Omega-Fire") }}{% endblock %}
 {% block terminal_title %}omega-fire -- rapport-audit-complet{% endblock %}
 
 {% block extra_style %}
@@ -68,21 +68,21 @@
 {% endblock %}
 
 {% block content %}
-            <h1>Rapport d'audit complet<span class="cursor"></span></h1>
+            <h1>{{ _("Rapport d'audit complet") }}<span class="cursor"></span></h1>
 
             <div class="note-historique">
-                <span class="note-prefix">[SYSTEM AUDIT]</span> Généré le {{ generated_at }}
-                {% if period_since %}<br><span style="font-size:0.8rem; color:var(--text-dim);">(Rapport précédent généré le : {{ period_since }})</span>{% endif %}
+                <span class="note-prefix">[SYSTEM AUDIT]</span> {{ _("Généré le {when}").format(when=generated_at) }}
+                {% if period_since %}<br><span style="font-size:0.8rem; color:var(--text-dim);">{{ _("(Rapport précédent généré le : {when})").format(when=period_since) }}</span>{% endif %}
             </div>
 
             <div class="exec-summary">{{ executive_summary }}</div>
 
-            <h2>Services &amp; Capacités</h2>
+            <h2>{{ _("Services & Capacités") }}</h2>
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Disponibles</span><span class="value" style="color:var(--status-success-text);">{{ capabilities.total_available }}</span></div>
-                <div class="reco-item"><span class="label">Manquantes</span><span class="value" style="color:var(--status-neutral-text);">{{ capabilities.total_missing }}</span></div>
-                <div class="reco-item"><span class="label">Dégradées</span><span class="value" style="color:var(--status-warning-text);">{{ capabilities.total_degraded }}</span></div>
-                <div class="reco-item"><span class="label">Disqualifiées</span><span class="value" style="color:var(--status-danger-text);">{{ capabilities.total_disqualified }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Disponibles") }}</span><span class="value" style="color:var(--status-success-text);">{{ capabilities.total_available }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Manquantes") }}</span><span class="value" style="color:var(--status-neutral-text);">{{ capabilities.total_missing }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Dégradées") }}</span><span class="value" style="color:var(--status-warning-text);">{{ capabilities.total_degraded }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Disqualifiées") }}</span><span class="value" style="color:var(--status-danger-text);">{{ capabilities.total_disqualified }}</span></div>
             </div>
             {% set available_caps = capabilities.capabilities|selectattr('status', 'in', ['AVAILABLE', 'DEGRADED'])|list %}
             {% set missing_caps = capabilities.capabilities|selectattr('status', 'in', ['MISSING', 'DISQUALIFIED'])|list %}
@@ -105,23 +105,23 @@
 
             {% if missing_caps %}
             <div class="cap-missing-list">
-                <span class="label">Non détectées ({{ missing_caps|length }})</span>
+                <span class="label">{{ _("Non détectées ({count})").format(count=missing_caps|length) }}</span>
                 <span class="cap-missing-names">{{ missing_caps|map(attribute='id')|join(', ') }}</span>
             </div>
             {% endif %}
 
-            <h2>Règles &amp; synchronisation</h2>
+            <h2>{{ _("Règles & synchronisation") }}</h2>
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Règles totales</span><span class="value">{{ rules_inventory.total_count }}</span></div>
-                <div class="reco-item"><span class="label">Règles actives</span><span class="value">{{ rules_inventory.enabled_count }}</span></div>
-                <div class="reco-item"><span class="label">Dernière sync</span><span class="value">{% if sync_info.found %}{{ sync_info.last_sync_at }}{% else %}Aucune{% endif %}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Règles totales") }}</span><span class="value">{{ rules_inventory.total_count }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Règles actives") }}</span><span class="value">{{ rules_inventory.enabled_count }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Dernière sync") }}</span><span class="value">{% if sync_info.found %}{{ sync_info.last_sync_at }}{% else %}{{ _("Aucune") }}{% endif %}</span></div>
             </div>
 
-            <h2>Inventaire IP actuel</h2>
+            <h2>{{ _("Inventaire IP actuel") }}</h2>
             {% if ip_inventory %}
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Backend</th><th>IPs actives</th></tr></thead>
+                    <thead><tr><th>{{ _("Backend") }}</th><th>{{ _("IPs actives") }}</th></tr></thead>
                     <tbody>
                     {% for inv in ip_inventory %}
                         <tr><td>{{ inv.backend }}</td><td>{{ inv.active_count }}</td></tr>
@@ -130,27 +130,27 @@
                 </table>
             </div>
             {% else %}
-            <div class="empty-state">Aucune IP active actuellement.</div>
+            <div class="empty-state">{{ _("Aucune IP active actuellement.") }}</div>
             {% endif %}
             {% if ip_internal_duplicate_count > 0 %}
-            <div class="anomaly anomaly-warning"><span class="anomaly-category">[IPs]</span>{{ ip_internal_duplicate_count }} doublon(s) IP au sein d'un même backend.</div>
+            <div class="anomaly anomaly-warning"><span class="anomaly-category">[IPs]</span>{{ _("{count} doublon(s) IP au sein d'un même backend.").format(count=ip_internal_duplicate_count) }}</div>
             {% endif %}
             {% if ip_cross_backend_count > 0 %}
-            <div class="anomaly anomaly-warning" style="border-left-color:var(--text-accent);"><span class="anomaly-category">[IPs]</span>{{ ip_cross_backend_count }} IP(s) présente(s) dans plusieurs backends (normal après une synchronisation).</div>
+            <div class="anomaly anomaly-warning" style="border-inline-start-color:var(--text-accent);"><span class="anomaly-category">[IPs]</span>{{ _("{count} IP(s) présente(s) dans plusieurs backends (normal après une synchronisation).").format(count=ip_cross_backend_count) }}</div>
             {% endif %}
 
 
-            <h2>Fail2ban (résumé — détail complet : menu 6.4)</h2>
+            <h2>{{ _("Fail2ban (résumé — détail complet : menu 6.4)") }}</h2>
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Jails</span><span class="value">{{ fail2ban_summary.total_jails }}</span></div>
-                <div class="reco-item"><span class="label">IPs bannies (F2B)</span><span class="value">{{ fail2ban_summary.total_currently_banned }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Jails") }}</span><span class="value">{{ fail2ban_summary.total_jails }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("IPs bannies (F2B)") }}</span><span class="value">{{ fail2ban_summary.total_currently_banned }}</span></div>
             </div>
 
-            <h2>Journal applicatif — top événements</h2>
+            <h2>{{ _("Journal applicatif — top événements") }}</h2>
             {% if journal_summary.top_events %}
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Action</th><th>Occurrences</th></tr></thead>
+                    <thead><tr><th>{{ _("Action") }}</th><th>{{ _("Occurrences") }}</th></tr></thead>
                     <tbody>
                     {% for name, count in journal_summary.top_events %}
                         <tr><td>{{ name }}</td><td>{{ count }}</td></tr>
@@ -160,11 +160,11 @@
             </div>
             {% endif %}
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Erreurs</span><span class="value" style="color:var(--status-danger-text);">{{ journal_summary.error_count }}</span></div>
-                <div class="reco-item"><span class="label">Autres événements</span><span class="value">{{ journal_summary.other_count }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Erreurs") }}</span><span class="value" style="color:var(--status-danger-text);">{{ journal_summary.error_count }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Autres événements") }}</span><span class="value">{{ journal_summary.other_count }}</span></div>
             </div>
 
-            <h2>Anomalies détectées</h2>
+            <h2>{{ _("Anomalies détectées") }}</h2>
             {% if anomalies %}
                 {% for a in anomalies %}
                 <div class="anomaly anomaly-{{ a.severity }}">
@@ -172,30 +172,30 @@
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="empty-state">✔ Aucune anomalie détectée.</div>
+            <div class="empty-state">✔ {{ _("Aucune anomalie détectée.") }}</div>
             {% endif %}
 
-            <h2>Santé applicative &amp; ressources</h2>
+            <h2>{{ _("Santé applicative & ressources") }}</h2>
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Version</span><span class="value">{{ app_health.version }}</span></div>
-                <div class="reco-item"><span class="label">Dernier backup</span><span class="value">{{ app_health.last_backup_info }}</span></div>
-                <div class="reco-item"><span class="label">Taille backups</span><span class="value">{{ disk_usage.backups_size_mb }} MB ({{ disk_usage.backups_count }} archives)</span></div>
-                <div class="reco-item"><span class="label">Taille base</span><span class="value">{{ disk_usage.db_size_mb }} MB</span></div>
-                <div class="reco-item"><span class="label">Taille logs</span><span class="value">{{ disk_usage.logs_size_mb }} MB</span></div>
-                <div class="reco-item"><span class="label">Espace libre</span><span class="value">{{ disk_usage.free_space_gb }} GB</span></div>
+                <div class="reco-item"><span class="label">{{ _("Version") }}</span><span class="value">{{ app_health.version }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Dernier backup") }}</span><span class="value">{{ app_health.last_backup_info }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Taille backups") }}</span><span class="value">{{ _("{size} MB ({count} archives)").format(size=disk_usage.backups_size_mb, count=disk_usage.backups_count) }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Taille base") }}</span><span class="value">{{ disk_usage.db_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">{{ _("Taille logs") }}</span><span class="value">{{ disk_usage.logs_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">{{ _("Espace libre") }}</span><span class="value">{{ disk_usage.free_space_gb }} GB</span></div>
             </div>
             {% if disk_usage.warning %}
-            <div class="anomaly anomaly-warning"><span class="anomaly-category">[Disque]</span>{{ disk_usage.warning }}</div>
+            <div class="anomaly anomaly-warning"><span class="anomaly-category">[{{ _("Disque") }}]</span>{{ disk_usage.warning }}</div>
             {% endif %}
 
-            <h2>Intégrité base de données</h2>
+            <h2>{{ _("Intégrité base de données") }}</h2>
             <div class="reco-grid">
-                <div class="reco-item"><span class="label">Statut</span><span class="value" style="color:{% if db_integrity.integrity_ok %}var(--status-success-text){% else %}var(--status-danger-text){% endif %};">{{ db_integrity.integrity_details }}</span></div>
-                <div class="reco-item"><span class="label">Taille</span><span class="value">{{ db_integrity.db_size_mb }} MB</span></div>
-                <div class="reco-item"><span class="label">Version schéma</span><span class="value">{{ db_integrity.schema_version }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Statut") }}</span><span class="value" style="color:{% if db_integrity.integrity_ok %}var(--status-success-text){% else %}var(--status-danger-text){% endif %};">{{ db_integrity.integrity_details }}</span></div>
+                <div class="reco-item"><span class="label">{{ _("Taille") }}</span><span class="value">{{ db_integrity.db_size_mb }} MB</span></div>
+                <div class="reco-item"><span class="label">{{ _("Version schéma") }}</span><span class="value">{{ db_integrity.schema_version }}</span></div>
             </div>
 
             <div class="footer-note">
-                Omega-Fire CLI Framework — Rapport d'audit système complet.
+                {{ _("Omega-Fire CLI Framework — Rapport d'audit système complet.") }}
             </div>
 {% endblock %}

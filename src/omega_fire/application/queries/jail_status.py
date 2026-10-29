@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any, List, Optional
 
 from omega_fire.ports.fail2ban import JailInfo
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -70,7 +71,7 @@ def get_jail_status(
             active_jails=0,
             inactive_jails=0,
             total_banned_ips=0,
-            message="⚠️ Port Fail2banPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés.",
+            message=_("⚠️ Port Fail2banPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
         )
 
     try:
@@ -81,7 +82,7 @@ def get_jail_status(
                 active_jails=0,
                 inactive_jails=0,
                 total_banned_ips=0,
-                message="⚠️ Le port ne supporte pas list_jails_info().",
+                message=_("⚠️ Le port ne supporte pas list_jails_info()."),
             )
 
         jails = sorted(fail2ban_port.list_jails_info(), key=lambda j: j.name)
@@ -95,7 +96,7 @@ def get_jail_status(
             active_jails=active,
             inactive_jails=inactive,
             total_banned_ips=total_banned,
-            message=f"{len(jails)} jail(s) détecté(s), {active} actif(s), {total_banned} IP(s) bannie(s).",
+            message=_("{count} jail(s) détecté(s), {active} actif(s), {total_banned} IP(s) bannie(s).").format(count=len(jails), active=active, total_banned=total_banned),
         )
 
     except Exception as e:
@@ -105,7 +106,7 @@ def get_jail_status(
             active_jails=0,
             inactive_jails=0,
             total_banned_ips=0,
-            message=f"❌ Erreur lors de la récupération des jails : {e}",
+            message=_("❌ Erreur lors de la récupération des jails : {e}").format(e=e),
         )
 
 

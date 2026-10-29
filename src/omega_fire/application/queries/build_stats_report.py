@@ -31,6 +31,7 @@ from typing import Any, Optional
 from omega_fire.domain.reports.service import ReportsService
 from omega_fire.domain.reports.builders import Report
 from omega_fire.infrastructure.logging.stats.log_aggregator import LogAggregator
+from omega_fire.shared.i18n import _, action_title
 
 
 @dataclass
@@ -98,7 +99,7 @@ class BuildStatsReportQuery:
         except Exception as e:
             return BuildStatsReportResult(
                 success=False,
-                message=f"Erreur lors de l'agrégation des logs : {e}",
+                message=_("Erreur lors de l'agrégation des logs : {e}").format(e=e),
             )
 
         kpi = {
@@ -135,12 +136,12 @@ class BuildStatsReportQuery:
                 top_jails=top_jails,
                 management=management,
                 rules_evolution=rules_evolution,
-                title=f"Rapport Statistique — {request.period_label}",
+                title=_("Rapport Statistique — {period_label}").format(period_label=request.period_label),
             )
         except Exception as e:
             return BuildStatsReportResult(
                 success=False,
-                message=f"Erreur lors de la construction du rapport : {e}",
+                message=_("Erreur lors de la construction du rapport : {e}").format(e=e),
             )
 
         return BuildStatsReportResult(
@@ -190,7 +191,7 @@ class BuildStatsReportQuery:
 
         recent_sorted = sorted(entries, key=lambda e: e.timestamp, reverse=True)[:8]
         recent_entries = [
-            (e.timestamp.strftime("%d/%m %H:%M"), e.action, e.success)
+            (e.timestamp.strftime("%d/%m %H:%M"), action_title(e.action), e.success)
             for e in recent_sorted
         ]
 

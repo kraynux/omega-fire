@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 from omega_fire.infrastructure.config.settings import AppSettings, load_settings
 from omega_fire.infrastructure.config.paths import AppPaths
+from omega_fire.shared.i18n import _
 
 
 class ConfigLoader:
@@ -70,7 +71,7 @@ class ConfigLoader:
             RuntimeError: If settings haven't been loaded yet
         """
         if self._settings is None:
-            raise RuntimeError("Settings not loaded. Call load() first.")
+            raise RuntimeError(_("Réglages non chargés : appeler load() d'abord."))
         return self._settings
     
     def get_paths(self) -> AppPaths:
@@ -83,7 +84,7 @@ class ConfigLoader:
             RuntimeError: If settings haven't been loaded yet
         """
         if self._paths is None:
-            raise RuntimeError("Paths not loaded. Call load() first.")
+            raise RuntimeError(_("Chemins non chargés : appeler load() d'abord."))
         return self._paths
     
     def reload(self) -> AppSettings:

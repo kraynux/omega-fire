@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass(slots=True)
@@ -37,11 +38,7 @@ class CapabilityRegistryView:
 
     def summary_line(self) -> str:
         return (
-            f"Total: {self.total} | "
-            f"Disponible: {self.available} | "
-            f"Dégradé: {self.degraded} | "
-            f"Manquant: {self.missing} | "
-            f"Disqualifié: {self.disqualified}"
+            _("Total: {total} | Disponible: {available} | Dégradé: {degraded} | Manquant: {missing} | Disqualifié: {disqualified}").format(total=self.total, available=self.available, degraded=self.degraded, missing=self.missing, disqualified=self.disqualified)
         )
 
 

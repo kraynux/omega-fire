@@ -29,7 +29,7 @@ template de base alternatif, sans toucher aux templates de contenu tant
 qu'ils ne consomment que les classes/variables définies ici.
 #}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ html_lang() }}" dir="{{ html_dir() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,7 +101,7 @@ qu'ils ne consomment que les classes/variables définies ici.
             width: 8px;
             height: 1.2em;
             background-color: var(--text-heading);
-            margin-left: 6px;
+            margin-inline-start: 6px;
             vertical-align: middle;
             animation: blink 1s infinite;
         }
@@ -118,7 +118,7 @@ qu'ils ne consomment que les classes/variables définies ici.
         .note-historique {
             background-color: var(--bg-panel-alt);
             border: 1px solid var(--border-panel);
-            border-left: 3px solid #2a4f7a;
+            border-inline-start: 3px solid #2a4f7a;
             padding: 1.2rem 1.8rem;
             border-radius: 4px;
             color: var(--text-panel);
@@ -164,7 +164,7 @@ qu'ils ne consomment que les classes/variables définies ici.
         }
         thead { background-color: var(--bg-header); border-bottom: 1px solid var(--border-header); }
         th {
-            text-align: left;
+            text-align: start;
             padding: 0.7rem 1rem;
             font-weight: 600;
             color: var(--text-subheading);
@@ -201,12 +201,12 @@ qu'ils ne consomment que les classes/variables définies ici.
         }
         .anomaly-critical {
             background-color: var(--anomaly-critical-bg);
-            border-left: 3px solid var(--status-danger-text);
+            border-inline-start: 3px solid var(--status-danger-text);
             color: var(--anomaly-critical-text);
         }
         .anomaly-warning {
             background-color: var(--anomaly-warning-bg);
-            border-left: 3px solid var(--status-warning-text);
+            border-inline-start: 3px solid var(--status-warning-text);
             color: var(--anomaly-warning-text);
         }
         .anomaly-category {

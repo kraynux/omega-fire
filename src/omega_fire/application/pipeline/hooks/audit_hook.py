@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 class AuditEventType(Enum):
@@ -313,7 +314,7 @@ class AuditHook:
                 "reason": reason,
             },
             success=False,
-            error_message=f"Capability '{capability_id}' is {status}: {reason}",
+            error_message=_("Capacité « {capability_id} » : {status} ({reason})").format(capability_id=capability_id, status=status, reason=reason),
         )
         self.record_event(event)
     
@@ -341,7 +342,7 @@ class AuditHook:
                 "reason": reason,
             },
             success=False,
-            error_message=f"Permission denied: {required_permission} required",
+            error_message=_("Permission refusée : {required_permission} requis").format(required_permission=required_permission),
         )
         self.record_event(event)
     

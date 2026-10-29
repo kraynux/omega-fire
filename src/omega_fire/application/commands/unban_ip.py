@@ -27,6 +27,7 @@ application flow — same rationale as ban_ip.py.
 """
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -77,7 +78,7 @@ class UnbanIpCommand:
 
         if self._adapter is None:
             for ip in request.ips:
-                result.errors.append((ip, f"Backend '{request.backend}' indisponible."))
+                result.errors.append((ip, _("Backend '{backend}' indisponible.").format(backend=request.backend)))
             return result
 
         current_ips = self._list_current_ips()
@@ -94,7 +95,7 @@ class UnbanIpCommand:
                     current_ips.discard(ip)
                     self._persist_unban(ip, request.backend)
                 else:
-                    result.errors.append((ip, "Le backend a refusé le débannissement."))
+                    result.errors.append((ip, _("Le backend a refusé le débannissement.")))
             except Exception as e:
                 error_text = str(e)
                 lowered = error_text.lower()

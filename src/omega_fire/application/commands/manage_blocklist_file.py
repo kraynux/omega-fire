@@ -34,6 +34,7 @@ from omega_fire.domain.ip_blacklist.validation import (
     rebuild_clean_content,
 )
 from omega_fire.infrastructure.storage.files.text_store import TextStore, TextStoreError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -96,7 +97,7 @@ class ManageBlocklistFileCommand:
             return BlocklistFileSaveResult(
                 success=False,
                 name=name,
-                message=f"Un fichier nommé '{name}' existe déjà.",
+                message=_("Un fichier nommé '{name}' existe déjà.").format(name=name),
             )
 
         try:
@@ -104,7 +105,7 @@ class ManageBlocklistFileCommand:
         except TextStoreError as e:
             return BlocklistFileSaveResult(success=False, name=name, message=str(e))
 
-        return BlocklistFileSaveResult(success=True, name=name, message=f"Fichier '{name}' créé.")
+        return BlocklistFileSaveResult(success=True, name=name, message=_("Fichier '{name}' créé.").format(name=name))
 
     def rename_file(self, name: str, new_name: str) -> BlocklistFileSaveResult:
         """Rename a blocklist file."""
@@ -114,7 +115,7 @@ class ManageBlocklistFileCommand:
             return BlocklistFileSaveResult(success=False, name=name, message=str(e))
 
         return BlocklistFileSaveResult(
-            success=True, name=new_name, message=f"Fichier renommé en '{new_name}'."
+            success=True, name=new_name, message=_("Fichier renommé en '{new_name}'.").format(new_name=new_name)
         )
     def import_from_path(self, source_path: str, dest_name: str) -> BlocklistFileSaveResult:
         """Import a file from an arbitrary absolute path OUTSIDE
@@ -134,14 +135,14 @@ class ManageBlocklistFileCommand:
 
         if not source.exists() or not source.is_file():
             return BlocklistFileSaveResult(
-                success=False, name=dest_name, message=f"Fichier source introuvable : {source_path}"
+                success=False, name=dest_name, message=_("Fichier source introuvable : {source_path}").format(source_path=source_path)
             )
 
         if self._store.exists(dest_name):
             return BlocklistFileSaveResult(
                 success=False,
                 name=dest_name,
-                message=f"Un fichier nommé '{dest_name}' existe déjà dans var/blocklist/.",
+                message=_("Un fichier nommé '{dest_name}' existe déjà dans var/blocklist/.").format(dest_name=dest_name),
             )
 
         try:
@@ -156,8 +157,8 @@ class ManageBlocklistFileCommand:
         """Delete a blocklist file."""
         deleted = self._store.delete(name)
         if deleted:
-            return BlocklistFileSaveResult(success=True, name=name, message=f"Fichier '{name}' supprimé.")
-        return BlocklistFileSaveResult(success=False, name=name, message=f"Fichier '{name}' introuvable.")
+            return BlocklistFileSaveResult(success=True, name=name, message=_("Fichier '{name}' supprimé.").format(name=name))
+        return BlocklistFileSaveResult(success=False, name=name, message=_("Fichier '{name}' introuvable.").format(name=name))
 
     def load_file(self, name: str) -> BlocklistFileContent:
         """Load and parse a blocklist file's content.
@@ -204,7 +205,7 @@ class ManageBlocklistFileCommand:
             name=name,
             valid_ips=extract_valid_ips(parsed),
             rejected_lines=rejected,
-            message=f"Fichier '{name}' enregistré.",
+            message=_("Fichier '{name}' enregistré.").format(name=name),
         )
 
     def add_ip(self, name: str, ip_or_cidr: str, comment: str = "") -> BlocklistFileSaveResult:
@@ -220,7 +221,7 @@ class ManageBlocklistFileCommand:
             return BlocklistFileSaveResult(
                 success=False,
                 name=name,
-                message=classified.reason or f"'{ip_or_cidr}' n'est pas une IP ou un réseau CIDR valide.",
+                message=classified.reason or _("'{ip_or_cidr}' n'est pas une IP ou un réseau CIDR valide.").format(ip_or_cidr=ip_or_cidr),
             )
 
         loaded = self.load_file(name)
@@ -233,7 +234,7 @@ class ManageBlocklistFileCommand:
                 name=name,
                 valid_ips=loaded.valid_ips,
                 rejected_lines=loaded.rejected_lines,
-                message=f"'{classified.ip}' est déjà présent dans '{name}'.",
+                message=_("'{ip}' est déjà présent dans '{name}'.").format(ip=classified.ip, name=name),
             )
 
         existing_raw = self._store.load(name)
@@ -255,7 +256,7 @@ class ManageBlocklistFileCommand:
                 name=name,
                 valid_ips=loaded.valid_ips,
                 rejected_lines=loaded.rejected_lines,
-                message=f"'{ip_or_cidr}' n'était pas présent dans '{name}'.",
+                message=_("'{ip_or_cidr}' n'était pas présent dans '{name}'.").format(ip_or_cidr=ip_or_cidr, name=name),
             )
 
         remaining = [

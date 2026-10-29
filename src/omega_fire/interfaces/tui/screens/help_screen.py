@@ -11,26 +11,27 @@ from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, Footer, Header, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.shared.i18n import _
 
 _SHORTCUTS = (
-    ("Haut / Bas", "Naviguer entre les elements d'un ecran"),
-    ("Tab / Maj+Tab", "Naviguer entre les champs d'un formulaire"),
-    ("Echap", "Retour a l'ecran precedent (confirmation de sortie sur l'accueil)"),
-    ("t", "Theme suivant (applique immediatement, sans confirmation)"),
-    ("r", "Rafraichir la detection du terminal"),
-    ("a", "Cette aide"),
-    ("q", "Quitter (avec confirmation)"),
+    (_("Haut / Bas"), _("Naviguer entre les éléments d'un écran")),
+    (_("Tab / Maj+Tab"), _("Naviguer entre les champs d'un formulaire")),
+    (_("Échap"), _("Retour à l'écran précédent (confirmation de sortie sur l'accueil)")),
+    ("t", _("Thème suivant (appliqué immédiatement, sans confirmation)")),
+    ("r", _("Rafraîchir la détection du terminal")),
+    ("a", _("Cette aide")),
+    ("q", _("Quitter (avec confirmation)")),
 )
 
 _SECTIONS = (
-    ("1. Etat des capacites & diagnostics", "Registre des composants systeme detectes, diagnostics, journal applicatif."),
-    ("2. Gestion des IPs", "Bannissement/debannissement unifie (nftables/iptables/fail2ban), import/export."),
-    ("3. Gestion des regles", "Regles de filtrage avancees, politiques pre-definies par backend."),
-    ("4. Gestion Fail2ban", "Jails, transferts d'IPs, service Fail2ban."),
-    ("5. Gestion des logs", "Analyse des logs, rotation, restauration, nettoyage."),
-    ("6. Exports & rapports", "Exports de la blacklist, des regles, rapports d'audit."),
-    ("7. Systeme & persistance", "Sauvegarde/restauration d'etat complet, historique des actions."),
-    ("8. Monitoring & statistiques", "Tableau de bord temps reel, conntrack, statistiques."),
+    (_("1. Capacités & diagnostics"), _("Registre des composants système détectés, diagnostics, journal applicatif.")),
+    (_("2. Gestion des IPs"), _("Bannissement/débannissement unifié (nftables/iptables/fail2ban), import/export.")),
+    (_("3. Gestion des règles"), _("Règles de filtrage avancées, politiques pré-définies par backend.")),
+    (_("4. Gestion Fail2ban"), _("Jails, transferts d'IPs, service Fail2ban.")),
+    (_("5. Gestion des logs"), _("Analyse des logs, rotation, restauration, nettoyage.")),
+    (_("6. Exports & rapports"), _("Exports de la blacklist, des règles, rapports d'audit.")),
+    (_("7. Système & persistance"), _("Sauvegarde/restauration d'état complet, historique des actions.")),
+    (_("8. Monitoring & statistiques"), _("Tableau de bord temps réel, conntrack, statistiques.")),
 )
 
 
@@ -55,23 +56,30 @@ class HelpScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-panel"):
-            yield Static("AIDE", classes="omega-title")
+            yield Static(_("AIDE"), classes="omega-title")
             if self._help_context is not None:
                 context_title, context_body = self._help_context
                 yield Static(context_title, classes="omega-subtitle")
                 yield Static(context_body)
                 yield Static("")
-            yield Static("Raccourcis clavier", classes="omega-subtitle")
+            yield Static(_("Raccourcis clavier"), classes="omega-subtitle")
             for key, description in _SHORTCUTS:
-                yield Static(f"{key:<14} {description}")
+                yield Static(_("{key:<14} {description}").format(key=key, description=description))
             yield Static("")
-            yield Static("Sections", classes="omega-subtitle")
+            yield Static(_("Sections"), classes="omega-subtitle")
             for title, description in _SECTIONS:
-                yield Static(f"[b]{title}[/b]\n{description}\n")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button("Retour", id="back")
+                yield Static(_("[b]{title}[/b]\n{description}\n").format(title=title, description=description))
+            with Horizontal(classes="omega-actions"):
+                if hasattr(self.app, "action_open_guide"):
+                    with Container(classes="omega-btn-frame"):
+                        yield Button(_("Guide d'aide complet"), id="guide", variant="primary")
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.dismiss()
+        elif event.button.id == "guide":
+            self.dismiss()
+            self.app.action_open_guide()

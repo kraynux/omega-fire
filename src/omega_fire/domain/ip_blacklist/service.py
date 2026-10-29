@@ -35,6 +35,7 @@ from omega_fire.domain.ip_blacklist.export import (
     prepare_export,
 )
 from omega_fire.shared.networking import IPAddress
+from omega_fire.shared.i18n import _
 
 
 class BlacklistService:
@@ -230,7 +231,7 @@ class BlacklistService:
         """
         if not validate_sync_direction(source_backend, target_backend):
             raise ValueError(
-                f"Unsupported sync direction: {source_backend} -> {target_backend}"
+                _("Sens de synchronisation non pris en charge : {source_backend} -> {target_backend}").format(source_backend=source_backend, target_backend=target_backend)
             )
         
         source_entries = self.list_bans(backend=source_backend, active_only=True)

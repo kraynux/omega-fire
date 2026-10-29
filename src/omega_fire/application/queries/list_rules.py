@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, List, Optional
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -82,7 +83,7 @@ def list_rules(
             entries=[],
             total_count=0,
             by_backend={},
-            message="⚠️ Port FirewallPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés.",
+            message=_("⚠️ Port FirewallPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
         )
     
     try:
@@ -93,7 +94,7 @@ def list_rules(
                 entries=[],
                 total_count=0,
                 by_backend={},
-                message="⚠️ Le port ne supporte pas list_rules().",
+                message=_("⚠️ Le port ne supporte pas list_rules()."),
             )
         
         entries = []
@@ -143,7 +144,7 @@ def list_rules(
             entries=entries,
             total_count=len(entries),
             by_backend=by_backend,
-            message=f"{len(entries)} règle(s) trouvée(s).",
+            message=_("{count} règle(s) trouvée(s).").format(count=len(entries)),
         )
     
     except Exception as e:
@@ -151,7 +152,7 @@ def list_rules(
             entries=[],
             total_count=0,
             by_backend={},
-            message=f"❌ Erreur lors de la récupération des règles : {e}",
+            message=_("❌ Erreur lors de la récupération des règles : {e}").format(e=e),
         )
 
 
@@ -164,16 +165,16 @@ def format_rules_table(result: FirewallRulesResult) -> str:
     Returns:
         Formatted string for UI display.
     """
-    lines = ["═══ RÈGLES FIREWALL ═══", ""]
+    lines = [_("═══ RÈGLES FIREWALL ═══"), ""]
     
     if not result.entries:
         lines.append(result.message)
         return "\n".join(lines)
     
-    lines.append(f"Total : {result.total_count} règle(s)")
+    lines.append(_("Total : {total_count} règle(s)").format(total_count=result.total_count))
     if result.by_backend:
         backend_summary = " | ".join(f"{k}: {v}" for k, v in result.by_backend.items())
-        lines.append(f"Par backend : {backend_summary}")
+        lines.append(_("Par backend : {backend_summary}").format(backend_summary=backend_summary))
     lines.append("")
     
     lines.append(f"{'ID':<8} {'Backend':<10} {'Proto':<6} {'Port':<8} {'Source':<18} {'Dest':<18} {'Action':<8} {'Packets':<10} {'Bytes'}")

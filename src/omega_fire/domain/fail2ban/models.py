@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Optional
+from omega_fire.shared.i18n import _
 
 
 class JailStatus(Enum):
@@ -52,16 +53,16 @@ class JailConfig:
         errors = []
         
         if self.maxretry < 1:
-            errors.append("maxretry must be >= 1")
+            errors.append(_("maxretry doit être >= 1"))
         
         if self.bantime < 0:
-            errors.append("bantime must be >= 0")
+            errors.append(_("bantime doit être >= 0"))
         
         if self.findtime < 0:
-            errors.append("findtime must be >= 0")
+            errors.append(_("findtime doit être >= 0"))
         
         if not self.log_path:
-            errors.append("log_path is required")
+            errors.append(_("Le chemin du journal (log_path) est obligatoire"))
         
         return errors
     

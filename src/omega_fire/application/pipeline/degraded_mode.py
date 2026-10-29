@@ -12,6 +12,7 @@ from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.pipeline.planner import ExecutionPlan
 from omega_fire.application.exceptions import DegradedModeError
+from omega_fire.shared.i18n import _
 
 
 class ActionCriticality(Enum):
@@ -144,7 +145,7 @@ class DegradedModeManager:
         warnings = []
         if len(missing_caps) >= self._policy.warning_threshold:
             warnings.append(
-                f"Multiple capabilities missing ({len(missing_caps)}): {', '.join(missing_caps)}"
+                _("Plusieurs capacités manquantes ({count}) : {value}").format(count=len(missing_caps), value=', '.join(missing_caps))
             )
         
         # Decision logic
@@ -155,7 +156,7 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=[],
-                reason="All capabilities available",
+                reason=_("Toutes les capacités sont disponibles"),
                 warnings=warnings,
             )
         
@@ -166,7 +167,7 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=f"Blocked capabilities: {', '.join(blocked_caps)}",
+                reason=_("Capacités bloquées : {value}").format(value=', '.join(blocked_caps)),
                 warnings=warnings,
             )
         
@@ -177,7 +178,7 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=f"Command '{plan.command_name}' is critical and cannot run in degraded mode",
+                reason=_("La commande « {command_name} » est critique et ne peut pas s'exécuter en mode dégradé").format(command_name=plan.command_name),
                 warnings=warnings,
             )
         
@@ -188,7 +189,7 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=f"Command '{plan.command_name}' requires all capabilities",
+                reason=_("La commande « {command_name} » nécessite toutes les capacités").format(command_name=plan.command_name),
                 warnings=warnings,
             )
         
@@ -198,7 +199,7 @@ class DegradedModeManager:
             command_name=plan.command_name,
             criticality=criticality,
             missing_capabilities=missing_caps,
-            reason="Partial execution allowed",
+            reason=_("Partial exécution allowed"),
             warnings=warnings,
         )
     
@@ -263,7 +264,7 @@ class DegradedModeManager:
         if not assessment.allowed:
             raise DegradedModeError(
                 action_name=plan.command_name,
-                reason=assessment.reason or "Command blocked in degraded mode",
+                reason=assessment.reason or _("Commande bloquée en mode dégradé"),
             )
 
 

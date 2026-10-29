@@ -16,6 +16,7 @@ from omega_fire.core.exceptions import (
     InvalidCapabilityError,
     RegistryStateError,
 )
+from omega_fire.shared.i18n import _
 
 
 class CapabilityRegistry:
@@ -46,13 +47,13 @@ class CapabilityRegistry:
         """
         if not capability.id:
             raise InvalidCapabilityError(
-                "Capability ID cannot be empty",
+                _("L'identifiant de capacité ne doit pas être vide"),
                 capability_id=capability.id,
             )
         
         if capability.id in self._capabilities:
             raise RegistryError(
-                f"Capability '{capability.id}' is already registered",
+                _("La capacité « {id} » est déjà enregistrée").format(id=capability.id),
                 capability_id=capability.id,
                 operation="register",
             )
@@ -72,7 +73,7 @@ class CapabilityRegistry:
         """
         if not capability.id:
             raise InvalidCapabilityError(
-                "Capability ID cannot be empty",
+                _("L'identifiant de capacité ne doit pas être vide"),
                 capability_id=capability.id,
             )
         

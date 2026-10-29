@@ -24,6 +24,7 @@ from omega_fire.plugins.exceptions import (
     PluginNotFoundError,
     PluginValidationError,
 )
+from omega_fire.shared.i18n import _
 
 
 # ----------------------------------------------------------------------
@@ -128,7 +129,7 @@ class PluginLoader:
             # Load the module
             spec = importlib.util.spec_from_file_location(module_name, plugin_path)
             if spec is None or spec.loader is None:
-                raise PluginLoadError(plugin_path.stem, "Impossible de créer le spec du module")
+                raise PluginLoadError(plugin_path.stem, _("Impossible de créer le spec du module"))
             
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
@@ -167,7 +168,7 @@ class PluginLoader:
         if not name:
             raise PluginValidationError(
                 plugin_path.stem,
-                "Attribut manquant : PLUGIN_NAME"
+                _("Attribut manquant : PLUGIN_NAME")
             )
         
         version = getattr(module, "PLUGIN_VERSION", "0.0.0")
@@ -204,28 +205,28 @@ class PluginLoader:
             if not hasattr(module, func_name):
                 raise PluginValidationError(
                     manifest.name,
-                    f"Fonction requise manquante : {func_name}()"
+                    _("Fonction requise manquante : {func_name}()").format(func_name=func_name)
                 )
             
             func = getattr(module, func_name)
             if not callable(func):
                 raise PluginValidationError(
                     manifest.name,
-                    f"L'attribut {func_name} n'est pas une fonction"
+                    _("L'attribut {func_name} n'est pas une fonction").format(func_name=func_name)
                 )
         
         # Validate capabilities format
         if not isinstance(manifest.capabilities, list):
             raise PluginValidationError(
                 manifest.name,
-                "PLUGIN_CAPABILITIES doit être une liste"
+                _("PLUGIN_CAPABILITIES doit être une liste")
             )
         
         # Validate hooks format
         if not isinstance(manifest.hooks, list):
             raise PluginValidationError(
                 manifest.name,
-                "PLUGIN_HOOKS doit être une liste"
+                _("PLUGIN_HOOKS doit être une liste")
             )
 
 # <-- INFO DEV ---------------------------------------------------------

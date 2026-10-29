@@ -25,6 +25,7 @@ from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.domain.rules.fingerprint import RuleGroup, group_rules
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -69,7 +70,7 @@ class ExportRulesSummaryQuery:
         except RepositoryError as e:
             return ExportRulesSummaryResult(
                 success=False,
-                message=f"Erreur technique lors de la lecture des règles : {e}",
+                message=_("Erreur technique lors de la lecture des règles : {e}").format(e=e),
             )
 
         # --- Filtrage par origine ---
@@ -88,7 +89,7 @@ class ExportRulesSummaryQuery:
                 success=True,
                 full_list=[],
                 groups=[],
-                message="Aucune règle ne correspond aux critères sélectionnés.",
+                message=_("Aucune règle ne correspond aux critères sélectionnés."),
             )
 
         groups = group_rules(rules)
@@ -97,7 +98,7 @@ class ExportRulesSummaryQuery:
             success=True,
             full_list=rules,
             groups=groups,
-            message=f"{len(rules)} règle(s) trouvée(s), regroupées en {len(groups)} entrée(s) distincte(s).",
+            message=_("{count} règle(s) trouvée(s), regroupées en {count2} entrée(s) distincte(s).").format(count=len(rules), count2=len(groups)),
         )
 
 

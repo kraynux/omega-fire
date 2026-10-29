@@ -9,14 +9,15 @@ Conforms to Omega-Fire architecture charter:
 - No dependency on domain/, application/, or infrastructure/
 - Actual nftables operations are delegated to infrastructure/backends/nftables/
 """
+from omega_fire.shared.i18n import _
 
 # ----------------------------------------------------------------------
 # Plugin metadata
 # ----------------------------------------------------------------------
 PLUGIN_NAME = "nftables"
 PLUGIN_VERSION = "1.0.0"
-PLUGIN_AUTHOR = "Omega-Fire Team"
-PLUGIN_DESCRIPTION = "Backend nftables pour la gestion du pare-feu"
+PLUGIN_AUTHOR = _("Omega-Fire Team")
+PLUGIN_DESCRIPTION = _("Backend nftables pour la gestion du pare-feu")
 PLUGIN_CAPABILITIES = ["nftables_backend", "nftables_rules", "nftables_counters"]
 PLUGIN_DEPENDENCIES = []
 PLUGIN_HOOKS = ["before_ban", "after_ban", "before_unban", "after_unban"]

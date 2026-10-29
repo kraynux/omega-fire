@@ -6,6 +6,7 @@ These express failures in rendering, user input, navigation, or display.
 They are caught by the application layer or displayed directly to the user.
 """
 from omega_fire.core.exceptions import CoreError
+from omega_fire.shared.i18n import _
 
 
 class InterfaceError(CoreError):
@@ -18,7 +19,7 @@ class RenderError(InterfaceError):
     """Raised when rendering fails."""
     def __init__(self, component: str, reason: str, context: dict = None):
         super().__init__(
-            f"Failed to render '{component}': {reason}",
+            _("Impossible d'afficher « {component} » : {reason}").format(component=component, reason=reason),
             {**(context or {}), "component": component, "reason": reason},
         )
         self.component = component
@@ -29,7 +30,7 @@ class UserInputError(InterfaceError):
     """Raised when user input is invalid or cannot be processed."""
     def __init__(self, prompt_name: str, reason: str, context: dict = None):
         super().__init__(
-            f"Invalid user input for '{prompt_name}': {reason}",
+            _("Saisie invalide pour « {prompt_name} » : {reason}").format(prompt_name=prompt_name, reason=reason),
             {**(context or {}), "prompt_name": prompt_name, "reason": reason},
         )
         self.prompt_name = prompt_name
@@ -40,7 +41,7 @@ class NavigationError(InterfaceError):
     """Raised when menu navigation fails."""
     def __init__(self, node_path: str, reason: str, context: dict = None):
         super().__init__(
-            f"Navigation failed for '{node_path}': {reason}",
+            _("Navigation impossible vers « {node_path} » : {reason}").format(node_path=node_path, reason=reason),
             {**(context or {}), "node_path": node_path, "reason": reason},
         )
         self.node_path = node_path
@@ -51,7 +52,7 @@ class MenuBuildError(InterfaceError):
     """Raised when menu construction fails."""
     def __init__(self, reason: str, context: dict = None):
         super().__init__(
-            f"Failed to build menu: {reason}",
+            _("Impossible de construire le menu : {reason}").format(reason=reason),
             {**(context or {}), "reason": reason},
         )
         self.reason = reason
@@ -61,7 +62,7 @@ class KeybindingError(InterfaceError):
     """Raised when keybinding handling fails."""
     def __init__(self, key: str, reason: str, context: dict = None):
         super().__init__(
-            f"Keybinding error for '{key}': {reason}",
+            _("Erreur de raccourci clavier pour « {key} » : {reason}").format(key=key, reason=reason),
             {**(context or {}), "key": key, "reason": reason},
         )
         self.key = key

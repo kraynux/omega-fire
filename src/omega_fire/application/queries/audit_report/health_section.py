@@ -18,6 +18,7 @@ from omega_fire.application.queries.audit_report.models import (
     DiskUsage,
     DatabaseIntegrity,
 )
+from omega_fire.shared.i18n import _
 
 DISK_WARNING_THRESHOLD_PERCENT = 80
 
@@ -35,7 +36,7 @@ def collect_app_health() -> AppHealth:
     """
     return AppHealth(
         version="N/A",
-        last_backup_info="N/A — non configuré (menu 7.1)",
+        last_backup_info=_("N/A — non configuré (menu 7.1)"),
         config_integrity="N/A",
     )
 
@@ -66,7 +67,7 @@ def collect_disk_usage() -> DiskUsage:
         free_gb = usage.free / (1024 * 1024 * 1024)
         used_percent = (usage.used / usage.total) * 100 if usage.total else 0
         if used_percent >= DISK_WARNING_THRESHOLD_PERCENT:
-            warning = f"Espace disque utilisé à {used_percent:.0f}% — surveiller"
+            warning = _("Espace disque utilisé à {used_percent:.0f}% — surveiller").format(used_percent=used_percent)
     except Exception:
         pass
 
@@ -93,7 +94,7 @@ def check_database_integrity(db_connection: Any) -> DatabaseIntegrity:
     if db_connection is None:
         return DatabaseIntegrity(
             integrity_ok=False,
-            integrity_details="Connexion base de données non disponible",
+            integrity_details=_("Connexion base de données non disponible"),
         )
 
     try:
@@ -102,7 +103,7 @@ def check_database_integrity(db_connection: Any) -> DatabaseIntegrity:
         result = row[0] if row else "unknown"
         integrity_ok = (result == "ok")
     except Exception as e:
-        result = f"Erreur lors de la vérification : {e}"
+        result = _("Erreur lors de la vérification : {e}").format(e=e)
         integrity_ok = False
 
     db_size = DB_PATH.stat().st_size / (1024 * 1024) if DB_PATH.exists() else 0.0

@@ -1,6 +1,6 @@
 {% extends "_base.html.j2" %}
 
-{% block title %}Export des règles - Omega-Fire{% endblock %}
+{% block title %}{{ _("Export des règles - Omega-Fire") }}{% endblock %}
 {% block terminal_title %}omega-fire -- export-ruleset-synthese{% endblock %}
 
 {% block extra_style %}
@@ -18,7 +18,7 @@
         .action-accept { color: var(--status-success-text); font-weight: 600; }
         .occurrence-count {
             display: inline-block;
-            margin-left: 0.5rem;
+            margin-inline-start: 0.5rem;
             padding: 0.1rem 0.45rem;
             border-radius: 10px;
             background-color: var(--bg-header);
@@ -35,23 +35,23 @@
 {% endblock %}
 
 {% block content %}
-            <h1>Synthèse des règles firewall<span class="cursor"></span></h1>
+            <h1>{{ _("Synthèse des règles firewall") }}<span class="cursor"></span></h1>
 
             <div class="note-historique">
-                Rapport généré le {{ generated_at }} — Filtre appliqué : {{ filter_label }}
+                {{ _("Rapport généré le {when} — Filtre appliqué : {filter}").format(when=generated_at, filter=filter_label) }}
             </div>
 
             <div class="reco-grid">
                 <div class="reco-item">
-                    <span class="label">Règles totales</span>
+                    <span class="label">{{ _("Règles totales") }}</span>
                     <span class="value">{{ total_rules }}</span>
                 </div>
                 <div class="reco-item">
-                    <span class="label">Entrées distinctes</span>
+                    <span class="label">{{ _("Entrées distinctes") }}</span>
                     <span class="value">{{ total_groups }}</span>
                 </div>
                 <div class="reco-item">
-                    <span class="label">Périmètre</span>
+                    <span class="label">{{ _("Périmètre") }}</span>
                     <span class="value" style="color: var(--status-success-text);">nftables / iptables</span>
                 </div>
             </div>
@@ -61,15 +61,15 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Backend</th>
-                            <th>Origine</th>
-                            <th>Chaîne</th>
-                            <th>Action</th>
-                            <th>Protocole</th>
-                            <th>Port</th>
-                            <th>Source</th>
-                            <th>Destination</th>
-                            <th>État</th>
+                            <th>{{ _("Backend") }}</th>
+                            <th>{{ _("Origine") }}</th>
+                            <th>{{ _("Chaîne") }}</th>
+                            <th>{{ _("Action") }}</th>
+                            <th>{{ _("Protocole") }}</th>
+                            <th>{{ _("Port") }}</th>
+                            <th>{{ _("Source") }}</th>
+                            <th>{{ _("Destination") }}</th>
+                            <th>{{ _("État") }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,11 +78,11 @@
                             <td>{{ group.backend }}</td>
                             <td>
                                 {% if group.origins|length > 1 %}
-                                <span class="badge badge-mixte">MIXTE</span>
+                                <span class="badge badge-mixte">{{ _("MIXTE") }}</span>
                                 {% elif group.origins[0] == "OMEGA" %}
                                 <span class="badge badge-omega">OMEGA</span>
                                 {% else %}
-                                <span class="badge badge-systeme">SYSTÈME</span>
+                                <span class="badge badge-systeme">{{ _("SYSTÈME") }}</span>
                                 {% endif %}
                             </td>
                             <td>{{ group.chain }}</td>
@@ -99,9 +99,9 @@
                             <td>{{ group.destination }}</td>
                             <td>
                                 {% if group.state == "ACTIF" %}
-                                <span class="badge badge-actif">ACTIF</span>
+                                <span class="badge badge-actif">{{ _("ACTIF") }}</span>
                                 {% else %}
-                                <span class="badge badge-inactif">INACTIF</span>
+                                <span class="badge badge-inactif">{{ _("INACTIF") }}</span>
                                 {% endif %}
                                 {% if group.count > 1 %}
                                 <span class="occurrence-count">×{{ group.count }}</span>
@@ -112,7 +112,7 @@
                                     <div>• {{ name }}</div>
                                     {% endfor %}
                                     {% if group.names|length > 5 %}
-                                    <div>… et {{ group.names|length - 5 }} autre(s)</div>
+                                    <div>{{ _("… et {count} autre(s)").format(count=group.names|length - 5) }}</div>
                                     {% endif %}
                                 </div>
                                 {% endif %}
@@ -124,12 +124,12 @@
             </div>
             {% else %}
             <div class="empty-state">
-                Aucune règle ne correspond aux critères sélectionnés.
+                {{ _("Aucune règle ne correspond aux critères sélectionnés.") }}
             </div>
             {% endif %}
 
             <div class="footer-note">
-                Omega-Fire CLI Framework — Synthèse d'export des règles (vue regroupée, best-effort).
-                Pour un export exhaustif et réutilisable, voir les formats JSON / TXT.
+                {{ _("Omega-Fire CLI Framework — Synthèse d'export des règles (vue regroupée, best-effort).") }}
+                {{ _("Pour un export exhaustif et réutilisable, voir les formats JSON / TXT.") }}
             </div>
 {% endblock %}

@@ -28,6 +28,7 @@ from omega_fire.infrastructure.backends.iptables.exceptions import (
     IptCommandError,
     IptPermissionError,
 )
+from omega_fire.shared.i18n import _
 
 
 class IptablesAdapter:
@@ -404,10 +405,11 @@ class IptablesAdapter:
     def flush(self) -> int:
         """Flush all rules from the backend (FirewallPort contract).
 
-        Mirrors flush_all() (all built-in chains of the filter table) —
-        no multi-tool-table ambiguity here unlike NftablesAdapter.flush():
-        this adapter only ever touches the standard 'filter' table, never
-        a custom table another tool might own.
+        Mirrors flush_all(): EVERY chain of the filter table, including
+        the chains of other tools sharing it (UFW's ufw-*, Tailscale's
+        ts-*...). Unlike NftablesAdapter.flush(), there is no table of its
+        own to limit the scope to. Callers warn the user first
+        (application/queries/foreign_rules.py, constate 2026-10-28).
 
         Returns:
             Number of rules that were in scope immediately before flushing.
@@ -555,7 +557,7 @@ class IptablesAdapter:
         preset = self._resolve_policy(policy_name)
         if preset is None:
             raise PolicyNotFoundError(
-                policy_name, "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
+                policy_name, _("aucun profil FirewallPreset ne correspond (domain/rules/presets.py)")
             )
         self.apply_preset(preset)
         return sum(len(self._build_preset_rule_commands(r)) for r in preset.rules)

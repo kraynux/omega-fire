@@ -7,6 +7,7 @@ Conformes à la charte Omega-Fire :
 - Utilisées uniquement par loader.py et manager.py.
 """
 from __future__ import annotations
+from omega_fire.shared.i18n import _
 
 
 class PluginsError(Exception):
@@ -19,7 +20,7 @@ class PluginNotFoundError(PluginsError):
     
     def __init__(self, plugin_name: str, message: str | None = None):
         self.plugin_name = plugin_name
-        super().__init__(message or f"Plugin introuvable : '{plugin_name}'")
+        super().__init__(message or _("Plugin introuvable : '{plugin_name}'").format(plugin_name=plugin_name))
 
 
 class PluginLoadError(PluginsError):
@@ -28,7 +29,7 @@ class PluginLoadError(PluginsError):
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
-        msg = f"Impossible de charger le plugin '{plugin_name}'"
+        msg = _("Impossible de charger le plugin '{plugin_name}'").format(plugin_name=plugin_name)
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -40,7 +41,7 @@ class PluginValidationError(PluginsError):
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
-        msg = f"Plugin '{plugin_name}' invalide"
+        msg = _("Plugin '{plugin_name}' invalide").format(plugin_name=plugin_name)
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -52,7 +53,7 @@ class PluginActivationError(PluginsError):
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
-        msg = f"Impossible d'activer le plugin '{plugin_name}'"
+        msg = _("Impossible d'activer le plugin '{plugin_name}'").format(plugin_name=plugin_name)
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -65,7 +66,7 @@ class PluginConflictError(PluginsError):
         self.plugin_a = plugin_a
         self.plugin_b = plugin_b
         self.reason = reason
-        msg = f"Conflit entre plugins '{plugin_a}' et '{plugin_b}'"
+        msg = _("Conflit entre plugins '{plugin_a}' et '{plugin_b}'").format(plugin_a=plugin_a, plugin_b=plugin_b)
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -78,7 +79,7 @@ class PluginDependencyError(PluginsError):
         self.plugin_name = plugin_name
         self.missing_dependency = missing_dependency
         super().__init__(
-            f"Plugin '{plugin_name}' nécessite le plugin '{missing_dependency}' qui n'est pas disponible"
+            _("Plugin '{plugin_name}' nécessite le plugin '{missing_dependency}' qui n'est pas disponible").format(plugin_name=plugin_name, missing_dependency=missing_dependency)
         )
 
 # <-- INFO DEV ---------------------------------------------------------

@@ -2,12 +2,21 @@
 """Restore state command.
 
 Orchestrates the restoration of a full-state snapshot (menu 7.2):
-- Rules: FULL REPLACEMENT. Every rule currently tracked by Omega-Fire
-  (has an external_ref in RuleRepository) is removed from the live
-  kernel and from the database, then every rule from the snapshot is
-  reapplied. This never touches rules NOT tracked by Omega-Fire (e.g.
-  UFW or other tools' rules), since only tracked external_refs are
-  targeted — no system-wide flush.
+- Rules: REPLACEMENT OF OMEGA-FIRE'S OWN RULES ONLY (securise 2026-10-28).
+  Only snapshot rules marked restorable (recreatable exactly: base chain
+  of inet filter / INPUT-OUTPUT-FORWARD, no criterion the parser cannot
+  read — see infrastructure/backends/rule_fidelity.py) are reapplied.
+  Only rows created by Omega-Fire (origin="managed") are removed from the
+  kernel; rules imported from other tools (UFW, Tailscale, docker...) are
+  never removed, even though the database knows them. A snapshot with no
+  restorable rule (older format, or only other tools' rules) leaves the
+  rules untouched. No system-wide flush.
+  Avant : les regles UFW importees etaient retirees du noyau, et les regles
+  reappliquees sans leurs criteres (`ct state established accept` devenait
+  « tout accepter »).
+- Chain policies: reset to ACCEPT only on a backend where an Omega-Fire
+  profile (3.4) was active, the only case where Omega-Fire set them. Avant :
+  remises a ACCEPT partout, ce qui ouvrait une machine UFW (INPUT DROP).
 - Banned IPs: ADD-ONLY. Only IPs missing from the current live state
   are added; nothing is ever removed. This is deliberately asymmetric
   with rules — action_2_1_ban_ip does not persist bans to the database,
@@ -22,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from omega_fire.application.commands.apply_preset import state_file_for
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -40,6 +50,7 @@ class RestoreStateResult:
     ips_added: int = 0
     ips_already_present: int = 0
     jails_in_snapshot: int = 0
+    rules_skipped: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -72,10 +83,21 @@ class RestoreStateCommand:
         if domain_snapshot is None:
             return RestoreStateResult(
                 success=False,
-                message=f"Snapshot introuvable : {request.snapshot_id}",
+                message=_("Snapshot introuvable : {snapshot_id}").format(snapshot_id=request.snapshot_id),
             )
 
         errors: list[str] = []
+
+        snapshot_rules = domain_snapshot.content.rules.rules if domain_snapshot.content.rules else []
+        restorable = [r for r in snapshot_rules if r.get("restorable") is True]
+        rules_skipped = len(snapshot_rules) - len(restorable)
+        # Snapshot sans aucune regle recreable a l'identique (format d'avant
+        # 2026-10-28, ou seulement des regles d'autres outils) : on ne touche a
+        # aucune regle plutot que de retirer celles d'Omega-Fire sans rien remettre.
+        replace_rules = bool(restorable) or not snapshot_rules
+        # Profils actifs AVANT restauration : seuls backends dont Omega-Fire a
+        # pu changer la politique par defaut.
+        preset_backends = {b for b in ("nftables", "iptables", "ip6tables") if self._preset_active(b)}
 
         # Capture des règles trackées AVANT toute modification. Fige
         # l'état "ancien" à retirer une fois les nouvelles règles en
@@ -85,10 +107,12 @@ class RestoreStateCommand:
         # verrait aussi les règles tout juste appliquées et les
         # retirerait par erreur.
         try:
-            rules_to_remove = self._rule_repository.find_all() if self._rule_repository else []
+            rules_to_remove = self._rule_repository.find_all() if self._rule_repository and replace_rules else []
         except Exception as e:
-            errors.append(f"Impossible de lire les règles trackées : {e}")
+            errors.append(_("Impossible de lire les règles trackées : {e}").format(e=e))
             rules_to_remove = []
+        # Jamais les regles importees d'autres outils (UFW, Tailscale...).
+        rules_to_remove = [r for r in rules_to_remove if getattr(r, "origin", "imported") == "managed"]
 
         # Ordre volontaire : APPLIQUER les nouvelles règles avant de
         # RETIRER les anciennes. Ça garantit qu'il n'existe jamais un
@@ -99,9 +123,9 @@ class RestoreStateCommand:
         # nftables tolère les doublons), puis les anciennes — et
         # seulement les anciennes, capturées ci-dessus — sont retirées
         # une fois les nouvelles en place.
-        rules_applied = self._apply_snapshot_rules(domain_snapshot, errors)
+        rules_applied = self._apply_snapshot_rules(restorable, errors) if replace_rules else 0
         rules_removed = self._remove_tracked_rules(rules_to_remove, errors)
-        self._reset_chain_policies(errors)
+        self._reset_chain_policies(errors, preset_backends)
         ips_added, ips_present = self._restore_ips_add_only(domain_snapshot, errors)
         
 
@@ -115,9 +139,16 @@ class RestoreStateCommand:
         # "Aucun profil actif" trop prudent qu'un badge ACTIF mensonger.
         self._clear_preset_markers()
 
+        if not replace_rules:
+            message = _("Restauration terminée : aucune règle de ce snapshot ne peut être recréée à l'identique ({count}), les règles du pare-feu n'ont pas été touchées ; IPs ajoutées (jamais retirées).").format(count=rules_skipped)
+        elif rules_skipped:
+            message = _("Restauration terminée : règles Omega-Fire remplacées, {count} règle(s) d'autres outils ou incomplète(s) laissée(s) telles quelles ; IPs ajoutées (jamais retirées).").format(count=rules_skipped)
+        else:
+            message = _("Restauration terminée : règles remplacées, IPs ajoutées (jamais retirées).")
         return RestoreStateResult(
             success=True,
-            message="Restauration terminée : règles remplacées, IPs ajoutées (jamais retirées).",
+            message=message,
+            rules_skipped=rules_skipped,
             rules_removed=rules_removed,
             rules_applied=rules_applied,
             ips_added=ips_added,
@@ -208,11 +239,17 @@ class RestoreStateCommand:
                     except Exception:
                         pass
                 else:
-                    errors.append(f"Erreur suppression règle ({backend}) : {e}")
+                    errors.append(_("Erreur suppression règle ({backend}) : {e}").format(backend=backend, e=e))
 
         return removed
 
-    def _apply_snapshot_rules(self, domain_snapshot, errors: list[str]) -> int:
+    def _preset_active(self, backend: str) -> bool:
+        try:
+            return state_file_for(backend).exists()
+        except Exception:
+            return False
+
+    def _apply_snapshot_rules(self, snapshot_rules: list[dict], errors: list[str]) -> int:
         """Apply every rule stored in the snapshot to the live backends,
         and persist each successfully applied rule to RuleRepository so
         the database stays in sync with the kernel — mirroring what
@@ -221,14 +258,14 @@ class RestoreStateCommand:
         re-import them as "new" on every subsequent scan (observed
         during session testing: rules table grew to 800+ rows for a
         12-rule live ruleset)."""
-        if not domain_snapshot.content.rules:
+        if not snapshot_rules:
             return 0
         # Trie par 'order' (position réelle dans le noyau au moment de
         # la capture) — respecter cet ordre est critique : une règle
         # DROP sans condition, appliquée avant les règles ACCEPT,
         # bloquerait tout le trafic quel que soit ce qui suit.
         rules_to_apply = sorted(
-            domain_snapshot.content.rules.rules,
+            snapshot_rules,
             key=lambda r: r.get("order", 0),
         )
         applied = 0
@@ -275,9 +312,9 @@ class RestoreStateCommand:
                     applied += 1
                     self._persist_applied_rule(backend, rule_data, adapter)
                 else:
-                    errors.append(f"Règle non appliquée ({backend}) : {rule_data.get('comment', '?')}")
+                    errors.append(_("Règle non appliquée ({backend}) : {value}").format(backend=backend, value=rule_data.get('comment', '?')))
             except Exception as e:
-                errors.append(f"Erreur application règle ({backend}) : {e}")
+                errors.append(_("Erreur application règle ({backend}) : {e}").format(backend=backend, e=e))
 
         return applied
 
@@ -413,13 +450,13 @@ class RestoreStateCommand:
                     added += 1
                     live_ips_by_backend[backend].add(ip)
                 else:
-                    errors.append(f"IP non restaurée ({backend}) : {ip}")
+                    errors.append(_("IP non restaurée ({backend}) : {ip}").format(backend=backend, ip=ip))
             except Exception as e:
-                errors.append(f"Erreur IP {ip} ({backend}) : {e}")
+                errors.append(_("Erreur IP {ip} ({backend}) : {e}").format(ip=ip, backend=backend, e=e))
 
         return added, already_present
 
-    def _reset_chain_policies(self, errors: list[str]) -> None:
+    def _reset_chain_policies(self, errors: list[str], backends: set[str]) -> None:
         """Remet la politique par défaut des chaînes de base (input,
         output, forward) à ACCEPT sur chaque backend disponible.
 
@@ -429,32 +466,36 @@ class RestoreStateCommand:
         cette politique survivrait à la restauration même une fois
         toutes ses règles retirées, bloquant tout paquet qui ne
         correspond à aucune règle explicite.
+
+        Seulement sur les backends où un profil était actif (backends) :
+        ailleurs la politique n'est pas celle d'Omega-Fire (UFW met INPUT en
+        DROP) et la remettre à ACCEPT ouvrirait la machine.
         """
         chain_names = ("input", "output", "forward")
 
-        nft_adapter = self._adapters.get("nftables")
+        nft_adapter = self._adapters.get("nftables") if "nftables" in backends else None
         if nft_adapter is not None:
             for chain_name in chain_names:
                 try:
                     nft_adapter.set_chain_policy(chain_name, policy="accept")
                 except Exception as e:
-                    errors.append(f"Politique non réinitialisée (nftables/{chain_name}) : {e}")
+                    errors.append(_("Politique non réinitialisée (nftables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
 
-        ipt_adapter = self._adapters.get("iptables")
+        ipt_adapter = self._adapters.get("iptables") if "iptables" in backends else None
         if ipt_adapter is not None:
             for chain_name in chain_names:
                 try:
                     ipt_adapter.set_chain_policy(chain_name, policy="ACCEPT")
                 except Exception as e:
-                    errors.append(f"Politique non réinitialisée (iptables/{chain_name}) : {e}")
+                    errors.append(_("Politique non réinitialisée (iptables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
 
-        ip6t_adapter = self._adapters.get("ip6tables")
+        ip6t_adapter = self._adapters.get("ip6tables") if "ip6tables" in backends else None
         if ip6t_adapter is not None:
             for chain_name in chain_names:
                 try:
                     ip6t_adapter.set_chain_policy(chain_name, policy="ACCEPT")
                 except Exception as e:
-                    errors.append(f"Politique non réinitialisée (ip6tables/{chain_name}) : {e}")
+                    errors.append(_("Politique non réinitialisée (ip6tables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
 
     def _clear_preset_markers(self) -> None:
         """Supprime les marqueurs 'profil actif' (3.4) des deux backends,
@@ -484,9 +525,11 @@ class RestoreStateCommand:
 #   Pattern simple, pas de pipeline ExecutionPlan.
 #
 # Décision de session (asymétrie assumée) :
-# - Règles : remplacement sûr car ciblé sur external_ref (jamais un
-#   flush système global) — ne touche jamais les règles d'un autre
-#   outil (UFW, etc.) jamais trackées par Omega-Fire.
+# - Règles : seules les règles « managed » sont retirées du noyau, seules
+#   les règles restorable du snapshot sont réappliquées (2026-10-28 :
+#   avant, les règles UFW importées étaient retirées et les règles
+#   réappliquées sans leurs critères). Jamais de flush.
+# - Politiques : remises à ACCEPT seulement si un profil 3.4 était actif.
 # - IPs : ajout seul car action_2_1_ban_ip n'écrit jamais dans la
 #   table bans — aucun moyen fiable de savoir quelles IPs live sont
 #   gérées par Omega-Fire, donc un retrait serait dangereux.

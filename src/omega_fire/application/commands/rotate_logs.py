@@ -19,6 +19,7 @@ from typing import Any, Optional
 
 from omega_fire.domain.logs.rotation import compute_rotations_to_delete
 from omega_fire.infrastructure.exceptions import StorageError
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -33,13 +34,13 @@ class RotateLogsRequest:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.source_path:
-            errors.append("source_path must not be empty")
+            errors.append(_("Le chemin source (source_path) ne doit pas être vide"))
         if not Path(self.source_path).exists():
-            errors.append(f"Source file not found: {self.source_path}")
+            errors.append(_("Fichier source introuvable : {source_path}").format(source_path=self.source_path))
         if self.keep < 1:
-            errors.append("Keep must be at least 1")
+            errors.append(_("Le nombre de copies à conserver doit être d'au moins 1"))
         if self.keep > 365:
-            errors.append("Keep must not exceed 365 days")
+            errors.append(_("La durée de conservation ne doit pas dépasser 365 jours"))
         return errors
 
     def is_valid(self) -> bool:
@@ -89,7 +90,7 @@ class RotateLogsCommand:
         except StorageError as e:
             return RotateLogsResult(
                 success=False,
-                message=f"Erreur technique lors de la sauvegarde : {e}",
+                message=_("Erreur technique lors de la sauvegarde : {e}").format(e=e),
             )
 
         # --- 2. Application de la limite de rétention ---
@@ -100,8 +101,7 @@ class RotateLogsCommand:
             return RotateLogsResult(
                 success=True,
                 message=(
-                    f"Sauvegarde créée avec succès, mais la purge des anciennes "
-                    f"archives a échoué : {e}"
+                    _("Sauvegarde créée avec succès, mais la purge des anciennes archives a échoué : {e}").format(e=e)
                 ),
                 backup_path=backup_info.path,
                 backup_size_bytes=backup_info.size_bytes,
@@ -123,7 +123,7 @@ class RotateLogsCommand:
 
         return RotateLogsResult(
             success=True,
-            message=f"Sauvegarde créée avec succès : {backup_info.path.name}",
+            message=_("Sauvegarde créée avec succès : {name}").format(name=backup_info.path.name),
             backup_path=backup_info.path,
             backup_size_bytes=backup_info.size_bytes,
             deleted_count=deleted_count,

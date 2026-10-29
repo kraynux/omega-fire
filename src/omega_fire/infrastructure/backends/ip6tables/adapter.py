@@ -28,6 +28,7 @@ from omega_fire.infrastructure.backends.ip6tables.exceptions import (
     Ip6tCommandError,
     Ip6tPermissionError,
 )
+from omega_fire.shared.i18n import _
 
 
 class Ip6tablesAdapter:
@@ -541,7 +542,7 @@ class Ip6tablesAdapter:
         preset = self._resolve_policy(policy_name)
         if preset is None:
             raise PolicyNotFoundError(
-                policy_name, "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
+                policy_name, _("aucun profil FirewallPreset ne correspond (domain/rules/presets.py)")
             )
         self.apply_preset(preset)
         return sum(len(self._build_preset_rule_commands(r)) for r in preset.rules)

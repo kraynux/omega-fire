@@ -18,6 +18,7 @@ Oficjalna strona: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/
 [![Platform](https://img.shields.io/badge/Platform-Linux-informational.svg)](https://www.linux.org/)
 [![Interface](https://img.shields.io/badge/Interface-Textual%20TUI-cyan.svg)](https://github.com/Textualize/textual)
 
+🌐 Dokumentacja, eksporty i interfejs dostępne w **17 językach** — zobacz [Języki interfejsu](#języki-interfejsu).  
 **Języki:**
 <img src="https://flagcdn.com/w20/fr.png" alt="France" style="height:14px;"> [Français](../../../README.md) · <img src="https://flagcdn.com/w20/gb.png" alt="English" style="height:14px;"> [English](../en/README.md) · <img src="https://flagcdn.com/w20/es.png" alt="Español" style="height:14px;"> [Español](../es/README.md) · <img src="https://flagcdn.com/w20/br.png" alt="Português (Brasil)" style="height:14px;"> [Português (Brasil)](../pt-BR/README.md) · <img src="https://flagcdn.com/w20/it.png" alt="Italiano" style="height:14px;"> [Italiano](../it/README.md) · <img src="https://flagcdn.com/w20/de.png" alt="Deutsch" style="height:14px;"> [Deutsch](../de/README.md) · <img src="https://flagcdn.com/w20/nl.png" alt="Nederlands" style="height:14px;"> [Nederlands](../nl/README.md) · <img src="https://flagcdn.com/w20/pl.png" alt="Polski" style="height:14px;"> [Polski](README.md) · <img src="https://flagcdn.com/w20/ru.png" alt="Русский" style="height:14px;"> [Русский](../ru/README.md) · <img src="https://flagcdn.com/w20/cn.png" alt="中文" style="height:14px;"> [中文](../zh-CN/README.md) · <img src="https://flagcdn.com/w20/vn.png" alt="Tiếng Việt" style="height:14px;"> [Tiếng Việt](../vi/README.md) · <img src="https://flagcdn.com/w20/th.png" alt="ไทย" style="height:14px;"> [ไทย](../th/README.md) · <img src="https://flagcdn.com/w20/id.png" alt="Bahasa Indonesia" style="height:14px;"> [Bahasa Indonesia](../id/README.md) · <img src="https://flagcdn.com/w20/jp.png" alt="日本語" style="height:14px;"> [日本語](../ja/README.md) · <img src="https://flagcdn.com/w20/kr.png" alt="한국어" style="height:14px;"> [한국어](../ko/README.md) · <img src="https://flagcdn.com/w20/in.png" alt="हिन्दी" style="height:14px;"> [हिन्दी](../hi/README.md) · <img src="https://flagcdn.com/w20/ae.png" alt="العربية" style="height:14px;"> [العربية](../ar/README.md)
 
@@ -100,6 +101,7 @@ Omega-Fire działa jako **lokalne stanowisko dowodzenia** bezpieczeństwem sieci
 - Przegląd ostatnich diagnostyk.
 - Przegląd i wyszukiwanie w logu aplikacji.
 - Eksport stanu i diagnostyki do JSON, TXT lub HTML.
+- Kategoria **Pakiet omega**: omega-serv (wykryte i działające instancje), omega-waf (włączony dodatek `magnet`) i omega-jail (zainstalowane jaile), widoczne w rejestrze, na dashboardzie i w raportach.
 
 ### 2. Zunifikowane zarządzanie adresami IP
 
@@ -121,12 +123,15 @@ Zunifikowana czarna lista pozwala pracować z nftables i iptables z jednego ekra
 - Lista reguł systemowych i reguł utworzonych przez Omega-Fire.
 - Usuwanie reguły przez zaznaczenie.
 - Automatyczne czyszczenie nieaktywnych reguł w bazie referencyjnej.
+- Czyszczenie i ponowna synchronizacja bazy z rzeczywistą zaporą, z podglądem i wcześniejszą kopią zapasową, bez modyfikowania samej zapory.
+- Reguły innych narzędzi (UFW, Tailscale, Docker…) rozpoznawane po pochodzeniu: wyświetlane informacyjnie, nigdy nieusuwane z poziomu Omega-Fire.
+- Zabezpieczenie przed zastosowaniem polityki lub opróżnieniem iptables, gdy inne narzędzia mają tam reguły: zastosuj wszędzie, tylko w nftables lub anuluj — konsekwencje opisane szczegółowo w pomocy.
 - Stosowanie predefiniowanych polityk.
 - Automatyczna kopia zapasowa przed zastosowaniem polityki.
 - Dostosowanie, zapis i przywracanie polityki.
 - Oznaczenie aktywnej polityki w menu statusu i na dashboardzie.
 - Oznaczanie zmodyfikowanych profili w postaci `Profil + CUSTOM`.
-- Zarządzanie tabelami (menu 3.5): diagnostyka tylko do odczytu dla każdego backendu (obecność tabeli, polityki input/output/forward, liczba reguł) z wykrywaniem rozbieżności między backendami.
+- Zarządzanie tabelami (menu 3.5): diagnostyka tylko do odczytu dla każdego backendu (obecność tabeli, polityki input/output/forward, liczba reguł) z wyjaśnieniem polityk różniących się między backendami (rzeczywisty skutek, przyczyna i rozwiązanie).
 - Inicjalizacja tabeli nftables przy pierwszym użyciu, bez nadpisywania już skonfigurowanego łańcucha.
 - Przywrócenie polityk łańcuchów do ACCEPT w backendzie, aby poprawić osieroconą restrykcyjną politykę pozostawioną przez wcześniejszy profil.
 - Celowane opróżnienie jednego backendu lub zsynchronizowane opróżnienie wszystkich wykrytych backendów jedną akcją.
@@ -140,20 +145,23 @@ Zunifikowana czarna lista pozwala pracować z nftables i iptables z jednego ekra
 - Ban i unban pojedynczy lub wielokrotny.
 - Przenoszenie adresów IP między jailami, backendami i plikami.
 - Prowadzone tworzenie własnego jaila.
-- Predefiniowane szablony jaili.
-- Usunięcie jaila.
+- Predefiniowane szablony jaili, edytowalne i usuwalne.
+- Pochodzenie każdego jaila: Omega-Fire, omega-jail, główna konfiguracja fail2ban lub inny plik.
+- Niezawodne usuwanie jaila, niezależnie od nazwy jego pliku: ostrzeżenie dla jaila zainstalowanego przez omega-jail, uzasadniona odmowa dla jaila z `jail.local` lub ze współdzielonego pliku, standardowe filtry fail2ban nigdy nie są usuwane.
 - Opróżnienie jaila lub ogólne czyszczenie.
 - Eksport do JSON, TXT lub HTML.
 - Weryfikacja i audyt konfiguracji.
-- Sterowanie usługą: status, start, stop, restart, włączenie i wyłączenie przy starcie systemu.
+- Sterowanie usługą: status, uruchomienie, zatrzymanie, restart, włączenie i wyłączenie przy starcie systemu; po uruchomieniu lub zatrzymaniu rejestr możliwości i dashboard są aktualizowane.
 
 ### 5. Logi i konserwacja
 
-- Live Tail z dashboardem Omega-Fire.
-- Wyświetlanie wielu plików z przypięciami (ulubione źródła, zapamiętywane między uruchomieniami).
-- Integracja `lnav`: wybór jednego lub kilku plików (numery lub ręczne ścieżki oddzielone przecinkami), automatyczne scalenie w jeden widok chronologiczny, osadzony w nagłówku/stopce Omega-Fire (zobacz [Nawigacja](#nawigacja)).
-- Analiza najczęstszych adresów IP z Top N.
-- Celowane usunięcie adresu IP z plików LOG lub TXT.
+- **Biblioteka logów** (5.1): automatyczny import logów wykrytych instancji omega-serv, w tym logów omega-waf, ręczne przypinanie ścieżki oraz pobieranie zdalnego logu przez SSH (klucz lub agent, nigdy hasło).
+- **Ulubione** (5.2): łączenie logów z Biblioteki, zapisywanie ich pod nazwą z wybraną przeglądarką i bezpośrednie uruchamianie.
+- **Przeglądaj logi** (5.3): jeden log bez konfiguracji, w wybranej przeglądarce — Prosta (dashboard w czasie rzeczywistym), Klasyczna (ostatnie wiersze, potem śledzenie na żywo) lub `lnav`.
+- Integracja `lnav`: kilka logów scalonych w jeden widok chronologiczny, osadzony w nagłówku/stopce Omega-Fire (zobacz [Nawigacja](#nawigacja)).
+- Analiza najczęstszych IP za pomocą Top N, z możliwością eksportu i ponownego wczytania w ukierunkowanym czyszczeniu.
+- Ukierunkowane usuwanie jednego lub kilku IP z plików LOG lub TXT, wpisanych ręcznie lub zaznaczonych z eksportu.
+- Przypięte pliki z **presetami do zaznaczenia**: proponowane są tylko typowe ścieżki faktycznie obecne na maszynie.
 - Rotacja oraz natychmiastowe lub zautomatyzowane kopie zapasowe.
 - Przywracanie kopii zapasowej.
 - Czyszczenie według wieku, limitu, typu lub ręcznego wyboru.
@@ -178,6 +186,10 @@ Dostępne raporty:
 - Statystyki Fail2Ban.
 - Stan i diagnostyka systemu.
 - Raporty statystyczne z 7 lub 30 dni.
+- Ranking Top N adresów IP.
+- Przewodnik pomocy i FAQ.
+
+**Zobacz wszystkie eksporty** (6.5): wszystkie wyeksportowane pliki w jednym miejscu, z typem, datą i rozmiarem; raport HTML otwiera się w domyślnej przeglądarce internetowej użytkownika, plik JSON lub TXT czyta się w Omega-Fire, bez terminala i menedżera plików.
 
 Motywy HTML:
 
@@ -187,11 +199,13 @@ Motywy HTML:
 - `light-basic` — jasny i stonowany.
 - `light-alt` — kremowy papier i leśna zieleń.
 
+Język eksportów: ustawiany osobno w ustawieniach (domyślnie « Jak interfejs »), aby przekazać raport w języku jego czytelnika bez zmiany języka interfejsu.
+
 ### 7. System i trwałość
 
 - Kopia zapasowa pełnego stanu: reguły, bany nftables, bany iptables i Fail2Ban.
 - Tworzenie archiwów `.tar.gz` ze znacznikiem czasu.
-- Lista i przywracanie snapshotów.
+- Lista i przywracanie snapshotów: przywracane są tylko reguły Omega-Fire możliwe do identycznego odtworzenia; reguły innych narzędzi nigdy nie są ruszane.
 - Historia działań.
 - Filtrowanie i czyszczenie historii.
 - Przeładowanie konfiguracji i ponowne skanowanie bez restartu.
@@ -209,7 +223,17 @@ Motywy HTML:
 
 - Wybór aktywnego motywu spośród dziesięciu motywów `omega-*` wspólnych z resztą pakietu (zobacz [Motywy i terminale](#motywy-i-terminale)), zapamiętywany między uruchomieniami.
 - Ręczne nadpisanie profilu renderowania (automatyczny, pełny, standardowy, ograniczony lub tylko mono), stosowane przy następnym uruchomieniu.
-- Dostępne z menu głównego (`9. RÉGLAGES`) lub bezpośrednio klawiszem `s`.
+- Język interfejsu spośród 17 języków (zobacz [Języki interfejsu](#języki-interfejsu)): uruchamia się ponownie tylko interfejs; reguły zapory, Fail2Ban i usługi pozostają nietknięte.
+- Język eksportów HTML i TXT, niezależny od języka interfejsu.
+- Edytowalne foldery eksportów i zrzutów ekranu, z czyszczeniem po potwierdzeniu.
+- Dostępne z menu głównego (`9. USTAWIENIA`) lub bezpośrednio klawiszem `s`.
+
+### 10. Pomoc
+
+- **Przewodnik pomocy**: wszystkie karty pomocy zebrane w kolejności menu, każda karta otwiera karty powiązane.
+- **FAQ**: rzeczywiste pytania napotkane w użyciu (reguły innych narzędzi, przywracanie, Fail2Ban, logi, eksporty i przeglądarka).
+- Eksport HTML przewodnika i FAQ, w języku eksportów.
+- Klawisz `a` pozostaje pomocą bieżącego ekranu.
 
 ---
 
@@ -269,7 +293,7 @@ Zależności produkcyjne są zdefiniowane w `requirements.txt`:
 - `psutil` — informacje o systemie (CPU, pamięć, sieć, procesy) dla dashboardu i diagnostyki.
 - `jinja2` — generowanie eksportów HTML.
 - `python-dotenv` — zmienne środowiskowe.
-- `pyte` — wirtualny emulator terminala do osadzania `lnav` (menu 5.9/8.6).
+- `pyte` — wirtualny emulator terminala, do osadzania `lnav` (menu 8.6 i przeglądarka lnav w 5.2 / 5.3).
 
 Narzędzia jakości (`pytest`, `black`, `flake8`, `mypy`) są wymienione w komentarzu w `requirements.txt`: odkomentuj je lub zainstaluj osobno, jeśli współtworzysz projekt (zobacz [Testy i jakość](#testy-i-jakość)).
 
@@ -454,11 +478,17 @@ Aby zamiast tego uruchomić stary interfejs Rich (sekwencyjne wpisywanie numeró
 ./omega-fire.sh --legacy-cli
 ```
 
+Stary interfejs pozostaje interfejsem wersji 3.0, po francusku: oryginalne menu 5 (bez Biblioteki, Ulubionych i przeglądarki Klasycznej), bez „Zobacz wszystkie eksporty”, bez przewodnika pomocy i FAQ, bez presetów. Interfejs Textual zawiera pełną wersję 3.5.
+
+### Języki interfejsu
+
+17 języków: francuski, angielski, hiszpański, portugalski (Brazylia), włoski, niemiecki, niderlandzki, polski, rosyjski, chiński, wietnamski, tajski, indonezyjski, japoński, koreański, hindi, arabski. Wybór w ustawieniach (klawisz `s`, « Langue / Language », etykieta nigdy nietłumaczona), stosowany przez ponowne uruchomienie samego interfejsu, lub jednorazowo `OMEGA_FIRE_LANG=pl ./omega-fire.sh` (skrypt startowy zachowuje ją przez `sudo`). W konsoli tekstowej Linuksa (TTY) języki, których pisma brakuje w czcionkach konsoli (wietnamski, chiński, tajski, japoński, koreański, hindi, arabski), są wyświetlane po angielsku na czas sesji. Arabski jest wyświetlany od prawej do lewej. W hindi Terminator, GNOME Terminal, Xfce Terminal i Alacritty wyświetlają tekst wyrównany; terminale, które same składają litery łączone (Kitty, Ghostty, Konsole), mogą przesuwać ramki i kolumny. **Język eksportów** (raporty HTML i TXT) ustawia się osobno, domyślnie « Jak interfejs ». Dziennik aplikacji i historia audytu są nadal zapisywane po francusku; tytuły historii są wyświetlane w wybranym języku. Stary interfejs (`--legacy-cli`) pozostaje po francusku.
+
 ### Ogólny przebieg
 
 1. Ekran startowy (splash), a następnie ostrzeżenie, jeśli terminal jest za mały.
 2. Wykrywanie możliwości systemu (dedykowany, nieblokujący ekran).
-3. Menu główne: 8 sekcji tematycznych (1-8) oraz ustawienia (9).
+3. Menu główne: 8 sekcji tematycznych (1-8), ustawienia (9) i pomoc (10).
 4. Wybór sekcji, a następnie akcji — każda akcja otwiera formularz, którego wszystkie wymagane pola są walidowane przed przejściem dalej.
 5. Wyraźne potwierdzenie przed każdą wrażliwą lub destrukcyjną operacją (flush, czyszczenie, przywracanie...).
 6. Wykonywanie wolnych operacji w tle (interfejs pozostaje użyteczny podczas oczekiwania), a następnie powrót do menu z podsumowaniem wyniku.
@@ -470,13 +500,13 @@ Aby zamiast tego uruchomić stary interfejs Rich (sekwencyjne wpisywanie numeró
 - Enter: wybór lub zatwierdzenie.
 - Kliknięcie wiersza tabeli: zaznacza go i wstępnie wypełnia odpowiednie pola (źródło do przypięcia, docelowy jail itd.).
 - `Esc`: powrót do poprzedniego ekranu (na ekranie głównym prosi o potwierdzenie wyjścia).
-- `a`: pomoc kontekstowa — opisuje bieżącą akcję albo wszystkie akcje bieżącej sekcji, jeśli żaden ekran akcji nie jest jeszcze otwarty.
+- `a`: pomoc kontekstowa — opisuje bieżącą akcję albo wszystkie akcje bieżącej sekcji, jeśli nie otwarto jeszcze żadnego ekranu akcji; pełny przewodnik i FAQ znajdują się w menu 10.
 - `t`: przejście do następnego motywu, bez potwierdzenia.
 - `r`: ponowne wykrycie rozmiaru i rodziny terminala.
-- `s`: otwarcie ustawień (motyw, profil renderowania).
+- `s`: otwarcie ustawień (motyw, profil renderowania, języki, foldery).
 - `q` / `Ctrl+Q`: wyjście, z potwierdzeniem.
 
-#### Szczególne cechy ekranu lnav (5.9 / 8.6)
+#### Szczególne cechy ekranu lnav (8.6 oraz przeglądarka lnav w 5.2 / 5.3)
 
 `lnav` jest osadzony w pseudoterminalu z trwałym nagłówkiem/stopką Omega-Fire wokół własnego widoku, aby uniknąć kolizji między jego natywnymi skrótami a skrótami Omega-Fire:
 
@@ -603,6 +633,7 @@ Omega-Fire działa na krytycznych komponentach systemu i należy go używać ost
 - Uruchomienie wymaga uprawnień roota przez `sudo`.
 - Flush, ogólne czyszczenie i zastosowanie polityki mogą być destrukcyjne.
 - Predefiniowana polityka uruchamia automatyczną kopię zapasową przed zmianą.
+- W iptables / ip6tables zastosowanie polityki lub opróżnienie backendu usuwa również reguły innych narzędzi (UFW…): Omega-Fire to sygnalizuje i pozwala wybrać przed działaniem.
 - Przed każdą istotną zmianą wykonaj ręczną kopię zapasową.
 - Po każdej operacji sprawdzaj rzeczywisty stan zapory, jaili i połączeń.
 - Najpierw testuj na maszynie lub celu jednorazowego użytku.
@@ -614,14 +645,14 @@ Omega-Fire działa na krytycznych komponentach systemu i należy go używać ost
 
 ## Testy i jakość
 
-Projekt ma historyczny zestaw 152 testów jednostkowych, napisany przed migracją do Textual: obejmuje domenę biznesową, orkiestrację (`application/`), infrastrukturę i interfejs Rich (`interfaces/cli/`), ale **nie obejmuje jeszcze `interfaces/tui/`** (domyślnego interfejsu Textual). To archiwum nie zawiera katalogu `tests/`: pobierz go z repozytorium deweloperskiego, jeśli chcesz go uruchomić.
+Pakiet liczy 137 testów jednostkowych (ponad 8000 sprawdzonych przypadków): domena biznesowa, orkiestracja (`application/`), infrastruktura oraz ekrany Textual dodane lub poprawione w 3.5, uruchamiane z prawdziwymi arkuszami stylów (układ, pełne ścieżki, języki eksportów). To archiwum nie zawiera katalogu `tests/`: pobierz go z repozytorium deweloperskiego, jeśli chcesz go uruchomić.
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover tests/unit -v
+python -m unittest discover -s tests/unit -t .
 ```
 
-Ponieważ architektura warstwowa ściśle oddziela domenę biznesową od prezentacji (`domain/`, `application/`, `ports/` jako `Protocol`, zobacz [Architektura](#architektura)), ten zestaw pozostaje ważny bez zmian mimo migracji: jedynie nowszy interfejs Textual nie ma jeszcze własnego pokrycia testami.
+Architektura warstwowa ściśle oddziela domenę biznesową od prezentacji (`domain/`, `application/`, `ports/` jako `Protocol`, zobacz [Architektura](#architektura)): większość testów nie wymaga ani roota, ani prawdziwej zapory.
 
 Jeśli współtworzysz projekt, zainstaluj narzędzia jakości zadeklarowane (w komentarzu) w `requirements.txt`:
 
@@ -657,7 +688,7 @@ pytest --cov
 
 ### Znane ograniczenia
 
-- Zestaw testów (152) nie obejmuje jeszcze interfejsu Textual (`interfaces/tui/`), napisanego po nim (zobacz [Testy i jakość](#testy-i-jakość)).
+- Pakiet testów obejmuje ekrany Textual wersji 3.5, jeszcze nie wszystkie starsze ekrany (zobacz [Testy i jakość](#testy-i-jakość)).
 - Mechanizm `ExecutionPlan`/`PipelineStep` jest częściowo nadal obecny w projekcie.
 - Dokładna dostępność funkcji zależy od plików binarnych, usług, uprawnień i konfiguracji maszyny hosta.
 - Historyczny interfejs Rich (`--legacy-cli`) nie jest już osią aktywnego rozwoju; jest zachowany, dopóki interfejs Textual nie stanie się w pełni niezawodny w rzeczywistych warunkach.

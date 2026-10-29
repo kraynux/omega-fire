@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 from omega_fire.application.queries.f2b_report.report_builder import build_f2b_report
 from omega_fire.application.queries.f2b_report.models import F2bReportData
+from omega_fire.shared.i18n import _
 
 
 @dataclass
@@ -26,7 +27,7 @@ class ExportF2bReportRequest:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.format not in ("txt", "html"):
-            errors.append(f"Invalid format: {self.format}. Must be 'txt' or 'html'")
+            errors.append(_("Format invalide : {format}. Valeurs possibles : « txt » ou « html »").format(format=self.format))
         return errors
 
     def is_valid(self) -> bool:
@@ -80,7 +81,7 @@ class ExportF2bReportCommand:
                 if self._html_exporter is None:
                     return ExportF2bReportResult(
                         success=False,
-                        message="Exporteur HTML non disponible.",
+                        message=_("Exporteur HTML non disponible."),
                     )
                 data = self._report_to_dict(report)
                 data["theme_name"] = request.theme_name
@@ -90,12 +91,12 @@ class ExportF2bReportCommand:
         except Exception as e:
             return ExportF2bReportResult(
                 success=False,
-                message=f"Échec de la génération du rapport : {e}",
+                message=_("Échec de la génération du rapport : {e}").format(e=e),
             )
 
         return ExportF2bReportResult(
             success=True,
-            message=f"Rapport fail2ban généré avec succès : {dest_path}",
+            message=_("Rapport fail2ban généré avec succès : {dest_path}").format(dest_path=dest_path),
             file_path=dest_path,
         )
 
@@ -113,61 +114,60 @@ class ExportF2bReportCommand:
         """Render F2bReportData as plain text."""
         lines = []
         lines.append("=" * 80)
-        lines.append("                 OMEGA-FIRE — RAPPORT DÉTAILLÉ FAIL2BAN")
+        lines.append(_("                 OMEGA-FIRE — RAPPORT DÉTAILLÉ FAIL2BAN"))
         lines.append("=" * 80)
-        lines.append(f" Généré le : {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(_(" Généré le : {value}").format(value=report.generated_at.strftime('%Y-%m-%d %H:%M:%S')))
         lines.append("-" * 80)
         lines.append("")
 
-        lines.append("[ SYSTÈME ]")
-        lines.append(f"  Installé          : {'Oui' if report.system.installed else 'Non'}")
-        lines.append(f"  Service actif     : {'Oui' if report.system.service_running else 'Non'}")
+        lines.append(_("[ SYSTÈME ]"))
+        lines.append(_("  Installé          : {value}").format(value=_('Oui') if report.system.installed else _('Non')))
+        lines.append(_("  Service actif     : {value}").format(value=_('Oui') if report.system.service_running else _('Non')))
         if report.system.enabled_at_boot is None:
-            lines.append("  Activé au démarrage : Indéterminé (gestionnaire de service non détecté)")
+            lines.append(_("  Activé au démarrage : Indéterminé (gestionnaire de service non détecté)"))
         else:
-            lines.append(f"  Activé au démarrage : {'Oui' if report.system.enabled_at_boot else 'Non'}")
+            lines.append(_("  Activé au démarrage : {value}").format(value=_('Oui') if report.system.enabled_at_boot else _('Non')))
         lines.append("")
 
-        lines.append(f"[ JAILS ({report.total_jails}) ]")
+        lines.append(_("[ JAILS ({total_jails}) ]").format(total_jails=report.total_jails))
         lines.append("")
         for jail in report.jails:
             lines.append(f"● {jail.name}")
-            lines.append(f"  ├─ Échecs (actuel/total) : {jail.currently_failed} / {jail.total_failed}")
-            lines.append(f"  ├─ Bannis (actuel/total) : {jail.currently_banned} / {jail.total_banned}")
+            lines.append(_("  ├─ Échecs (actuel/total) : {currently_failed} / {total_failed}").format(currently_failed=jail.currently_failed, total_failed=jail.total_failed))
+            lines.append(_("  ├─ Bannis (actuel/total) : {currently_banned} / {total_banned}").format(currently_banned=jail.currently_banned, total_banned=jail.total_banned))
             lines.append(
-                f"  ├─ Config : maxretry={jail.maxretry or 'N/A'}  "
-                f"bantime={jail.bantime or 'N/A'}  findtime={jail.findtime or 'N/A'}"
+                _("  ├─ Config : maxretry={value}  bantime={value2}  findtime={value3}").format(value=jail.maxretry or _('N/A'), value2=jail.bantime or _('N/A'), value3=jail.findtime or _('N/A'))
             )
             if jail.banned_ips:
                 ips_str = ", ".join(jail.banned_ips)
-                lines.append(f"  ├─ IPs bannies : {ips_str}")
+                lines.append(_("  ├─ IPs bannies : {ips_str}").format(ips_str=ips_str))
                 if jail.banned_ips_overflow > 0:
-                    lines.append(f"  │  (+{jail.banned_ips_overflow} autre(s))")
+                    lines.append(_("  │  (+{banned_ips_overflow} autre(s))").format(banned_ips_overflow=jail.banned_ips_overflow))
             else:
-                lines.append("  ├─ IPs bannies : aucune")
+                lines.append(_("  ├─ IPs bannies : aucune"))
 
             if jail.history_available:
                 if jail.recent_bans:
-                    lines.append("  └─ 10 derniers bans (historique fail2ban) :")
+                    lines.append(_("  └─ 10 derniers bans (historique fail2ban) :"))
                     for rb in jail.recent_bans:
                         lines.append(f"       {rb.timeofban.strftime('%Y-%m-%d %H:%M:%S')} — {rb.ip}")
                 else:
-                    lines.append("  └─ Aucun ban dans l'historique fail2ban.")
+                    lines.append(_("  └─ Aucun ban dans l'historique fail2ban."))
             else:
-                lines.append("  └─ Historique fail2ban indisponible (base non trouvée).")
+                lines.append(_("  └─ Historique fail2ban indisponible (base non trouvée)."))
             lines.append("")
 
-        lines.append("[ IPS PRÉSENTES DANS PLUSIEURS JAILS ]")
+        lines.append(_("[ IPS PRÉSENTES DANS PLUSIEURS JAILS ]"))
         if report.duplicate_ips:
             for dup in report.duplicate_ips:
                 jails_str = ", ".join(dup.jails)
                 lines.append(f"  {dup.ip:<18} → {jails_str}")
         else:
-            lines.append("  Aucune IP partagée entre plusieurs jails actuellement.")
+            lines.append(_("  Aucune IP partagée entre plusieurs jails actuellement."))
         lines.append("")
 
         lines.append("-" * 80)
-        lines.append(f"-- Fin du rapport [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --")
+        lines.append(_("-- Fin du rapport [{value}] --").format(value=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return "\n".join(lines)
 

@@ -23,6 +23,7 @@ from omega_fire.domain.monitoring.stats import (
     BackendStats,
     TimeSeriesPoint,
 )
+from omega_fire.shared.i18n import _
 
 
 class MonitoringService:
@@ -240,18 +241,18 @@ class MonitoringService:
         # Detect sudden spike in bans
         if stats.total_bans > avg_bans * 2 and avg_bans > 0:
             anomalies.append(
-                f"Sudden spike in bans: {stats.total_bans} (avg: {avg_bans:.0f})"
+                _("Pic soudain de bannissements : {total_bans} (moyenne : {avg_bans:.0f})").format(total_bans=stats.total_bans, avg_bans=avg_bans)
             )
         
         # Detect sudden spike in connections
         if stats.total_connections > avg_connections * 2 and avg_connections > 0:
             anomalies.append(
-                f"Sudden spike in connections: {stats.total_connections} (avg: {avg_connections:.0f})"
+                _("Pic soudain de connexions : {total_connections} (moyenne : {avg_connections:.0f})").format(total_connections=stats.total_connections, avg_connections=avg_connections)
             )
         
         # Detect if all jails are disabled
         if stats.active_jails == 0 and stats.total_jails > 0:
-            anomalies.append("All fail2ban jails are disabled")
+            anomalies.append(_("Tous les jails fail2ban sont désactivés"))
         
         return anomalies
 

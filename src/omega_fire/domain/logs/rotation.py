@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
 from omega_fire.domain.logs.exceptions import InvalidRetentionError
+from omega_fire.shared.i18n import _
 
 
 class RotationStrategy(Enum):
@@ -47,18 +48,18 @@ class RotationPolicy:
         
         if self.strategy == RotationStrategy.BY_SIZE:
             if self.max_size_bytes is None or self.max_size_bytes <= 0:
-                errors.append("max_size_bytes must be > 0 for BY_SIZE strategy")
+                errors.append(_("max_size_bytes doit être > 0 pour la stratégie BY_SIZE"))
         
         elif self.strategy == RotationStrategy.BY_AGE:
             if self.max_age_days is None or self.max_age_days <= 0:
-                errors.append("max_age_days must be > 0 for BY_AGE strategy")
+                errors.append(_("max_age_days doit être > 0 pour la stratégie BY_AGE"))
         
         elif self.strategy == RotationStrategy.BY_COUNT:
             if self.max_lines is None or self.max_lines <= 0:
-                errors.append("max_lines must be > 0 for BY_COUNT strategy")
+                errors.append(_("max_lines doit être > 0 pour la stratégie BY_COUNT"))
         
         if self.max_rotations < 1:
-            errors.append("max_rotations must be >= 1")
+            errors.append(_("max_rotations doit être >= 1"))
         
         return errors
     
@@ -99,7 +100,7 @@ def should_rotate_by_size(
         Tuple of (should_rotate, reason)
     """
     if file_size_bytes >= max_size_bytes:
-        return True, f"File size ({file_size_bytes} bytes) exceeds threshold ({max_size_bytes} bytes)"
+        return True, _("Taille du fichier ({file_size_bytes} octets) supérieure au seuil ({max_size_bytes} octets)").format(file_size_bytes=file_size_bytes, max_size_bytes=max_size_bytes)
     return False, None
 
 
@@ -125,7 +126,7 @@ def should_rotate_by_age(
     max_age = timedelta(days=max_age_days)
     
     if age >= max_age:
-        return True, f"File age ({age.days} days) exceeds threshold ({max_age_days} days)"
+        return True, _("Âge du fichier ({days} jours) supérieur au seuil ({max_age_days} jours)").format(days=age.days, max_age_days=max_age_days)
     return False, None
 
 
@@ -143,7 +144,7 @@ def should_rotate_by_count(
         Tuple of (should_rotate, reason)
     """
     if line_count >= max_lines:
-        return True, f"Line count ({line_count}) exceeds threshold ({max_lines})"
+        return True, _("Nombre de lignes ({line_count}) supérieur au seuil ({max_lines})").format(line_count=line_count, max_lines=max_lines)
     return False, None
 
 
@@ -167,17 +168,17 @@ def should_rotate_by_schedule(
     
     if strategy == RotationStrategy.DAILY:
         if now.date() > last_rotation.date():
-            return True, "Daily rotation: new day started"
+            return True, _("Rotation quotidienne : nouveau jour")
     
     elif strategy == RotationStrategy.WEEKLY:
         # Rotate if week number changed
         if now.isocalendar()[1] != last_rotation.isocalendar()[1]:
-            return True, "Weekly rotation: new week started"
+            return True, _("Rotation hebdomadaire : nouvelle semaine")
     
     elif strategy == RotationStrategy.MONTHLY:
         # Rotate if month changed
         if now.month != last_rotation.month or now.year != last_rotation.year:
-            return True, "Monthly rotation: new month started"
+            return True, _("Rotation mensuelle : nouveau mois")
     
     return False, None
 

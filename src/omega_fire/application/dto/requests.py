@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
+from omega_fire.shared.i18n import _
 
 
 class BackendTarget(str, Enum):
@@ -45,9 +46,9 @@ class IPAddressInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.ip:
-            errors.append("IP address is required")
+            errors.append(_("L'adresse IP est obligatoire"))
         elif not self._is_valid_ipv4(self.ip):
-            errors.append(f"Invalid IPv4 format: {self.ip}")
+            errors.append(_("Format IPv4 invalide : {ip}").format(ip=self.ip))
         return errors
 
     def is_valid(self) -> bool:
@@ -74,10 +75,10 @@ class IPListInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.ips and not self.source_file:
-            errors.append("Either ips list or source_file is required")
+            errors.append(_("Une liste d'IP ou un fichier source (source_file) est obligatoire"))
         for ip in self.ips:
             if not IPAddressInput._is_valid_ipv4(ip):
-                errors.append(f"Invalid IPv4 in list: {ip}")
+                errors.append(_("IPv4 invalide dans la liste : {ip}").format(ip=ip))
         return errors
 
     def is_valid(self) -> bool:
@@ -98,11 +99,11 @@ class RuleInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.port is not None and (self.port < 1 or self.port > 65535):
-            errors.append(f"Invalid port: {self.port}")
+            errors.append(_("Port invalide : {port}").format(port=self.port))
         if self.protocol and self.protocol not in ("tcp", "udp", "icmp", "all"):
-            errors.append(f"Invalid protocol: {self.protocol}")
+            errors.append(_("Protocole invalide : {protocol}").format(protocol=self.protocol))
         if self.action not in ("accept", "deny", "drop", "reject"):
-            errors.append(f"Invalid action: {self.action}")
+            errors.append(_("Action invalide : {action}").format(action=self.action))
         return errors
 
     def is_valid(self) -> bool:
@@ -120,11 +121,11 @@ class JailInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.jail_name:
-            errors.append("Jail name is required")
+            errors.append(_("Le nom du jail est obligatoire"))
         if not self.ip_address:
-            errors.append("IP address is required")
+            errors.append(_("L'adresse IP est obligatoire"))
         if self.duration_seconds is not None and self.duration_seconds < 0:
-            errors.append("Duration must be non-negative")
+            errors.append(_("La durée ne doit pas être négative"))
         return errors
 
     def is_valid(self) -> bool:
@@ -142,7 +143,7 @@ class ExportInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.report_name:
-            errors.append("Report name is required")
+            errors.append(_("Le nom du rapport est obligatoire"))
         return errors
 
     def is_valid(self) -> bool:
@@ -163,7 +164,7 @@ class MaintenanceInput:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.keep < 1:
-            errors.append("Keep must be at least 1")
+            errors.append(_("Le nombre de copies à conserver doit être d'au moins 1"))
         return errors
 
     def is_valid(self) -> bool:

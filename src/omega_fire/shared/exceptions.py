@@ -4,6 +4,7 @@
 """Exceptions génériques partagées par les utilitaires transverses."""
 
 from __future__ import annotations
+from omega_fire.shared.i18n import _
 
 
 class SharedError(Exception):
@@ -43,7 +44,7 @@ class ShellCommandError(SharedError):
         base = super().__str__()
         if self.command is not None:
             cmd = " ".join(self.command) if isinstance(self.command, list) else self.command
-            base = f"{base} [cmd={cmd!r} rc={self.return_code}]"
+            base = _("{base} [cmd={cmd!r} rc={return_code}]").format(base=base, cmd=cmd, return_code=self.return_code)
         return base
 
 

@@ -25,6 +25,7 @@ from omega_fire.domain.persistence.exceptions import (
     IncompatibleVersionError,
     InvalidRestoreScopeError,
 )
+from omega_fire.shared.i18n import _
 
 
 class RestoreRequest:
@@ -56,23 +57,23 @@ class RestoreRequest:
         
         # Check snapshot validity
         if not self.snapshot.is_valid():
-            errors.append("Snapshot is not valid")
+            errors.append(_("Le snapshot n'est pas valide"))
         
         # Check scope compatibility
         scope = self.snapshot.metadata.scope
         
         if self.restore_blacklist and scope == SnapshotScope.RULES_ONLY:
-            errors.append("Cannot restore blacklist from rules-only snapshot")
+            errors.append(_("Impossible de restaurer la blacklist depuis un snapshot qui ne contient que des règles"))
         
         if self.restore_rules and scope == SnapshotScope.BLACKLIST_ONLY:
-            errors.append("Cannot restore rules from blacklist-only snapshot")
+            errors.append(_("Impossible de restaurer les règles depuis un snapshot qui ne contient que la blacklist"))
         
         if self.restore_fail2ban and scope in (SnapshotScope.BLACKLIST_ONLY, SnapshotScope.RULES_ONLY):
-            errors.append("Cannot restore fail2ban from blacklist/rules-only snapshot")
+            errors.append(_("Impossible de restaurer fail2ban depuis un snapshot qui ne contient que la blacklist ou les règles"))
         
         # Check that at least one component is requested
         if not (self.restore_blacklist or self.restore_rules or self.restore_fail2ban):
-            errors.append("At least one component must be selected for restore")
+            errors.append(_("Sélectionnez au moins un élément à restaurer"))
         
         return errors
     
@@ -136,7 +137,7 @@ def extract_blacklist_from_snapshot(snapshot: Snapshot) -> list[BanEntry]:
     if snapshot.content.blacklist is None:
         raise RestoreError(
             snapshot.metadata.snapshot_id,
-            "Snapshot contains no blacklist data"
+            _("Le snapshot ne contient aucune donnée de blacklist")
         )
     
     banned_ips = []
@@ -181,7 +182,7 @@ def extract_rules_from_snapshot(snapshot: Snapshot) -> list[FirewallRule]:
     if snapshot.content.rules is None:
         raise RestoreError(
             snapshot.metadata.snapshot_id,
-            "Snapshot contains no rules data"
+            _("Le snapshot ne contient aucune règle")
         )
     
     rules = []
@@ -265,7 +266,7 @@ def extract_jails_from_snapshot(snapshot: Snapshot) -> list[Jail]:
     if snapshot.content.fail2ban is None:
         raise RestoreError(
             snapshot.metadata.snapshot_id,
-            "Snapshot contains no fail2ban data"
+            _("Le snapshot ne contient aucune donnée fail2ban")
         )
     
     jails = []
@@ -318,7 +319,7 @@ def validate_restore_compatibility(
     # Check snapshot status
     if snapshot.metadata.status != SnapshotStatus.COMPLETED:
         errors.append(
-            f"Snapshot status is {snapshot.metadata.status.value}, not COMPLETED"
+            _("Le snapshot est à l'état {value}, pas COMPLETED").format(value=snapshot.metadata.status.value)
         )
     
     # Check version compatibility (simple check: major version must match)
@@ -395,7 +396,7 @@ def plan_restore(
         except RestoreError as e:
             raise InvalidRestoreScopeError(
                 "blacklist",
-                "snapshot has no blacklist data"
+                _("le snapshot ne contient aucune donnée de blacklist")
             ) from e
     
     if request.restore_rules and request.snapshot.content.rules:
@@ -404,7 +405,7 @@ def plan_restore(
         except RestoreError as e:
             raise InvalidRestoreScopeError(
                 "rules",
-                "snapshot has no rules data"
+                _("le snapshot ne contient aucune règle")
             ) from e
     
     if request.restore_fail2ban and request.snapshot.content.fail2ban:
@@ -413,7 +414,7 @@ def plan_restore(
         except RestoreError as e:
             raise InvalidRestoreScopeError(
                 "fail2ban",
-                "snapshot has no fail2ban data"
+                _("le snapshot ne contient aucune donnée fail2ban")
             ) from e
     
     return RestorePlan(

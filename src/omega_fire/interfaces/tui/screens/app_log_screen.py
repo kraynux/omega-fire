@@ -32,6 +32,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 from omega_fire.infrastructure.config.paths import APP_LOG_PATH
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.purge_app_log_screen import PurgeAppLogScreen
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -51,23 +52,23 @@ class AppLogScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static("JOURNAL APPLICATIF", classes="omega-title")
-            yield Input(placeholder="Filtrer par mot-cle (vide = aucun filtre)", id="filter-input")
-            yield Input(value=str(_DEFAULT_MAX_LINES), placeholder="Nombre de lignes", id="lines-input")
+            yield Static(_("JOURNAL APPLICATIF"), classes="omega-title")
+            yield Input(placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"), id="filter-input")
+            yield Input(value=str(_DEFAULT_MAX_LINES), placeholder=_("Nombre de lignes"), id="lines-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Filtrer", id="filter", variant="primary")
+                    yield Button(_("Filtrer"), id="filter", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer / Purger", id="manage", variant="error")
+                    yield Button(_("Gérer / Purger"), id="manage", variant="error")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
 
             yield DataTable(id="log-table")
             yield Static("", id="log-hint", classes="omega-hint")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#log-table", DataTable).add_columns("Entree du journal applicatif")
+        self.query_one("#log-table", DataTable).add_columns(_("Entrée du journal applicatif"))
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -105,7 +106,7 @@ class AppLogScreen(OmegaScreen):
                 lines = [l for l in lines if keyword.lower() in l.lower()]
             return lines[-max_lines:]
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message="Lecture du journal...")
+        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Lecture du journal..."))
 
     def _on_loaded(self, recent_lines: list[str]) -> None:
         colors = self._colors()
@@ -113,13 +114,13 @@ class AppLogScreen(OmegaScreen):
         table.clear()
 
         if not APP_LOG_PATH.exists():
-            self.query_one("#log-hint", Static).update(f"Le fichier journal '{APP_LOG_PATH}' n'existe pas encore.")
+            self.query_one("#log-hint", Static).update(_("Le fichier journal '{APP_LOG_PATH}' n'existe pas encore.").format(APP_LOG_PATH=APP_LOG_PATH))
             return
         if not recent_lines:
-            self.query_one("#log-hint", Static).update("Aucune entree ne correspond aux criteres.")
+            self.query_one("#log-hint", Static).update(_("Aucune entrée ne correspond aux critères."))
             return
 
-        self.query_one("#log-hint", Static).update(f"{len(recent_lines)} entree(s) affichee(s).")
+        self.query_one("#log-hint", Static).update(_("{count} entrée(s) affichée(s).").format(count=len(recent_lines)))
         for line in recent_lines:
             if "[ERROR]" in line or "[CRITICAL]" in line:
                 text = Text(line, style=colors["danger"])

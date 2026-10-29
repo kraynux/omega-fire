@@ -18,14 +18,13 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from omega_fire.infrastructure.storage.files.json_store import JsonStore, JsonStoreError
+from omega_fire.shared.i18n import _
 
-DEFAULT_LIVE_TAIL_PINS: dict[str, str] = {
-    "Nginx Access Log": "/var/log/nginx/access.log",
-    "Apache Access Log": "/var/log/apache2/access.log",
-    "Lighttpd Access Log": "/var/log/lighttpd/access.log",
-    "Caddy Access Log": "/var/log/caddy/access.log",
-    "Omega-Fire Audit Log": "logs/audit.log",
-}
+# Plus d'epingles par defaut codees en dur (retour utilisateur 2026-10-28) : les chemins
+# nginx / apache / lighttpd / caddy n'existent pas sur la plupart des machines, et la 1re
+# epingle prenait la place du log choisi depuis 5.3. Les logs se declarent dans la
+# Bibliotheque (5.1) ou s'epinglent ici a la main.
+DEFAULT_LIVE_TAIL_PINS: dict[str, str] = {}
 
 CUSTOM_PINS_RELATIVE_PATH = "live_tail_custom_pins.json"
 DISABLED_PINS_RELATIVE_PATH = "live_tail_disabled_pins.json"
@@ -129,7 +128,7 @@ class ManageLiveTailPinsCommand:
         name = name.strip()
         path = path.strip()
         if not name or not path:
-            return LiveTailPinResult(success=False, message="Nom et chemin requis.")
+            return LiveTailPinResult(success=False, message=_("Nom et chemin requis."))
 
         custom = self._load_dict(self._custom_path)
         custom[name] = path
@@ -140,7 +139,7 @@ class ManageLiveTailPinsCommand:
             disabled.remove(name)
             self._store.save(self._disabled_path, disabled)
 
-        return LiveTailPinResult(success=True, message=f"Épingle '{name}' ajoutée.")
+        return LiveTailPinResult(success=True, message=_("Épingle '{name}' ajoutée.").format(name=name))
 
     def remove_pinned(self, name: str) -> LiveTailPinResult:
         """Remove a pin by name — deletes it from custom pins if
@@ -159,8 +158,8 @@ class ManageLiveTailPinsCommand:
             self._store.save(self._disabled_path, disabled)
 
         if not was_custom and name not in self._defaults:
-            return LiveTailPinResult(success=False, message=f"'{name}' n'est pas une épingle connue.")
-        return LiveTailPinResult(success=True, message=f"Épingle '{name}' supprimée.")
+            return LiveTailPinResult(success=False, message=_("'{name}' n'est pas une épingle connue.").format(name=name))
+        return LiveTailPinResult(success=True, message=_("Épingle '{name}' supprimée.").format(name=name))
 
     def record_history(self, path: str) -> None:
         """Insert a path at the front of history, deduplicated, capped."""
@@ -173,10 +172,10 @@ class ManageLiveTailPinsCommand:
     def remove_history_entry(self, path: str) -> LiveTailPinResult:
         history = self._load_list(self._history_path)
         if path not in history:
-            return LiveTailPinResult(success=False, message="Entrée d'historique introuvable.")
+            return LiveTailPinResult(success=False, message=_("Entrée d'historique introuvable."))
         history.remove(path)
         self._store.save(self._history_path, history)
-        return LiveTailPinResult(success=True, message="Entrée d'historique supprimée.")
+        return LiveTailPinResult(success=True, message=_("Entrée d'historique supprimée."))
 
     def purge_all(self) -> None:
         """Reset to factory state: deletes custom pins, disabled
@@ -209,7 +208,7 @@ class ManageLiveTailPinsCommand:
 #    à l'appelant de confirmer avant d'appeler)
 #
 # Points clés :
-# - DEFAULT_LIVE_TAIL_PINS : les 5 épingles auparavant codées en dur.
+# - DEFAULT_LIVE_TAIL_PINS : vide depuis la 3.5 (anciennes épingles codées en dur retirées).
 # - Épingles par défaut : jamais stockées, juste masquables (liste de
 #   noms désactivés) — réversible en ré-ajoutant sous le même nom, ou
 #   via purge_all().

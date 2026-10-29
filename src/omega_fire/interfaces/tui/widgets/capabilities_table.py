@@ -12,12 +12,13 @@ from textual.widgets import DataTable
 
 from omega_fire.core.capability import Capability
 from omega_fire.core.enums import CapabilityStatus
+from omega_fire.shared.i18n import _
 
 _STATUS_LABELS: dict[CapabilityStatus, str] = {
-    CapabilityStatus.AVAILABLE: "DISPONIBLE",
-    CapabilityStatus.DEGRADED: "DEGRADE",
-    CapabilityStatus.MISSING: "MANQUANT",
-    CapabilityStatus.DISQUALIFIED: "DISQUALIFIE",
+    CapabilityStatus.AVAILABLE: _("DISPONIBLE"),
+    CapabilityStatus.DEGRADED: _("DÉGRADÉ"),
+    CapabilityStatus.MISSING: _("MANQUANT"),
+    CapabilityStatus.DISQUALIFIED: _("DISQUALIFIÉ"),
 }
 
 _STATUS_VARIABLE: dict[CapabilityStatus, str] = {
@@ -33,7 +34,7 @@ class CapabilitiesTable(DataTable[str]):
 
     def on_mount(self) -> None:
         self.cursor_type = "row"
-        self.add_columns("Statut", "Capacite", "Raison")
+        self.add_columns(_("Statut"), _("Capacité"), _("Raison"))
 
     def set_capabilities(self, capabilities: list[Capability]) -> None:
         self.clear()

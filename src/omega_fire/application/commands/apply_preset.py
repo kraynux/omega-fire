@@ -29,6 +29,7 @@ from typing import Any, Optional
 from omega_fire.domain.rules.presets import FirewallPreset
 from omega_fire.infrastructure.config.paths import RUNTIME_DIR
 from omega_fire.application.commands.backup_state import _collect_banned_ips, _collect_jails
+from omega_fire.shared.i18n import _
 
 def snapshot_file_for(backend: str) -> Path:
     """Get the snapshot file path for a specific backend.
@@ -105,7 +106,7 @@ class ApplyPresetCommand:
         if self._adapter is None:
             return ApplyPresetResult(
                 success=False,
-                message=f"Aucun backend disponible pour appliquer un profil sur {request.backend}.",
+                message=_("Aucun backend disponible pour appliquer un profil sur {backend}.").format(backend=request.backend),
             )
 
         snapshot_file = snapshot_file_for(request.backend)
@@ -118,8 +119,7 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=f"Impossible de sauvegarder l'état actuel avant application : {e}. "
-                        f"Application annulée par sécurité.",
+                message=_("Impossible de sauvegarder l'état actuel avant application : {e}. Application annulée par sécurité.").format(e=e),
             )
 
         try:
@@ -128,8 +128,7 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=f"Impossible d'écrire le fichier de sauvegarde ({e}). "
-                        f"Application annulée par sécurité.",
+                message=_("Impossible d'écrire le fichier de sauvegarde ({e}). Application annulée par sécurité.").format(e=e),
             )
 
         # --- 1b. Snapshot complet multi-backend (nouveau, non bloquant) ---
@@ -142,7 +141,7 @@ class ApplyPresetCommand:
             try:
                 self._capture_full_snapshot(request)
             except Exception as e:
-                warnings.append(f"snapshot complet non créé ({e})")
+                warnings.append(_("snapshot complet non créé ({e})").format(e=e))
 
         # --- 2. Application du profil ---
         try:
@@ -150,8 +149,7 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=f"Échec de l'application du profil '{request.preset.name}' sur "
-                        f"{request.backend} : {e}. L'état antérieur reste disponible via [R].",
+                message=_("Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R].").format(name=request.preset.name, backend=request.backend, e=e),
             )
 
         # --- 2b. Synchronisation RuleRepository (non bloquant) ---
@@ -164,7 +162,7 @@ class ApplyPresetCommand:
             try:
                 self._sync_repository_with_backend(request.backend)
             except Exception as e:
-                warnings.append(f"base de données non synchronisée ({e})")
+                warnings.append(_("base de données non synchronisée ({e})").format(e=e))
 
         # --- 3. Enregistrement de l'état actif (propre à ce backend) ---
         # rules_count_at_apply : nombre de règles managées réellement
@@ -194,13 +192,11 @@ class ApplyPresetCommand:
         except Exception:
             return ApplyPresetResult(
                 success=True,
-                message=f"Le profil '{request.preset.name}' a été appliqué sur {request.backend}, "
-                        f"mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait "
-                        f"être incorrect au prochain affichage).",
+                message=_("Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage).").format(name=request.preset.name, backend=request.backend),
             )
-        message = f"Le profil '{request.preset.name}' est maintenant actif sur {request.backend}."
+        message = _("Le profil '{name}' est maintenant actif sur {backend}.").format(name=request.preset.name, backend=request.backend)
         if warnings:
-            message += " Avertissement : " + " ; ".join(warnings) + "."
+            message += _(" Avertissement : ") + " ; ".join(warnings) + "."
 
         return ApplyPresetResult(
             success=True,
@@ -213,8 +209,7 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=f"Échec de l'application du profil '{request.preset.name}' sur "
-                        f"{request.backend} : {e}. L'état antérieur reste disponible via [R].",
+                message=_("Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R].").format(name=request.preset.name, backend=request.backend, e=e),
             )
 
         # --- 3. Enregistrement de l'état actif (propre à ce backend) ---
@@ -231,14 +226,12 @@ class ApplyPresetCommand:
         except Exception:
             return ApplyPresetResult(
                 success=True,
-                message=f"Le profil '{request.preset.name}' a été appliqué sur {request.backend}, "
-                        f"mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait "
-                        f"être incorrect au prochain affichage).",
+                message=_("Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage).").format(name=request.preset.name, backend=request.backend),
             )
 
         return ApplyPresetResult(
             success=True,
-            message=f"Le profil '{request.preset.name}' est maintenant actif sur {request.backend}.",
+            message=_("Le profil '{name}' est maintenant actif sur {backend}.").format(name=request.preset.name, backend=request.backend),
         )
     
     def _capture_full_snapshot(self, request: ApplyPresetRequest) -> None:
@@ -270,8 +263,7 @@ class ApplyPresetCommand:
             rules=rules,
             jails=jails,
             description=(
-                f"Auto — avant application du profil '{request.preset.name}' "
-                f"sur {request.backend}"
+                f"Auto — avant application du profil '{request.preset.name}' sur {request.backend}"
             ),
             origin="auto_preset",
         )

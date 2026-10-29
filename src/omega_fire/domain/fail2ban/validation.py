@@ -9,6 +9,7 @@ import os
 import re
 from typing import Optional
 from omega_fire.domain.fail2ban.exceptions import InvalidParameterError
+from omega_fire.shared.i18n import _
 
 
 def validate_port(port: str) -> None:
@@ -43,7 +44,7 @@ def validate_port(port: str) -> None:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    f"Invalid port range format: '{part}'"
+                    _("Format de plage de ports invalide : « {part} »").format(part=part)
                 )
             try:
                 start, end = int(range_parts[0]), int(range_parts[1])
@@ -51,19 +52,19 @@ def validate_port(port: str) -> None:
                     raise InvalidParameterError(
                         "port",
                         port,
-                        f"Port range start ({start}) > end ({end})"
+                        _("Plage de ports : début ({start}) > fin ({end})").format(start=start, end=end)
                     )
                 if not (1 <= start <= 65535 and 1 <= end <= 65535):
                     raise InvalidParameterError(
                         "port",
                         port,
-                        f"Port values must be between 1 and 65535"
+                        _("Les ports doivent être compris entre 1 et 65535")
                     )
             except ValueError:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    f"Port range must contain integers: '{part}'"
+                    _("Une plage de ports doit contenir des nombres entiers : « {part} »").format(part=part)
                 )
         
         # Check if it's a number
@@ -73,7 +74,7 @@ def validate_port(port: str) -> None:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    f"Port number must be between 1 and 65535: {port_num}"
+                    _("Le numéro de port doit être compris entre 1 et 65535 : {port_num}").format(port_num=port_num)
                 )
         
         # Check if it's a valid service name (alphanumeric)
@@ -84,7 +85,7 @@ def validate_port(port: str) -> None:
             raise InvalidParameterError(
                 "port",
                 port,
-                f"Invalid port format: '{part}'"
+                _("Format de port invalide : « {part} »").format(part=part)
             )
 
 
@@ -107,14 +108,14 @@ def validate_log_path(log_path: str) -> None:
         raise InvalidParameterError(
             "log_path",
             log_path,
-            "log_path is required"
+            _("Le chemin du journal (log_path) est obligatoire")
         )
     
     if not os.path.isabs(log_path):
         raise InvalidParameterError(
             "log_path",
             log_path,
-            "log_path must be an absolute path"
+            _("Le chemin du journal (log_path) doit être absolu")
         )
     
     # Check for invalid characters
@@ -122,7 +123,7 @@ def validate_log_path(log_path: str) -> None:
         raise InvalidParameterError(
             "log_path",
             log_path,
-            "log_path contains null bytes"
+            _("Le chemin du journal (log_path) contient des octets nuls")
         )
 
 
@@ -147,7 +148,7 @@ def validate_filter_name(filter_name: str) -> None:
         raise InvalidParameterError(
             "filter_name",
             filter_name,
-            "filter_name must be <= 64 characters"
+            _("Le nom du filtre (filter_name) doit faire 64 caractères au plus")
         )
     
     pattern = r'^[a-zA-Z][a-zA-Z0-9_-]*$'
@@ -155,7 +156,7 @@ def validate_filter_name(filter_name: str) -> None:
         raise InvalidParameterError(
             "filter_name",
             filter_name,
-            "filter_name must start with a letter and contain only alphanumeric, hyphens, underscores"
+            _("Le nom du filtre (filter_name) doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés")
         )
 
 
@@ -188,7 +189,7 @@ def validate_protocol(protocol: str) -> None:
             raise InvalidParameterError(
                 "protocol",
                 protocol,
-                f"Invalid protocol: '{part}'. Must be tcp, udp, or tcp,udp"
+                _("Protocole invalide : « {part} ». Valeurs possibles : tcp, udp ou tcp,udp").format(part=part)
             )
 
 
@@ -213,7 +214,7 @@ def validate_action(action: str) -> None:
         raise InvalidParameterError(
             "action",
             action,
-            "action must be <= 64 characters"
+            _("L'action doit faire 64 caractères au plus")
         )
     
     pattern = r'^[a-zA-Z][a-zA-Z0-9_-]*$'
@@ -221,7 +222,7 @@ def validate_action(action: str) -> None:
         raise InvalidParameterError(
             "action",
             action,
-            "action must start with a letter and contain only alphanumeric, hyphens, underscores"
+            _("L'action doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés")
         )
 
 

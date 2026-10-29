@@ -14,11 +14,12 @@ from omega_fire.application.commands.backup_state import BackupStateCommand, Bac
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "7.1 Sauvegarder l'etat"
+_ACTION_TITLE = "7.1 Sauvegarder l'état"
 
 
 class BackupStateScreen(OmegaScreen):
@@ -31,18 +32,18 @@ class BackupStateScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-form-panel"):
-            yield Static("SAUVEGARDER L'ETAT COMPLET", classes="omega-title")
+            yield Static(_("SAUVEGARDER L'ÉTAT COMPLET"), classes="omega-title")
             yield Static(
-                "Capture l'etat actuel : regles firewall, IPs bannies (nftables/iptables/fail2ban).",
+                _("Capture l'état actuel : règles firewall, IPs bannies (nftables/iptables/fail2ban)."),
                 classes="omega-hint",
             )
-            yield Static("Description (optionnelle)", classes="omega-subtitle")
+            yield Static(_("Description (optionnelle)"), classes="omega-subtitle")
             yield Input(id="description-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Sauvegarder", id="launch", variant="primary")
+                    yield Button(_("Sauvegarder"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -55,8 +56,8 @@ class BackupStateScreen(OmegaScreen):
         description = self.query_one("#description-input", Input).value.strip()
         self.app.push_screen(
             ConfirmScreen(
-                title="CONFIRMER LA SAUVEGARDE",
-                message=f"Description : {description or '(aucune)'}",
+                title=_("CONFIRMER LA SAUVEGARDE"),
+                message=_("Description : {value}").format(value=description or _('(aucune)')),
             ),
             lambda confirmed: self._backup_if_confirmed(confirmed, description),
         )
@@ -82,19 +83,18 @@ class BackupStateScreen(OmegaScreen):
 
         def _on_done(result) -> None:
             if not result.success:
-                self.app.notify(f"Echec de la sauvegarde : {result.message}", severity="error")
+                self.app.notify(_("Échec de la sauvegarde : {message}").format(message=result.message), severity="error")
                 log_action_result(self._container, _ACTION_TITLE, status="failure", error=result.message)
                 return
 
             self.app.notify(
-                f"Sauvegarde reussie ({result.snapshot_id or 'N/A'}) — "
-                f"{result.rules_count} regle(s), {result.blacklist_count} IP(s), {result.jails_count} jail(s).",
+                _("Sauvegarde réussie ({value}) — {rules_count} règle(s), {blacklist_count} IP(s), {jails_count} jail(s).").format(value=result.snapshot_id or _('N/A'), rules_count=result.rules_count, blacklist_count=result.blacklist_count, jails_count=result.jails_count),
             )
             log_action_result(self._container, _ACTION_TITLE, status="success")
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(f"Echec de la sauvegarde : {error}", severity="error")
+            self.app.notify(_("Échec de la sauvegarde : {error}").format(error=error), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
 
-        self.run_blocking(_execute, _on_done, busy_message="Sauvegarde en cours...", on_error=_on_error)
+        self.run_blocking(_execute, _on_done, busy_message=_("Sauvegarde en cours..."), on_error=_on_error)

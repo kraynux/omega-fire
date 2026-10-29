@@ -9,6 +9,7 @@ from __future__ import annotations
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.dto.views import DashboardView
+from omega_fire.shared.i18n import _
 
 
 def get_dashboard_summary(registry: CapabilityRegistry) -> str:
@@ -23,26 +24,26 @@ def get_dashboard_summary(registry: CapabilityRegistry) -> str:
     view = build_dashboard_view(registry)
 
     lines = [
-        "═══ TABLEAU DE BORD ═══",
+        _("═══ TABLEAU DE BORD ═══"),
         "",
-        f"  Connexions actives   : {view.active_connections}",
-        f"  IPs bannies (total)  : {view.banned_ips_total}",
-        f"  Règles actives       : {view.rules_total}",
-        f"  Jails actifs         : {view.jails_active}",
-        f"  Uptime               : {view.uptime_seconds:.0f}s",
-        f"  Dernier scan         : {view.last_scan or 'N/A'}",
+        _("  Connexions actives   : {active_connections}").format(active_connections=view.active_connections),
+        _("  IPs bannies (total)  : {banned_ips_total}").format(banned_ips_total=view.banned_ips_total),
+        _("  Règles actives       : {rules_total}").format(rules_total=view.rules_total),
+        _("  Jails actifs         : {jails_active}").format(jails_active=view.jails_active),
+        _("  Uptime               : {uptime_seconds:.0f}s").format(uptime_seconds=view.uptime_seconds),
+        _("  Dernier scan         : {value}").format(value=view.last_scan or _('N/A')),
         "",
     ]
 
     if view.degraded_capabilities:
-        lines.append("  ⚠️ Capacités dégradées :")
+        lines.append(_("  ⚠️ Capacités dégradées :"))
         for cap in view.degraded_capabilities:
             lines.append(f"     • {cap}")
     else:
-        lines.append("   Toutes les capacités sont opérationnelles")
+        lines.append(_("   Toutes les capacités sont opérationnelles"))
 
     lines.append("")
-    lines.append("⚠️ Données réelles à connecter via infrastructure adapters")
+    lines.append(_("⚠️ Données réelles à connecter via infrastructure adapters"))
 
     return "\n".join(lines)
 

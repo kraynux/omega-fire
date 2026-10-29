@@ -37,6 +37,7 @@ from omega_fire.domain.persistence.exceptions import (
     EmptyBackupError,
     InvalidRestoreScopeError,
 )
+from omega_fire.shared.i18n import _
 
 
 class PersistenceService:
@@ -123,7 +124,7 @@ class PersistenceService:
         except (BackupError, EmptyBackupError, InvalidSnapshotError):
             raise
         except Exception as e:
-            raise BackupError("planning", f"Unexpected error: {e}") from e
+            raise BackupError("planning", _("Erreur inattendue : {e}").format(e=e)) from e
     
     def create_full_backup(
         self,
@@ -277,7 +278,7 @@ class PersistenceService:
         except Exception as e:
             raise RestoreError(
                 snapshot.metadata.snapshot_id,
-                f"Unexpected error: {e}"
+                _("Erreur inattendue : {e}").format(e=e)
             ) from e
     
     def validate_snapshot(self, snapshot: Snapshot) -> list[str]:
@@ -293,17 +294,17 @@ class PersistenceService:
         
         # Check metadata
         if not snapshot.metadata.is_valid():
-            errors.append("Snapshot metadata is invalid")
+            errors.append(_("Les métadonnées du snapshot sont invalides"))
         
         # Check status
         if snapshot.metadata.status != SnapshotStatus.COMPLETED:
             errors.append(
-                f"Snapshot status is {snapshot.metadata.status.value}, not COMPLETED"
+                _("Le snapshot est à l'état {value}, pas COMPLETED").format(value=snapshot.metadata.status.value)
             )
         
         # Check content
         if snapshot.content.is_empty():
-            errors.append("Snapshot content is empty")
+            errors.append(_("Le contenu du snapshot est vide"))
         
         return errors
     

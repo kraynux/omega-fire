@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Optional
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
 from omega_fire.domain.fail2ban.models import Jail
+from omega_fire.shared.i18n import _
 
 
 class TransferStrategy(Enum):
@@ -124,20 +125,19 @@ def validate_transfer_feasibility(
     """
     # Check if jail is active
     if not jail.is_active():
-        return False, f"Jail '{jail.name}' is not active"
+        return False, _("Le jail « {name} » n'est pas actif").format(name=jail.name)
     
     # Check backend compatibility
     if jail.config.backend != target_backend:
         # Allow transfer if jail backend matches target
         # (e.g., jail uses nftables, transfer to nftables blacklist)
         return False, (
-            f"Backend mismatch: jail uses '{jail.config.backend}', "
-            f"target is '{target_backend}'"
+            _("Backends différents : le jail utilise « {backend} », la cible est « {target_backend} »").format(backend=jail.config.backend, target_backend=target_backend)
         )
     
     # Check jail configuration
     if not jail.config.is_valid():
-        return False, f"Jail '{jail.name}' has invalid configuration"
+        return False, _("La configuration du jail « {name} » est invalide").format(name=jail.name)
     
     return True, None
 

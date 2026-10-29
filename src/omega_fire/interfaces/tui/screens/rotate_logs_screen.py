@@ -29,11 +29,12 @@ from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "5.4 Rotation & Backup Logs"
+_ACTION_TITLE = "5.6 Rotation / Backup des logs"
 _AUTO_FILE = "scheduled_rotations.json"
 
 _MODE_MANUAL = "manual"
@@ -43,12 +44,12 @@ _MODE_MANAGE = "manage"
 _SRC_MANUAL = "__manual__"
 
 _FREQ_OPTIONS: dict[str, tuple[int, str]] = {
-    "weekly": (7, "Toutes les semaines"),
-    "monthly": (30, "Tous les mois"),
-    "quarterly": (90, "Tous les trimestres"),
-    "semiannual": (180, "Tous les semestres"),
-    "yearly": (364, "Tous les ans"),
-    "custom": (0, "Personnalise"),
+    "weekly": (7, _("Toutes les semaines")),
+    "monthly": (30, _("Tous les mois")),
+    "quarterly": (90, _("Tous les trimestres")),
+    "semiannual": (180, _("Tous les semestres")),
+    "yearly": (364, _("Tous les ans")),
+    "custom": (0, _("Personnalisé")),
 }
 
 
@@ -79,54 +80,54 @@ class RotateLogsScreen(OmegaScreen):
         (RUNTIME_DIR / _AUTO_FILE).write_text(json.dumps(automations, indent=2, ensure_ascii=False), encoding="utf-8")
 
     def _source_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [("Chemin manuel", _SRC_MANUAL)]
+        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _SRC_MANUAL)]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
-            yield Static("ROTATION / BACKUP DES LOGS", classes="omega-title")
+            yield Static(_("ROTATION / BACKUP DES LOGS"), classes="omega-title")
 
-            yield Static("Action", classes="omega-subtitle")
+            yield Static(_("Action"), classes="omega-subtitle")
             yield Select(
                 [
-                    ("Creer une sauvegarde manuelle immediatement", _MODE_MANUAL),
-                    ("Configurer une automatisation de sauvegarde", _MODE_SCHEDULE),
-                    ("Lister et gerer les automatisations en cours", _MODE_MANAGE),
+                    (_("Créer une sauvegarde manuelle immédiatement"), _MODE_MANUAL),
+                    (_("Configurer une automatisation de sauvegarde"), _MODE_SCHEDULE),
+                    (_("Lister et gérer les automatisations en cours"), _MODE_MANAGE),
                 ],
                 value=_MODE_MANUAL,
                 id="mode-select",
             )
 
-            yield Static("Source a sauvegarder", id="source-label", classes="omega-subtitle")
-            yield Select(self._source_options(), id="source-select")
+            yield Static(_("Source à sauvegarder"), id="source-label", classes="omega-subtitle")
+            yield Select(self._source_options(), id="source-select", prompt=_("Sélectionner"))
             with Horizontal(classes="omega-actions", id="pins-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Gerer les epingles", id="manage-pins")
+                    yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static("Chemin manuel", id="manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Chemin manuel"), id="manual-label", classes="omega-subtitle omega-hidden")
             yield Input(value="var/log/access.log", id="manual-input", classes="omega-hidden")
 
-            yield Static("Frequence", id="freq-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Fréquence"), id="freq-label", classes="omega-subtitle omega-hidden")
             yield Select(
-                [(label, key) for key, (_, label) in _FREQ_OPTIONS.items()],
+                [(label, key) for key, (_ignored, label) in _FREQ_OPTIONS.items()],
                 value="weekly",
                 id="freq-select",
                 classes="omega-hidden",
             )
-            yield Static("Intervalle personnalise (jours)", id="freq-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Intervalle personnalisé (jours)"), id="freq-custom-label", classes="omega-subtitle omega-hidden")
             yield Input(value="15", id="freq-custom-input", classes="omega-hidden")
 
-            yield Static("Automatisations planifiees", id="manage-label", classes="omega-subtitle omega-hidden")
+            yield Static(_("Automatisations planifiées"), id="manage-label", classes="omega-subtitle omega-hidden")
             yield DataTable(id="automations-table", classes="omega-hidden")
             with Horizontal(classes="omega-actions", id="manage-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Supprimer la selection", id="delete-automation", variant="error")
+                    yield Button(_("Supprimer la sélection"), id="delete-automation", variant="error")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Valider", id="launch", variant="primary")
+                    yield Button(_("Valider"), id="launch", variant="primary")
                 with Container(classes="omega-btn-frame"):
-                    yield Button("Retour", id="back")
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -184,7 +185,7 @@ class RotateLogsScreen(OmegaScreen):
         table = self.query_one("#automations-table", DataTable)
         table.clear(columns=True)
         table.cursor_type = "row"
-        table.add_columns("Source", "Frequence", "Creee le")
+        table.add_columns(_("Source"), _("Fréquence"), _("Créée le"))
         for idx, item in enumerate(self._load_automations()):
             table.add_row(
                 item.get("source_path", ""),
@@ -222,11 +223,11 @@ class RotateLogsScreen(OmegaScreen):
         idx = getattr(self, "_selected_automation_index", None)
         automations = self._load_automations()
         if idx is None or not (0 <= idx < len(automations)):
-            self.app.notify("Selectionnez d'abord une ligne.", severity="warning")
+            self.app.notify(_("Sélectionnez d'abord une ligne."), severity="warning")
             return
         removed = automations.pop(idx)
         self._save_automations(automations)
-        self.app.notify(f"Automatisation pour '{removed.get('source_path', '')}' supprimee.")
+        self.app.notify(_("Automatisation pour '{value}' supprimée.").format(value=removed.get('source_path', '')))
         self._selected_automation_index = None
         self._refresh_automations_table()
 
@@ -237,7 +238,7 @@ class RotateLogsScreen(OmegaScreen):
         else:
             selected_file = str(source)
         if not selected_file:
-            self.app.notify("Saisissez un chemin de fichier.", severity="warning")
+            self.app.notify(_("Saisissez un chemin de fichier."), severity="warning")
             return None
         raw_path = Path(selected_file)
         if raw_path.exists():
@@ -247,7 +248,7 @@ class RotateLogsScreen(OmegaScreen):
             if raw_path.is_absolute() else _PROJECT_ROOT / raw_path
         )
         if not resolved.exists():
-            self.app.notify(f"Fichier introuvable : {resolved}", severity="error")
+            self.app.notify(_("Fichier introuvable : {resolved}").format(resolved=resolved), severity="error")
             return None
         return resolved
 
@@ -258,19 +259,19 @@ class RotateLogsScreen(OmegaScreen):
 
         command = RotateLogsCommand(persistence_port=self._container.get_persistence_port())
         result = command.execute(RotateLogsRequest(
-            source_path=str(source_path), reason="Sauvegarde manuelle (menu 5.4)", keep=10,
+            source_path=str(source_path), reason="Sauvegarde manuelle (menu 5.6)", keep=10,
         ))
         if not result.success:
-            self.app.notify(f"Echec de la sauvegarde : {result.message}", severity="error")
+            self.app.notify(_("Échec de la sauvegarde : {message}").format(message=result.message), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=result.message)
             return
 
         src_size = source_path.stat().st_size
         dst_size = result.backup_size_bytes or 0
         ratio = (1 - (dst_size / src_size)) * 100 if src_size > 0 else 0
-        message = f"Sauvegarde reussie ({src_size / 1024:.1f} KB -> {dst_size / 1024:.1f} KB, {ratio:.1f}% de gain)"
+        message = _("Sauvegarde réussie ({value:.1f} KB -> {value2:.1f} KB, {ratio:.1f}% de gain)").format(value=src_size / 1024, value2=dst_size / 1024, ratio=ratio)
         if result.deleted_count:
-            message += f", {result.deleted_count} ancienne(s) archive(s) supprimee(s)"
+            message += _(", {deleted_count} ancienne(s) archive(s) supprimée(s)").format(deleted_count=result.deleted_count)
         self.app.notify(message)
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()
@@ -284,10 +285,10 @@ class RotateLogsScreen(OmegaScreen):
         if freq_key == "custom":
             raw = self.query_one("#freq-custom-input", Input).value.strip()
             if not (raw.isdigit() and int(raw) > 0):
-                self.app.notify("Nombre de jours invalide.", severity="warning")
+                self.app.notify(_("Nombre de jours invalide."), severity="warning")
                 return
             days_interval = int(raw)
-            interval_label = f"Tous les {days_interval} jours"
+            interval_label = _("Tous les {days_interval} jours").format(days_interval=days_interval)
         else:
             days_interval, interval_label = _FREQ_OPTIONS[freq_key]
 
@@ -301,8 +302,7 @@ class RotateLogsScreen(OmegaScreen):
         self._save_automations(automations)
 
         self.app.notify(
-            f"Regle de rotation configuree pour '{source_path.name}' ({interval_label}) — "
-            f"destination : {BACKUPS_DIR}"
+            _("Règle de rotation configurée pour '{name}' ({interval_label}) — destination : {BACKUPS_DIR}").format(name=source_path.name, interval_label=interval_label, BACKUPS_DIR=BACKUPS_DIR)
         )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

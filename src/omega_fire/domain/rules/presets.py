@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from omega_fire.domain.rules.models import RuleAction, RuleChain, RuleProtocol
+from omega_fire.shared.i18n import _
 
 
 @dataclass(frozen=True)
@@ -68,8 +69,8 @@ PRESETS: dict[str, FirewallPreset] = {
     "1": FirewallPreset(
         key="1",
         name="Moyenne",
-        description="Profil Web/SSH standard : SSH (22), HTTP (80), HTTPS (443) autorisés.",
-        policy_label="DROP (Restreint)",
+        description=_("Profil Web/SSH standard : SSH (22), HTTP (80), HTTPS (443) autorisés."),
+        policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
@@ -88,9 +89,9 @@ PRESETS: dict[str, FirewallPreset] = {
     "2": FirewallPreset(
         key="2",
         name="Moyenne (Contrôle Distant)",
-        description="Profil Web/SSH standard + accès de secours : SSH (22), HTTP (80), "
-                     "HTTPS (443), VNC (5900, 5901), RDP (3389).",
-        policy_label="DROP (Restreint)",
+        description=_("Profil Web/SSH standard + accès de secours : SSH (22), HTTP (80), "
+                     "HTTPS (443), VNC (5900, 5901), RDP (3389)."),
+        policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
@@ -109,8 +110,8 @@ PRESETS: dict[str, FirewallPreset] = {
     "3": FirewallPreset(
         key="3",
         name="Strict",
-        description="Sécurité maximale : Tout est bloqué sauf connexions établies.",
-        policy_label="DROP Strict",
+        description=_("Sécurité maximale : Tout est bloqué sauf connexions établies."),
+        policy_label=_("DROP Strict"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.FORWARD, default_action=RuleAction.DROP),
@@ -123,8 +124,8 @@ PRESETS: dict[str, FirewallPreset] = {
     "4": FirewallPreset(
         key="4",
         name="Local (Isolation)",
-        description="Isole la machine d'Internet. Autorise uniquement le trafic Local/LAN.",
-        policy_label="DROP (Internet)",
+        description=_("Isole la machine d'Internet. Autorise uniquement le trafic Local/LAN."),
+        policy_label=_("DROP (Internet)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.DROP),
@@ -145,8 +146,8 @@ PRESETS: dict[str, FirewallPreset] = {
     "5": FirewallPreset(
         key="5",
         name="Paranoia",
-        description="Isolation absolue : Blocage total entrant, sortant, LAN, Internet et Loopback.",
-        policy_label="DROP Total",
+        description=_("Isolation absolue : Blocage total entrant, sortant, LAN, Internet et Loopback."),
+        policy_label=_("DROP Total"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.DROP),
@@ -157,8 +158,8 @@ PRESETS: dict[str, FirewallPreset] = {
     "6": FirewallPreset(
         key="6",
         name="Monitoring",
-        description="Autorise Ping/ICMP et métriques de supervision.",
-        policy_label="DROP (Supervision)",
+        description=_("Autorise Ping/ICMP et métriques de supervision."),
+        policy_label=_("DROP (Supervision)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
         ],
@@ -175,7 +176,7 @@ PRESETS: dict[str, FirewallPreset] = {
     "7": FirewallPreset(
         key="7",
         name="Maintenance",
-        description="Ouverture totale temporaire pour interventions techniques.",
+        description=_("Ouverture totale temporaire pour interventions techniques."),
         policy_label="ACCEPT",
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.ACCEPT),
@@ -187,10 +188,10 @@ PRESETS: dict[str, FirewallPreset] = {
     "8": FirewallPreset(
         key="8",
         name="Server Web & FTP",
-        description="Serveur Web + FTP : SSH (22), HTTP (80), HTTPS (443), FTP contrôle (21) "
+        description=_("Serveur Web + FTP : SSH (22), HTTP (80), HTTPS (443), FTP contrôle (21) "
                      "et plage passive restreinte (30000-30009). Configurer le démon FTP "
-                     "(pasv_min_port/pasv_max_port) pour correspondre à cette plage.",
-        policy_label="DROP (Restreint)",
+                     "(pasv_min_port/pasv_max_port) pour correspondre à cette plage."),
+        policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
@@ -221,9 +222,9 @@ PRESETS: dict[str, FirewallPreset] = {
     "9": FirewallPreset(
         key="9",
         name="Multi-server (Reverse Proxy / Docker)",
-        description="Reverse proxy et services conteneurisés : SSH (22), HTTP (80), "
-                     "HTTPS (443), et ports d'exposition courants (8000, 8080, 8443).",
-        policy_label="DROP (Restreint)",
+        description=_("Reverse proxy et services conteneurisés : SSH (22), HTTP (80), "
+                     "HTTPS (443), et ports d'exposition courants (8000, 8080, 8443)."),
+        policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),

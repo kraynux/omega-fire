@@ -283,7 +283,7 @@ def render_monitoring_live(
         # Header
         header_text = Text()
         shield = "\U0001f6e1\ufe0f " if use_emoji else ""
-        header_text.append(f"{shield}OMEGA-FIRE v3.0", style=theme_registry.get_style("menu.title"))
+        header_text.append(f"{shield}OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title"))
         header_text.append("  |  ", style=theme_registry.get_style("text.muted"))
         header_text.append("Live Monitoring", style=theme_registry.get_style("text.heading"))
         

@@ -9,6 +9,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.shared.i18n import _
 
 
 class SyncDirection(Enum):
@@ -113,7 +114,7 @@ def _determine_direction(source: str, target: str) -> SyncDirection:
     elif source == "fail2ban" and target == "nftables":
         return SyncDirection.FAIL2BAN_TO_NFTABLES
     else:
-        raise ValueError(f"Unsupported sync direction: {source} -> {target}")
+        raise ValueError(_("Sens de synchronisation non pris en charge : {source} -> {target}").format(source=source, target=target))
 
 
 def transform_for_target(

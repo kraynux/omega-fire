@@ -6,6 +6,7 @@ These exceptions express structural errors related to the core system:
 capability registry, audit system, global state. They do not contain
 business logic — that belongs in domain/ or application/.
 """
+from omega_fire.shared.i18n import _
 
 
 class CoreError(Exception):
@@ -165,7 +166,7 @@ class CapabilityNotFoundError(RegistryError):
             capability_id: ID of the missing capability
             context: Optional dictionary with additional context
         """
-        message = f"Capability '{capability_id}' not found in registry"
+        message = _("Capacité « {capability_id} » absente du registre").format(capability_id=capability_id)
         super().__init__(message, capability_id=capability_id, context=context)
 
 

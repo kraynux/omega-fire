@@ -6,6 +6,7 @@ These are generic, non-business utilities used across multiple domains.
 """
 import ipaddress
 from dataclasses import dataclass
+from omega_fire.shared.i18n import _
 
 
 @dataclass(frozen=True)
@@ -22,7 +23,7 @@ class IPAddress:
         try:
             ipaddress.ip_address(self.value)
         except ValueError as e:
-            raise ValueError(f"Invalid IP address: {self.value}") from e
+            raise ValueError(_("Adresse IP invalide : {value}").format(value=self.value)) from e
     
     def __str__(self) -> str:
         return self.value
@@ -47,7 +48,7 @@ class CIDR:
         try:
             ipaddress.ip_network(self.value, strict=False)
         except ValueError as e:
-            raise ValueError(f"Invalid CIDR notation: {self.value}") from e
+            raise ValueError(_("Notation CIDR invalide : {value}").format(value=self.value)) from e
     
     def __str__(self) -> str:
         return self.value
