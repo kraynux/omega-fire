@@ -6,29 +6,43 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.import_linter_cache/
 *.egg-info/
+.coverage
+htmlcov/
+
+# Archives construites (build-release.sh) et omega-lib vendorisée à la construction
+dist/
+vendor/
+omega-fire-*.tar.gz
+omega-fire.tar.gz
 
 # État runtime généré localement (recréé automatiquement au démarrage)
 var/db/
 var/logs/
 var/runtime/
+var/blocklist/*
 var/cache/*
 var/backups/*
 var/exports/*
 var/screenshots/*
+var/settings.json
+var/*.log
+var/*.jsonl
 !var/cache/.gitkeep
 !var/backups/.gitkeep
 !var/exports/.gitkeep
 !var/screenshots/.gitkeep
 
-# Secrets locaux
+# Configuration et secrets locaux
+config/omega-fire.conf
 .env
 
-# Éditeurs
+# Outils et éditeurs
+.claude/
 *~
 *.bak
 *.swp
 
 # Logs de test locaux
 *.log
-
