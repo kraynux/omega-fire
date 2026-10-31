@@ -8,8 +8,7 @@
 
 **Trạm quản lý thống nhất bảo mật mạng**
 
-> Được phát triển bởi **kraynux** cho **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Được phát triển bởi [kraynux](https://github.com/kraynux) cho [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Trang chính thức: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Xem trước: [Ảnh chụp màn hình](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

@@ -8,8 +8,7 @@
 
 **네트워크 보안 통합 관리 스테이션**
 
-> **kraynux**가 **Omega-server**를 위해 개발 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> [kraynux](https://github.com/kraynux)가 [Omega-Server](https://kraynux.snake-mackarel.ts.net)를 위해 개발   
 
 공식 페이지: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; 미리 보기: [스크린샷](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

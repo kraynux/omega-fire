@@ -8,8 +8,7 @@
 
 **Geïntegreerde beheerpost voor netwerkbeveiliging**
 
-> Ontwikkeld door **kraynux** voor **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Ontwikkeld door [kraynux](https://github.com/kraynux) voor [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Officiële pagina: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Voorbeeld: [Schermafbeeldingen](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

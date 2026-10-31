@@ -8,8 +8,7 @@
 
 **नेटवर्क सुरक्षा का एकीकृत प्रबंधन केंद्र**
 
-> **kraynux** द्वारा **Omega-server** के लिए विकसित 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> [kraynux](https://github.com/kraynux) द्वारा [Omega-Server](https://kraynux.snake-mackarel.ts.net) के लिए विकसित   
 
 आधिकारिक पेज: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; झलक: [स्क्रीनशॉट](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

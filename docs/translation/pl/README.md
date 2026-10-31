@@ -8,8 +8,7 @@
 
 **Zunifikowane stanowisko zarządzania bezpieczeństwem sieci**
 
-> Opracowane przez **kraynux** dla **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Opracowane przez [kraynux](https://github.com/kraynux) dla [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Oficjalna strona: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Podgląd: [Zrzuty ekranu](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

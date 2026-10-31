@@ -8,8 +8,7 @@
 
 **محطة موحّدة لإدارة أمان الشبكة**
 
-> طوّره **kraynux** من أجل **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> طوّره [kraynux](https://github.com/kraynux) من أجل [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 الصفحة الرسمية: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; معاينة: [لقطات الشاشة](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

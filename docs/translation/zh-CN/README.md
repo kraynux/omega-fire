@@ -8,8 +8,7 @@
 
 **统一的网络安全管理平台**
 
-> 由 **kraynux** 为 **Omega-server** 打造 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> 由 [kraynux](https://github.com/kraynux) 为 [Omega-Server](https://kraynux.snake-mackarel.ts.net) 打造   
 
 官方页面：[OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; 预览：[Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

@@ -8,8 +8,7 @@
 
 **Unified network security management console**
 
-> Developed by **kraynux** for **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Developed by [kraynux](https://github.com/kraynux) for [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Official page: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Preview: [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

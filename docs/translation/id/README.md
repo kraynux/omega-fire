@@ -8,8 +8,7 @@
 
 **Pos manajemen keamanan jaringan terpadu**
 
-> Dikembangkan oleh **kraynux** untuk **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Dikembangkan oleh [kraynux](https://github.com/kraynux) untuk [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Halaman resmi: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Pratinjau: [Tangkapan layar](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

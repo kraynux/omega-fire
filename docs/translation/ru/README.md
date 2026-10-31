@@ -8,8 +8,7 @@
 
 **Единый центр управления сетевой безопасностью**
 
-> Разработано **kraynux** для **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> Разработано [kraynux](https://github.com/kraynux) для [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 Официальная страница: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; Превью: [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 

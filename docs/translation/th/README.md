@@ -8,8 +8,7 @@
 
 **ศูนย์จัดการความปลอดภัยเครือข่ายแบบรวมศูนย์**
 
-> พัฒนาโดย **kraynux** สำหรับ **Omega-server** 
-[https://kraynux.snake-mackarel.ts.net](https://kraynux.snake-mackarel.ts.net)
+> พัฒนาโดย [kraynux](https://github.com/kraynux) สำหรับ [Omega-Server](https://kraynux.snake-mackarel.ts.net)   
 
 หน้าอย่างเป็นทางการ: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &nbsp; ตัวอย่าง: [ภาพหน้าจอ](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/)  
 
