@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
 _ACTION_TITLE = "8.5 Visualiser les logs serveurs avec Tail"
 _REFRESH_SECONDS = 2.0
-_VISIBLE_ROWS = 30
 _BUFFER_SIZE = 500
 
 
@@ -423,7 +422,9 @@ class LiveTailScreen(OmegaScreen):
         }
 
         self.query_one("#stats-box", Static).update(self._render_stats(colors, self._buffer.get_stats()))
-        self._render_logs_table(colors, self._buffer.get_all()[:_VISIBLE_ROWS])
+        # Tout le tampon, du plus ancien au plus recent, comme le viewer Simple d'omega-serv (reference,
+        # retour utilisateur 2026-11-02) : avant, seules les 30 plus recentes en tete, sans ascenseur.
+        self._render_logs_table(colors, list(reversed(self._buffer.get_all())))
 
     def _render_stats(self, colors: dict, stats: dict) -> Text:
         def _format_bytes(size: float) -> str:
@@ -466,6 +467,8 @@ class LiveTailScreen(OmegaScreen):
 
     def _render_logs_table(self, colors: dict, entries: list[dict]) -> None:
         table = self.query_one("#logs-table", DataTable)
+        # Suivi automatique seulement si on etait deja en bas : jamais arrache d'une lecture plus haut.
+        follow = table.scroll_y >= table.max_scroll_y - 1
         table.clear()
         for entry in entries:
             status = entry.get("status_code", 0) or 0
@@ -515,3 +518,5 @@ class LiveTailScreen(OmegaScreen):
                 size_str,
                 Text(lat_text, style=lat_style),
             )
+        if follow:
+            table.call_after_refresh(table.scroll_end, animate=False)

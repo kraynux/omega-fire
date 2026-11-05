@@ -12,6 +12,15 @@ qui touchent aux **règles, aux bans ou aux services** sont toujours signalés e
 même mineurs. Les changements de textes affichés sont signalés aussi : ils doivent être
 reportés dans les 16 traductions (interface et README).
 
+## Non publié
+
+### Corrigé
+
+- **Viewer Simple (5.1 / 8.5, Favoris, Voir les logs)** : seules les 30 lignes les plus récentes étaient
+  affichées, sans ascenseur, pour un tampon de 500. Tout le tampon défile désormais, du plus ancien au plus
+  récent comme dans omega-serv (viewer de référence de la suite), ouvert sur les dernières lignes et suivant
+  les nouvelles tant qu'on est en bas.
+
 ## version 3.5.0 : 2026-10-29
 
 > **Traductions** : tous les textes ajoutés ou modifiés par la version 3.5 (point 1 à la FAQ,

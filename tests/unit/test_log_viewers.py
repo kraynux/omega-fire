@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 from textual.app import App
-from textual.widgets import Button, RichLog
+from textual.widgets import Button, DataTable, RichLog
 
 from omega_fire.application.commands.manage_live_tail_pins import ManageLiveTailPinsCommand
 from omega_fire.domain.logs.viewer_type import ViewerType
@@ -115,6 +115,37 @@ class DirectViewersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "access.log"
             path.write_text('1.2.3.4 - - [28/Oct/2026:10:00:00 +0100] "GET / HTTP/1.1" 200 12\n')
+            asyncio.run(run(path, Path(tmp) / "runtime"))
+
+    def test_simple_affiche_tout_le_tampon_avec_ascenseur(self) -> None:
+        """Retour utilisateur 2026-11-02 : comme le viewer Simple d'omega-serv (reference), tout le
+        tampon defile, du plus ancien au plus recent, ouvert sur les dernieres lignes - avant : les 30
+        plus recentes en tete, sans ascenseur."""
+
+        async def run(path: Path, runtime: Path):
+            with mock.patch.object(live_tail_screen, "RUNTIME_DIR", runtime), \
+                    mock.patch.object(live_tail_screen, "log_action_result", lambda *a, **k: None):
+                app = _Host()
+                async with app.run_test(size=(120, 40)) as pilot:
+                    app.push_screen(LiveTailScreen(container=None, source=str(path)))
+                    await pilot.pause()
+                    await pilot.pause()
+                    await pilot.pause(0.3)
+                    table = app.screen.query_one("#logs-table", DataTable)
+                    self.assertEqual(table.row_count, 200)
+                    self.assertIn("/p0", str(table.get_row_at(0)[4]))      # plus ancien en haut
+                    self.assertIn("/p199", str(table.get_row_at(199)[4]))  # plus recent en bas
+                    self.assertGreater(table.max_scroll_y, 0)
+                    self.assertGreaterEqual(table.scroll_y, table.max_scroll_y - 1)
+                    app.screen.action_back()
+                    await pilot.pause()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "access.log"
+            path.write_text("".join(
+                f'1.2.3.{i % 9} - - [02/Nov/2026:07:{i // 60:02d}:{i % 60:02d} +0000] "GET /p{i} HTTP/1.1" 200 12\n'
+                for i in range(200)
+            ))
             asyncio.run(run(path, Path(tmp) / "runtime"))
 
     def test_plus_d_epingles_par_defaut(self) -> None:
