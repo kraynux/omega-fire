@@ -28,6 +28,13 @@ Officiële pagina: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire
 De Textual-interface is de standaardwerkwijze en navigeert via menu's, gevalideerde formulieren (alle verplichte velden worden gecontroleerd voordat je verdergaat) en eigen schermen, met thema's, contextuele hulp en sneltoetsen die gedeeld worden met de rest van de OMEGA-suite (omega-check, omega-deep, omega-stress...). De oude [Rich](https://github.com/Textualize/rich)-interface, sequentieel en gestuurd door het invoeren van nummers, blijft beschikbaar via `--legacy-cli` (zie [Starten](#starten)). 
 Voorbeeld: [Schermafbeeldingen](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/nl/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/nl/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/nl/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/nl/omega-fire/D.png" width="24%" />
+</p>
+
 Het project volgt de principes van de **Clean Architecture**, met een duidelijke scheiding tussen bedrijfsdomein, orkestratie, infrastructuur en gebruikersinterface.
 
 ## Inhoud
@@ -114,7 +121,7 @@ De geïntegreerde blacklist maakt het mogelijk met nftables en iptables te werke
 - Export en herimport van de lijsten.
 - Volledige opschoning van één of meer backends.
 - Ondersteuning voor IPv4 en IPv6.
-- Beheer van de blocklist-bestanden (`var/blocklist/`) en hun vastgezette items rechtstreeks vanuit het eigen scherm.
+- Beheer van de blocklist-bestanden (`var/blocklist/`) en hun vastgezette items rechtstreeks vanuit het eigen scherm; de standaard voorgestelde bestanden, `blocklist.txt` en `blocklist-f2b.txt`, worden bij de eerste start leeg aangemaakt.
 
 ### 3. Beheer van regels en beleid
 
@@ -156,16 +163,17 @@ De geïntegreerde blacklist maakt het mogelijk met nftables en iptables te werke
 
 - **Logbibliotheek** (5.1): automatische import van de logs van gedetecteerde omega-serv-instanties, inclusief die van omega-waf, handmatig vastzetten van een pad en ophalen van een externe log via SSH (sleutel of agent, nooit een wachtwoord).
 - **Favorieten** (5.2): logs uit de Bibliotheek combineren, onder een naam met een viewer opslaan en direct starten.
-- **Logs bekijken** (5.3): één log zonder configuratie, met de viewer van je keuze — Eenvoudig (realtime dashboard), Klassiek (laatste regels, daarna live volgen) of `lnav`.
+- **Logs bekijken** (5.3): één log zonder configuratie, met de viewer van je keuze — Eenvoudig (realtime dashboard: HTTP-statussen inclusief weigeringen 403 en 429, Top 5 IP, gevraagde paden en paden met 404, zoals omega-log), Klassiek (laatste regels, daarna live volgen) of `lnav`.
+- **De Bibliotheek voedt alle logselecties**: 5.4, 5.5, 5.6, en ook 8.5 en 8.6, tonen haar bovenaan de lijst, vóór de vastgezette items.
 - `lnav`-integratie: meerdere logs samengevoegd tot één chronologische weergave, ingebed in een Omega-Fire-header/footer (zie [Navigatie](#navigatie)).
-- Analyse van de meest voorkomende IP's met Top N, exporteerbaar om opnieuw in de gerichte opschoning te laden.
+- Analyse van de meest voorkomende IP's met Top N (5.4), exporteerbaar om opnieuw in de gerichte opschoning te laden; zoeken naar een specifiek IP in het hele bestand en het gekozen IP direct verwijderen, zonder de interface te blokkeren.
 - Gerichte verwijdering van één of meer IP's uit LOG- of TXT-bestanden, met de hand ingevoerd of aangevinkt vanuit een export.
 - Vastgezette bestanden met **aan te vinken presets**: alleen de gebruikelijke paden die echt op de machine aanwezig zijn, worden aangeboden.
-- Rotatie en onmiddellijke of geautomatiseerde back-ups.
+- Rotatie en onmiddellijke of geplande back-ups, **elke nacht echt uitgevoerd** (systemd-timer als root, anders een regel in de crontab van root), met het aantal bewaarde back-ups, de laatste en de volgende back-up.
 - Herstellen van een back-up.
 - Opschonen op basis van ouderdom, quotum, type of handmatige selectie.
 - Geavanceerde opschoning per map of omgeving.
-- Statistieken over 24 uur, 7 dagen of 30 dagen.
+- Statistieken over 24 uur, 7 dagen of 30 dagen (5.10, snel overzicht).
 - Analyse van gebeurtenissen, bewegingen, quota en IP's in de jails.
 
 ### 6. Exports en rapporten
@@ -186,9 +194,10 @@ Beschikbare rapporten:
 - Systeemtoestand en -diagnose.
 - Statistische rapporten over 7 of 30 dagen.
 - Top N-ranglijst van IP's.
+- **Logstatistieken** (6.5): hetzelfde rapport als omega-serv en omega-log (samenvatting, HTTP-statussen, top-IP's, gevraagde paden, paden met 404, verdeling per uur, trend per dag), alleen logs; bans en de firewallstatus blijven in de rapporten over 7 en 30 dagen.
 - Helpgids en FAQ.
 
-**Alle exports bekijken** (6.5): alle geëxporteerde bestanden op één plek, met type, datum en grootte; een HTML-rapport opent in de standaardwebbrowser van de gebruiker, een JSON- of TXT-bestand wordt in Omega-Fire gelezen, zonder terminal of bestandsbeheerder.
+**Alle exports bekijken** (6.6): alle geëxporteerde bestanden op één plek, met type, datum en grootte; een HTML-rapport opent in de standaardwebbrowser van de gebruiker, een JSON- of TXT-bestand wordt in Omega-Fire gelezen, zonder terminal of bestandsbeheerder.
 
 HTML-thema's:
 
@@ -477,11 +486,15 @@ Om in plaats daarvan de oude Rich-interface (sequentiële invoer van nummers) te
 ./omega-fire.sh --legacy-cli
 ```
 
-De oude interface blijft die van versie 3.0, in het Frans: oorspronkelijk menu 5 (zonder Bibliotheek, Favorieten of Klassieke viewer), zonder „Alle exports bekijken”, zonder helpgids of FAQ, zonder presets. De Textual-interface bevat de volledige versie 3.5.
+**De oude Rich-interface wordt niet meer ontwikkeld, maar blijft beschikbaar.** De oude interface blijft die van versie 3.0, in het Frans: oorspronkelijk menu 5 (zonder Bibliotheek, Favorieten of Klassieke viewer), zonder „Alle exports bekijken”, zonder helpgids of FAQ, zonder presets. De Textual-interface bevat de volledige versie 3.5.
 
 ### Talen van de interface
 
 17 talen: Frans, Engels, Spaans, Portugees (Brazilië), Italiaans, Duits, Nederlands, Pools, Russisch, Chinees, Vietnamees, Thai, Indonesisch, Japans, Koreaans, Hindi, Arabisch. Keuze in de instellingen (toets `s`, « Langue / Language », een label dat nooit wordt vertaald), toegepast door alleen de interface opnieuw te starten, of eenmalig met `OMEGA_FIRE_LANG=nl ./omega-fire.sh` (door het startscript bewaard via `sudo`). In de Linux-tekstconsole (TTY) worden talen waarvan het schrift ontbreekt in de consolelettertypen (Vietnamees, Chinees, Thai, Japans, Koreaans, Hindi, Arabisch) voor de sessie in het Engels getoond. Arabisch wordt van rechts naar links weergegeven. In het Hindi tonen Terminator, GNOME Terminal, Xfce Terminal en Alacritty uitgelijnde tekst; terminals die verbonden letters zelf samenstellen (Kitty, Ghostty, Konsole) kunnen kaders en kolommen verschuiven. De **taal van de exports** (HTML- en TXT-rapporten) wordt apart ingesteld, standaard « Zoals de interface ». Het toepassingslogboek en de auditgeschiedenis worden in het Frans opgeslagen; de titels van de geschiedenis worden in de gekozen taal getoond. De oude interface (`--legacy-cli`) blijft in het Frans.
+
+### Contact en ondersteuning
+
+De hulp (toets `a`) biedt een scherm **Contact en ondersteuning**: *Trakteer op een koffie* (PayPal-pagina van de ontwikkelaar), *Contact opnemen met ondersteuning* (e-mailadres en contactformulier van de site, leesbaar weergegeven), *Mij aanmelden als gebruiker (anoniem)* en *Updates controleren*. De aanmelding is vrijwillig, standaard uitgeschakeld en wordt maar één keer verzonden: ze dient alleen om de gebruikers te tellen en, als u dat wilt, hun continent of land (gesloten lijsten, nooit vrije tekst). Ze verzendt een willekeurig gekozen sleutel, de naam van de software (`omega-fire`) en de versie; nooit een naam, een machinenaam, een instelling, een doel of een resultaat. Het IP-adres wordt niet opgeslagen in de aanmeldingen, maar gaat, zoals bij elk bezoek, door de beveiligingscontroles en het logboek van de ontvangende server. Intrekken kan op elk moment vanuit hetzelfde scherm (*Mij niet meer aanmelden*). De updatecontrole leest alleen de lijst van versies die op de site gepubliceerd zijn, en nooit zonder klik.
 
 ### Algemeen verloop
 

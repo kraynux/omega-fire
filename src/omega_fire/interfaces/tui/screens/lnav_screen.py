@@ -59,6 +59,7 @@ from omega_fire.interfaces.cli.themes import initialize_theme, theme_registry
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.interfaces.tui.support.terminal_handoff import suspended_terminal
+from omega_fire.interfaces.tui.screens._log_sources import library_paths
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
@@ -132,6 +133,17 @@ class LnavScreen(OmegaScreen):
         table.clear()
         self._display_items = {}
         idx = 1
+
+        # Logs de la Bibliotheque (5.1) en tete (2026-11-09 : « 8.5 et 8.6 doivent aussi etre alimentes par la
+        # Bibliotheque ») ; les epingles et l'historique (raccourcis manuels d'origine) suivent.
+        pinned_paths = set(self._command.list_active_pinned().values())
+        for lib_path in library_paths():
+            if lib_path in pinned_paths:
+                continue
+            key = str(idx)
+            self._display_items[key] = {"type": "library", "name": _("Bibliothèque"), "path": lib_path}
+            table.add_row(key, _("Bibliothèque"), Path(lib_path).name, lib_path, key=key)
+            idx += 1
 
         for name, path in self._command.list_active_pinned().items():
             key = str(idx)
@@ -246,6 +258,9 @@ class LnavScreen(OmegaScreen):
         item = self._display_items.get(self._highlighted_key)
         if item is None:
             self.app.notify(_("Aucune ligne en surbrillance."), severity="warning")
+            return
+        if item["type"] == "library":
+            self.app.notify(_("Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."), severity="warning")
             return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])

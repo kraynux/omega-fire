@@ -37,12 +37,17 @@ class NftSerializer:
         family: str = "inet",
         set_name: str = "blacklist",
         comment: str = "",
+        timeout_seconds: int | None = None,
     ) -> list[str]:
+        # timeout_seconds (2026-11-10) : expiration de l'element (set cree avec `flags timeout`) - un ban
+        # transfere depuis fail2ban garde le temps qui lui restait, au lieu de devenir permanent.
+        element = [ip]
+        if timeout_seconds:
+            element += ["timeout", f"{int(timeout_seconds)}s"]
         if comment:
             clean_comment = comment.replace('"', '\\"')
-            element_expr = f'{{ {ip} comment "{clean_comment}" }}'
-        else:
-            element_expr = f'{{ {ip} }}'
+            element += ["comment", f'"{clean_comment}"']
+        element_expr = "{ " + " ".join(element) + " }"
 
         return ["nft", "add", "element", family, table, set_name, element_expr]
 

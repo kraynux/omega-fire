@@ -257,7 +257,7 @@ class NftablesAdapter:
 
         return success
 
-    def ban_single_ip(self, ip: IPAddress, *, reason: str = "") -> None:
+    def ban_single_ip(self, ip: IPAddress, *, reason: str = "", timeout_seconds: int | None = None) -> None:
         """Ban a single IP (FirewallPort.ban_ip contract).
 
         Coexists with ban_ip() (batch, bool return) — does not replace it;
@@ -277,9 +277,19 @@ class NftablesAdapter:
         set_type = "ipv6_addr" if ip.version == 6 else "ipv4_addr"
         self._ensure_blackhole_set(set_name=set_name, set_type=set_type)
         cmd = self._serializer.build_ban_command(
-            ip=ip_str, table="filter", family="inet", set_name=set_name, comment=reason
+            ip=ip_str, table="filter", family="inet", set_name=set_name, comment=reason,
+            timeout_seconds=timeout_seconds,
         )
-        self._run_command(cmd)
+        try:
+            self._run_command(cmd)
+        except NftCommandError:
+            if not timeout_seconds:
+                raise
+            # Set cree sans `flags timeout` (version ancienne, ou cree a la main) : ban pose sans
+            # expiration plutot que pas de ban du tout.
+            self._run_command(self._serializer.build_ban_command(
+                ip=ip_str, table="filter", family="inet", set_name=set_name, comment=reason,
+            ))
 
     def unban_single_ip(self, ip: IPAddress) -> None:
         """Unban a single IP (FirewallPort.unban_ip contract).

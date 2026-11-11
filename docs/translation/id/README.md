@@ -28,6 +28,13 @@ Halaman resmi: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &
 Antarmuka Textual adalah mode kerja bawaan dan dinavigasi melalui menu, formulir tervalidasi (semua kolom wajib diperiksa sebelum melanjutkan), dan layar khusus, dengan tema, bantuan kontekstual, dan pintasan keyboard yang dipakai bersama seluruh suite OMEGA (omega-check, omega-deep, omega-stress...). Antarmuka [Rich](https://github.com/Textualize/rich) lama, yang berurutan dan dikendalikan dengan mengetik angka, tetap tersedia melalui `--legacy-cli` (lihat [Menjalankan](#menjalankan)). 
 Pratinjau: [Tangkapan layar](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/id/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/id/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/id/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/id/omega-fire/D.png" width="24%" />
+</p>
+
 Proyek ini dirancang mengikuti prinsip **Clean Architecture**, dengan pemisahan yang jelas antara domain bisnis, orkestrasi, infrastruktur, dan antarmuka pengguna.
 
 ## Daftar isi
@@ -114,7 +121,7 @@ Blacklist terpadu memungkinkan bekerja dengan nftables dan iptables dari satu la
 - Ekspor dan impor ulang daftar.
 - Pembersihan penuh satu atau beberapa backend.
 - Dukungan IPv4 dan IPv6.
-- Mengelola file blocklist (`var/blocklist/`) beserta item yang disematkan langsung dari layar khusus.
+- Mengelola file blocklist (`var/blocklist/`) beserta item yang disematkan langsung dari layar khusus; file yang ditawarkan secara bawaan, `blocklist.txt` dan `blocklist-f2b.txt`, dibuat kosong saat pertama kali dijalankan.
 
 ### 3. Manajemen aturan dan kebijakan
 
@@ -156,16 +163,17 @@ Blacklist terpadu memungkinkan bekerja dengan nftables dan iptables dari satu la
 
 - **Pustaka log** (5.1): impor otomatis log dari instans omega-serv yang terdeteksi, termasuk log omega-waf, penyematan path secara manual, dan pengambilan log jarak jauh melalui SSH (kunci atau agen, tidak pernah kata sandi).
 - **Favorit** (5.2): menggabungkan log dari Pustaka, menyimpannya dengan nama dan penampil, lalu menjalankannya langsung.
-- **Lihat log** (5.3): satu log tanpa konfigurasi, dengan penampil pilihan Anda — Sederhana (dashboard waktu nyata), Klasik (baris terakhir lalu diikuti langsung) atau `lnav`.
+- **Lihat log** (5.3): satu log tanpa konfigurasi, dengan penampil pilihan Anda — Sederhana (dashboard waktu nyata: status HTTP termasuk penolakan 403 dan 429, Top 5 IP, jalur diminta dan jalur dengan 404, seperti omega-log), Klasik (baris terakhir lalu diikuti langsung) atau `lnav`.
+- **Pustaka memasok semua pilihan log**: 5.4, 5.5, 5.6, serta 8.5 dan 8.6, menampilkannya di awal daftar, sebelum item tersemat.
 - Integrasi `lnav`: beberapa log digabungkan menjadi satu tampilan kronologis, dibungkus header/footer Omega-Fire (lihat [Navigasi](#navigasi)).
-- Analisis IP yang paling sering muncul dengan Top N, dapat diekspor untuk dimuat ulang ke pembersihan terarah.
+- Analisis IP yang paling sering muncul dengan Top N (5.4), dapat diekspor untuk dimuat ulang ke pembersihan terarah; pencarian IP tertentu di seluruh file dan penghapusan langsung IP yang dipilih, tanpa membekukan antarmuka.
 - Pembersihan terarah satu atau beberapa IP di file LOG atau TXT, diketik manual atau dicentang dari sebuah ekspor.
 - File tersemat dengan **preset yang bisa dicentang**: hanya path umum yang benar-benar ada di mesin yang ditawarkan.
-- Rotasi dan pencadangan segera atau otomatis.
+- Rotasi dan pencadangan segera atau terjadwal, **benar-benar dijalankan setiap malam** (timer systemd yang berjalan sebagai root, atau satu baris di crontab root), dengan jumlah cadangan yang disimpan, cadangan terakhir, dan cadangan berikutnya.
 - Memulihkan cadangan.
 - Pembersihan berdasarkan usia, kuota, jenis, atau pilihan manual.
 - Pembersihan lanjutan per folder atau lingkungan.
-- Statistik 24 jam, 7 hari, atau 30 hari.
+- Statistik 24 jam, 7 hari, atau 30 hari (5.10, tampilan cepat).
 - Analisis peristiwa, pergerakan, kuota, dan IP yang ada di jail.
 
 ### 6. Ekspor dan laporan
@@ -186,9 +194,10 @@ Laporan yang tersedia:
 - Status dan diagnostik sistem.
 - Laporan statistik 7 atau 30 hari.
 - Peringkat Top N IP.
+- **Statistik log** (6.5): laporan yang sama seperti omega-serv dan omega-log (ringkasan, status HTTP, top IP, jalur diminta, jalur dengan 404, sebaran per jam, tren harian), hanya log; ban dan status firewall tetap ada di laporan 7 dan 30 hari.
 - Panduan bantuan dan FAQ.
 
-**Lihat semua ekspor** (6.5): semua file yang diekspor di satu tempat, dengan jenis, tanggal, dan ukuran; laporan HTML terbuka di peramban web bawaan pengguna, file JSON atau TXT dibaca di dalam Omega-Fire, tanpa terminal maupun pengelola file.
+**Lihat semua ekspor** (6.6): semua file yang diekspor di satu tempat, dengan jenis, tanggal, dan ukuran; laporan HTML terbuka di peramban web bawaan pengguna, file JSON atau TXT dibaca di dalam Omega-Fire, tanpa terminal maupun pengelola file.
 
 Tema HTML:
 
@@ -477,11 +486,15 @@ Untuk menjalankan antarmuka Rich lama (input angka berurutan) sebagai gantinya:
 ./omega-fire.sh --legacy-cli
 ```
 
-Antarmuka lama tetap antarmuka versi 3.0, dalam bahasa Prancis: menu 5 asli (tanpa Pustaka, Favorit, atau penampil Klasik), tanpa "Lihat semua ekspor", tanpa panduan bantuan maupun FAQ, tanpa preset. Antarmuka Textual memuat versi 3.5 lengkap.
+**Antarmuka Rich lama tidak lagi dikembangkan, tetapi tetap tersedia.** Antarmuka lama tetap antarmuka versi 3.0, dalam bahasa Prancis: menu 5 asli (tanpa Pustaka, Favorit, atau penampil Klasik), tanpa "Lihat semua ekspor", tanpa panduan bantuan maupun FAQ, tanpa preset. Antarmuka Textual memuat versi 3.5 lengkap.
 
 ### Bahasa antarmuka
 
 17 bahasa: Prancis, Inggris, Spanyol, Portugis (Brasil), Italia, Jerman, Belanda, Polandia, Rusia, Tionghoa, Vietnam, Thai, Indonesia, Jepang, Korea, Hindi, Arab. Dipilih di pengaturan (tombol `s`, « Langue / Language », label yang tidak pernah diterjemahkan), diterapkan dengan memulai ulang antarmuka saja, atau sesekali dengan `OMEGA_FIRE_LANG=id ./omega-fire.sh` (dipertahankan melalui `sudo` oleh peluncur). Di konsol teks Linux (TTY), bahasa yang aksaranya tidak ada di font konsol (Vietnam, Tionghoa, Thai, Jepang, Korea, Hindi, Arab) ditampilkan dalam bahasa Inggris selama sesi tersebut. Bahasa Arab ditampilkan dari kanan ke kiri. Dalam bahasa Hindi, Terminator, GNOME Terminal, Xfce Terminal, dan Alacritty menampilkan teks yang rata; terminal yang menyusun sendiri huruf gabungan (Kitty, Ghostty, Konsole) dapat menggeser bingkai dan kolom. **Bahasa ekspor** (laporan HTML dan TXT) diatur terpisah, bawaannya « Sama dengan antarmuka ». Log aplikasi dan riwayat audit tetap dicatat dalam bahasa Prancis; judul riwayat ditampilkan dalam bahasa yang dipilih. Antarmuka lama (`--legacy-cli`) tetap dalam bahasa Prancis.
+
+### Kontak dan dukungan
+
+Bantuan (tombol `a`) menyediakan layar **Kontak dan dukungan**: *Traktir kopi* (halaman PayPal pengembang), *Hubungi dukungan* (alamat email dan formulir kontak situs, ditampilkan apa adanya), *Daftarkan saya sebagai pengguna (anonim)*, dan *Periksa pembaruan*. Pendaftaran bersifat sukarela, nonaktif secara bawaan, dan dikirim hanya sekali: hanya digunakan untuk menghitung pengguna dan, jika Anda mau, benua atau negara mereka (daftar tertutup, tidak pernah teks bebas). Yang dikirim adalah kunci yang diambil secara acak, nama perangkat lunak (`omega-fire`), dan versinya; tidak pernah nama, nama mesin, pengaturan, target, maupun hasil. Alamat IP tidak disimpan dalam pendaftaran, tetapi, seperti setiap kunjungan, melewati pemeriksaan keamanan dan log server penerima. Penarikan kapan saja dari layar yang sama (*Jangan daftarkan saya lagi*). Pemeriksaan pembaruan hanya membaca daftar versi yang dipublikasikan di situs, dan tidak pernah tanpa klik.
 
 ### Alur umum
 

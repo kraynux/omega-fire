@@ -90,7 +90,7 @@ rsync -a \
     --exclude='var/blocklist/*' --exclude='var/cache/*' --exclude='var/backups/*' \
     --exclude='var/runtime/*' --exclude='var/exports/*' --exclude='var/db/*' \
     --exclude='var/logs/*' --exclude='var/screenshots/*' --exclude='var/settings.json' \
-    --exclude='var/*.log' --exclude='var/*.jsonl' \
+    --exclude='var/*.log' --exclude='var/*.jsonl' --exclude='var/omega-jeton.json' \
     --exclude='config/omega-fire.conf' \
     --exclude='*~' --exclude='*.bak' --exclude='*.swp' \
     --exclude='.coverage' --exclude='htmlcov/' \
@@ -122,6 +122,7 @@ rsync -a \
     --exclude='.venv/' --exclude='__pycache__/' --exclude='*.pyc' \
     --exclude='.pytest_cache/' --exclude='.mypy_cache/' --exclude='.ruff_cache/' \
     --exclude='*.egg-info/' --exclude='.git/' --exclude='tests/' \
+    --exclude='*~' --exclude='*.bak' --exclude='*.swp' --exclude='*.po' --exclude='*.pot' \
     "$OMEGA_LIB_SRC/" "$DEST/vendor/omega-lib/"
 
 info "Archivage..."

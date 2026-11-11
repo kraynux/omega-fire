@@ -218,8 +218,15 @@ def bootstrap_tui() -> int:
     align_spacing_marks_with_terminal()
 
     from omega_fire.app.dependency_container import DependencyContainer
+    from omega_fire.infrastructure.config.paths import ensure_runtime_dirs
     from omega_fire.interfaces.tui.app import OmegaFireApp
 
+    # Dossiers de var/ et fichiers de blocklist par defaut (2.7 / 2.8, 4.3, 6.1) presents des le
+    # lancement (2026-11-09 : ils manquaient sur une installation neuve). Jamais bloquant.
+    try:
+        ensure_runtime_dirs()
+    except OSError:
+        pass
     container = DependencyContainer()
     app = OmegaFireApp(container)
     _run_with_text_direction(app, choice.language.code)
@@ -284,6 +291,16 @@ def main() -> int:
         Exit code (0 = success, 1 = error, 130 = SIGINT).
     """
     try:
+        if sys.argv[1:2] == ["synchro"]:
+            # Contrats d'interconnexion (2026-11-10) : jeton et fiche en JSON, jamais d'interface.
+            from omega_fire.app.synchro_runner import run_synchro
+
+            return run_synchro(sys.argv[2:])
+        if sys.argv[1:3] == ["rotate", "run-automations"]:
+            # Tache quotidienne des sauvegardes planifiees (5.6, 3.6) : jamais d'interface.
+            from omega_fire.app.rotation_runner import run_rotation_automations
+
+            return run_rotation_automations()
         if "--legacy-cli" in sys.argv:
             return bootstrap()
         return bootstrap_tui()

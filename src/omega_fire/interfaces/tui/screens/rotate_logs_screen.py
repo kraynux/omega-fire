@@ -9,16 +9,25 @@ ouverture plutot que partage en memoire entre process CLI/TUI."""
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.css.query import NoMatches
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static
 
 from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 from omega_fire.application.commands.rotate_logs import RotateLogsCommand, RotateLogsRequest
+from omega_fire.application.commands.rotation_automation import (
+    ScheduleResult,
+    install_rotation_schedule,
+    remove_rotation_schedule,
+    rotation_schedule_status,
+)
+from omega_fire.domain.logs.rotation_schedule import DEFAULT_KEEP, KEEP_CHOICES, next_run
 from omega_fire.infrastructure.config.paths import (
     BACKUPS_DIR,
     DEFAULT_PINNED_FILES,
@@ -27,6 +36,7 @@ from omega_fire.infrastructure.config.paths import (
 )
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens._log_sources import log_source_options
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.shared.i18n import _
@@ -44,6 +54,7 @@ _MODE_MANAGE = "manage"
 _SRC_MANUAL = "__manual__"
 
 _FREQ_OPTIONS: dict[str, tuple[int, str]] = {
+    "daily": (1, _("Tous les jours")),
     "weekly": (7, _("Toutes les semaines")),
     "monthly": (30, _("Tous les mois")),
     "quarterly": (90, _("Tous les trimestres")),
@@ -80,7 +91,8 @@ class RotateLogsScreen(OmegaScreen):
         (RUNTIME_DIR / _AUTO_FILE).write_text(json.dumps(automations, indent=2, ensure_ascii=False), encoding="utf-8")
 
     def _source_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _SRC_MANUAL)]
+        # Bibliotheque (5.1) en tete, puis epingles, puis chemin manuel (2026-11-09).
+        return log_source_options(self._pinned_command.list_paths(), _SRC_MANUAL)
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -116,12 +128,22 @@ class RotateLogsScreen(OmegaScreen):
             )
             yield Static(_("Intervalle personnalisé (jours)"), id="freq-custom-label", classes="omega-subtitle omega-hidden")
             yield Input(value="15", id="freq-custom-input", classes="omega-hidden")
+            # Sauvegardes conservees par log (comme omega-serv / omega-log, 2026-11-09).
+            yield Static(_("Sauvegardes conservées"), id="keep-label", classes="omega-subtitle omega-hidden")
+            yield Select([(str(count), str(count)) for count in KEEP_CHOICES], value=str(DEFAULT_KEEP),
+                         allow_blank=False, id="keep-select", classes="omega-hidden")
 
             yield Static(_("Automatisations planifiées"), id="manage-label", classes="omega-subtitle omega-hidden")
             yield DataTable(id="automations-table", classes="omega-hidden")
+            # Execution reelle des automatisations (3.6) : tache quotidienne root (timer systemd ou crontab).
+            yield Static("", id="schedule-status", classes="omega-hint omega-hidden")
             with Horizontal(classes="omega-actions", id="manage-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Supprimer la sélection"), id="delete-automation", variant="error")
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Réinstaller l'exécution"), id="install-schedule")
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Désinstaller l'exécution"), id="remove-schedule")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
@@ -172,25 +194,40 @@ class RotateLogsScreen(OmegaScreen):
         freq_is_custom = is_schedule and str(self.query_one("#freq-select", Select).value) == "custom"
         self.query_one("#freq-custom-label", Static).set_class(not freq_is_custom, "omega-hidden")
         self.query_one("#freq-custom-input", Input).set_class(not freq_is_custom, "omega-hidden")
+        self.query_one("#keep-label", Static).set_class(not is_schedule, "omega-hidden")
+        self.query_one("#keep-select", Select).set_class(not is_schedule, "omega-hidden")
 
         self.query_one("#manage-label", Static).set_class(not is_manage, "omega-hidden")
+        self.query_one("#schedule-status", Static).set_class(not is_manage, "omega-hidden")
         table = self.query_one("#automations-table", DataTable)
         table.set_class(not is_manage, "omega-hidden")
         self.query_one("#manage-actions", Horizontal).set_class(not is_manage, "omega-hidden")
         self.query_one("#launch", Button).set_class(is_manage, "omega-hidden")
         if is_manage:
             self._refresh_automations_table()
+            self._refresh_schedule_status()
 
     def _refresh_automations_table(self) -> None:
         table = self.query_one("#automations-table", DataTable)
         table.clear(columns=True)
         table.cursor_type = "row"
-        table.add_columns(_("Source"), _("Fréquence"), _("Créée le"))
+        table.add_columns(_("Source"), _("Fréquence"), _("Gardées"), _("Créée le"), _("Dernière sauvegarde"),
+                          _("Prochaine"), _("Résultat"))
         for idx, item in enumerate(self._load_automations()):
+            due = next_run(item)
+            if "last_success" not in item:
+                result = "-"
+            else:
+                result = _("réussie") if item.get("last_success") else _("échec : {message}").format(
+                    message=item.get("last_result", ""))
             table.add_row(
                 item.get("source_path", ""),
                 f"{item.get('interval_label', '')} ({item.get('days_interval', '?')}j)",
+                str(item.get("keep") or DEFAULT_KEEP),
                 item.get("created_at", ""),
+                str(item.get("last_run_at") or "-").replace("T", " ")[:16],
+                due.strftime("%Y-%m-%d") if due is not None else "-",
+                result,
                 key=str(idx),
             )
 
@@ -203,6 +240,12 @@ class RotateLogsScreen(OmegaScreen):
             return
         if event.button.id == "delete-automation":
             self._delete_selected_automation()
+            return
+        if event.button.id == "install-schedule":
+            self._schedule_in_thread(install=True)
+            return
+        if event.button.id == "remove-schedule":
+            self._schedule_in_thread(install=False)
             return
         if event.button.id != "launch":
             return
@@ -227,9 +270,39 @@ class RotateLogsScreen(OmegaScreen):
             return
         removed = automations.pop(idx)
         self._save_automations(automations)
+        if not automations:
+            self._schedule_in_thread(install=False)  # plus aucune automatisation : tache quotidienne retiree
         self.app.notify(_("Automatisation pour '{value}' supprimée.").format(value=removed.get('source_path', '')))
         self._selected_automation_index = None
         self._refresh_automations_table()
+
+    # ------------------------------------------------------------------
+    # Execution quotidienne des automatisations (3.6, porte d'omega-log / omega-serv, version root)
+    # ------------------------------------------------------------------
+    def _refresh_schedule_status(self) -> None:
+        self.run_worker(lambda: self._show_schedule(rotation_schedule_status()), thread=True, group="rotation-status")
+
+    def _schedule_in_thread(self, *, install: bool) -> None:
+        def work() -> None:
+            if install:
+                result = install_rotation_schedule(_PROJECT_ROOT, sys.executable)
+            else:
+                result = remove_rotation_schedule()
+            if result.message:
+                self.app.call_from_thread(self.app.notify, result.message,
+                                          severity="information" if result.success else "warning", timeout=12)
+            self._show_schedule(rotation_schedule_status())
+
+        self.run_worker(work, thread=True, group="rotation-schedule")
+
+    def _show_schedule(self, status: ScheduleResult) -> None:
+        def update() -> None:
+            try:
+                self.query_one("#schedule-status", Static).update(status.message)
+            except NoMatches:
+                pass  # ecran deja ferme
+
+        self.app.call_from_thread(update)
 
     def _resolve_source_path(self) -> Path | None:
         source = self.query_one("#source-select", Select).value
@@ -298,8 +371,12 @@ class RotateLogsScreen(OmegaScreen):
             "days_interval": days_interval,
             "interval_label": interval_label,
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "keep": int(str(self.query_one("#keep-select", Select).value)),
         })
         self._save_automations(automations)
+        if len(automations) == 1 or not rotation_schedule_status().success:
+            # Premiere automatisation (ou tache absente) : installe l'execution quotidienne (3.6).
+            self._schedule_in_thread(install=True)
 
         self.app.notify(
             _("Règle de rotation configurée pour '{name}' ({interval_label}) — destination : {BACKUPS_DIR}").format(name=source_path.name, interval_label=interval_label, BACKUPS_DIR=BACKUPS_DIR)

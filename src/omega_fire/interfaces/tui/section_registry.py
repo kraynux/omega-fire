@@ -29,6 +29,7 @@ from omega_fire.interfaces.tui.screens.export_audit_screen import ExportAuditScr
 from omega_fire.interfaces.tui.screens.export_blacklist_screen import ExportBlacklistScreen
 from omega_fire.interfaces.tui.screens.export_blocklist_file_screen import ExportBlocklistFileScreen
 from omega_fire.interfaces.tui.screens.export_f2b_stats_screen import ExportF2bStatsScreen
+from omega_fire.interfaces.tui.screens.export_log_stats_screen import ExportLogStatsScreen
 from omega_fire.interfaces.tui.screens.exports_screen import ExportsScreen
 from omega_fire.interfaces.tui.screens.export_jail_screen import ExportJailScreen
 from omega_fire.interfaces.tui.screens.export_rules_screen import ExportRulesScreen
@@ -219,6 +220,11 @@ MENU_5_BEFORE_3_5: dict[str, tuple[str, ...]] = {
     "5.8": (N_("Statistiques des logs"),),
     "5.9": (N_("Visualiser les logs serveurs avec lnav"),),
 }
+# Menu 6 avant la version 3.6 : « 6.5 Voir tous les exports » (devenu 6.6) garde son libelle dans
+# l'historique d'audit au lieu de s'afficher « 6.5 Exporter les statistiques des logs ».
+MENU_6_BEFORE_3_6: dict[str, tuple[str, ...]] = {
+    "6.5": (N_("Voir tous les exports"),),
+}
 # Titres courts ecrits dans l'historique par les ecrans et par --legacy-cli -> libelle du menu.
 AUDIT_TITLE_ALIASES: dict[str, str] = {
     "Live Tail": N_("Visualiser les logs en direct (Live Tail)"),
@@ -239,7 +245,11 @@ SECTION_6_ITEMS: tuple[SectionItem, ...] = (
                 screen_factory=lambda c: ExportAuditScreen(container=c)),
     SectionItem("6.4", N_("Exporter les statistiques Fail2Ban"), _("Jails et bans"),
                 screen_factory=lambda c: ExportF2bStatsScreen(container=c)),
-    SectionItem("6.5", N_("Voir tous les exports"), _("Ouvrir, copier le chemin, supprimer"),
+    # 3.6 (2026-11-09) : 6.5 = statistiques des logs (meme rapport qu'omega-serv / omega-log, logs
+    # seulement) ; « Voir tous les exports » passe en 6.6. Ancien libelle : MENU_6_BEFORE_3_6.
+    SectionItem("6.5", N_("Exporter les statistiques des logs"), _("Rapport des logs : statuts, top IP, chemins, horaires"),
+                screen_factory=lambda c: ExportLogStatsScreen(container=c)),
+    SectionItem("6.6", N_("Voir tous les exports"), _("Ouvrir, copier le chemin, supprimer"),
                 screen_factory=lambda c: ExportsScreen(container=c)),
 )
 

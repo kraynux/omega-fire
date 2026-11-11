@@ -1,0 +1,36 @@
+OMEGA-FIRE 3.6.1 - Ce qui change pour vous
+==========================================
+
+Une version de correctifs pour la production, et omega-fire sait se présenter aux
+autres outils omega (omega-connect). Le détail technique complet reste dans le
+CHANGELOG.
+
+
+SE PRÉSENTER AUX AUTRES OUTILS OMEGA
+------------------------------------
+- ./omega-fire.sh synchro jeton dépose une « carte d'identité » (var/omega-jeton.json) :
+  quel outil, où, quelle version. omega-connect la lit pour relier vos outils.
+- ./omega-fire.sh synchro fiche décrit ce qu'omega-fire sait faire sur la machine
+  (fail2ban, nftables, iptables, bibliothèque de logs).
+- Sans sudo, sans bannière ; install.sh crée la carte pour vous.
+
+
+CORRECTIFS QUI TOUCHENT AUX BANS ET AUX JOURNAUX
+------------------------------------------------
+- Transfert d'IP vers nftables : le ban garde le temps qu'il lui restait dans fail2ban.
+  Avant, toute IP transférée restait bannie définitivement.
+- Transfert en masse : l'hôte local, Tailscale et les réseaux locaux ne sont plus
+  jamais bannis ; ils sont écartés et signalés.
+- Supprimer une IP des logs : le journal est corrigé sur place, sans perdre les lignes
+  arrivées entre-temps, et il garde son propriétaire et ses droits.
+- Créer un jail : un journal absent est créé au nom du propriétaire de son dossier
+  (un journal d'omega-serv reste écrit par omega-serv) ; un nom déjà utilisé est refusé.
+- Rotation des logs : les sauvegardes les plus récentes ne sont plus supprimées, et
+  seules celles du même journal comptent.
+
+
+AFFICHAGE ET DOCUMENTATION
+--------------------------
+- L'écran d'accueil affiche la bonne version (3.6.1) ; il indiquait encore 3.5.
+- Le README, dans les 17 langues, montre l'interface en 4 captures : accueil, menu,
+  tableau de bord et lecteur de logs Simple.

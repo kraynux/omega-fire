@@ -25,15 +25,31 @@ from __future__ import annotations
 
 from textual.widgets import Static
 
+from omega_fire.core.constants import OMEGA_FIRE_VERSION
+
 _WIDTH = 77
 """Largeur du cadre OMEGA-FIRE (l'element le plus large) : axe de
 centrage commun a tout le logo, meme technique que omega-check."""
+
+_LOGO_VERSION_FORMAT = "version {version}"
+"""Texte de la barre de version : partie du logo ASCII, jamais traduit (largeur fixe du dessin)."""
+
+
+def _version_bar(width: int = 34) -> str:
+    """Barre de version du splash, a la largeur du cadre "LINUX FIREWALL SUITE" (34) : le numero vient de
+    OMEGA_FIRE_VERSION (corrige le 2026-11-11 : « version 3.5 » etait ecrit en dur, l'application etait en
+    3.6.1). Les blocs de remplissage s'ajustent a la longueur du numero, partages gauche / droite."""
+    label = _LOGO_VERSION_FORMAT.format(version=OMEGA_FIRE_VERSION)
+    blocks = max(0, width - len(label) - 14)
+    left = blocks // 2
+    return f"█░▒▓{'█' * left}▓▒░{label}░▒▓{'█' * (blocks - left)}▓▒░█"
+
 
 _LOGO_LINES = (
     "┌────────────────────────┐",
     "│  LINUX FIREWALL SUITE  │",
     "▄▄▄ └────────────────────────┘ ▄▄▄",
-    "█░▒▓████▓▒░version 3.5░▒▓█████▓▒░█",
+    _version_bar(),
     "┌───────────────────────────────────────────────────────────────────────────┐",
     "│ ┌╦═══╦┐ ┌╦═╦═╦┐ ┌╦═══╦┐ ┌╦═══╦┐ ┌╦═══╦┐   ┌╦═══╦┐ ┌═╤╦╤═┐ ┌╦═══╦┐ ┌╦═══╦┐ │",
     "│ │║   ║│ │║ ║ ║│ ├╬══    │║  ═╦┐ ├╬═══╬┤ ═ ├╬══      │║│   │╠══╦╩┘ ├╬══    │",

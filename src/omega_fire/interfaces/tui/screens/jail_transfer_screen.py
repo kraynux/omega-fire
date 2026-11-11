@@ -25,6 +25,7 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
+from omega_fire.domain.ip_blacklist.protected import split_protected
 from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 from omega_fire.application.queries.jail_status import get_jail_status
 from omega_fire.domain.ip_blacklist.exceptions import IPAlreadyBannedError
@@ -89,6 +90,8 @@ class JailTransferScreen(OmegaScreen):
             self._ip6tables_port = None
 
         self._jails_info: dict[str, list[str]] = {}
+        # Temps restant de chaque ban fail2ban de la source (None = permanent), 2026-11-10.
+        self._ban_remaining: dict[str, int | None] = {}
 
         self._pinned_command = ManagePinnedLogPathsCommand(
             JsonStore(RUNTIME_DIR),
@@ -271,6 +274,7 @@ class JailTransferScreen(OmegaScreen):
             if jail_name is None or jail_name == Select.BLANK:
                 self.app.notify(_("Aucun jail disponible ou sélectionné."), severity="warning")
                 return None
+            self._ban_remaining = self._remaining_for([str(jail_name)])
             return set(self._jails_info.get(str(jail_name), [])), _("Jail '{jail_name}'").format(jail_name=jail_name)
 
         if source == _SRC_NFTABLES:
@@ -311,6 +315,7 @@ class JailTransferScreen(OmegaScreen):
             collected: set[str] = set()
             for ips in self._jails_info.values():
                 collected.update(ips)
+            self._ban_remaining = self._remaining_for(list(self._jails_info))
             if self._nftables_port is not None:
                 try:
                     collected.update(b.ip for b in self._nftables_port.list_bans())
@@ -330,6 +335,23 @@ class JailTransferScreen(OmegaScreen):
 
         return None
 
+    def _remaining_for(self, jail_names: list[str]) -> dict[str, int | None]:
+        """Temps restant par IP sur ces jails (le plus long l'emporte ; permanent = None l'emporte)."""
+        reader = getattr(self._fail2ban_port, "get_ban_remaining_seconds", None)
+        merged: dict[str, int | None] = {}
+        if reader is None:
+            return merged
+        for name in jail_names:
+            try:
+                for ip, seconds in reader(name).items():
+                    if ip not in merged:
+                        merged[ip] = seconds
+                    elif merged[ip] is not None and (seconds is None or seconds > merged[ip]):
+                        merged[ip] = seconds
+            except Exception:
+                continue
+        return merged
+
     def _launch(self) -> None:
         # _collect_from_source()/_execute_transfer() appellent fail2ban-
         # client et/ou les backends nftables/iptables/ip6tables (jusqu'a
@@ -338,6 +360,7 @@ class JailTransferScreen(OmegaScreen):
         # notify()/query_one() en lecture sont surs depuis ce thread
         # (verifie empiriquement, voir docstring du fichier).
         def _work() -> None:
+            self._ban_remaining = {}
             collected = self._collect_from_source()
             if collected is None:
                 return
@@ -356,6 +379,19 @@ class JailTransferScreen(OmegaScreen):
     # Execution vers la destination
     # ------------------------------------------------------------------
     def _execute_transfer(self, dest: str, banned_ips: list[str], source_label: str) -> None:
+        if dest not in (_DST_DEFAULT_FILE, _DST_MANUAL, _DST_PINNED):
+            # Jamais de ban en masse sur l'hote local, Tailscale ou le reseau local (2026-11-10). Un
+            # fichier n'est qu'une liste : il garde toutes les adresses.
+            banned_ips, protected = split_protected(banned_ips)
+            if protected:
+                self.app.notify(
+                    _("{count} adresse(s) protégée(s) écartée(s) (hôte local, Tailscale, réseau local) : "
+                      "{values}").format(count=len(protected), values=", ".join(protected[:5])
+                                         + (" …" if len(protected) > 5 else "")),
+                    severity="warning",
+                )
+            if not banned_ips:
+                return
         if dest == _DST_JAIL:
             jail_name = self.query_one("#dest-jail-select", Select).value
             if jail_name is None or jail_name == Select.BLANK:
@@ -483,12 +519,21 @@ class JailTransferScreen(OmegaScreen):
         added_count = 0
         already_present = 0
         failed_count = 0
+        timed = 0
         for ip in banned_ips:
             if ip in existing_ips:
                 already_present += 1
                 continue
             try:
-                port.ban_single_ip(IPAddress(ip), reason=source_label)
+                if name == "nftables" and self._ban_remaining.get(ip) is not None:
+                    # Duree fail2ban conservee (2026-11-10) : avant, le ban devenait permanent.
+                    if self._ban_remaining[ip] == 0:
+                        already_present += 1  # deja expire cote fail2ban : rien a transferer
+                        continue
+                    port.ban_single_ip(IPAddress(ip), reason=source_label, timeout_seconds=self._ban_remaining[ip])
+                    timed += 1
+                else:
+                    port.ban_single_ip(IPAddress(ip), reason=source_label)
                 added_count += 1
             except IPAlreadyBannedError:
                 already_present += 1
@@ -500,5 +545,8 @@ class JailTransferScreen(OmegaScreen):
             title=name,
             severity="warning" if failed_count else "information",
         )
+        if timed:
+            self.app.notify(_("{count} ban(s) gardent le temps qui leur restait dans fail2ban.").format(count=timed),
+                            title=name)
         log_action_result(self._container, _ACTION_TITLE, status="success" if not failed_count else "failure")
         self.app.call_from_thread(self.dismiss)

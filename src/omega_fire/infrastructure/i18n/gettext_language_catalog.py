@@ -7,6 +7,8 @@ from pathlib import Path
 
 from omega_lib.i18n.models import LanguageStatus
 from omega_lib.infrastructure.i18n.gettext_catalogs import (
+    SHARED_DOMAIN,
+    SHARED_LOCALE_DIR,
     CatalogError,
     discover_catalogs,
     load_translations,
@@ -29,10 +31,21 @@ class GettextLanguageCatalog:
         return discover_catalogs(self._locale_dir, self._domain)
 
     def load(self, code: str) -> gettext.NullTranslations | None:
+        """Catalogue d'omega-fire, chaine au catalogue partage omega-lib s'il existe (2026-11-09 :
+        phrases des ecrans partages, ex. Contact et support). Le catalogue d'omega-fire reste
+        OBLIGATOIRE (langue absente ou illisible : refusee, comme avant) et l'emporte toujours."""
         try:
-            return load_translations(self._locale_dir, self._domain, code)
+            translations = load_translations(self._locale_dir, self._domain, code)
         except CatalogError as e:
             raise LanguageCatalogError(str(e)) from e
+        if translations is not None:
+            try:
+                shared = load_translations(SHARED_LOCALE_DIR, SHARED_DOMAIN, code)
+            except CatalogError:
+                shared = None  # catalogue partage absent ou illisible : omega-fire seul, comme avant
+            if shared is not None:
+                translations.add_fallback(shared)
+        return translations
 
     def translated_phrases(self, code: str) -> dict[str, str]:
         """Phrases source -> traduction d'un catalogue (sans pluriels ni en-tete) ; {} si le

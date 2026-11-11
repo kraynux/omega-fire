@@ -267,6 +267,19 @@ class DependencyContainer:
         return JsonSettingsStore(RUNTIME_DIR / "settings.json")
 
     @property
+    def contact_support(self) -> Any:
+        """Aide -> Contact et support (omega-lib, D-016, 2026-11-09) : declaration anonyme une seule
+        fois (omega-fire n'a pas de service qui enverrait chaque jour), mises a jour, navigateur.
+        Cle dans var/runtime/declaration.json (var/runtime/ n'est jamais livre dans l'archive)."""
+        return self._get_or_create("contact_support", self._create_contact_support)
+
+    def _create_contact_support(self) -> Any:
+        from omega_lib.infrastructure.declaration import build_contact_support
+        from omega_fire.core.constants import OMEGA_FIRE_VERSION
+        from omega_fire.infrastructure.config.paths import RUNTIME_DIR
+        return build_contact_support("omega-fire", OMEGA_FIRE_VERSION, RUNTIME_DIR)
+
+    @property
     def language_catalog(self) -> Any:
         return self._get_or_create("language_catalog", self._create_language_catalog)
 

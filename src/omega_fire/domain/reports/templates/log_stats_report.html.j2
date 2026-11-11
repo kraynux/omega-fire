@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="{{ html_lang() }}" dir="{{ html_dir() }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ _("OMEGA-FIRE — Statistiques") }}</title>
+<style>
+  /* Presentation du rapport periodique d'omega-fire (stats_report.html.j2) : cartes de synthese,
+     histogramme horaire, tendance par jour en jauges horizontales (2026-11-06). Couleurs = palette
+     du theme d'export choisi. */
+  * { box-sizing: border-box; }
+  body {
+    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    line-height: 1.6;
+    color: {{ palette.foreground }};
+    background: {{ palette.background }};
+    padding: 20px;
+    margin: 0;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: {{ palette.surface }};
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  h1 {
+    font-size: 1.4rem;
+    color: {{ palette.foreground }};
+    border-bottom: 3px solid {{ palette.accent }};
+    padding-bottom: 10px;
+    margin: 0 0 20px;
+  }
+  h2 { font-size: 1.05rem; color: {{ palette.accent }}; margin: 0 0 12px; }
+  .meta { color: {{ palette.secondary }}; margin-bottom: 20px; }
+  .box {
+    background: {{ palette.panel }};
+    border: 1px solid {{ palette.accent }};
+    border-radius: 8px;
+    padding: 16px 20px 20px;
+    margin-bottom: 20px;
+  }
+  .empty { color: {{ palette.secondary }}; font-style: italic; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .kpi-card { background: {{ palette.surface }}; border: 1px solid {{ palette.panel }}; border-radius: 4px; padding: 12px 14px; }
+  .kpi-card .value { font-size: 1.4rem; color: {{ palette.accent }}; font-weight: 600; word-break: break-all; }
+  .kpi-card .value.good { color: {{ palette.success }}; }
+  .kpi-card .value.warn { color: {{ palette.warning }}; }
+  .kpi-card .value.bad { color: {{ palette.error }}; }
+  .kpi-card.wide { grid-column: span 2; }
+  .kpi-card .label { font-size: 0.78rem; color: {{ palette.secondary }}; margin-top: 2px; }
+
+  .hourly-chart { direction: ltr; display: flex; align-items: flex-end; gap: 3px; height: 160px; }
+  .hourly-chart .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+  .hourly-chart .bar { width: 100%; background: {{ palette.accent }}; border-radius: 2px 2px 0 0; min-height: 2px; }
+  .hourly-chart .bar.peak { background: {{ palette.error }}; }
+  .hourly-chart .hour-label { font-size: 0.65rem; color: {{ palette.secondary }}; margin-top: 4px; height: 1em; }
+
+  .gauge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .gauge-row .label { width: 300px; font-size: 0.82rem; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gauge-row .label.short { width: 100px; }
+  .gauge-row .track { flex: 1; background: {{ palette.surface }}; border-radius: 3px; height: 16px; overflow: hidden; }
+  .gauge-row .fill { height: 100%; background: {{ palette.accent }}; }
+  .gauge-row .fill.good { background: {{ palette.success }}; }
+  .gauge-row .fill.info { background: {{ palette.secondary }}; }
+  .gauge-row .fill.warn { background: {{ palette.warning }}; }
+  .gauge-row .fill.bad { background: {{ palette.error }}; }
+  .gauge-row .value { width: 220px; text-align: right; font-size: 0.82rem; white-space: nowrap; }
+  .gauge-row .value .dim { color: {{ palette.secondary }}; }
+  .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .tables-grid { grid-template-columns: 1fr; } .gauge-row .label { width: 140px; } .gauge-row .value { width: auto; } }
+
+  footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid {{ palette.panel }};
+    text-align: center;
+    color: {{ palette.secondary }};
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>{{ _("OMEGA-FIRE — Statistiques de logs") }}</h1>
+    <p class="meta">{{ _("Généré le {generated_at} · Période : {period_label} · Source(s) : {sources}").format(generated_at=generated_at, period_label=period_label, sources=(sources|join(", "))) }}</p>
+
+    {% macro gauge(label, value, maximum, kind="", suffix="", short=False) -%}
+    <div class="gauge-row">
+      <div class="label{% if short %} short{% endif %}" title="{{ label }}">{{ label }}</div>
+      <div class="track"><div class="fill {{ kind }}" style="width: {{ ((value / maximum * 100) if maximum else 0)|round(1) }}%;"></div></div>
+      <div class="value">{{ value }}{% if suffix %} <span class="dim">{{ suffix }}</span>{% endif %}</div>
+    </div>
+    {%- endmacro %}
+
+    <div class="box">
+      <h2>{{ _("Synthèse") }}</h2>
+      {% if report.total == 0 %}
+      <p class="empty">{{ _("Aucune ligne sur cette période.") }}</p>
+      {% else %}
+      {% set rate = report.error_rate %}
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="value">{{ report.total }}</div><div class="label">{{ _("Lignes analysées") }}</div></div>
+        <div class="kpi-card"><div class="value">{{ report.http_total }}</div><div class="label">{{ _("Requêtes HTTP") }}</div></div>
+        <div class="kpi-card"><div class="value">{{ report.unique_ips }}</div><div class="label">{{ _("IPs uniques") }}</div></div>
+        <div class="kpi-card"><div class="value {{ 'good' if rate < 5 else ('warn' if rate < 15 else 'bad') }}">{{ "%.1f"|format(rate) }} %</div><div class="label">{{ _("Taux d'erreur") }}</div></div>
+        <div class="kpi-card"><div class="value">{{ volume }}</div><div class="label">{{ _("Volume transféré") }}</div></div>
+        <div class="kpi-card"><div class="value">{{ "%02d"|format(report.peak_hour) }}h</div><div class="label">{{ _("Heure de pointe ({peak_count} lignes)").format(peak_count=report.peak_count) }}</div></div>
+        <div class="kpi-card wide"><div class="value" style="font-size:1.1rem; word-break: normal;">{{ report.first_day }} → {{ report.last_day }}</div><div class="label">{{ _("Période couverte") }}</div></div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if report.total %}
+    <div class="box">
+      <h2>{{ _("Répartition horaire (24 h)") }}</h2>
+      {% set max_hour = report.hourly|max %}
+      <div class="hourly-chart">
+        {% for count in report.hourly %}
+        <div class="bar-col">
+          <div class="bar {% if count == max_hour and count > 0 %}peak{% endif %}"
+               style="height: {{ ((count / max_hour * 100) if max_hour else 0)|round(0) }}%;"
+               title="{{ _("{hour}h : {count} ligne(s)").format(hour=('%02d'|format(loop.index0)), count=count) }}"></div>
+          <div class="hour-label">{% if loop.index0 % 2 == 0 %}{{ '%02d'|format(loop.index0) }}{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>{{ _("Tendance par jour ({daily} j)").format(daily=(report.daily|length)) }}</h2>
+      {% set max_day = report.daily|map(attribute=1)|max %}
+      {% for day, count in report.daily %}{{ gauge(day, count, max_day, short=True) }}{% endfor %}
+    </div>
+
+    {% if report.statuses %}
+    <div class="box">
+      <h2>{{ _("Statuts HTTP") }}</h2>
+      {% set kinds = {"2xx": "good", "3xx": "info", "4xx": "warn", "5xx": "bad", "403": "warn", "429": "warn"} %}
+      {% for name, count in report.statuses.items() %}
+      {{ gauge(_("Refus {name}").format(name=name) if name in ("403", "429") else name, count, report.http_total, kinds[name],
+               "%.1f %%"|format(count / report.http_total * 100), short=True) }}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% macro ranking(title, items, kind="") -%}
+    <div class="box">
+      <h2>{{ title }}</h2>
+      {% if items %}
+        {% set top = items[0].count %}
+        {% for item in items %}{{ gauge(item.value, item.count, top, kind, _("dont {errors} en erreur").format(errors=item.errors) if item.errors else "") }}{% endfor %}
+      {% else %}
+      <p class="empty">{{ _("Aucune donnée.") }}</p>
+      {% endif %}
+    </div>
+    {%- endmacro %}
+
+    {{ ranking(_("Top adresses IP"), report.top_ips) }}
+    {% if report.top_paths %}
+    {{ ranking(_("Chemins les plus demandés"), report.top_paths) }}
+    {{ ranking(_("Chemins en 404"), report.top_not_found, "warn") }}
+    {% endif %}
+    {% endif %}
+
+    <footer>{{ _("Rapport généré par") }} <strong>OMEGA-FIRE</strong></footer>
+  </div>
+</body>
+</html>

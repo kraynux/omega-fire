@@ -8,6 +8,7 @@ This is the only module that directly calls fail2ban-client via subprocess.
 """
 import os
 import re
+from datetime import datetime
 import sqlite3
 import subprocess
 import time
@@ -32,6 +33,64 @@ from omega_fire.domain.fail2ban.exceptions import (
 from omega_fire.domain.fail2ban.definitions import ConfigFile, JailDefinition, build_definitions, owned_filter
 from omega_fire.shared.i18n import _
 
+
+
+def _create_like_parent(path: str) -> None:
+    """Cree `path` (et ses dossiers manquants) avec le proprietaire et le groupe du plus proche dossier
+    existant, fichier en 0664, dossiers en 0775 (setgid conserve s'il est herite). Rien si `path` existe."""
+    if not path or os.path.exists(path):
+        return
+    parent = os.path.dirname(os.path.abspath(path))
+    ancestor = parent
+    while not os.path.isdir(ancestor):
+        ancestor = os.path.dirname(ancestor)
+    info = os.stat(ancestor)
+    missing: list[str] = []
+    current = parent
+    while not os.path.isdir(current):
+        missing.append(current)
+        current = os.path.dirname(current)
+    for directory in reversed(missing):
+        os.mkdir(directory, 0o775)
+        _give_to(directory, info.st_uid, info.st_gid)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o664)
+    try:
+        _give_to(path, info.st_uid, info.st_gid)
+        os.fchmod(fd, 0o664)
+    finally:
+        os.close(fd)
+
+
+def _give_to(path: str, uid: int, gid: int) -> None:
+    try:
+        os.chown(path, uid, gid)
+    except PermissionError:
+        pass  # sans root : le fichier reste a l'appelant, qui est alors deja le bon proprietaire
+
+
+_BAN_WITH_TIME = re.compile(
+    r"^\s*(?P<ip>\S+)\s+(?P<start>\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) \+ (?P<bantime>-?\d+) = "
+    r"(?P<end>\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\s*$"
+)
+
+
+def parse_ban_remaining_seconds(output: str, now: datetime) -> dict[str, Optional[int]]:
+    """Sortie de `banip --with-time` -> {ip: secondes restantes, ou None si permanent}. Les bans deja
+    expires (fin passee) donnent 0 ; les lignes illisibles sont ignorees."""
+    remaining: dict[str, Optional[int]] = {}
+    for line in output.splitlines():
+        match = _BAN_WITH_TIME.match(line.replace("`-", " ").replace("|-", " "))
+        if not match:
+            continue
+        if int(match.group("bantime")) < 0:
+            remaining[match.group("ip")] = None
+            continue
+        try:
+            end = datetime.strptime(match.group("end"), "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        remaining[match.group("ip")] = max(0, int((end - now).total_seconds()))
+    return remaining
 
 class Fail2banAdapter:
     """Concrete adapter for fail2ban operations.
@@ -767,6 +826,17 @@ class Fail2banAdapter:
         if self._parser.parse_set_ip_result(output) == 0:
             raise IPNotFoundError(str(ip), jail_name)
 
+    def get_ban_remaining_seconds(self, jail_name: str) -> dict[str, Optional[int]]:
+        """Temps restant de chaque ban du jail, en secondes (None = ban permanent), lu par
+        `fail2ban-client get <jail> banip --with-time` (correctif 2026-11-10 : le transfert vers
+        nftables garde la duree au lieu de rendre le ban permanent). Ligne de fail2ban (1.x) :
+        `IP \tAAAA-MM-JJ HH:MM:SS + DUREE = AAAA-MM-JJ HH:MM:SS` (heure locale ; DUREE < 0 = permanent).
+        Dictionnaire vide si la commande echoue : l'appelant retombe alors sur la duree du jail."""
+        result = self._run_raw(["fail2ban-client", "get", jail_name, "banip", "--with-time"])
+        if result.returncode != 0:
+            return {}
+        return parse_ban_remaining_seconds(result.stdout, datetime.now())
+
     def get_banned_ips(self, jail_name: str) -> list[str]:
         """Get the list of banned IPs in a jail.
 
@@ -948,7 +1018,10 @@ class Fail2banAdapter:
             Fail2banCommandError: If the config can't be written, or reload fails
         """
         jail_conf_path = os.path.join(jail_d_dir, f"{name}.conf")
-        if os.path.exists(jail_conf_path) or name in self.list_jails():
+        # Section [nom] deja definie sur disque, meme dans un jail non charge (desactive, fail2ban
+        # arrete) ou dans un fichier d'un autre nom (omega-jail-<nom>.conf) : sinon fail2ban fusionnait
+        # deux sections du meme nom sans le dire (correctif 2026-11-10).
+        if os.path.exists(jail_conf_path) or name in self.list_jails() or name in self._defined_jail_names(jail_d_dir):
             raise DomainJailAlreadyExistsError(name)
 
         port_line = f"port = {port}\n" if port else ""
@@ -965,11 +1038,10 @@ class Fail2banAdapter:
         )
         try:
             os.makedirs(jail_d_dir, exist_ok=True)
-            log_dir = os.path.dirname(log_path)
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir, exist_ok=True)
-            if not os.path.exists(log_path):
-                open(log_path, "a", encoding="utf-8").close()
+            # fail2ban refuse de demarrer sur un logpath absent : le fichier est cree, mais au nom du
+            # proprietaire et du groupe de son dossier (jamais root:root), en 0664 - sinon l'outil qui
+            # ecrit ce journal (omega-serv, compte de service) ne pouvait plus y ecrire (2026-11-10).
+            _create_like_parent(log_path)
             with open(jail_conf_path, "w", encoding="utf-8") as f:
                 f.write(content)
         except PermissionError as e:
@@ -982,6 +1054,12 @@ class Fail2banAdapter:
             self._run_raw(["fail2ban-client", "start", name])
 
         return self._build_jail_info(name)
+
+    def _defined_jail_names(self, jail_d_dir: str) -> set[str]:
+        try:
+            return set(build_definitions(self._jail_config_files(jail_d_dir)))
+        except OSError:
+            return set()
 
     def _jail_config_files(
         self,

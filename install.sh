@@ -216,6 +216,20 @@ case "$DISTRO_FAMILY" in
         ;;
 esac
 
+# -------------------------------------------------------------------------
+# 8. Jeton d'installation (var/omega-jeton.json, contrats d'interconnexion
+#    2026-11-10) : lu par omega-connect, sans rien exécuter. Écrit sous VOTRE
+#    compte (jamais en root) ; remis en 0644 après le chmod -R 2775 de var/.
+#    Un échec ne bloque jamais l'installation.
+# -------------------------------------------------------------------------
+if "$SCRIPT_DIR/omega-fire.sh" synchro jeton >/dev/null 2>&1; then
+    chmod 0644 "$SCRIPT_DIR/var/omega-jeton.json" 2>/dev/null || true
+    ok "Jeton d'installation à jour (var/omega-jeton.json)."
+else
+    warn "Jeton d'installation non écrit : omega-connect ne verra pas cette installation tant qu'il manque."
+    tip "Créez-le sans sudo avec : ${SCRIPT_DIR}/omega-fire.sh synchro jeton"
+fi
+
 echo ""
 ok "Installation terminée."
 tip "Lancez Omega-Fire avec : ${SCRIPT_DIR}/omega-fire.sh (ou 'fire' dans un nouveau terminal si l'alias vient d'être ajouté)."

@@ -28,6 +28,13 @@ Trang chính thức: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fi
 Giao diện Textual là chế độ hoạt động mặc định, điều hướng bằng menu, biểu mẫu được xác thực (mọi trường bắt buộc đều được kiểm tra trước khi tiếp tục) và các màn hình riêng, với chủ đề, trợ giúp theo ngữ cảnh và phím tắt dùng chung với phần còn lại của bộ OMEGA (omega-check, omega-deep, omega-stress...). Giao diện [Rich](https://github.com/Textualize/rich) cũ, tuần tự và điều khiển bằng cách nhập số, vẫn có sẵn qua `--legacy-cli` (xem [Khởi chạy](#khởi-chạy)). 
 Xem trước: [Ảnh chụp màn hình](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/vi/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/vi/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/vi/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/vi/omega-fire/D.png" width="24%" />
+</p>
+
 Dự án được thiết kế theo các nguyên tắc của **Clean Architecture**, với sự tách biệt rõ ràng giữa miền nghiệp vụ, điều phối, hạ tầng và giao diện người dùng.
 
 ## Mục lục
@@ -114,7 +121,7 @@ Blacklist thống nhất cho phép làm việc với nftables và iptables từ 
 - Xuất và nhập lại danh sách.
 - Dọn sạch hoàn toàn một hoặc nhiều backend.
 - Hỗ trợ IPv4 và IPv6.
-- Quản lý các tệp blocklist (`var/blocklist/`) và các mục ghim của chúng ngay từ màn hình riêng.
+- Quản lý các tệp blocklist (`var/blocklist/`) và các mục ghim của chúng ngay từ màn hình riêng; các tệp được đề xuất mặc định, `blocklist.txt` và `blocklist-f2b.txt`, được tạo rỗng ở lần khởi chạy đầu tiên.
 
 ### 3. Quản lý quy tắc và chính sách
 
@@ -156,16 +163,17 @@ Blacklist thống nhất cho phép làm việc với nftables và iptables từ 
 
 - **Thư viện nhật ký** (5.1): tự động nhập nhật ký của các phiên bản omega-serv được phát hiện, bao gồm cả nhật ký của omega-waf, ghim thủ công một đường dẫn, và lấy nhật ký từ xa qua SSH (khóa hoặc agent, không bao giờ dùng mật khẩu).
 - **Yêu thích** (5.2): kết hợp các nhật ký từ Thư viện, lưu chúng dưới một tên kèm trình xem và khởi chạy trực tiếp.
-- **Xem nhật ký** (5.3): một nhật ký không cần cấu hình, với trình xem tùy chọn — Đơn giản (dashboard thời gian thực), Cổ điển (các dòng cuối rồi theo dõi trực tiếp) hoặc `lnav`.
+- **Xem nhật ký** (5.3): một nhật ký không cần cấu hình, với trình xem tùy chọn — Đơn giản (dashboard thời gian thực: trạng thái HTTP gồm từ chối 403 và 429, Top 5 IP, đường dẫn được gọi và đường dẫn trả về 404, giống omega-log), Cổ điển (các dòng cuối rồi theo dõi trực tiếp) hoặc `lnav`.
+- **Thư viện cung cấp nguồn cho mọi lựa chọn nhật ký**: 5.4, 5.5, 5.6, cũng như 8.5 và 8.6, đưa nó lên đầu danh sách, trước các mục ghim.
 - Tích hợp `lnav`: nhiều nhật ký được gộp thành một góc nhìn theo thời gian duy nhất, được bọc trong header/footer của Omega-Fire (xem [Điều hướng](#điều-hướng)).
-- Phân tích các IP xuất hiện nhiều nhất bằng Top N, có thể xuất ra để nạp lại vào việc dọn dẹp có mục tiêu.
+- Phân tích các IP xuất hiện nhiều nhất bằng Top N (5.4), có thể xuất ra để nạp lại vào việc dọn dẹp có mục tiêu; tìm một IP cụ thể trong toàn bộ tệp và gỡ trực tiếp IP đã chọn, không làm treo giao diện.
 - Dọn dẹp có mục tiêu một hoặc nhiều IP trong tệp LOG hoặc TXT, nhập tay hoặc đánh dấu từ một bản xuất.
 - Tệp được ghim với **preset để đánh dấu**: chỉ đề xuất các đường dẫn thông dụng thực sự có trên máy.
-- Xoay vòng và sao lưu tức thì hoặc tự động.
+- Xoay vòng và sao lưu tức thì hoặc theo lịch, **thực sự chạy mỗi đêm** (timer systemd chạy dưới quyền root, nếu không thì một dòng trong crontab của root), kèm số bản sao lưu được giữ lại, bản sao lưu gần nhất và lần tiếp theo.
 - Khôi phục một bản sao lưu.
 - Dọn theo độ cũ, hạn mức, loại hoặc chọn thủ công.
 - Dọn nâng cao theo thư mục hoặc môi trường.
-- Thống kê 24 giờ, 7 ngày hoặc 30 ngày.
+- Thống kê 24 giờ, 7 ngày hoặc 30 ngày (5.10, xem nhanh).
 - Phân tích các sự kiện, biến động, hạn mức và IP có trong các jail.
 
 ### 6. Xuất dữ liệu và báo cáo
@@ -186,9 +194,10 @@ Các báo cáo có sẵn:
 - Trạng thái và chẩn đoán hệ thống.
 - Báo cáo thống kê 7 hoặc 30 ngày.
 - Bảng xếp hạng Top N các IP.
+- **Thống kê nhật ký** (6.5): cùng báo cáo như omega-serv và omega-log (tổng quan, trạng thái HTTP, IP hàng đầu, đường dẫn được gọi, đường dẫn trả về 404, phân bố theo giờ, xu hướng theo ngày), chỉ nhật ký; các lệnh cấm và trạng thái tường lửa vẫn nằm trong báo cáo 7 và 30 ngày.
 - Hướng dẫn trợ giúp và FAQ.
 
-**Xem tất cả bản xuất** (6.5): mọi tệp đã xuất ở cùng một nơi, kèm loại, ngày và kích thước; báo cáo HTML mở trong trình duyệt web mặc định của người dùng, tệp JSON hoặc TXT đọc ngay trong Omega-Fire, không cần terminal hay trình quản lý tệp.
+**Xem tất cả bản xuất** (6.6): mọi tệp đã xuất ở cùng một nơi, kèm loại, ngày và kích thước; báo cáo HTML mở trong trình duyệt web mặc định của người dùng, tệp JSON hoặc TXT đọc ngay trong Omega-Fire, không cần terminal hay trình quản lý tệp.
 
 Chủ đề HTML:
 
@@ -477,11 +486,15 @@ Trình khởi chạy:
 ./omega-fire.sh --legacy-cli
 ```
 
-Giao diện cũ vẫn là giao diện của phiên bản 3.0, bằng tiếng Pháp: menu 5 gốc (không có Thư viện, Yêu thích hay trình xem Cổ điển), không có "Xem tất cả bản xuất", không có hướng dẫn trợ giúp hay FAQ, không có preset. Giao diện Textual mang phiên bản 3.5 đầy đủ.
+**Giao diện Rich cũ không còn được phát triển, nhưng vẫn có thể sử dụng.** Giao diện cũ vẫn là giao diện của phiên bản 3.0, bằng tiếng Pháp: menu 5 gốc (không có Thư viện, Yêu thích hay trình xem Cổ điển), không có "Xem tất cả bản xuất", không có hướng dẫn trợ giúp hay FAQ, không có preset. Giao diện Textual mang phiên bản 3.5 đầy đủ.
 
 ### Ngôn ngữ giao diện
 
 17 ngôn ngữ: tiếng Pháp, tiếng Anh, tiếng Tây Ban Nha, tiếng Bồ Đào Nha (Brazil), tiếng Ý, tiếng Đức, tiếng Hà Lan, tiếng Ba Lan, tiếng Nga, tiếng Trung, tiếng Việt, tiếng Thái, tiếng Indonesia, tiếng Nhật, tiếng Hàn, tiếng Hindi, tiếng Ả Rập. Chọn trong cài đặt (phím `s`, « Langue / Language », nhãn không bao giờ được dịch), áp dụng bằng cách chỉ khởi động lại giao diện, hoặc dùng một lần `OMEGA_FIRE_LANG=vi ./omega-fire.sh` (trình khởi chạy giữ biến này qua `sudo`). Trong console văn bản Linux (TTY), các ngôn ngữ có chữ viết không có trong phông chữ console (tiếng Việt, tiếng Trung, tiếng Thái, tiếng Nhật, tiếng Hàn, tiếng Hindi, tiếng Ả Rập) được hiển thị bằng tiếng Anh trong phiên đó. Tiếng Ả Rập hiển thị từ phải sang trái. Với tiếng Hindi, Terminator, GNOME Terminal, Xfce Terminal và Alacritty hiển thị văn bản thẳng hàng; các terminal tự ghép chữ nối (Kitty, Ghostty, Konsole) có thể làm lệch khung và cột. **Ngôn ngữ bản xuất** (báo cáo HTML và TXT) được đặt riêng, mặc định « Giống giao diện ». Nhật ký ứng dụng và lịch sử kiểm tra vẫn được ghi bằng tiếng Pháp; tiêu đề trong lịch sử được hiển thị bằng ngôn ngữ đã chọn. Giao diện cũ (`--legacy-cli`) vẫn bằng tiếng Pháp.
+
+### Liên hệ và hỗ trợ
+
+Phần trợ giúp (phím `a`) có màn hình **Liên hệ và hỗ trợ**: *Mời một ly cà phê* (trang PayPal của nhà phát triển), *Liên hệ hỗ trợ* (địa chỉ email và biểu mẫu liên hệ của trang web, hiển thị rõ ràng), *Khai báo là người dùng (ẩn danh)* và *Kiểm tra cập nhật*. Việc khai báo là tự nguyện, tắt theo mặc định và chỉ gửi một lần: nó chỉ dùng để đếm số người dùng và, nếu bạn muốn, châu lục hoặc quốc gia của họ (danh sách đóng, không bao giờ là văn bản tự do). Nó gửi một khóa được tạo ngẫu nhiên, tên phần mềm (`omega-fire`) và phiên bản của nó; không bao giờ gửi tên, tên máy, thiết lập, mục tiêu hay kết quả. Địa chỉ IP không được lưu trong các khai báo, nhưng, như mọi lượt truy cập, nó đi qua các kiểm tra bảo mật và nhật ký của máy chủ nhận. Có thể rút lại bất cứ lúc nào từ cùng màn hình (*Không khai báo tôi nữa*). Việc kiểm tra cập nhật chỉ đọc danh sách các phiên bản đã phát hành trên trang web, và không bao giờ khi chưa nhấp.
 
 ### Luồng chung
 

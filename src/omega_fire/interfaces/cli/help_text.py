@@ -661,15 +661,12 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         summary=N_("Analyse un fichier log ou une blocklist pour en extraire le classement des IPs les plus actives (Top N), sur une période choisie."),
         usage=[
             N_("Choisis la source (épinglée, manuelle, ou ajout/retrait d'épingle), la période d'analyse (1h/1j/7j/personnalisée), puis le nombre N d'IPs à afficher."),
-            N_("Après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML) dans le dossier d'exports : 5.5 peut ensuite recharger ces IPs pour les retirer des logs, sans les recopier à la main, et 6.5 les affiche."),
+            N_("Après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML) dans le dossier d'exports : 5.5 peut ensuite recharger ces IPs pour les retirer des logs, sans les recopier à la main, et 6.6 les affiche."),
             N_("« Gérer les épingles » → « Presets » propose les chemins usuels (logs système, serveurs web, blocklists d'omega-fire, logs de la Bibliothèque 5.1) présents sur cette machine : coche ceux à épingler."),
+            N_("Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."),
+            N_("« Rechercher cette IP » compte ses lignes dans le fichier entier ; « Retirer cette IP du log analysé » retire l'IP choisie (ligne du tableau ou recherche) après confirmation, comme 5.5. L'analyse tourne sans figer l'interface."),
         ],
-        consequences=[N_("Lecture seule. « Exporter » écrit un fichier top-ips_<date> dans le dossier d'exports.")],
-        warnings=[
-            N_("Les fichiers proposés ici viennent de la liste « fichiers de travail » "
-            "partagée avec 5.5, 5.6 et les écrans de blocklists (épingles "
-            "persistées), distincte de la Bibliothèque 5.1."),
-        ],
+        consequences=[N_("Lecture seule, sauf « Retirer cette IP du log analysé », qui modifie réellement le fichier. « Exporter » écrit un fichier top-ips_<date> dans le dossier d'exports.")],
         see_also=["5.5", "1.6"],
     ),
     "5.5": HelpEntry(
@@ -677,6 +674,7 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         usage=[
             N_("Choisis le fichier source, saisis une ou plusieurs IPs (séparées par des virgules), vérifie le récapitulatif (lignes trouvées par IP) avant de confirmer."),
             N_("« Charger depuis un export » liste les exports contenant des IPs (Top N de 5.4 en premier, puis blacklist 6.1 et jails 4.8) : choisis le fichier, coche les IPs à retirer."),
+            N_("Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."),
         ],
         consequences=[N_("Modifie réellement le fichier — les lignes contenant l'une des IPs sont supprimées, les autres conservées.")],
         warnings=[N_("N'agit que sur le fichier choisi, pas sur l'état réel du firewall/fail2ban — pour débannir une IP, utilise 2.3 ou 4.2.")],
@@ -684,12 +682,17 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
     ),
     "5.6": HelpEntry(
         summary=N_("Sauvegarde (backup) manuelle ou automatisée de fichiers logs/blocklists dans une archive."),
-        usage=[N_("Choisis la source à sauvegarder, puis le mode : sauvegarde immédiate, planification d'une automatisation récurrente, ou gestion des automatisations existantes.")],
-        consequences=[
-            N_("Crée une archive réelle dans var/backups/. Une automatisation "
-            "configurée continue de s'exécuter aux intervalles définis "
-            "tant qu'elle n'est pas supprimée via [3]."),
+        usage=[
+            N_("Choisis la source à sauvegarder, puis le mode : sauvegarde immédiate, planification d'une automatisation récurrente, ou gestion des automatisations existantes."),
+            N_("Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."),
+            N_("Une automatisation choisit une fréquence et le nombre de sauvegardes conservées. « Lister et gérer » montre la dernière sauvegarde, la prochaine et le résultat, et permet de réinstaller ou désinstaller l'exécution."),
         ],
+        consequences=[
+            N_("Crée une archive réelle dans var/backups/. Les automatisations s'exécutent chaque nuit "
+            "(timer systemd omega-fire-rotation, sinon une ligne de la crontab de root) : la première "
+            "installe cette exécution, la dernière supprimée la retire."),
+        ],
+        warnings=[N_("La tâche tourne en root, comme omega-fire : les logs protégés sont aussi sauvegardés. Une sauvegarde en échec est retentée la nuit suivante.")],
         see_also=["5.7", "5.8"],
     ),
     "5.7": HelpEntry(
@@ -719,9 +722,9 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
     ),
     "5.10": HelpEntry(
         summary=N_("Affiche un tableau de bord de statistiques sur les logs (volumes, tendances)."),
-        usage=[N_("Aucune saisie requise.")],
+        usage=[N_("Aucune saisie requise."), N_("Vue rapide : le rapport complet et exportable des logs est en 6.5.")],
         consequences=[N_("Lecture seule.")],
-        see_also=["8.3", "8.4"],
+        see_also=["6.5", "8.3", "8.4"],
     ),
 
     # ------------------------------------------------------------------
@@ -729,9 +732,9 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
     # ------------------------------------------------------------------
 
     "6": HelpEntry(
-        summary=N_("Centralise les exports et rapports : blacklist complète, règles de pare-feu, audit système complet, statistiques fail2ban — et 6.5 pour les retrouver et les ouvrir."),
+        summary=N_("Centralise les exports et rapports : blacklist complète, règles de pare-feu, audit système complet, statistiques fail2ban, statistiques des logs (6.5) — et 6.6 pour les retrouver et les ouvrir."),
         usage=[N_("Chaque export propose un format (JSON/TXT/HTML selon le rapport) et un chemin de destination modifiable.")],
-        see_also=["6.1", "6.3", "6.5"],
+        see_also=["6.1", "6.3", "6.5", "6.6"],
     ),
     "6.1": HelpEntry(
         summary=N_("Exporte la blacklist complète (IPs bannies) depuis un fichier source choisi, au format JSON, TXT ou HTML."),
@@ -758,6 +761,16 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         see_also=["4.8", "4.1"],
     ),
     "6.5": HelpEntry(
+        summary=N_("Exporte les statistiques des logs choisis, avec le même rapport qu'omega-serv et omega-log : synthèse, statuts HTTP, top IP, chemins demandés, chemins en 404, répartition horaire et tendance par jour."),
+        usage=[
+            N_("« Choisir les logs » : cochez un ou plusieurs logs, ceux de la Bibliothèque (5.1) en tête."),
+            N_("Choisissez une période (24h, 7j, 30j ou tout le fichier) : le rapport s'affiche, puis « Exporter JSON » ou « Exporter HTML » (thème au choix) l'écrit dans le dossier d'exports, visible en 6.6."),
+        ],
+        consequences=[N_("Lecture seule sur les logs. Écrit seulement le fichier d'export.")],
+        warnings=[N_("Logs seulement : les bans, les jails et l'état du pare-feu sont dans les rapports 8.3 et 8.4. 5.10 reste la vue rapide.")],
+        see_also=["5.10", "8.3", "8.4", "6.6"],
+    ),
+    "6.6": HelpEntry(
         summary=N_("Liste tous les fichiers exportés (dossier d'exports, et exports de blacklist de 6.1) : type, date, taille — sans ouvrir de terminal ni de gestionnaire de fichiers."),
         usage=[
             N_("« Ouvrir » : un rapport HTML s'ouvre dans votre navigateur ; un JSON ou TXT se lit dans omega-fire (lecteur Classique)."),
@@ -868,6 +881,8 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         usage=[
             N_("Choisis une source épinglée, l'historique récent, ou saisis "
             "un chemin/URL manuellement."),
+            N_("Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."),
+            N_("Le cadre de gauche montre, comme omega-log : débit, bande passante, statuts HTTP (dont refus 403 et 429), Top 5 IP, chemins demandés, chemins en 404, santé du log."),
             N_("Utilise [G] pour gérer les épingles (ajouter/retirer) et "
             "l'historique — un [0] Annuler est disponible à chaque étape."),
         ],
@@ -889,6 +904,7 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         usage=[
             N_("Numéros séparés par des virgules pour choisir plusieurs sources "
             "épinglées/historique à la fois (ex: 1,3)."),
+            N_("Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."),
             N_("[M] pour un ou plusieurs chemins saisis à la main (mêmes "
             "virgules), [G] pour gérer les épingles — un [0]/Entrée annule "
             "à chaque étape."),

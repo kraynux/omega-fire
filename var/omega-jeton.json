@@ -1,0 +1,28 @@
+{
+  "format": "omega-jeton",
+  "schema_version": 1,
+  "tool": "omega-fire",
+  "version": "3.6",
+  "installation_id": "2310c0c1fc5b16933e573f7f21d5cb14",
+  "machine": "d18aee1f308bc0c6",
+  "root": "/home/kraynux/DEV/FIRE/omega-fire",
+  "owner": "kraynux",
+  "installed_at": "2026-11-10T17:02:41Z",
+  "updated_at": "2026-11-10T17:02:41Z",
+  "contracts": {
+    "omega-fiche": [
+      1
+    ]
+  },
+  "offers": [
+    "fail2ban",
+    "nftables",
+    "iptables",
+    "log-library"
+  ],
+  "wants": [
+    "blocklist",
+    "waf-logs",
+    "riposte-decisions"
+  ]
+}

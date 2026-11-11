@@ -127,7 +127,7 @@ class GuideMenuScreen(OmegaScreen):
 
 def export_guide_html(screen: OmegaScreen, container: DependencyContainer, theme_name: str,
                       *, faq_only: bool = False) -> None:
-    """Guide complet (fiches + FAQ) ou FAQ seule, dans le dossier d'exports (visible en 6.5),
+    """Guide complet (fiches + FAQ) ou FAQ seule, dans le dossier d'exports (visible en 6.6),
     dans la « Langue des exports » des Reglages comme les autres exports (retour utilisateur
     2026-10-28 : guide et FAQ sortaient toujours dans la langue de l'interface)."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -144,8 +144,8 @@ def export_guide_html(screen: OmegaScreen, container: DependencyContainer, theme
             container.get_exporter_port("html").export_data(context, path, template_name="guide.html.j2")
 
     def done(_result: None) -> None:
-        message = _("FAQ exportée : {path} (visible en 6.5).") if faq_only else \
-            _("Guide exporté : {path} (visible en 6.5).")
+        message = _("FAQ exportée : {path} (visible en 6.6).") if faq_only else \
+            _("Guide exporté : {path} (visible en 6.6).")
         screen.app.notify(message.format(path=path), timeout=8)
         log_action_result(container, _ACTION_TITLE, status="success")
 

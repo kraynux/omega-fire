@@ -46,14 +46,19 @@ from omega_fire.shared.i18n import STATE, _
 
 def install_action_title_translator(container: DependencyContainer) -> None:
     """Titres de l'historique d'audit traduits a l'affichage (support/action_titles.py)."""
-    from omega_fire.interfaces.tui.section_registry import AUDIT_TITLE_ALIASES, MENU_5_BEFORE_3_5, SECTIONS
+    from omega_fire.interfaces.tui.section_registry import (
+        AUDIT_TITLE_ALIASES,
+        MENU_5_BEFORE_3_5,
+        MENU_6_BEFORE_3_6,
+        SECTIONS,
+    )
     from omega_fire.interfaces.tui.support.action_titles import ActionTitleTranslator, menu_labels_by_action
     from omega_fire.shared.i18n import set_action_title_translator
 
     catalog = container.language_catalog
     set_action_title_translator(ActionTitleTranslator(
         menu_labels_by_action(SECTIONS), lambda: catalog.available().keys(), catalog.translated_phrases,
-        renumbered=MENU_5_BEFORE_3_5, aliases=AUDIT_TITLE_ALIASES))
+        renumbered={**MENU_5_BEFORE_3_5, **MENU_6_BEFORE_3_6}, aliases=AUDIT_TITLE_ALIASES))
 
 from omega_fire.core.constants import OMEGA_FIRE_VERSION
 
@@ -221,7 +226,7 @@ class OmegaFireApp(App[None]):
     def action_help(self) -> None:
         current = self.screen
         context = current.help_content() if hasattr(current, "help_content") else None
-        self.push_screen(HelpScreen(context=context))
+        self.push_screen(HelpScreen(context=context, container=self._container))
 
     def action_open_guide(self) -> None:
         """Guide d'aide centralise (menu 10 AIDE), aussi propose depuis l'aide generique."""

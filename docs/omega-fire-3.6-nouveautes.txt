@@ -1,0 +1,112 @@
+OMEGA-FIRE 3.6 - Ce qui change pour vous
+========================================
+
+Une version qui met le gestionnaire de logs au niveau d'omega-serv et d'omega-log, et
+ajoute l'écran « Contact et support ». Le détail technique complet reste dans le CHANGELOG.
+
+
+LA BIBLIOTHÈQUE ALIMENTE TOUTES LES SÉLECTIONS DE LOG
+-----------------------------------------------------
+- 5.4 Analyser les IPs, 5.5 Supprimer une IP des logs et 5.6 Rotation / Backup proposent
+  d'abord les logs de la Bibliothèque (5.1), puis vos épingles, puis « Chemin manuel ».
+- 8.5 et 8.6 listent aussi les logs de la Bibliothèque, avant les épingles et l'historique.
+
+
+5.4 ANALYSER LES IPs : COMME « VOIR ET TRAITER IP »
+---------------------------------------------------
+- « Rechercher cette IP » : combien de lignes dans le fichier entier.
+- « Retirer cette IP du log analysé » : l'IP choisie (ligne du tableau ou recherche) est
+  retirée après la même confirmation qu'en 5.5.
+- L'analyse ne fige plus l'interface. Top N, % trafic, volume et export vers 5.5 restent.
+
+
+VIEWER SIMPLE : LES INFOS D'OMEGA-LOG
+-------------------------------------
+- Refus 403 et 429, Top 5 IP, chemins demandés, chemins en 404. Le cadre défile.
+
+
+6.5 EXPORTER LES STATISTIQUES DES LOGS (NOUVEAU)
+------------------------------------------------
+- Le même rapport qu'omega-serv et omega-log : synthèse, statuts HTTP, top IP, chemins,
+  répartition horaire, tendance par jour, sur 24h, 7j, 30j ou tout le fichier.
+- Un ou plusieurs logs cochés, export JSON ou HTML (thème au choix).
+- Logs seulement : les bans et le pare-feu restent dans 8.3 et 8.4 ; 5.10 reste la vue rapide.
+- « Voir tous les exports » devient 6.6.
+
+
+SAUVEGARDES PLANIFIÉES ENFIN EXÉCUTÉES (5.6)
+--------------------------------------------
+- Avant, les automatisations étaient enregistrées mais jamais lancées.
+- Désormais une tâche quotidienne en root (timer systemd omega-fire-rotation, sinon la
+  crontab de root) les exécute chaque nuit. La première automatisation l'installe, la
+  dernière supprimée la retire.
+- Nouveau : « Tous les jours », nombre de sauvegardes conservées, dernière et prochaine
+  sauvegarde, résultat. Vos automatisations existantes sont reprises telles quelles.
+
+
+FICHIERS DE BLOCKLIST PAR DÉFAUT
+--------------------------------
+- var/blocklist/blocklist.txt et blocklist-f2b.txt sont créés vides au premier lancement
+  (ils étaient proposés dans les menus 2, 4 et 6 sans exister).
+
+
+CONTACT ET SUPPORT
+------------------
+- Nouveau bouton « Contact et support » dans l'aide (touche a), à côté de « Guide d'aide complet ».
+- Payer un café : ouvre la page PayPal du développeur (adresse aussi affichée).
+- Contacter le support : adresse mail et formulaire de contact du site, affichés en
+  clair. Aucun formulaire dans l'outil, aucun mail envoyé par l'outil.
+- Sans session graphique (SSH), le navigateur ne s'ouvre pas : l'adresse s'affiche.
+- Omega-Fire tourne en root : le navigateur s'ouvre au nom de l'utilisateur qui a fait
+  sudo, dans sa session graphique.
+
+
+SE DÉCLARER UTILISATEUR (ANONYME), UNE SEULE FOIS
+-------------------------------------------------
+- Volontaire et désactivé par défaut : sert seulement à compter les utilisateurs.
+- Le message contient une clé tirée au hasard, « omega-fire », la version et, si vous le
+  voulez, un continent et un pays (listes fermées). Il est affiché avant l'envoi.
+- Jamais de nom, de nom de machine, de réglage, de cible ni de résultat.
+- Envoi une seule fois, sur clic. Réception injoignable : rien n'est enregistré.
+- « Ne plus me déclarer » : votre entrée est supprimée à la réception et la clé
+  effacée de la machine.
+
+
+VERSION ET MISES À JOUR
+-----------------------
+- « Vérifier les mises à jour » compare votre version à la liste publiée sur le site,
+  seulement quand vous cliquez. Rien n'est envoyé.
+- « Voir les nouveautés » ouvre ce fichier pour la dernière version publiée.
+
+
+17 LANGUES
+----------
+- Les nouveaux écrans sont traduits dans les 17 langues de l'interface.
+- Le README (17 langues) a une nouvelle section « Contact et support ».
+
+
+LIENS AVEC LES AUTRES OUTILS OMEGA
+----------------------------------
+- Nouvelles commandes, sans sudo : « ./omega-fire.sh synchro jeton » dépose un petit
+  fichier d'identité (var/omega-jeton.json) et « ./omega-fire.sh synchro fiche » décrit
+  ce qu'omega-fire trouve sur la machine (fail2ban, nftables, iptables). Le futur
+  omega-connect s'en servira pour relier les outils installés. L'installation le
+  fait pour vous.
+
+
+CORRIGÉ
+-------
+- Viewer Simple (5.1 / 8.5, Favoris, Voir les logs) : tout le tampon de 500 lignes
+  défile désormais (seules les 30 dernières étaient affichées, sans ascenseur),
+  ouvert sur les dernières lignes et suivant les nouvelles tant qu'on est en bas.
+- Sauvegardes de logs (5.6 et automatisation de nuit) : la limite de copies à
+  conserver supprimait les plus récentes, y compris celle qui venait d'être créée.
+  Elle garde maintenant les copies les plus récentes de chaque journal, sans toucher
+  aux sauvegardes des autres journaux.
+- Transfert d'IP d'un jail vers nftables : le ban garde le temps qu'il lui restait dans
+  fail2ban (avant, il devenait permanent). L'hôte local, Tailscale et le réseau local ne
+  sont plus jamais bannis par un transfert en masse.
+- Supprimer une IP des logs : le journal est modifié sur place, sans perdre les lignes
+  arrivées pendant l'opération ni changer son propriétaire.
+- Créer un jail : un journal manquant est créé au nom du propriétaire de son dossier
+  (plus en root), et un nom de jail déjà défini sur disque est refusé.

@@ -15,6 +15,8 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
+from omega_fire.domain.logs.ip_lines import split_lines_by_ips  # noqa: F401 (reexporte)
+from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
 from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
 from omega_fire.infrastructure.config.paths import BLOCKLIST_DIR, DEFAULT_PINNED_FILES, RUNTIME_DIR, _PROJECT_ROOT
 from omega_fire.infrastructure.exporters.export_catalog import ip_list_exports
@@ -24,6 +26,7 @@ from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.checklist import CheckListScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.screens.export_picker import ExportPickerScreen
+from omega_fire.interfaces.tui.screens._log_sources import log_source_options
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.shared.i18n import _
@@ -54,22 +57,6 @@ def parse_ip_list(raw: str) -> tuple[list[str], list[str]]:
     return valid, invalid
 
 
-def split_lines_by_ips(lines: list[str], ips: list[str]) -> tuple[dict[str, int], list[str]]:
-    """(lignes retirees par IP, lignes conservees). Une ligne qui contient plusieurs des
-    IPs n'est comptee qu'une fois, pour la premiere IP de la liste."""
-    patterns = [(ip, re.compile(rf"(?<![\w.:]){re.escape(ip)}(?![\w:]|\.\d)")) for ip in ips]
-    counts = {ip: 0 for ip in ips}
-    kept: list[str] = []
-    for line in lines:
-        for ip, pattern in patterns:
-            if pattern.search(line):
-                counts[ip] += 1
-                break
-        else:
-            kept.append(line)
-    return counts, kept
-
-
 class RemoveIpFromLogScreen(OmegaScreen):
     """Retrait de toutes les occurrences d'une IP dans un fichier source."""
 
@@ -83,7 +70,8 @@ class RemoveIpFromLogScreen(OmegaScreen):
         )
 
     def _source_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _SRC_MANUAL)]
+        # Bibliotheque (5.1) en tete, puis epingles, puis chemin manuel (2026-11-09).
+        return log_source_options(self._pinned_command.list_paths(), _SRC_MANUAL)
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -208,8 +196,9 @@ class RemoveIpFromLogScreen(OmegaScreen):
         if not confirmed:
             return
         try:
-            with open(target_path, "w", encoding="utf-8") as f:
-                f.writelines(cleaned_lines)
+            # Sur place, binaire, relu juste avant l'ecriture (correctif 2026-11-10) : jamais de ligne
+            # arrivee entre-temps perdue, proprietaire et droits du log inchanges.
+            occurrences = sum(remove_ips_in_place(target_path, target_ips).values())
         except Exception as e:
             self.app.notify(_("Erreur lors de l'écriture dans le fichier : {e}").format(e=e), severity="error")
             log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))

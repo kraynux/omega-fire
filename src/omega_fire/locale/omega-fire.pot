@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omega-fire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 23:40+0100\n"
+"POT-Creation-Date: 2026-11-10 01:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,19 +17,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/omega_fire/app/bootstrap.py:292
+#: src/omega_fire/app/bootstrap.py:304
 msgid ""
 "\n"
 "\n"
 "[+] Interruption système. Fermeture d'Omega-Fire.\n"
 msgstr ""
 
-#: src/omega_fire/app/dependency_container.py:359
+#: src/omega_fire/app/dependency_container.py:372
 #, python-brace-format
 msgid "Backend de pare-feu inconnu : {backend}"
 msgstr ""
 
-#: src/omega_fire/app/dependency_container.py:378
+#: src/omega_fire/app/dependency_container.py:391
 #, python-brace-format
 msgid "Format d'export inconnu : {format}"
 msgstr ""
@@ -549,7 +549,7 @@ msgid "DISPONIBLE"
 msgstr ""
 
 #: src/omega_fire/application/commands/export_report.py:122
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:462
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:526
 #: src/omega_fire/interfaces/tui/widgets/capabilities_table.py:19
 msgid "DÉGRADÉ"
 msgstr ""
@@ -680,7 +680,7 @@ msgid "Fichier renommé en '{new_name}'."
 msgstr ""
 
 #: src/omega_fire/application/commands/manage_blocklist_file.py:138
-#: src/omega_fire/application/commands/rotate_logs.py:39
+#: src/omega_fire/application/commands/rotate_logs.py:40
 #, python-brace-format
 msgid "Fichier source introuvable : {source_path}"
 msgstr ""
@@ -1149,32 +1149,103 @@ msgstr ""
 msgid "Politique non réinitialisée (ip6tables/{chain_name}) : {e}"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:37
+#: src/omega_fire/application/commands/rotate_logs.py:38
 msgid "Le chemin source (source_path) ne doit pas être vide"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:41
+#: src/omega_fire/application/commands/rotate_logs.py:42
 #: src/omega_fire/application/dto/requests.py:167
 msgid "Le nombre de copies à conserver doit être d'au moins 1"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:43
+#: src/omega_fire/application/commands/rotate_logs.py:44
 msgid "La durée de conservation ne doit pas dépasser 365 jours"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:93
+#: src/omega_fire/application/commands/rotate_logs.py:94
 #, python-brace-format
 msgid "Erreur technique lors de la sauvegarde : {e}"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:104
+#: src/omega_fire/application/commands/rotate_logs.py:105
 #, python-brace-format
 msgid "Sauvegarde créée avec succès, mais la purge des anciennes archives a échoué : {e}"
 msgstr ""
 
-#: src/omega_fire/application/commands/rotate_logs.py:126
+#: src/omega_fire/application/commands/rotate_logs.py:140
 #, python-brace-format
 msgid "Sauvegarde créée avec succès : {name}"
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:148
+#, python-brace-format
+msgid "Exécution : timer systemd {timer} actif (chaque nuit)."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:149
+#, python-brace-format
+msgid "Exécution : timer systemd {timer} non installé."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:152
+msgid "Exécution : aucun planificateur (ni systemd, ni crontab)."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:154
+msgid "Exécution : ligne crontab installée (chaque nuit)."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:155
+msgid "Exécution : aucune ligne crontab pour ce compte."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:171
+#: src/omega_fire/application/commands/rotation_automation.py:176
+#, python-brace-format
+msgid "Timer systemd non installé : {error}"
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:175
+#: src/omega_fire/application/commands/rotation_automation.py:198
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:42
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:58
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:69
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:76
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:98
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:108
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:123
+#: src/omega_fire/infrastructure/log_stats/privileged_file_ops.py:130
+#, python-brace-format
+msgid "code {returncode}"
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:177
+#, python-brace-format
+msgid "Timer systemd {timer} installé : les automatisations s'exécutent chaque nuit."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:187
+#: src/omega_fire/application/commands/rotation_automation.py:215
+#, python-brace-format
+msgid "Échec de l'écriture de la crontab : {value}"
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:189
+msgid "Ligne crontab installée : les automatisations s'exécutent chaque nuit."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:199
+#: src/omega_fire/application/commands/rotation_automation.py:204
+#, python-brace-format
+msgid "Timer systemd non retiré : {error}"
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:206
+msgid "Plus aucune automatisation : timer systemd retiré."
+msgstr ""
+
+#: src/omega_fire/application/commands/rotation_automation.py:217
+msgid "Plus aucune automatisation : ligne crontab retirée."
 msgstr ""
 
 #: src/omega_fire/application/commands/select_render_profile.py:20
@@ -1390,6 +1461,49 @@ msgstr ""
 #: src/omega_fire/application/exceptions.py:191
 #, python-brace-format
 msgid "Opération « {operation_name} » en partie échouée : {count} réussie(s), {count2} en échec"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:97
+#, python-brace-format
+msgid "Adresse IP invalide : {ip}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:101
+#: src/omega_fire/interfaces/tui/screens/exports_screen.py:141
+#: src/omega_fire/interfaces/tui/screens/log_classic_viewer_screen.py:80
+#: src/omega_fire/interfaces/tui/screens/log_view_screen.py:111
+#, python-brace-format
+msgid "Fichier introuvable : {path}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:112
+#, python-brace-format
+msgid "Lecture privilégiée impossible : {message}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:116
+#, python-brace-format
+msgid "Lecture impossible : {exc}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:121
+#, python-brace-format
+msgid "Aucune occurrence de {ip} trouvée."
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:140
+#, python-brace-format
+msgid "Écriture privilégiée impossible : {message}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:144
+#, python-brace-format
+msgid "Écriture impossible : {exc}"
+msgstr ""
+
+#: src/omega_fire/application/log_stats/process_ip.py:146
+#, python-brace-format
+msgid "{occurrences} occurrence(s) de {ip} retirée(s)."
 msgstr ""
 
 #: src/omega_fire/application/pipeline/degraded_mode.py:148
@@ -2429,6 +2543,14 @@ msgstr ""
 msgid "Rotation mensuelle : nouveau mois"
 msgstr ""
 
+#: src/omega_fire/domain/logs/rotation_schedule.py:86
+#, python-brace-format
+msgid ""
+"Aucun planificateur détecté (ni systemd, ni crontab). Ajoutez cette ligne vous-même à votre planificateur (crontab -e, /etc/cron.d/, tâche OpenRC ou runit équivalente) :\n"
+"\n"
+"{cron_line}"
+msgstr ""
+
 #: src/omega_fire/domain/logs/service.py:66
 #, python-brace-format
 msgid "Échec de la lecture : {e}"
@@ -2780,7 +2902,7 @@ msgstr ""
 msgid "Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack))."
 msgstr ""
 
-#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:1129
+#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:1207
 #, python-brace-format
 msgid "fail2ban-client -t a échoué sans détail (code de retour {returncode})"
 msgstr ""
@@ -2817,7 +2939,7 @@ msgstr ""
 
 #: src/omega_fire/infrastructure/backends/ip6tables/adapter.py:545
 #: src/omega_fire/infrastructure/backends/iptables/adapter.py:560
-#: src/omega_fire/infrastructure/backends/nftables/adapter.py:852
+#: src/omega_fire/infrastructure/backends/nftables/adapter.py:862
 msgid "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
 msgstr ""
 
@@ -3017,6 +3139,15 @@ msgstr ""
 
 #: src/omega_fire/infrastructure/lnav/pty_session.py:43
 msgid "au moins un fichier de log est requis"
+msgstr ""
+
+#: src/omega_fire/infrastructure/log_stats/elevation.py:40
+#, python-brace-format
+msgid "Permission refusée sur {path} (élévation requise)."
+msgstr ""
+
+#: src/omega_fire/infrastructure/log_stats/elevation.py:69
+msgid "Authentification sudo échouée ou annulée."
 msgstr ""
 
 #: src/omega_fire/infrastructure/logging/stats/log_aggregator.py:84
@@ -3568,11 +3699,11 @@ msgstr ""
 #: src/omega_fire/interfaces/cli/help_text.py:257
 #: src/omega_fire/interfaces/cli/help_text.py:578
 #: src/omega_fire/interfaces/cli/help_text.py:656
-#: src/omega_fire/interfaces/cli/help_text.py:723
-#: src/omega_fire/interfaces/cli/help_text.py:840
-#: src/omega_fire/interfaces/cli/help_text.py:846
-#: src/omega_fire/interfaces/cli/help_text.py:852
-#: src/omega_fire/interfaces/cli/help_text.py:858
+#: src/omega_fire/interfaces/cli/help_text.py:726
+#: src/omega_fire/interfaces/cli/help_text.py:853
+#: src/omega_fire/interfaces/cli/help_text.py:859
+#: src/omega_fire/interfaces/cli/help_text.py:865
+#: src/omega_fire/interfaces/cli/help_text.py:871
 msgid "Lecture seule."
 msgstr ""
 
@@ -3597,9 +3728,9 @@ msgid "Affiche les erreurs et dégradations récentes détectées sur le systèm
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:137
-#: src/omega_fire/interfaces/cli/help_text.py:722
-#: src/omega_fire/interfaces/cli/help_text.py:851
-#: src/omega_fire/interfaces/cli/help_text.py:857
+#: src/omega_fire/interfaces/cli/help_text.py:725
+#: src/omega_fire/interfaces/cli/help_text.py:864
+#: src/omega_fire/interfaces/cli/help_text.py:870
 msgid "Aucune saisie requise."
 msgstr ""
 
@@ -4216,342 +4347,386 @@ msgid "Choisis la source (épinglée, manuelle, ou ajout/retrait d'épingle), la
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:664
-msgid "Après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML) dans le dossier d'exports : 5.5 peut ensuite recharger ces IPs pour les retirer des logs, sans les recopier à la main, et 6.5 les affiche."
+msgid "Après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML) dans le dossier d'exports : 5.5 peut ensuite recharger ces IPs pour les retirer des logs, sans les recopier à la main, et 6.6 les affiche."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:665
 msgid "« Gérer les épingles » → « Presets » propose les chemins usuels (logs système, serveurs web, blocklists d'omega-fire, logs de la Bibliothèque 5.1) présents sur cette machine : coche ceux à épingler."
 msgstr ""
 
+#: src/omega_fire/interfaces/cli/help_text.py:666
+#: src/omega_fire/interfaces/cli/help_text.py:677
+#: src/omega_fire/interfaces/cli/help_text.py:687
+#: src/omega_fire/interfaces/cli/help_text.py:884
+#: src/omega_fire/interfaces/cli/help_text.py:907
+msgid "Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."
+msgstr ""
+
 #: src/omega_fire/interfaces/cli/help_text.py:667
-msgid "Lecture seule. « Exporter » écrit un fichier top-ips_<date> dans le dossier d'exports."
+msgid "« Rechercher cette IP » compte ses lignes dans le fichier entier ; « Retirer cette IP du log analysé » retire l'IP choisie (ligne du tableau ou recherche) après confirmation, comme 5.5. L'analyse tourne sans figer l'interface."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:669
-msgid "Les fichiers proposés ici viennent de la liste « fichiers de travail » partagée avec 5.5, 5.6 et les écrans de blocklists (épingles persistées), distincte de la Bibliothèque 5.1."
+msgid "Lecture seule, sauf « Retirer cette IP du log analysé », qui modifie réellement le fichier. « Exporter » écrit un fichier top-ips_<date> dans le dossier d'exports."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:676
+#: src/omega_fire/interfaces/cli/help_text.py:673
 msgid "Retire toutes les lignes contenant une IP précise dans un fichier source (log ou blocklist) — édition directe du fichier, pas un débannissement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:678
+#: src/omega_fire/interfaces/cli/help_text.py:675
 msgid "Choisis le fichier source, saisis une ou plusieurs IPs (séparées par des virgules), vérifie le récapitulatif (lignes trouvées par IP) avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:679
+#: src/omega_fire/interfaces/cli/help_text.py:676
 msgid "« Charger depuis un export » liste les exports contenant des IPs (Top N de 5.4 en premier, puis blacklist 6.1 et jails 4.8) : choisis le fichier, coche les IPs à retirer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:681
+#: src/omega_fire/interfaces/cli/help_text.py:679
 msgid "Modifie réellement le fichier — les lignes contenant l'une des IPs sont supprimées, les autres conservées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:682
+#: src/omega_fire/interfaces/cli/help_text.py:680
 msgid "N'agit que sur le fichier choisi, pas sur l'état réel du firewall/fail2ban — pour débannir une IP, utilise 2.3 ou 4.2."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:686
+#: src/omega_fire/interfaces/cli/help_text.py:684
 msgid "Sauvegarde (backup) manuelle ou automatisée de fichiers logs/blocklists dans une archive."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:687
+#: src/omega_fire/interfaces/cli/help_text.py:686
 msgid "Choisis la source à sauvegarder, puis le mode : sauvegarde immédiate, planification d'une automatisation récurrente, ou gestion des automatisations existantes."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:689
-msgid "Crée une archive réelle dans var/backups/. Une automatisation configurée continue de s'exécuter aux intervalles définis tant qu'elle n'est pas supprimée via [3]."
+#: src/omega_fire/interfaces/cli/help_text.py:688
+msgid "Une automatisation choisit une fréquence et le nombre de sauvegardes conservées. « Lister et gérer » montre la dernière sauvegarde, la prochaine et le résultat, et permet de réinstaller ou désinstaller l'exécution."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:696
-msgid "Restaure une archive de logs précédemment sauvegardée (menu 5.6), immédiatement ou selon une automatisation planifiée."
+#: src/omega_fire/interfaces/cli/help_text.py:691
+msgid "Crée une archive réelle dans var/backups/. Les automatisations s'exécutent chaque nuit (timer systemd omega-fire-rotation, sinon une ligne de la crontab de root) : la première installe cette exécution, la dernière supprimée la retire."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:697
-msgid "Choisis le mode (restauration immédiate, planification, gestion des automatisations existantes), puis l'archive et la stratégie de restauration."
-msgstr ""
-
-#: src/omega_fire/interfaces/cli/help_text.py:698
-msgid "Écrit réellement les fichiers restaurés — une restauration peut écraser des fichiers actuels selon le mode choisi."
+#: src/omega_fire/interfaces/cli/help_text.py:695
+msgid "La tâche tourne en root, comme omega-fire : les logs protégés sont aussi sauvegardés. Une sauvegarde en échec est retentée la nuit suivante."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:699
+msgid "Restaure une archive de logs précédemment sauvegardée (menu 5.6), immédiatement ou selon une automatisation planifiée."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:700
+msgid "Choisis le mode (restauration immédiate, planification, gestion des automatisations existantes), puis l'archive et la stratégie de restauration."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:701
+msgid "Écrit réellement les fichiers restaurés — une restauration peut écraser des fichiers actuels selon le mode choisi."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:702
 msgid "Vérifie la stratégie/mode proposés avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:703
+#: src/omega_fire/interfaces/cli/help_text.py:706
 msgid "Purge et nettoie les archives de backup (var/backups/) selon différents critères : ancienneté, quota, type (sauvegardes automatiques de sécurité), ou sélection manuelle."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:704
+#: src/omega_fire/interfaces/cli/help_text.py:707
 msgid "Consulte d'abord les statistiques de stockage affichées (nombre d'archives, volume, espace disque libre), puis choisis le critère de purge."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:705
+#: src/omega_fire/interfaces/cli/help_text.py:708
 msgid "Suppression réelle et irréversible des archives ciblées — une confirmation avec aperçu des fichiers concernés est demandée avant exécution."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:709
+#: src/omega_fire/interfaces/cli/help_text.py:712
 msgid "Nettoyage avancé de l'espace de stockage interne d'Omega-Fire (logs, cache, exports, backups, ou tout var/), filtré par âge ou taille."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:710
+#: src/omega_fire/interfaces/cli/help_text.py:713
 msgid "Choisis le(s) dossier(s) cible(s), puis les critères de filtrage, et vérifie l'aperçu des fichiers concernés avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:711
+#: src/omega_fire/interfaces/cli/help_text.py:714
 msgid "Suppression réelle et irréversible des fichiers correspondants."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:713
+#: src/omega_fire/interfaces/cli/help_text.py:716
 msgid "app.log et audit.log sont toujours exclus de ce nettoyage, même si le dossier logs/ est ciblé — ce sont des fichiers actifs en écriture continue ; utilise 1.5 ou 7.3 pour les gérer spécifiquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:721
+#: src/omega_fire/interfaces/cli/help_text.py:724
 msgid "Affiche un tableau de bord de statistiques sur les logs (volumes, tendances)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:732
-msgid "Centralise les exports et rapports : blacklist complète, règles de pare-feu, audit système complet, statistiques fail2ban — et 6.5 pour les retrouver et les ouvrir."
+#: src/omega_fire/interfaces/cli/help_text.py:725
+msgid "Vue rapide : le rapport complet et exportable des logs est en 6.5."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:733
+#: src/omega_fire/interfaces/cli/help_text.py:735
+msgid "Centralise les exports et rapports : blacklist complète, règles de pare-feu, audit système complet, statistiques fail2ban, statistiques des logs (6.5) — et 6.6 pour les retrouver et les ouvrir."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:736
 msgid "Chaque export propose un format (JSON/TXT/HTML selon le rapport) et un chemin de destination modifiable."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:737
+#: src/omega_fire/interfaces/cli/help_text.py:740
 msgid "Exporte la blacklist complète (IPs bannies) depuis un fichier source choisi, au format JSON, TXT ou HTML."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:738
+#: src/omega_fire/interfaces/cli/help_text.py:741
 msgid "Choisis la source (épinglée, manuelle, ou gestion des épingles), puis le format de sortie."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:739
+#: src/omega_fire/interfaces/cli/help_text.py:742
 msgid "Écrit un fichier réel — lecture seule côté bannissement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:743
+#: src/omega_fire/interfaces/cli/help_text.py:746
 msgid "Exporte les règles de pare-feu nftables/iptables (fail2ban a son propre export, voir 4.8) — toutes, actives seulement, Omega-Fire uniquement, ou système importées uniquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:744
+#: src/omega_fire/interfaces/cli/help_text.py:747
 msgid "Choisis le contenu à exporter, puis le format (JSON/HTML/TXT)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:745
+#: src/omega_fire/interfaces/cli/help_text.py:748
 msgid "Écrit un fichier réel — lecture seule côté règles."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:749
+#: src/omega_fire/interfaces/cli/help_text.py:752
 msgid "Génère un rapport d'audit complet : état système, historique, top IPs, en un seul document."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:750
+#: src/omega_fire/interfaces/cli/help_text.py:753
 msgid "Choisis le format (TXT ou HTML), valide le chemin de destination proposé ou saisis-en un autre."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:751
+#: src/omega_fire/interfaces/cli/help_text.py:754
 msgid "Écrit un fichier réel — lecture seule côté système."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:755
+#: src/omega_fire/interfaces/cli/help_text.py:758
 msgid "Exporte un rapport détaillé sur fail2ban (jails et bans), au format TXT ou HTML."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:756
+#: src/omega_fire/interfaces/cli/help_text.py:759
 msgid "Choisis le format, valide ou modifie le chemin de destination proposé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:757
+#: src/omega_fire/interfaces/cli/help_text.py:760
 msgid "Écrit un fichier réel — lecture seule côté fail2ban."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:761
-msgid "Liste tous les fichiers exportés (dossier d'exports, et exports de blacklist de 6.1) : type, date, taille — sans ouvrir de terminal ni de gestionnaire de fichiers."
-msgstr ""
-
-#: src/omega_fire/interfaces/cli/help_text.py:763
-msgid "« Ouvrir » : un rapport HTML s'ouvre dans votre navigateur ; un JSON ou TXT se lit dans omega-fire (lecteur Classique)."
-msgstr ""
-
 #: src/omega_fire/interfaces/cli/help_text.py:764
-msgid "« Copier le chemin » copie le chemin complet du fichier ; « Supprimer » l'efface après confirmation."
+msgid "Exporte les statistiques des logs choisis, avec le même rapport qu'omega-serv et omega-log : synthèse, statuts HTTP, top IP, chemins demandés, chemins en 404, répartition horaire et tendance par jour."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:766
-msgid "Ouvrir et copier sont en lecture seule. Supprimer efface réellement le fichier."
+msgid "« Choisir les logs » : cochez un ou plusieurs logs, ceux de la Bibliothèque (5.1) en tête."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:768
-msgid "omega-fire tourne en root : le navigateur est lancé au nom de l'utilisateur qui a fait sudo, dans sa session graphique. Si le fichier ne lui est pas lisible, une copie lui appartenant est ouverte depuis un dossier temporaire."
+#: src/omega_fire/interfaces/cli/help_text.py:767
+msgid "Choisissez une période (24h, 7j, 30j ou tout le fichier) : le rapport s'affiche, puis « Exporter JSON » ou « Exporter HTML » (thème au choix) l'écrit dans le dossier d'exports, visible en 6.6."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:769
+msgid "Lecture seule sur les logs. Écrit seulement le fichier d'export."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:770
+msgid "Logs seulement : les bans, les jails et l'état du pare-feu sont dans les rapports 8.3 et 8.4. 5.10 reste la vue rapide."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:774
+msgid "Liste tous les fichiers exportés (dossier d'exports, et exports de blacklist de 6.1) : type, date, taille — sans ouvrir de terminal ni de gestionnaire de fichiers."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:776
+msgid "« Ouvrir » : un rapport HTML s'ouvre dans votre navigateur ; un JSON ou TXT se lit dans omega-fire (lecteur Classique)."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:777
+msgid "« Copier le chemin » copie le chemin complet du fichier ; « Supprimer » l'efface après confirmation."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:779
+msgid "Ouvrir et copier sont en lecture seule. Supprimer efface réellement le fichier."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:781
+msgid "omega-fire tourne en root : le navigateur est lancé au nom de l'utilisateur qui a fait sudo, dans sa session graphique. Si le fichier ne lui est pas lisible, une copie lui appartenant est ouverte depuis un dossier temporaire."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:782
 msgid "Sans session graphique (connexion SSH, serveur sans bureau), aucun navigateur ne peut s'ouvrir : le chemin du fichier est affiché pour l'ouvrir depuis un autre poste."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:780
+#: src/omega_fire/interfaces/cli/help_text.py:793
 msgid "Gestion de l'état interne d'Omega-Fire : sauvegarde/restauration complète (règles + IPs bannies), historique d'audit, rechargement de la configuration."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:784
+#: src/omega_fire/interfaces/cli/help_text.py:797
 msgid "Distinct du menu 5 (qui gère les fichiers de logs) — ici, c'est l'état du firewall/fail2ban lui-même qui est sauvegardé/restauré."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:788
+#: src/omega_fire/interfaces/cli/help_text.py:801
 msgid "Capture un instantané (snapshot) complet de l'état actuel : règles firewall et IPs bannies (nftables/iptables/fail2ban)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:789
+#: src/omega_fire/interfaces/cli/help_text.py:802
 msgid "Une description optionnelle peut être ajoutée pour identifier facilement le snapshot plus tard."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:790
+#: src/omega_fire/interfaces/cli/help_text.py:803
 msgid "Crée une archive réelle — n'affecte aucun état actuel, uniquement une sauvegarde."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:794
+#: src/omega_fire/interfaces/cli/help_text.py:807
 msgid "Restaure un snapshot précédemment sauvegardé (menu 7.1)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:795
+#: src/omega_fire/interfaces/cli/help_text.py:808
 msgid "Sélectionne le snapshot à restaurer dans la liste paginée, puis confirme."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:797
+#: src/omega_fire/interfaces/cli/help_text.py:810
 msgid "Les règles firewall actuellement gérées par Omega-Fire sont RETIRÉES puis REMPLACÉES par celles du snapshot."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:799
+#: src/omega_fire/interfaces/cli/help_text.py:812
 msgid "Seules les règles que le snapshot peut recréer à l'identique sont réappliquées (chaîne de base, avec seulement protocole, port, adresses, commentaire et verdict). Les autres — règles d'autres outils ou avec des critères qu'Omega-Fire ne sait pas reproduire (état de connexion, interface, type ICMP, limite de débit) — restent telles quelles dans le pare-feu."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:800
+#: src/omega_fire/interfaces/cli/help_text.py:813
 msgid "Un snapshot créé avant la version 3.5 ne porte pas cette information : sa restauration ne touche à aucune règle, seules les IPs bannies sont ajoutées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:801
+#: src/omega_fire/interfaces/cli/help_text.py:814
 msgid "La politique par défaut des chaînes n'est remise à ACCEPT que sur un backend où un profil (3.4) était actif."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:802
+#: src/omega_fire/interfaces/cli/help_text.py:815
 msgid "Les IPs bannies du snapshot sont AJOUTÉES — rien n'est retiré des bannissements actuels."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:804
+#: src/omega_fire/interfaces/cli/help_text.py:817
 msgid "Les jails fail2ban ne sont PAS restaurées automatiquement (information seulement)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:806
+#: src/omega_fire/interfaces/cli/help_text.py:819
 msgid "Les règles/IPs gérées par d'autres outils (UFW, etc.) ne sont jamais touchées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:809
+#: src/omega_fire/interfaces/cli/help_text.py:822
 msgid "Opération significative sur les règles firewall — vérifie bien le snapshot choisi avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:813
+#: src/omega_fire/interfaces/cli/help_text.py:826
 msgid "Consulte ou purge l'historique d'audit (le journal des actions effectuées par Omega-Fire, avec succès/échec) — distinct du journal applicatif technique (1.5)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:814
+#: src/omega_fire/interfaces/cli/help_text.py:827
 msgid "Recherche par mot-clé possible. Le sous-menu de gestion permet de purger les entrées anciennes."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:815
+#: src/omega_fire/interfaces/cli/help_text.py:828
 msgid "La consultation est en lecture seule. La purge supprime réellement des entrées, irréversible."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:819
+#: src/omega_fire/interfaces/cli/help_text.py:832
 msgid "Recharge la configuration système sans redémarrer l'application."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:820
+#: src/omega_fire/interfaces/cli/help_text.py:833
 msgid "Aucune saisie — lance directement le rechargement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:822
+#: src/omega_fire/interfaces/cli/help_text.py:835
 msgid "Même mécanisme que 1.3 (re-scan complet des sondes système et de la configuration), avec un affichage minimal plutôt que le détail diagnostic complet."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:834
+#: src/omega_fire/interfaces/cli/help_text.py:847
 msgid "Vue d'ensemble de l'activité réseau en temps réel et sur la durée : tableau de bord live, connexions actives, tendances 7/30 jours."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:838
+#: src/omega_fire/interfaces/cli/help_text.py:851
 msgid "Tableau de bord en temps réel combinant statistiques firewall, monitoring, audit et logs — rafraîchi automatiquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:839
+#: src/omega_fire/interfaces/cli/help_text.py:852
 msgid "Aucune saisie au lancement — consulte l'écran, quitte avec la touche indiquée à l'écran."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:844
+#: src/omega_fire/interfaces/cli/help_text.py:857
 msgid "Affiche les connexions réseau actives (conntrack) : protocole, état, adresses, ports."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:845
+#: src/omega_fire/interfaces/cli/help_text.py:858
 msgid "Filtre par protocole et/ou état une fois la liste initiale affichée, limite le nombre d'entrées affichées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:850
+#: src/omega_fire/interfaces/cli/help_text.py:863
 msgid "Rapport statistique sur les 7 derniers jours (tendances, graphiques)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:856
+#: src/omega_fire/interfaces/cli/help_text.py:869
 msgid "Rapport statistique sur les 30 derniers jours — vue macro, même mécanisme que 8.3 avec une fenêtre plus large."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:863
+#: src/omega_fire/interfaces/cli/help_text.py:876
 msgid "Visualise en direct les logs serveur (Nginx, Apache, Caddy, Lighttpd) ou le journal applicatif, avec analyse des requêtes HTTP en temps réel. C'est aussi le lecteur « Simple » de 5.2 Favoris et 5.3 Voir les logs."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:869
+#: src/omega_fire/interfaces/cli/help_text.py:882
 msgid "Choisis une source épinglée, l'historique récent, ou saisis un chemin/URL manuellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:871
+#: src/omega_fire/interfaces/cli/help_text.py:885
+msgid "Le cadre de gauche montre, comme omega-log : débit, bande passante, statuts HTTP (dont refus 403 et 429), Top 5 IP, chemins demandés, chemins en 404, santé du log."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:886
 msgid "Utilise [G] pour gérer les épingles (ajouter/retirer) et l'historique — un [0] Annuler est disponible à chaque étape."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:874
+#: src/omega_fire/interfaces/cli/help_text.py:889
 msgid "Lecture seule sur la source suivie — aucune modification du fichier ou du serveur observé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:876
+#: src/omega_fire/interfaces/cli/help_text.py:891
 msgid "Les épingles et l'historique sont persistés (survivent à un redémarrage). Ouvert depuis 5.2 ou 5.3, il démarre directement sur le log choisi, sans toucher à cet historique."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:884
+#: src/omega_fire/interfaces/cli/help_text.py:899
 msgid "Sélectionne un ou plusieurs fichiers de logs serveur (Nginx, Apache, Lighttpd, Caddy) pour analyse via lnav — contrairement à 8.5, plusieurs fichiers peuvent être choisis à la fois : lnav les fusionne automatiquement en une seule vue chronologique."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:890
+#: src/omega_fire/interfaces/cli/help_text.py:905
 msgid "Numéros séparés par des virgules pour choisir plusieurs sources épinglées/historique à la fois (ex: 1,3)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:892
+#: src/omega_fire/interfaces/cli/help_text.py:908
 msgid "[M] pour un ou plusieurs chemins saisis à la main (mêmes virgules), [G] pour gérer les épingles — un [0]/Entrée annule à chaque étape."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:896
+#: src/omega_fire/interfaces/cli/help_text.py:912
 msgid "Lecture seule sur les fichiers sélectionnés — aucune modification."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:898
+#: src/omega_fire/interfaces/cli/help_text.py:914
 msgid "Épingles et historique propres à 8.6 (séparés de ceux de 8.5, mêmes mécanismes de stockage). lnav s'ouvre ensuite en plein écran, encapsulé dans un header/footer Omega-Fire — Ctrl-Q pour quitter, Ctrl-C pour copier la ligne courante, la touche t pour changer de thème."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:912
+#: src/omega_fire/interfaces/cli/help_text.py:928
 msgid "Ferme Omega-Fire, avec une confirmation avant de quitter réellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:913
+#: src/omega_fire/interfaces/cli/help_text.py:929
 msgid "Réponds 'o' pour confirmer la fermeture, ou toute autre réponse pour rester dans l'application."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:914
+#: src/omega_fire/interfaces/cli/help_text.py:930
 msgid "Aucune sauvegarde automatique n'est déclenchée par cette confirmation — pense à utiliser 7.1 avant de quitter si tu veux capturer l'état actuel."
 msgstr ""
 
@@ -4575,7 +4750,7 @@ msgstr ""
 #: src/omega_fire/interfaces/cli/keybindings.py:42
 #: src/omega_fire/interfaces/tui/screens/checklist.py:31
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:127
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:128
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:150
 msgid "Valider"
 msgstr ""
 
@@ -4612,6 +4787,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:138
 #: src/omega_fire/interfaces/tui/screens/export_f2b_stats_screen.py:66
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:86
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:134
 #: src/omega_fire/interfaces/tui/screens/export_rules_screen.py:90
 #: src/omega_fire/interfaces/tui/screens/export_state_screen.py:70
 #: src/omega_fire/interfaces/tui/screens/exports_screen.py:72
@@ -4620,16 +4796,16 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:92
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:232
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:279
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:77
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:84
 #: src/omega_fire/interfaces/tui/screens/home.py:78
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:79
 #: src/omega_fire/interfaces/tui/screens/jail_presets_screen.py:80
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:179
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:182
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:61
 #: src/omega_fire/interfaces/tui/screens/list_banned_ips_screen.py:60
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:51
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:237
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:116
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:256
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:117
 #: src/omega_fire/interfaces/tui/screens/log_classic_viewer_screen.py:59
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:89
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:127
@@ -4641,10 +4817,10 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/purge_audit_history_screen.py:60
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:129
 #: src/omega_fire/interfaces/tui/screens/remote_log_sources_screen.py:87
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:112
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:100
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:129
 #: src/omega_fire/interfaces/tui/screens/restore_state_screen.py:42
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:130
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:152
 #: src/omega_fire/interfaces/tui/screens/search_diagnostics_screen.py:68
 #: src/omega_fire/interfaces/tui/screens/section_screen.py:74
 #: src/omega_fire/interfaces/tui/screens/settings_screen.py:152
@@ -4653,19 +4829,19 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/sync_backends_screen.py:55
 #: src/omega_fire/interfaces/tui/screens/table_management_screen.py:101
 #: src/omega_fire/interfaces/tui/screens/table_management_screen.py:136
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:135
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:186
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:120
 #: src/omega_fire/interfaces/tui/screens/unban_ip_screen.py:71
 msgid "Retour"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/keybindings.py:45
-#: src/omega_fire/interfaces/tui/app.py:82
+#: src/omega_fire/interfaces/tui/app.py:87
 msgid "Aide"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/keybindings.py:46
-#: src/omega_fire/interfaces/tui/app.py:237
+#: src/omega_fire/interfaces/tui/app.py:242
 #: src/omega_fire/interfaces/tui/screens/settings_screen.py:95
 msgid "Thème"
 msgstr ""
@@ -4675,14 +4851,14 @@ msgid "Menu"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/keybindings.py:48
-#: src/omega_fire/interfaces/tui/app.py:78
-#: src/omega_fire/interfaces/tui/app.py:79
-#: src/omega_fire/interfaces/tui/app.py:239
+#: src/omega_fire/interfaces/tui/app.py:83
+#: src/omega_fire/interfaces/tui/app.py:84
+#: src/omega_fire/interfaces/tui/app.py:244
 msgid "Quitter"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/keybindings.py:49
-#: src/omega_fire/interfaces/tui/app.py:81
+#: src/omega_fire/interfaces/tui/app.py:86
 #: src/omega_fire/interfaces/tui/screens/fail2ban_diagnostics_screen.py:51
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:55
 #: src/omega_fire/interfaces/tui/screens/stats_report_screen.py:93
@@ -5248,7 +5424,6 @@ msgid "Fichiers ({count}) : {names}"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:259
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:437
 msgid "── RENDEMENT ───────────────\n"
 msgstr ""
 
@@ -5265,7 +5440,6 @@ msgid ""
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:271
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:443
 msgid "── BANDE PASSANTE ──────────\n"
 msgstr ""
 
@@ -5280,7 +5454,6 @@ msgid " {tot_icon} Vol. Total  : {value}\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:277
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:446
 #, python-brace-format
 msgid ""
 " 🗜 Taille moy. : {value}\n"
@@ -5288,36 +5461,30 @@ msgid ""
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:280
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:448
 msgid "── STATUTS HTTP ────────────\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:281
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:449
 #, python-brace-format
 msgid " 📊 Total Req.  : {total}\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:282
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:450
 #, python-brace-format
 msgid " √  Succès 2xx  : {success_2xx}\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:283
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:451
 #, python-brace-format
 msgid " ↔  Redir. 3xx  : {redirect_3xx}\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:284
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:452
 #, python-brace-format
 msgid " ⚠  Erreurs 4xx : {errors_4xx}\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:285
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:453
 #, python-brace-format
 msgid ""
 " ❌ Erreurs 5xx : {errors_5xx}\n"
@@ -5325,7 +5492,6 @@ msgid ""
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:288
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:455
 msgid "── CLIENTS & RÉSEAU ────────\n"
 msgstr ""
 
@@ -5346,7 +5512,6 @@ msgid "── RAMP & TAMPON ───────────\n"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:299
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:463
 #, python-brace-format
 msgid " 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n"
 msgstr ""
@@ -5402,29 +5567,29 @@ msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:349
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:58
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 msgid "IP Source"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:350
 #: src/omega_fire/interfaces/tui/screens/export_picker.py:44
 #: src/omega_fire/interfaces/tui/screens/exports_screen.py:78
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:256
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:127
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:278
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:128
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:191
 msgid "Type"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:351
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 msgid "Méthode"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:352
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:256
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:127
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:278
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:128
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:98
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:133
 #: src/omega_fire/interfaces/tui/screens/log_view_screen.py:79
@@ -5434,12 +5599,12 @@ msgstr ""
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:353
 #: src/omega_fire/interfaces/tui/screens/fail2ban_diagnostics_screen.py:59
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:92
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:75
 #: src/omega_fire/interfaces/tui/screens/purge_all_jails_screen.py:55
 #: src/omega_fire/interfaces/tui/screens/stats_report_screen.py:102
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:305
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:352
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:367
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:519
 #: src/omega_fire/interfaces/tui/widgets/capabilities_table.py:37
 msgid "Statut"
 msgstr ""
@@ -5447,27 +5612,27 @@ msgstr ""
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:354
 #: src/omega_fire/interfaces/tui/screens/export_picker.py:44
 #: src/omega_fire/interfaces/tui/screens/exports_screen.py:78
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 msgid "Taille"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:355
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 msgid "Latence"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:393
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:502
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:584
 msgid "🤖 Bot"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:395
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:504
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:586
 msgid "⚠ CLI"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:397
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:506
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:588
 msgid "🖧 Web"
 msgstr ""
 
@@ -5531,76 +5696,76 @@ msgstr ""
 msgid "Erreur de raccourci clavier pour « {key} » : {reason}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:65
+#: src/omega_fire/interfaces/tui/app.py:70
 #, python-brace-format
 msgid "version {version}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:65
+#: src/omega_fire/interfaces/tui/app.py:70
 msgid "🛡️ OMEGA-FIRE"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:80
+#: src/omega_fire/interfaces/tui/app.py:85
 msgid "Thème suivant"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:83
+#: src/omega_fire/interfaces/tui/app.py:88
 #: src/omega_fire/interfaces/tui/support/guide.py:37
 msgid "Réglages"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:142
+#: src/omega_fire/interfaces/tui/app.py:147
 #, python-brace-format
 msgid "Langue « {code} » indisponible : interface en français."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:148
+#: src/omega_fire/interfaces/tui/app.py:153
 #, python-brace-format
 msgid "Ce terminal (console texte) ne peut pas afficher la langue « {name} » : interface en anglais pour cette session. Le réglage est conservé - la langue revient dans un terminal graphique."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:160
+#: src/omega_fire/interfaces/tui/app.py:165
 #, python-brace-format
 msgid "Terminal détecté : {family} ({columns}x{rows}). Rendu appliqué : {value}."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:174
-#: src/omega_fire/interfaces/tui/app.py:215
+#: src/omega_fire/interfaces/tui/app.py:179
+#: src/omega_fire/interfaces/tui/app.py:220
 #, python-brace-format
 msgid "{theme} | {columns}x{rows}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:207
+#: src/omega_fire/interfaces/tui/app.py:212
 #, python-brace-format
 msgid "Thème appliqué mais non enregistré : {exc}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:217
+#: src/omega_fire/interfaces/tui/app.py:222
 #, python-brace-format
 msgid "{family} ({columns}x{rows})"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:218
+#: src/omega_fire/interfaces/tui/app.py:223
 msgid "Terminal rafraîchi"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:237
+#: src/omega_fire/interfaces/tui/app.py:242
 msgid "Changer le thème actif"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:239
+#: src/omega_fire/interfaces/tui/app.py:244
 msgid "Quitter l'application (avec confirmation)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:242
+#: src/omega_fire/interfaces/tui/app.py:247
 msgid "Capture d'écran"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:243
+#: src/omega_fire/interfaces/tui/app.py:248
 msgid "Enregistrer une capture SVG de l'écran courant"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/app.py:259
+#: src/omega_fire/interfaces/tui/app.py:264
 msgid "Erreur inattendue"
 msgstr ""
 
@@ -5652,6 +5817,18 @@ msgstr ""
 msgid "Erreur : {error}"
 msgstr ""
 
+#: src/omega_fire/interfaces/tui/screens/_log_sources.py:35
+#: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:68
+#: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:105
+#: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:63
+#: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:76
+#: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:97
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:87
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:161
+msgid "Chemin manuel"
+msgstr ""
+
 #: src/omega_fire/interfaces/tui/screens/action_history_screen.py:48
 msgid "HISTORIQUE DES ACTIONS"
 msgstr ""
@@ -5690,7 +5867,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:63
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:58
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:74
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:90
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:102
 #: src/omega_fire/interfaces/tui/screens/table_management_screen.py:108
 msgid "Action"
 msgstr ""
@@ -5700,11 +5877,12 @@ msgid "Détails"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/action_history_screen.py:69
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:258
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:280
 msgid "Heure"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/action_history_screen.py:69
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:215
 msgid "Résultat"
 msgstr ""
 
@@ -5809,7 +5987,7 @@ msgid "Extension recherchée"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/advanced_cleanup_screen.py:97
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:133
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:184
 msgid "Analyser"
 msgstr ""
 
@@ -5983,7 +6161,7 @@ msgid "Description : {value}"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/backup_state_screen.py:86
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:265
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:338
 #, python-brace-format
 msgid "Échec de la sauvegarde : {message}"
 msgstr ""
@@ -6058,10 +6236,10 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/ban_ip_list_screen.py:136
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:98
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:113
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:119
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:129
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:145
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:154
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:122
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:132
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:148
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:157
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:85
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:98
 msgid "Fichier épinglé"
@@ -6096,15 +6274,15 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:59
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:61
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:67
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:126
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:130
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:151
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:155
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:129
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:133
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:154
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:158
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:117
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:94
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:82
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:86
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:102
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:105
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:114
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:156
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:96
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:99
 msgid "Sélectionner"
@@ -6115,9 +6293,9 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:104
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:74
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:117
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:97
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:105
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:108
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:85
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:117
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:159
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:102
 msgid "Gérer les épingles"
 msgstr ""
@@ -6221,9 +6399,10 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/ban_ip_list_screen.py:257
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:217
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:86
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:161
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:241
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:210
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:149
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:314
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:280
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:410
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:216
 msgid "Saisissez un chemin de fichier."
 msgstr ""
@@ -6285,10 +6464,11 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/list_banned_ips_screen.py:65
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:74
 #: src/omega_fire/interfaces/tui/screens/stats_report_screen.py:101
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:305
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:314
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:352
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:356
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:194
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:367
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:519
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:523
 #: src/omega_fire/interfaces/tui/screens/unban_ip_screen.py:55
 msgid "Adresse IP"
 msgstr ""
@@ -6306,7 +6486,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/ban_ip_screen.py:102
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:132
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:175
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:163
 #: src/omega_fire/interfaces/tui/screens/unban_ip_screen.py:87
 msgid "Saisissez une adresse IP."
 msgstr ""
@@ -6318,6 +6498,8 @@ msgid "Format d'adresse IP invalide : '{raw_ip}'."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/ban_ip_screen.py:126
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:309
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:536
 msgid "(aucun)"
 msgstr ""
 
@@ -6370,7 +6552,7 @@ msgid "Retirer une IP / CIDR"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/blocklist_file_detail_screen.py:57
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:233
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:252
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:116
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:59
 msgid "Retirer"
@@ -6426,8 +6608,9 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:386
 #: src/omega_fire/interfaces/tui/screens/purge_app_log_screen.py:116
 #: src/omega_fire/interfaces/tui/screens/purge_audit_history_screen.py:116
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:199
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:187
 #: src/omega_fire/interfaces/tui/screens/snapshot_detail_screen.py:78
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:459
 msgid "CONFIRMER LA SUPPRESSION"
 msgstr ""
 
@@ -6603,7 +6786,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:98
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:58
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:83
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:194
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:197
 #: src/omega_fire/interfaces/tui/screens/purge_all_jails_screen.py:45
 #: src/omega_fire/interfaces/tui/screens/purge_all_jails_screen.py:65
 msgid "Chargement des jails..."
@@ -6745,13 +6928,14 @@ msgid "Filtrer / Rafraîchir"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/conntrack_screen.py:78
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:132
 #: src/omega_fire/interfaces/tui/screens/stats_report_screen.py:95
 msgid "Exporter HTML"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/conntrack_screen.py:87
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:90
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:136
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:139
 msgid "Destination"
 msgstr ""
 
@@ -6770,8 +6954,8 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/conntrack_screen.py:87
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:212
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:188
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:366
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:214
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:533
 msgid "Source"
 msgstr ""
 
@@ -6836,20 +7020,6 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:65
 #, python-brace-format
 msgid "{name} — {desc}"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:68
-#: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:105
-#: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:63
-#: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:76
-#: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:97
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:86
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:99
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:83
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:107
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:92
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:110
-msgid "Chemin manuel"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/create_jail_screen.py:73
@@ -7441,8 +7611,8 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:140
 #: src/omega_fire/interfaces/tui/screens/jail_presets_screen.py:86
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:92
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:256
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:127
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:278
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:128
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:95
 msgid "Nom"
 msgstr ""
@@ -7604,7 +7774,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:71
 #: src/omega_fire/interfaces/tui/screens/export_rules_screen.py:76
 #: src/omega_fire/interfaces/tui/screens/export_state_screen.py:56
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:150
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:213
 msgid "Thème HTML"
 msgstr ""
 
@@ -7624,7 +7794,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:84
 #: src/omega_fire/interfaces/tui/screens/export_rules_screen.py:88
 #: src/omega_fire/interfaces/tui/screens/export_state_screen.py:68
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:159
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:222
 msgid "Exporter"
 msgstr ""
 
@@ -7665,19 +7835,19 @@ msgid "EXPORTER LA BLACKLIST COMPLÈTE"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:70
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:93
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:81
 msgid "Fichier source"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:81
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:63
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:145
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:208
 msgid "JSON (brut structure)"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:81
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:64
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:145
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:208
 msgid "TXT (1 IP par ligne, réinjectable)"
 msgstr ""
 
@@ -7715,8 +7885,9 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_blacklist_screen.py:220
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:200
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:366
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:153
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:339
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:506
 #, python-brace-format
 msgid "Erreur lors de l'écriture du fichier d'export : {e}"
 msgstr ""
@@ -7757,8 +7928,8 @@ msgid "Écraser (remplace tout)"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_blocklist_file_screen.py:122
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:162
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:169
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:165
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:172
 msgid "Incrementer (nouvelles IP uniquement)"
 msgstr ""
 
@@ -7804,7 +7975,7 @@ msgid "Impossible de contacter Fail2ban."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:111
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:103
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:106
 #, python-brace-format
 msgid "{name} ({count} IP(s))"
 msgstr ""
@@ -7826,6 +7997,189 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_jail_screen.py:192
 msgid "Jail Source"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:63
+msgid "24 dernières heures"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:63
+msgid "30 derniers jours"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:63
+msgid "7 derniers jours"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:69
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:50
+msgid "Go"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:69
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:50
+msgid "Ko"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:69
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:50
+msgid "Mo"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:107
+msgid "EXPORTER LES STATISTIQUES DES LOGS"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:108
+msgid "Logs seulement, même rapport qu'omega-serv et omega-log. Les bans, jails et l'état du pare-feu sont dans les rapports 8.3 et 8.4."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:110
+msgid "Logs analysés"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:113
+msgid "Choisir les logs"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:125
+msgid "Thème d'export HTML"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:130
+msgid "Exporter JSON"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:145
+msgid "Aucun log : importez-en dans 5.1 Bibliothèque, ou épinglez-en un."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:150
+#, python-brace-format
+msgid "Sélection : {description}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:158
+msgid "LOGS À ANALYSER"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:159
+msgid "Bibliothèque (5.1) en tête, puis vos épingles."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:178
+msgid "Un calcul est déjà en cours, patientez."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:181
+msgid "Choisissez au moins un log."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:232
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:235
+#, python-brace-format
+msgid "Erreur de calcul : {message}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:269
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:352
+msgid "tout le fichier"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:270
+#, python-brace-format
+msgid "── SYNTHÈSE — {period_label}, {log_count} log(s) ──\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:272
+msgid " Aucune ligne sur cette période.\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:277
+#, python-brace-format
+msgid " Lignes analysées   : {total}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:278
+#, python-brace-format
+msgid " Requêtes HTTP      : {http_total}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:279
+#, python-brace-format
+msgid " IPs uniques        : {unique_ips}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:280
+#, python-brace-format
+msgid " Taux d'erreur      : {error_rate:.1f} %\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:281
+#, python-brace-format
+msgid " Volume transféré   : {volume}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:282
+#, python-brace-format
+msgid " Heure de pointe    : {peak_hour:02d}h ({peak_count} lignes)\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:283
+#, python-brace-format
+msgid ""
+" Période couverte   : {covered}\n"
+"\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:286
+msgid "── STATUTS HTTP ──\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:289
+#, python-brace-format
+msgid "Refus {name}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:299
+msgid "TOP IP"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:301
+msgid "CHEMINS DEMANDÉS"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:302
+msgid "CHEMINS EN 404"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:314
+#, python-brace-format
+msgid "dont {errors} en erreur"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:324
+msgid "── RÉPARTITION HORAIRE (24 h) ──\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:330
+#, python-brace-format
+msgid "── TENDANCE PAR JOUR ({count} j) ──\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:338
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:345
+msgid "Calculez d'abord les statistiques (choisissez une période)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:341
+#, python-brace-format
+msgid "Export JSON : {out_path}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/export_log_stats_screen.py:357
+#, python-brace-format
+msgid "Export HTML : {out_path}"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_picker.py:37
@@ -7944,13 +8298,6 @@ msgstr ""
 msgid ""
 "{path}\n"
 "Le fichier est supprimé définitivement."
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/screens/exports_screen.py:141
-#: src/omega_fire/interfaces/tui/screens/log_classic_viewer_screen.py:80
-#: src/omega_fire/interfaces/tui/screens/log_view_screen.py:111
-#, python-brace-format
-msgid "Fichier introuvable : {path}"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/exports_screen.py:146
@@ -8223,12 +8570,12 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:147
 #, python-brace-format
-msgid "FAQ exportée : {path} (visible en 6.5)."
+msgid "FAQ exportée : {path} (visible en 6.6)."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:148
 #, python-brace-format
-msgid "Guide exporté : {path} (visible en 6.5)."
+msgid "Guide exporté : {path} (visible en 6.6)."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/guide_screens.py:157
@@ -8290,151 +8637,155 @@ msgstr ""
 msgid "Exporter la FAQ en HTML"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:17
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:18
 #: src/omega_fire/interfaces/tui/support/guide.py:31
 msgid "Haut / Bas"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:17
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:18
 #: src/omega_fire/interfaces/tui/support/guide.py:31
 msgid "Naviguer entre les éléments d'un écran"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:18
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:19
 #: src/omega_fire/interfaces/tui/support/guide.py:32
 msgid "Naviguer entre les champs d'un formulaire"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:18
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:19
 #: src/omega_fire/interfaces/tui/support/guide.py:32
 msgid "Tab / Maj+Tab"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:19
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:20
 #: src/omega_fire/interfaces/tui/support/guide.py:33
 msgid "Retour à l'écran précédent (confirmation de sortie sur l'accueil)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:19
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:20
 #: src/omega_fire/interfaces/tui/support/guide.py:33
 msgid "Échap"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:20
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:21
 #: src/omega_fire/interfaces/tui/support/guide.py:34
 msgid "Thème suivant (appliqué immédiatement, sans confirmation)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:21
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:22
 #: src/omega_fire/interfaces/tui/support/guide.py:35
 msgid "Rafraîchir la détection du terminal"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:22
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:23
 msgid "Cette aide"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:23
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:24
 #: src/omega_fire/interfaces/tui/support/guide.py:38
 msgid "Quitter (avec confirmation)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:27
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:28
 msgid "1. Capacités & diagnostics"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:27
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:28
 msgid "Registre des composants système détectés, diagnostics, journal applicatif."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:28
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:29
 msgid "2. Gestion des IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:28
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:29
 msgid "Bannissement/débannissement unifié (nftables/iptables/fail2ban), import/export."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:29
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:30
 msgid "3. Gestion des règles"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:29
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:30
 msgid "Règles de filtrage avancées, politiques pré-définies par backend."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:30
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:31
 msgid "4. Gestion Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:30
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:31
 msgid "Jails, transferts d'IPs, service Fail2ban."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:31
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:32
 msgid "5. Gestion des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:31
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:32
 msgid "Analyse des logs, rotation, restauration, nettoyage."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:32
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:33
 msgid "6. Exports & rapports"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:32
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:33
 msgid "Exports de la blacklist, des règles, rapports d'audit."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:33
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:34
 msgid "7. Système & persistance"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:33
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:34
 msgid "Sauvegarde/restauration d'état complet, historique des actions."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:34
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:35
 msgid "8. Monitoring & statistiques"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:34
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:35
 msgid "Tableau de bord temps réel, conntrack, statistiques."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:59
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:63
 #: src/omega_fire/interfaces/tui/screens/home.py:48
 msgid "AIDE"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:65
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:69
 #: src/omega_fire/interfaces/tui/support/guide.py:49
 msgid "Raccourcis clavier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:67
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:71
 #, python-brace-format
 msgid "{key:<14} {description}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:69
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:73
 msgid "Sections"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:71
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:75
 #, python-brace-format
 msgid ""
 "[b]{title}[/b]\n"
 "{description}\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/help_screen.py:75
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:79
 msgid "Guide d'aide complet"
 msgstr ""
 
+#: src/omega_fire/interfaces/tui/screens/help_screen.py:82
+msgid "Contact et support"
+msgstr ""
+
 #: src/omega_fire/interfaces/tui/screens/home.py:39
-#: src/omega_fire/interfaces/tui/section_registry.py:99
+#: src/omega_fire/interfaces/tui/section_registry.py:100
 msgid "CAPACITÉS & DIAGNOSTICS"
 msgstr ""
 
@@ -8463,7 +8814,7 @@ msgid "SYSTÈME & PERSISTANCE"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/home.py:46
-#: src/omega_fire/interfaces/tui/section_registry.py:258
+#: src/omega_fire/interfaces/tui/section_registry.py:268
 msgid "MONITORING & STATISTIQUES"
 msgstr ""
 
@@ -8659,201 +9010,211 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:99
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:288
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:233
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:226
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:269
 msgid "Sélectionnez d'abord une ligne."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:108
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:111
 msgid "TRANSFERT / INTEROPÉRABILITÉ DES IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:111
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:114
 msgid "Source de collecte"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:114
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:117
 msgid "Jail Fail2ban (temps réel)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:115
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:140
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:118
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:143
 msgid "Pare-feu nftables (set blackhole)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:116
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:141
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:144
 msgid "Pare-feu iptables (chaîne INPUT)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:117
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:142
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:120
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:145
 msgid "Pare-feu ip6tables (chaîne INPUT)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:118
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:121
 msgid "Fichier texte / chemin manuel"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:120
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:123
 msgid "Tous les backends réunis (nft, ipt, ip6t, jails)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:125
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:128
 msgid "Jail source"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:127
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:152
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:130
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:155
 msgid "Chemin du fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:133
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:136
 msgid "Gérer les épingles (source)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:139
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:142
 msgid "Jail Fail2ban (bannir dans un jail actif)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:143
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:146
 #, python-brace-format
 msgid "Fichier texte par défaut ({name})"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:144
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:147
 msgid "Chemin manuel personnalisé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:150
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:153
 msgid "Jail destination"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:158
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:161
 msgid "Gérer les épingles (destination)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:160
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:163
 msgid "Mode d'écriture (fichier)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:162
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:165
 msgid "Rajouter (brut)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:162
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:165
 msgid "Écraser"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:167
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:170
 msgid "Mode d'injection (iptables/ip6tables)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:169
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:172
 msgid "Réinitialiser / écraser la chaîne"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:177
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:180
 msgid "Transférer"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:272
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:362
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:275
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:398
 msgid "Aucun jail disponible ou sélectionné."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:274
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:418
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:278
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:454
 #, python-brace-format
 msgid "Jail '{jail_name}'"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:278
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:282
 msgid "Port nftables indisponible."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:280
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:284
 msgid "Pare-feu nftables (blackhole)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:284
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:288
 msgid "Port iptables indisponible."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:286
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:290
 msgid "Pare-feu iptables (INPUT)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:290
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:294
 msgid "Port ip6tables indisponible."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:292
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:296
 msgid "Pare-feu ip6tables (INPUT)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:297
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:301
 #, python-brace-format
 msgid "Fichier source '{src_file}' introuvable."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:300
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:304
 #, python-brace-format
 msgid "Fichier '{src_file}'"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:305
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:309
 msgid "Fichier épinglé introuvable ou non sélectionné."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:308
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:312
 #, python-brace-format
 msgid "Épinglé '{src_file}'"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:329
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:334
 msgid "Tous les backends réunis"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:347
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:370
 #, python-brace-format
 msgid "La source {source_label} ne contient aucune IP bannie à transférer."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:353
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:376
 msgid "Transfert en cours..."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:388
+#, python-brace-format
+msgid "{count} adresse(s) protégée(s) écartée(s) (hôte local, Tailscale, réseau local) : {values}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:412
 msgid "Chemin de destination manquant."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:394
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:430
 msgid "Port Fail2ban indisponible."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:417
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:453
 #, python-brace-format
 msgid "Source : {source_label} | {added_count} bannie(s), {already_present} ignorée(s), {failed_count} échec(s)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:458
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:494
 #, python-brace-format
 msgid "Erreur d'écriture dans le fichier : {e}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:463
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:499
 #, python-brace-format
 msgid "Source : {source_label} | {new_added} nouvelle(s) IP(s), {already_present} déjà présente(s), dans '{target_path}'."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:470
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:506
 #, python-brace-format
 msgid "Port {name} indisponible."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:499
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:544
 #, python-brace-format
 msgid "Source : {source_label} | {added_count} injectée(s), {already_present} ignorée(s), {failed_count} échec(s)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:549
+#, python-brace-format
+msgid "{count} ban(s) gardent le temps qui leur restait dans fail2ban."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:46
@@ -8987,214 +9348,314 @@ msgstr ""
 msgid "{count} règle(s) d'autres outils ({tools}) : affichées pour information, Omega-Fire ne les modifie pas."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:195
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:200
 #, python-brace-format
 msgid "Erreur de lecture ({source}) : {e}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:222
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:241
 msgid "VISUALISER LES LOGS EN DIRECT (LIVE TAIL)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:225
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:244
 msgid "Nom de l'épingle (uniquement pour 'Épingler')"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:226
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:245
 msgid "Chemin du fichier ou URL http(s)://..."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:229
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:248
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:69
 msgid "Lancer"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:231
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:110
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:250
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:111
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:125
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:55
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:130
 msgid "Épingler"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:235
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:114
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:254
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:115
 #: src/omega_fire/interfaces/tui/screens/purge_all_jails_screen.py:49
 msgid "Purger tout"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:245
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:267
 msgid "Arrêter / Retour"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:281
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:141
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:307
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:308
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:144
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:145
+#: src/omega_fire/interfaces/tui/section_registry.py:187
+msgid "Bibliothèque"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:314
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:153
 msgid "Épingle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:286
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:287
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:146
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:147
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:319
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:320
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:158
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:159
 msgid "Historique récent"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:287
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:147
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:320
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:159
 msgid "Historique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:292
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:325
 msgid "Sélectionnez une ligne, ou saisissez un chemin/URL manuellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:303
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:336
 msgid "Aucune source épinglée. Saisissez un chemin/URL manuellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:341
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:374
 msgid "Nom et chemin requis pour épingler."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:353
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:358
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:386
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:391
 msgid "Aucune ligne sélectionnée."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:372
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:394
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:263
+msgid "Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:408
 msgid "Historique et épingles purges avec succès."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:381
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:417
 msgid "Source invalide. Saisissez un chemin ou une URL."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:392
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:428
 #, python-brace-format
 msgid "LIVE TAIL — {source}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:438
-#, python-brace-format
-msgid " ⚡ Débit      : {rps:.1f} req/s\n"
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:485
+msgid "── RENDEMENT ──────────────\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:441
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:486
+#, python-brace-format
+msgid "{requests_per_second:.1f} req/s"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:487
+#, python-brace-format
+msgid " ⚡ Débit        : {rps}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:489
 #, python-brace-format
 msgid ""
-" ⏱ Latence moy: {avg_lat:.0f} ms\n"
+" ⏱ Latence moy. : {none}\n"
 "\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:444
-#, python-brace-format
-msgid " 🌐 Débit réseau: {value}/s\n"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:445
-#, python-brace-format
-msgid " 📦 Vol. total  : {value}\n"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:456
-#, python-brace-format
-msgid " 💻 IPs uniques : {unique_ips}\n"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:457
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:493
 #, python-brace-format
 msgid ""
-" 🖧 Top Talker  : {value}\n"
+" ⏱ Latence moy. : {latency:.0f} ms\n"
 "\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:459
-msgid "── SANTÉ & TAMPON ──────────\n"
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:495
+msgid "── BANDE PASSANTE ─────────\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:464
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:499
 #, python-brace-format
-msgid " 📥 Tampon Live : {buffer_size}/{BUFFER_SIZE}"
+msgid " 🌐 Débit réseau : {bps}\n"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:92
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:500
+#, python-brace-format
+msgid " 📦 Volume total : {total}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:501
+#, python-brace-format
+msgid ""
+" 🗜 Taille moy.  : {average}\n"
+"\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:503
+msgid "── STATUTS HTTP ───────────\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:504
+#, python-brace-format
+msgid " 📊 Requêtes     : {http_total}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:505
+#, python-brace-format
+msgid " √  Succès 2xx   : {status_2xx}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:506
+#, python-brace-format
+msgid " ↔  Redir. 3xx   : {status_3xx}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:507
+#, python-brace-format
+msgid " ⚠  Erreurs 4xx  : {status_4xx}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:508
+#, python-brace-format
+msgid " ❌ Erreurs 5xx  : {status_5xx}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:509
+#, python-brace-format
+msgid " ⛔ Refus 403    : {status_403}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:510
+#, python-brace-format
+msgid ""
+" ⏳ Refus 429    : {status_429}\n"
+"\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:512
+msgid "── CLIENTS & RÉSEAU ───────\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:513
+#, python-brace-format
+msgid " 💻 IPs uniques  : {unique_ips}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:515
+msgid " 🖧 Top 5 IP     :\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:518
+msgid "── CHEMINS DEMANDÉS ───────\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:520
+msgid "── CHEMINS EN 404 ─────────\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:523
+msgid "── SANTÉ & TAMPON ─────────\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:527
+#, python-brace-format
+msgid " 🌡 Santé        : {health}\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:528
+#, python-brace-format
+msgid " ⚠  Taux d'erreur: {rate:.1f}%\n"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:529
+#, python-brace-format
+msgid " 📥 Tampon       : {count}/{BUFFER_SIZE}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:93
 msgid "VISUALISER LES LOGS SERVEURS AVEC LNAV"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:94
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:95
 msgid "Cliquez une ligne pour ajouter son numéro au champ de fusion ci-dessous (lnav fusionne automatiquement plusieurs fichiers)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:100
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:101
 msgid "Sources à fusionner (numéros ci-dessus et/ou chemins manuels, séparés par des virgules)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:101
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:102
 msgid "ex: 1,3 ou /chemin/manuel.log"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:103
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:104
 msgid "Épingler (toujours UNE seule source : la ligne en surbrillance, ou le 1er élément ci-dessus)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:104
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:105
 msgid "Nom de l'épingle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:108
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:109
 msgid "Lancer lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:112
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:113
 msgid "Retirer (ligne en surbrillance)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:140
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:152
 #, python-brace-format
 msgid "{name} ({count} fichiers)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:218
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:230
 msgid "Saisissez un nom pour l'épingle."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:231
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:243
 msgid "Aucune source à épingler (sélectionnez une ligne ou saisissez un chemin)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:236
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:248
 #, python-brace-format
 msgid "{message} ({count} fichier(s))"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:244
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:248
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:256
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:260
 msgid "Aucune ligne en surbrillance."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:265
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:280
 msgid "Historique et épingles lnav purges avec succès."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:271
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:286
 msgid "Aucune source valide sélectionnée."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:287
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:302
 #, python-brace-format
 msgid "Fichier(s) introuvable(s), ignore(s) : {value}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:290
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:305
 msgid "Aucun fichier valide au final. Opération annulée."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:302
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:317
 #: src/omega_fire/interfaces/tui/support/log_viewers.py:42
 msgid "L'exécutable 'lnav' est introuvable (non installé ou absent du PATH). Sur Arch/EndeavourOS : sudo pacman -S lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:309
+#: src/omega_fire/interfaces/tui/screens/lnav_screen.py:324
 #: src/omega_fire/interfaces/tui/support/log_viewers.py:46
 #, python-brace-format
 msgid "Échec du lancement de lnav : {e}"
@@ -9386,13 +9847,13 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:28
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:53
-#: src/omega_fire/interfaces/tui/section_registry.py:271
+#: src/omega_fire/interfaces/tui/section_registry.py:281
 msgid "30 jours"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:28
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:51
-#: src/omega_fire/interfaces/tui/section_registry.py:266
+#: src/omega_fire/interfaces/tui/section_registry.py:276
 msgid "7 jours"
 msgstr ""
 
@@ -9734,8 +10195,8 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:98
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:108
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:104
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:52
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:63
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:170
 msgid "Personnalisé"
 msgstr ""
 
@@ -9745,7 +10206,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:102
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:109
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:128
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:179
 msgid "Nombre de jours"
 msgstr ""
 
@@ -9779,7 +10240,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:123
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:123
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:124
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:142
 msgid "Supprimer la sélection"
 msgstr ""
 
@@ -9795,7 +10256,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/purge_backups_screen.py:191
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:199
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:188
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:214
 msgid "Créée le"
 msgstr ""
 
@@ -9948,54 +10409,59 @@ msgstr ""
 msgid "Récupération en cours..."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:91
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:79
 msgid "SUPPRIMER UNE IP DES LOGS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:102
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:90
 msgid "Adresse(s) IP à retirer (séparées par des virgules)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:106
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:94
 msgid "Charger depuis un export"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:110
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:98
 msgid "Rechercher et supprimer"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:166
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:154
 #, python-brace-format
 msgid "Fichier introuvable : {selected_file}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:171
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:159
 #, python-brace-format
 msgid "Format d'adresse IP invalide : {values}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:182
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:243
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:170
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:232
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:421
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:448
 #, python-brace-format
 msgid "Impossible de lire le fichier : {e}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:188
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:176
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:452
 #, python-brace-format
 msgid "Aucune de ces IPs n'a été trouvée dans '{name}'."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:194
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:182
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:455
 #, python-brace-format
 msgid "  {ip} : {count} ligne(s)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:196
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:184
 #, python-brace-format
 msgid "Absentes du fichier : {values}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:200
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:188
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:460
 #, python-brace-format
 msgid ""
 "Fichier : {name}\n"
@@ -10003,38 +10469,40 @@ msgid ""
 "{occurrences} ligne(s) retirée(s), {count} ligne(s) restante(s) après purge."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:214
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:203
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:475
 #, python-brace-format
 msgid "Erreur lors de l'écriture dans le fichier : {e}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:218
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:207
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:478
 #, python-brace-format
 msgid "{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s))."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:228
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:217
 msgid "Aucun export d'IPs trouvé : exportez d'abord un résultat en 5.4."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:232
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:221
 msgid "CHARGER UNE LISTE D'IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:233
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:222
 msgid "Exports contenant des IPs, Top N (5.4) en premier."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:246
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:235
 #, python-brace-format
 msgid "Aucune IP dans '{name}'."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:251
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:240
 msgid "IPs À RETIRER DES LOGS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:252
+#: src/omega_fire/interfaces/tui/screens/remove_ip_from_log_screen.py:241
 #, python-brace-format
 msgid "{name} — cochez les IPs à retirer du fichier source."
 msgstr ""
@@ -10076,7 +10544,7 @@ msgid "Configurer une automatisation de restauration"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:79
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:95
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:107
 msgid "Lister et gérer les automatisations en cours"
 msgstr ""
 
@@ -10122,7 +10590,7 @@ msgid "Écraser (remplacement complet)"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:119
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:120
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:136
 msgid "Automatisations planifiées"
 msgstr ""
 
@@ -10203,81 +10671,118 @@ msgstr ""
 msgid "{count} snapshot(s) — sélectionnez une ligne pour agir dessus."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:47
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:57
+msgid "Tous les jours"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:58
 msgid "Toutes les semaines"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:48
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:59
 msgid "Tous les mois"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:49
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:60
 msgid "Tous les trimestres"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:50
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:61
 msgid "Tous les semestres"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:51
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:62
 msgid "Tous les ans"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:88
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:100
 msgid "ROTATION / BACKUP DES LOGS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:93
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:105
 msgid "Créer une sauvegarde manuelle immédiatement"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:94
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:106
 msgid "Configurer une automatisation de sauvegarde"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:101
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:113
 msgid "Source à sauvegarder"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:110
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:188
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:122
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:214
 msgid "Fréquence"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:117
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:129
 msgid "Intervalle personnalisé (jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:230
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:132
+msgid "Sauvegardes conservées"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:144
+msgid "Réinstaller l'exécution"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:146
+msgid "Désinstaller l'exécution"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:214
+msgid "Dernière sauvegarde"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:214
+msgid "Gardées"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:215
+msgid "Prochaine"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:221
+msgid "réussie"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:221
+#, python-brace-format
+msgid "échec : {message}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:275
 #, python-brace-format
 msgid "Automatisation pour '{value}' supprimée."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:251
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:324
 #, python-brace-format
 msgid "Fichier introuvable : {resolved}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:272
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:345
 #, python-brace-format
 msgid "Sauvegarde réussie ({value:.1f} KB -> {value2:.1f} KB, {ratio:.1f}% de gain)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:274
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:347
 #, python-brace-format
 msgid ", {deleted_count} ancienne(s) archive(s) supprimée(s)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:288
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:361
 msgid "Nombre de jours invalide."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:291
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:364
 #, python-brace-format
 msgid "Tous les {days_interval} jours"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:305
+#: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:382
 #, python-brace-format
 msgid "Règle de rotation configurée pour '{name}' ({interval_label}) — destination : {BACKUPS_DIR}"
 msgstr ""
@@ -10862,150 +11367,184 @@ msgstr ""
 msgid "Continuer quand même"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:96
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:147
 msgid "Dernière heure"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:96
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:147
 msgid "Dernières 24 heures"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:96
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:147
 msgid "Tout le fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:97
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:148
 msgid "Derniers 7 jours"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:97
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:148
 msgid "Saisie manuelle (jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:102
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:153
 msgid "ANALYSER LES IPs (TOP N)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:104
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:155
 msgid "Source (fichier log ou blocklist)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:117
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:168
 msgid "Nombre d'IPs (Top N)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:170
 msgid "Top 10"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:170
 msgid "Top 100"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:119
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:170
 msgid "Top 50"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:123
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:174
 msgid "Nombre personnalisé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:126
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:177
 msgid "Période à analyser"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:143
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:193
+msgid "Ou cherchez une IP précise dans ce log (fichier entier) :"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:197
+msgid "Rechercher cette IP"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:199
+msgid "Retirer cette IP du log analysé"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:206
 msgid "Exporter le résultat (rechargeable en 5.5)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:146
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:209
 msgid "HTML (rapport visuel)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:272
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:309
+msgid "Analyse en cours... (l'interface reste utilisable)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:328
 #, python-brace-format
 msgid "Erreur lors de la lecture du fichier : {e}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:282
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:344
 msgid "Aucune IP valide n'a pu être extraite de ce fichier."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:305
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:352
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:367
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:519
 msgid "Occurrences"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:305
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:314
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:352
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:356
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:367
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:519
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:523
 msgid "Rang"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:307
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:353
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:369
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:520
 msgid "Doublon"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:307
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:353
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:369
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:520
 msgid "Unique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:310
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:372
 #, python-brace-format
 msgid "Total entrées : {total_occurrences} | IPs uniques : {count} | Doublons : {duplicates_count}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:312
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:374
 #, python-brace-format
 msgid "Fichier propre : {count} IPs uniques sans doublon."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:314
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:356
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:523
 msgid "% Trafic"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:314
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:356
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:523
 msgid "Requêtes"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:314
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:356
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:376
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:523
 msgid "Volume"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:318
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:380
 #, python-brace-format
 msgid "Analyse terminée ({count} IPs affichées sur {total_occurrences} requêtes)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:323
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:406
+msgid "Saisissez une seule adresse IP valide."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:413
+msgid "Recherche en cours..."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:433
+#, python-brace-format
+msgid "{ip} : absente de {name}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:437
+#, python-brace-format
+msgid "{ip} : {count} ligne(s) dans {name}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:490
 msgid "Lancez d'abord une analyse."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:343
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:510
 #, python-brace-format
-msgid "Export réussi : {count} IP(s) dans '{path}'. Rechargeable en 5.5, visible en 6.5."
+msgid "Export réussi : {count} IP(s) dans '{path}'. Rechargeable en 5.5, visible en 6.6."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:362
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:529
 #, python-brace-format
 msgid "{days} derniers jours"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:364
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:531
 msgid "Top IPs - Omega-Fire"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:365
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:532
 msgid "Classement des IPs les plus actives"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:367
+#: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:534
 msgid "Période"
 msgstr ""
 
@@ -11057,584 +11596,589 @@ msgstr ""
 msgid "IP {ip} n'était pas bannie (déjà libre)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:76
+#: src/omega_fire/interfaces/tui/section_registry.py:77
 msgid "Vérifier le statut du service & persistance"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:77
+#: src/omega_fire/interfaces/tui/section_registry.py:78
 msgid "4.10 Statut du service Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:78
+#: src/omega_fire/interfaces/tui/section_registry.py:79
 msgid "Démarrer le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:79
+#: src/omega_fire/interfaces/tui/section_registry.py:80
 msgid "4.10 Démarrer Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:80
+#: src/omega_fire/interfaces/tui/section_registry.py:81
 msgid "Stopper le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:81
+#: src/omega_fire/interfaces/tui/section_registry.py:82
 msgid "4.10 Stopper Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:82
+#: src/omega_fire/interfaces/tui/section_registry.py:83
 msgid "Arrêter le service Fail2ban ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:82
+#: src/omega_fire/interfaces/tui/section_registry.py:83
 msgid "CONFIRMER L'ARRÊT"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:83
+#: src/omega_fire/interfaces/tui/section_registry.py:84
 msgid "Redémarrer le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:84
+#: src/omega_fire/interfaces/tui/section_registry.py:85
 msgid "4.10 Redémarrer Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:85
+#: src/omega_fire/interfaces/tui/section_registry.py:86
 msgid "CONFIRMER LE REDÉMARRAGE"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:85
+#: src/omega_fire/interfaces/tui/section_registry.py:86
 msgid "Redémarrer le service Fail2ban ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:86
+#: src/omega_fire/interfaces/tui/section_registry.py:87
 msgid "Activer le service au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:87
+#: src/omega_fire/interfaces/tui/section_registry.py:88
 msgid "4.10 Activer Fail2ban au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:88
+#: src/omega_fire/interfaces/tui/section_registry.py:89
 msgid "Désactiver le service au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:89
+#: src/omega_fire/interfaces/tui/section_registry.py:90
 msgid "4.10 Désactiver Fail2ban au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:96
+#: src/omega_fire/interfaces/tui/section_registry.py:97
 msgid "GÉRER LE SERVICE FAIL2BAN"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:101
+#: src/omega_fire/interfaces/tui/section_registry.py:102
 msgid "Afficher le registre des capacités"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:101
+#: src/omega_fire/interfaces/tui/section_registry.py:102
 msgid "Liste des composants et leur status"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:103
+#: src/omega_fire/interfaces/tui/section_registry.py:104
 msgid "Détail d'une capacité"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:103
+#: src/omega_fire/interfaces/tui/section_registry.py:104
 msgid "Sélection d'un composant"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:105
+#: src/omega_fire/interfaces/tui/section_registry.py:106
 msgid "Re-scanner le système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:105
+#: src/omega_fire/interfaces/tui/section_registry.py:106
 msgid "Relance des probes système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:106
+#: src/omega_fire/interfaces/tui/section_registry.py:107
 msgid "1.3 Re-scan du système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:107
+#: src/omega_fire/interfaces/tui/section_registry.py:108
 msgid "RE-SCANNER LE SYSTÈME"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:108
+#: src/omega_fire/interfaces/tui/section_registry.py:109
 msgid "Relancer un scan complet du système (nftables, iptables, fail2ban, systemd) ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:109
+#: src/omega_fire/interfaces/tui/section_registry.py:110
 msgid "Liste les erreurs et dégradations"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:109
+#: src/omega_fire/interfaces/tui/section_registry.py:110
 msgid "Voir les diagnostics récents"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:111
+#: src/omega_fire/interfaces/tui/section_registry.py:112
 msgid "Voir le journal applicatif"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:111
+#: src/omega_fire/interfaces/tui/section_registry.py:112
 msgid "voir les logs d'événements applicatif"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:113
+#: src/omega_fire/interfaces/tui/section_registry.py:114
 msgid "Recherche par mot-clé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:113
+#: src/omega_fire/interfaces/tui/section_registry.py:114
 msgid "Rechercher dans les diagnostics"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:115
+#: src/omega_fire/interfaces/tui/section_registry.py:116
 msgid "Données JSON (brut), TXT (data) ou HTML (visuel)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:115
+#: src/omega_fire/interfaces/tui/section_registry.py:116
 msgid "Exporter l'état et les diagnostics"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:119
+#: src/omega_fire/interfaces/tui/section_registry.py:120
 msgid "GESTION DES IPs (Blacklist unifiée NFt-IPt)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:121
+#: src/omega_fire/interfaces/tui/section_registry.py:122
 msgid "Bannir une IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:121
+#: src/omega_fire/interfaces/tui/section_registry.py:122
 msgid "Bannir une IP unique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:123
+#: src/omega_fire/interfaces/tui/section_registry.py:124
 msgid "Bannir une liste d'IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:123
-#: src/omega_fire/interfaces/tui/section_registry.py:127
+#: src/omega_fire/interfaces/tui/section_registry.py:124
+#: src/omega_fire/interfaces/tui/section_registry.py:128
 msgid "Saisie multiple ou fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:125
+#: src/omega_fire/interfaces/tui/section_registry.py:126
 msgid "Débannir une IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:125
+#: src/omega_fire/interfaces/tui/section_registry.py:126
 msgid "Débannir une IP unique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:127
+#: src/omega_fire/interfaces/tui/section_registry.py:128
 msgid "Débannir une liste d'IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:129
+#: src/omega_fire/interfaces/tui/section_registry.py:130
 msgid "Lister les IPs bannies"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:129
+#: src/omega_fire/interfaces/tui/section_registry.py:130
 msgid "Tableau avec filtres"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:131
+#: src/omega_fire/interfaces/tui/section_registry.py:132
 msgid "Nft <-> Ipt"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:131
+#: src/omega_fire/interfaces/tui/section_registry.py:132
 msgid "Synchroniser les backends NFt-IPt"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:133
+#: src/omega_fire/interfaces/tui/section_registry.py:134
 msgid "Gestion, Édition des fichiers et IP blocklist"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:133
+#: src/omega_fire/interfaces/tui/section_registry.py:134
 msgid "Importer depuis un fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:135
+#: src/omega_fire/interfaces/tui/section_registry.py:136
 msgid "Exporter vers un fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:135
+#: src/omega_fire/interfaces/tui/section_registry.py:136
 msgid "Transfert des IPs vers fichiers, archives"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:137
+#: src/omega_fire/interfaces/tui/section_registry.py:138
 msgid "Nettoyer (Flush) complet"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:137
+#: src/omega_fire/interfaces/tui/section_registry.py:138
 msgid "Vider un ou tous les backends"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:139
-#: src/omega_fire/interfaces/tui/section_registry.py:163
+#: src/omega_fire/interfaces/tui/section_registry.py:140
+#: src/omega_fire/interfaces/tui/section_registry.py:164
 msgid "Interopérabilité des IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:139
+#: src/omega_fire/interfaces/tui/section_registry.py:140
 msgid "Transfert/Injection (Jails, Backends, Fichiers (idem que 4.3)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:143
+#: src/omega_fire/interfaces/tui/section_registry.py:144
 msgid "GESTION DES RÈGLES (Politiques / Filtres)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:145
+#: src/omega_fire/interfaces/tui/section_registry.py:146
 msgid "Assistant pas-à-pas pour créer une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:145
+#: src/omega_fire/interfaces/tui/section_registry.py:146
 msgid "Créer une règle avancée"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:147
+#: src/omega_fire/interfaces/tui/section_registry.py:148
 msgid "Suppression simplifiée d'une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:147
+#: src/omega_fire/interfaces/tui/section_registry.py:148
 msgid "Supprimer une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:149
+#: src/omega_fire/interfaces/tui/section_registry.py:150
 msgid "Lister les règles"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:149
+#: src/omega_fire/interfaces/tui/section_registry.py:150
 msgid "Tableau avec détail & compteurs par backend"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:151
+#: src/omega_fire/interfaces/tui/section_registry.py:152
 msgid "Appliquer une politique pré-définie"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:151
+#: src/omega_fire/interfaces/tui/section_registry.py:152
 msgid "Profils activable (sauvegarde-auto de l'état)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:153
+#: src/omega_fire/interfaces/tui/section_registry.py:154
 msgid "Diagnostic, initialisation, reset des politiques, flush cible ou synchronisé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:153
+#: src/omega_fire/interfaces/tui/section_registry.py:154
 msgid "Gestion des tables"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:157
+#: src/omega_fire/interfaces/tui/section_registry.py:158
 msgid "GESTION FAIL2BAN (Jails & Transferts)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:159
+#: src/omega_fire/interfaces/tui/section_registry.py:160
 msgid "Analyse et État des jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:159
+#: src/omega_fire/interfaces/tui/section_registry.py:160
 msgid "Tableau récapitulatif + recherche d'IP par jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:161
+#: src/omega_fire/interfaces/tui/section_registry.py:162
 msgid "Ban et Unban, IP unique ou liste d'IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:161
+#: src/omega_fire/interfaces/tui/section_registry.py:162
 msgid "Bannir / Débannir dans un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:163
+#: src/omega_fire/interfaces/tui/section_registry.py:164
 msgid "Transfert / Import / Export (Jails, Backends, Fichiers)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:165
+#: src/omega_fire/interfaces/tui/section_registry.py:166
 msgid "Assistant de création"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:165
+#: src/omega_fire/interfaces/tui/section_registry.py:166
 msgid "Créer un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:167
+#: src/omega_fire/interfaces/tui/section_registry.py:168
 msgid "Supprimer un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:167
+#: src/omega_fire/interfaces/tui/section_registry.py:168
 msgid "choisir le jail et confirmer sa suppression"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:169
+#: src/omega_fire/interfaces/tui/section_registry.py:170
 msgid "Vider toutes les IPs d'un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:169
+#: src/omega_fire/interfaces/tui/section_registry.py:170
 msgid "Vider un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:171
+#: src/omega_fire/interfaces/tui/section_registry.py:172
 msgid "PURGE GÉNÉRALE - Vider toutes les IPs de tous les jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:171
+#: src/omega_fire/interfaces/tui/section_registry.py:172
 msgid "Vider tous les jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:173
+#: src/omega_fire/interfaces/tui/section_registry.py:174
 msgid "Exporter un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:173
-#: src/omega_fire/interfaces/tui/section_registry.py:234
+#: src/omega_fire/interfaces/tui/section_registry.py:174
+#: src/omega_fire/interfaces/tui/section_registry.py:240
 msgid "FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:175
+#: src/omega_fire/interfaces/tui/section_registry.py:176
 msgid "Vérifier la configuration Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:175
+#: src/omega_fire/interfaces/tui/section_registry.py:176
 msgid "utilisation de fail2ban-client -d"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:177
+#: src/omega_fire/interfaces/tui/section_registry.py:178
 msgid "Contrôle du service Fail2ban (status, start, stop,...)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:177
+#: src/omega_fire/interfaces/tui/section_registry.py:178
 msgid "Gérer le service Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:181
+#: src/omega_fire/interfaces/tui/section_registry.py:182
 msgid "GESTION DES LOGS (Analyse & Maintenance)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:186
-msgid "Bibliothèque"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:186
+#: src/omega_fire/interfaces/tui/section_registry.py:187
 msgid "Import des logs : omega-serv automatique, épinglage, SSH"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:188
+#: src/omega_fire/interfaces/tui/section_registry.py:189
 msgid "Favoris"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:188
+#: src/omega_fire/interfaces/tui/section_registry.py:189
 msgid "Logs combinés, enregistrés et lancés directement"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:190
+#: src/omega_fire/interfaces/tui/section_registry.py:191
 msgid "Un log, lecteur au choix : Simple, Classique, lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:190
+#: src/omega_fire/interfaces/tui/section_registry.py:191
 msgid "Voir les logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:192
-#: src/omega_fire/interfaces/tui/section_registry.py:213
-#: src/omega_fire/interfaces/tui/section_registry.py:225
+#: src/omega_fire/interfaces/tui/section_registry.py:193
+#: src/omega_fire/interfaces/tui/section_registry.py:214
+#: src/omega_fire/interfaces/tui/section_registry.py:231
 msgid "Analyser les IPs (Top N)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:192
+#: src/omega_fire/interfaces/tui/section_registry.py:193
 msgid "Classement des IPs actives"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:194
+#: src/omega_fire/interfaces/tui/section_registry.py:195
 msgid "Nettoyage cible"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:194
-#: src/omega_fire/interfaces/tui/section_registry.py:214
-#: src/omega_fire/interfaces/tui/section_registry.py:226
+#: src/omega_fire/interfaces/tui/section_registry.py:195
+#: src/omega_fire/interfaces/tui/section_registry.py:215
+#: src/omega_fire/interfaces/tui/section_registry.py:232
 msgid "Supprimer une IP des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:196
+#: src/omega_fire/interfaces/tui/section_registry.py:197
 msgid "Compression et archivage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:196
-#: src/omega_fire/interfaces/tui/section_registry.py:215
-#: src/omega_fire/interfaces/tui/section_registry.py:227
+#: src/omega_fire/interfaces/tui/section_registry.py:197
+#: src/omega_fire/interfaces/tui/section_registry.py:216
+#: src/omega_fire/interfaces/tui/section_registry.py:233
 msgid "Rotation / Backup des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:198
-#: src/omega_fire/interfaces/tui/section_registry.py:216
-#: src/omega_fire/interfaces/tui/section_registry.py:228
+#: src/omega_fire/interfaces/tui/section_registry.py:199
+#: src/omega_fire/interfaces/tui/section_registry.py:217
+#: src/omega_fire/interfaces/tui/section_registry.py:234
 msgid "Restaurer un backup"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:198
+#: src/omega_fire/interfaces/tui/section_registry.py:199
 msgid "Sélection et restauration"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:200
-#: src/omega_fire/interfaces/tui/section_registry.py:217
-#: src/omega_fire/interfaces/tui/section_registry.py:229
+#: src/omega_fire/interfaces/tui/section_registry.py:201
+#: src/omega_fire/interfaces/tui/section_registry.py:218
+#: src/omega_fire/interfaces/tui/section_registry.py:235
 msgid "Purge des backups"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:200
+#: src/omega_fire/interfaces/tui/section_registry.py:201
 msgid "Suppression massive"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:202
-#: src/omega_fire/interfaces/tui/section_registry.py:218
+#: src/omega_fire/interfaces/tui/section_registry.py:203
+#: src/omega_fire/interfaces/tui/section_registry.py:219
 msgid "Nettoyage avancé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:202
+#: src/omega_fire/interfaces/tui/section_registry.py:203
 msgid "Par âge ou taille"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:204
-#: src/omega_fire/interfaces/tui/section_registry.py:219
+#: src/omega_fire/interfaces/tui/section_registry.py:205
+#: src/omega_fire/interfaces/tui/section_registry.py:220
 msgid "Statistiques des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:204
+#: src/omega_fire/interfaces/tui/section_registry.py:205
 msgid "récapitulatifs des événements des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:212
-#: src/omega_fire/interfaces/tui/section_registry.py:224
+#: src/omega_fire/interfaces/tui/section_registry.py:213
+#: src/omega_fire/interfaces/tui/section_registry.py:230
 msgid "Visualiser les logs en direct (Live Tail)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:220
-#: src/omega_fire/interfaces/tui/section_registry.py:276
+#: src/omega_fire/interfaces/tui/section_registry.py:221
+#: src/omega_fire/interfaces/tui/section_registry.py:286
 msgid "Visualiser les logs serveurs avec lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:232
-msgid "EXPORTS & RAPPORTS (Audit centralisé)"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:234
-msgid "Exporter la Blacklist complète"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:236
-msgid "Exporter les Règles (ruleset)"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:236
-msgid "Regleset structure"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:238
-msgid "Exporter un rapport d'audit complet"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:238
-msgid "État, historique, top IPs,..."
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:240
-msgid "Exporter les statistiques Fail2Ban"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:240
-msgid "Jails et bans"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:242
-msgid "Ouvrir, copier le chemin, supprimer"
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/section_registry.py:242
+#: src/omega_fire/interfaces/tui/section_registry.py:226
+#: src/omega_fire/interfaces/tui/section_registry.py:252
 msgid "Voir tous les exports"
 msgstr ""
 
+#: src/omega_fire/interfaces/tui/section_registry.py:238
+msgid "EXPORTS & RAPPORTS (Audit centralisé)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:240
+msgid "Exporter la Blacklist complète"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:242
+msgid "Exporter les Règles (ruleset)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:242
+msgid "Regleset structure"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:244
+msgid "Exporter un rapport d'audit complet"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:244
+msgid "État, historique, top IPs,..."
+msgstr ""
+
 #: src/omega_fire/interfaces/tui/section_registry.py:246
+msgid "Exporter les statistiques Fail2Ban"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:246
+msgid "Jails et bans"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:250
+msgid "Exporter les statistiques des logs"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:250
+msgid "Rapport des logs : statuts, top IP, chemins, horaires"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:252
+msgid "Ouvrir, copier le chemin, supprimer"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:256
 msgid "SYSTÈME & PERSISTANCE (État & Sauvegarde)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:248
+#: src/omega_fire/interfaces/tui/section_registry.py:258
 msgid "Archive tar.gz horodatee"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:248
+#: src/omega_fire/interfaces/tui/section_registry.py:258
 msgid "Sauvegarder l'état complet"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:250
+#: src/omega_fire/interfaces/tui/section_registry.py:260
 msgid "Restaurer un état"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:250
+#: src/omega_fire/interfaces/tui/section_registry.py:260
 msgid "Sélection d'archive"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:252
+#: src/omega_fire/interfaces/tui/section_registry.py:262
 msgid "Log applicatif paginé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:252
+#: src/omega_fire/interfaces/tui/section_registry.py:262
 msgid "Voir l'historique des actions"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:254
+#: src/omega_fire/interfaces/tui/section_registry.py:264
 msgid "Re-scan sans redémarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:254
+#: src/omega_fire/interfaces/tui/section_registry.py:264
 msgid "Recharger la configuration"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:255
+#: src/omega_fire/interfaces/tui/section_registry.py:265
 msgid "7.4 Recharger config"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:260
+#: src/omega_fire/interfaces/tui/section_registry.py:270
 msgid "Dashboard Live complet (Refresh 2s)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:260
+#: src/omega_fire/interfaces/tui/section_registry.py:270
 msgid "Tableau de bord en temps réel"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:262
+#: src/omega_fire/interfaces/tui/section_registry.py:272
 msgid "Sessions actives (snapshots)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:262
+#: src/omega_fire/interfaces/tui/section_registry.py:272
 msgid "État des connexions (Conntrack)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:264
+#: src/omega_fire/interfaces/tui/section_registry.py:274
 msgid "Graphiques sur 7 jours visu/export"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:264
+#: src/omega_fire/interfaces/tui/section_registry.py:274
 msgid "Rapports statistiques (7 jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:267
+#: src/omega_fire/interfaces/tui/section_registry.py:277
 msgid "RAPPORT STATISTIQUE — 7 JOURS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:269
+#: src/omega_fire/interfaces/tui/section_registry.py:279
 msgid "Rapports statistiques (30 jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:269
+#: src/omega_fire/interfaces/tui/section_registry.py:279
 msgid "Vue macro 30 jours visu/export"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:272
+#: src/omega_fire/interfaces/tui/section_registry.py:282
 msgid "RAPPORT STATISTIQUE — 30 JOURS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:274
+#: src/omega_fire/interfaces/tui/section_registry.py:284
 msgid "Tableau de bord temps réel : trafic + stats + logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:274
+#: src/omega_fire/interfaces/tui/section_registry.py:284
 msgid "Visualiser les logs serveurs avec Tail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:276
+#: src/omega_fire/interfaces/tui/section_registry.py:286
 msgid "Sélection multi-fichiers, analyse via lnav (fusion automatique)"
 msgstr ""
 
@@ -11775,7 +12319,11 @@ msgstr ""
 msgid "Guide d'aide (10)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/export_kinds.py:26
+#: src/omega_fire/interfaces/tui/support/export_kinds.py:25
+msgid "Statistiques des logs (6.5)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/export_kinds.py:27
 msgid "Autre"
 msgstr ""
 
@@ -11945,7 +12493,7 @@ msgid "Où retrouver mes exports et comment les ouvrir ?"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:103
-msgid "6.5 « Voir tous les exports » les liste tous (type, date, taille). « Ouvrir » affiche un HTML dans votre navigateur, un JSON ou un TXT dans Omega-Fire. Le dossier se choisit dans les Réglages (var/exports/ par défaut)."
+msgid "6.6 « Voir tous les exports » les liste tous (type, date, taille). « Ouvrir » affiche un HTML dans votre navigateur, un JSON ou un TXT dans Omega-Fire. Le dossier se choisit dans les Réglages (var/exports/ par défaut)."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:106
@@ -11969,7 +12517,7 @@ msgid "Rien ne s'ouvre quand je travaille en SSH."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:117
-msgid "Sans session graphique, aucun navigateur ne peut s'ouvrir : Omega-Fire affiche le chemin du fichier pour l'ouvrir depuis un poste avec navigateur. « Copier le chemin » (6.5) le copie."
+msgid "Sans session graphique, aucun navigateur ne peut s'ouvrir : Omega-Fire affiche le chemin du fichier pour l'ouvrir depuis un poste avec navigateur. « Copier le chemin » (6.6) le copie."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:120
@@ -11985,15 +12533,15 @@ msgid "L'historique d'audit (7.3) montre d'anciens numéros du menu 5."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:125
-msgid "Le menu 5 a été renuméroté en 3.5 (5.1 Bibliothèque, 5.2 Favoris, 5.3 Voir les logs ; les anciens 5.2 à 5.8 sont devenus 5.4 à 5.10). Une entrée enregistrée avant, ou par `--legacy-cli`, garde son numéro et son libellé d'origine."
-msgstr ""
-
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:128
-msgid "Quelles différences avec l'ancienne interface (--legacy-cli) ?"
+msgid "Le menu 5 a été renuméroté en 3.5 (5.1 Bibliothèque, 5.2 Favoris, 5.3 Voir les logs ; les anciens 5.2 à 5.8 sont devenus 5.4 à 5.10). Une entrée enregistrée avant, ou par `--legacy-cli`, garde son numéro et son libellé d'origine. De même, l'ancien 6.5 « Voir tous les exports » est devenu 6.6 en 3.6."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:129
-msgid "`--legacy-cli` reste l'interface de la version 3.0, en français : menu 5 d'origine (sans Bibliothèque, Favoris ni lecteur Classique), sans 6.5, sans guide d'aide ni presets. L'interface Textual est la version 3.5 complète."
+msgid "Quelles différences avec l'ancienne interface (--legacy-cli) ?"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:130
+msgid "`--legacy-cli` reste l'interface de la version 3.0, en français : menu 5 d'origine (sans Bibliothèque, Favoris ni lecteur Classique), sans 6.5 ni 6.6, sans guide d'aide ni presets. L'interface Textual est la version 3.6 complète."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/jail_origin.py:16
@@ -12019,6 +12567,78 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/support/log_viewers.py:35
 #, python-brace-format
 msgid "Fichier(s) introuvable(s), ignoré(s) : {value}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:24
+msgid "24h"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:24
+msgid "30j"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:24
+msgid "7j"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:24
+msgid "Tout (fichier entier)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:26
+msgid "24h, 7j, 30j : lecture depuis la fin du fichier, rapide. « Tout » lit le fichier entier : la durée dépend de sa taille (de quelques secondes à plusieurs minutes pour un gros log)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:36
+msgid "Lecture du fichier entier, ligne par ligne…"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:37
+msgid "Analyse des lignes (date, IP, code HTTP, chemin)…"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:38
+msgid "Plus le fichier est gros, plus c'est long : quelques secondes à plusieurs minutes."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:39
+msgid "Échap arrête l'analyse : il faudra la relancer."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:40
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:45
+msgid "Toujours en cours, rien n'est bloqué…"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:43
+msgid "Lecture depuis la fin du fichier, arrêt dès que les lignes sortent de la période…"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:44
+msgid "Analyse des lignes de la période…"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:95
+#, python-brace-format
+msgid "{count} log(s)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:98
+msgid " (au moins)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:98
+#, python-brace-format
+msgid "environ {lines} lignes"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:144
+msgid "Calcul en cours"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/widgets/busy_indicator.py:154
+#, python-brace-format
+msgid " {value:3.0f} %  ({done_parts}/{total_parts} morceaux analysés)"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/widgets/capabilities_table.py:20
@@ -12493,6 +13113,94 @@ msgstr ""
 #: src/omega_fire/domain/reports/templates/ip_export.html.j2:45
 #, python-brace-format
 msgid "Adresse IP (Colonne {number})"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:6
+msgid "OMEGA-FIRE — Statistiques"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:87
+msgid "OMEGA-FIRE — Statistiques de logs"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:88
+#, python-brace-format
+msgid "Généré le {generated_at} · Période : {period_label} · Source(s) : {sources}"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:99
+msgid "Synthèse"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:101
+msgid "Aucune ligne sur cette période."
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:105
+msgid "Lignes analysées"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:106
+msgid "Requêtes HTTP"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:107
+msgid "IPs uniques"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:108
+msgid "Taux d'erreur"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:109
+msgid "Volume transféré"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:110
+#, python-brace-format
+msgid "Heure de pointe ({peak_count} lignes)"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:111
+msgid "Période couverte"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:118
+msgid "Répartition horaire (24 h)"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:125
+#, python-brace-format
+msgid "{hour}h : {count} ligne(s)"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:133
+#, python-brace-format
+msgid "Tendance par jour ({daily} j)"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:140
+msgid "Statuts HTTP"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:156
+msgid "Aucune donnée."
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:161
+msgid "Top adresses IP"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:163
+msgid "Chemins les plus demandés"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:164
+msgid "Chemins en 404"
+msgstr ""
+
+#: src/omega_fire/domain/reports/templates/log_stats_report.html.j2:168
+msgid "Rapport généré par"
 msgstr ""
 
 #: src/omega_fire/domain/reports/templates/report_full.html.j2:22

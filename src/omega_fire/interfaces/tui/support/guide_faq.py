@@ -100,7 +100,7 @@ def faq_entries() -> tuple[FaqEntry, ...]:
                    "propose les chemins usuels réellement présents sur la machine, et les logs de la "
                    "Bibliothèque : cochez ceux à épingler.")),
         FaqEntry(exports, _("Où retrouver mes exports et comment les ouvrir ?"),
-                 _("6.5 « Voir tous les exports » les liste tous (type, date, taille). « Ouvrir » affiche "
+                 _("6.6 « Voir tous les exports » les liste tous (type, date, taille). « Ouvrir » affiche "
                    "un HTML dans votre navigateur, un JSON ou un TXT dans Omega-Fire. Le dossier se "
                    "choisit dans les Réglages (var/exports/ par défaut).")),
         FaqEntry(exports, _("Le rapport s'ouvre dans un autre navigateur que le mien."),
@@ -116,7 +116,7 @@ def faq_entries() -> tuple[FaqEntry, ...]:
         FaqEntry(exports, _("Rien ne s'ouvre quand je travaille en SSH."),
                  _("Sans session graphique, aucun navigateur ne peut s'ouvrir : Omega-Fire affiche le "
                    "chemin du fichier pour l'ouvrir depuis un poste avec navigateur. « Copier le "
-                   "chemin » (6.5) le copie.")),
+                   "chemin » (6.6) le copie.")),
         FaqEntry(ui, _("Dans quelle langue sont écrits les exports ?"),
                  _("Les rapports, le guide d'aide et sa FAQ suivent le réglage « Langue des exports » "
                    "(par défaut : comme l'interface). Le journal applicatif et l'historique d'audit "
@@ -124,9 +124,10 @@ def faq_entries() -> tuple[FaqEntry, ...]:
         FaqEntry(ui, _("L'historique d'audit (7.3) montre d'anciens numéros du menu 5."),
                  _("Le menu 5 a été renuméroté en 3.5 (5.1 Bibliothèque, 5.2 Favoris, 5.3 Voir les "
                    "logs ; les anciens 5.2 à 5.8 sont devenus 5.4 à 5.10). Une entrée enregistrée avant, "
-                   "ou par `--legacy-cli`, garde son numéro et son libellé d'origine.")),
+                   "ou par `--legacy-cli`, garde son numéro et son libellé d'origine. De même, l'ancien 6.5 "
+                   "« Voir tous les exports » est devenu 6.6 en 3.6.")),
         FaqEntry(ui, _("Quelles différences avec l'ancienne interface (--legacy-cli) ?"),
                  _("`--legacy-cli` reste l'interface de la version 3.0, en français : menu 5 d'origine "
-                   "(sans Bibliothèque, Favoris ni lecteur Classique), sans 6.5, sans guide d'aide ni "
-                   "presets. L'interface Textual est la version 3.5 complète.")),
+                   "(sans Bibliothèque, Favoris ni lecteur Classique), sans 6.5 ni 6.6, sans guide d'aide ni "
+                   "presets. L'interface Textual est la version 3.6 complète.")),
     )

@@ -13,6 +13,7 @@ Conforms to Omega-Fire architecture charter:
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -107,15 +108,28 @@ class RotateLogsCommand:
                 backup_size_bytes=backup_info.size_bytes,
             )
 
-        existing_names = [b.path.name for b in existing_backups]
+        # Rétention PAR journal (archives backup_<stem>_AAAAMMJJ_HHMMSS.tar.gz du même fichier),
+        # triées de la plus ancienne à la plus récente comme l'attend compute_rotations_to_delete.
+        # Correctif 2026-11-09 : list_backups() rend le plus récent d'abord et toutes les archives
+        # de var/backups, ce qui supprimait les plus récentes (y compris celle qui vient d'être créée)
+        # et faisait compter les archives des autres journaux.
+        same_log = re.compile(rf"^backup_{re.escape(source.stem)}_\d{{8}}_\d{{6}}\.tar\.gz$")
+        own_backups = sorted(
+            (b for b in existing_backups if same_log.match(b.path.name)),
+            key=lambda b: (b.created_at, b.path.name),
+        )
+        existing_names = [b.path.name for b in own_backups if b.path.name != backup_info.path.name]
+        existing_names.append(backup_info.path.name)
         names_to_delete = compute_rotations_to_delete(
             existing_rotations=existing_names,
             max_rotations=request.keep,
         )
 
-        backups_by_name = {b.path.name: b for b in existing_backups}
+        backups_by_name = {b.path.name: b for b in own_backups}
         deleted_count = 0
         for name in names_to_delete:
+            if name == backup_info.path.name:
+                continue  # jamais l'archive qui vient d'être créée
             backup = backups_by_name.get(name)
             if backup:
                 self._port.delete_backup(backup)

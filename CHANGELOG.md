@@ -12,7 +12,110 @@ qui touchent aux **règles, aux bans ou aux services** sont toujours signalés e
 même mineurs. Les changements de textes affichés sont signalés aussi : ils doivent être
 reportés dans les 16 traductions (interface et README).
 
-## Non publié
+## version 3.6.1 : construite le 2026-11-10, reconstruite le 2026-11-11 (archive omega-fire-3.6.1.tar.gz), non publiée
+
+Correctifs et contrats issus de l'étude de l'interconnecteur de la suite (`~/DEV/CONNECT/`), étapes 1 et 2 : l'archive 3.6 (construite le 2026-11-09) ne les contient pas, d'où ce numéro distinct.
+
+### Ajouté
+
+- **Liens avec les autres outils omega** (étude de l'interconnecteur, étape 2, 2026-11-10) :
+  `./omega-fire.sh synchro jeton` dépose le jeton d'installation `var/omega-jeton.json` (outil, version,
+  identifiant tiré au hasard, emplacement ; lancé par `install.sh`, jamais en root, exclu de l'archive) ;
+  `./omega-fire.sh synchro fiche --format json` affiche la fiche d'omega-fire (fail2ban, nftables, iptables,
+  Bibliothèque de logs) en JSON non traduit. Ces deux commandes ne demandent pas sudo et n'affichent pas de
+  bannière ; sans root, la fiche est marquée partielle (nftables et iptables non vérifiables).
+
+### Corrigé
+
+- **Transfert d'IP (2.10 / 4.3) : plus de ban permanent par erreur.** Un transfert d'un jail vers nftables garde
+  le temps qu'il restait au ban dans fail2ban (élément nftables avec expiration) ; avant, toute IP transférée
+  restait bannie définitivement. iptables, qui ne gère pas d'expiration, reste inchangé.
+- **Transfert d'IP : adresses protégées.** L'hôte local, Tailscale et les réseaux locaux ne sont plus jamais
+  bannis par un transfert en masse vers un pare-feu ou un jail (mêmes réseaux par défaut qu'omega-serv et
+  omega-waf) ; ils sont écartés et signalés. Un ban manuel d'une seule adresse reste possible.
+- **Supprimer une IP des logs (5.5, et retrait depuis 5.4) : sur place.** Le journal n'est plus vidé puis
+  réécrit depuis une copie lue avant la confirmation : il est relu juste avant l'écriture (les lignes arrivées
+  entre-temps ne sont plus perdues), les octets non UTF-8 sont conservés, et le fichier garde son
+  propriétaire et ses droits (un journal d'omega-serv reste lisible et inscriptible par son service).
+- **Créer un jail : journal absent créé au nom du propriétaire de son dossier**, en 0664, au lieu de root ;
+  avant, un journal d'omega-serv créé ainsi ne pouvait plus être écrit par omega-serv. Et un nom déjà défini sur
+  disque (jail désactivé, ou fichier `omega-jail-<nom>.conf`) est refusé : fail2ban ne fusionne plus deux
+  sections du même nom sans le dire.
+- **Rotation des logs (5.6 et automatisation nocturne) : la rétention supprimait les sauvegardes les plus
+  récentes**, y compris celle qui venait d'être créée, et comptait les archives de tous les journaux ensemble.
+  Elle garde maintenant les N archives les plus récentes **du même journal** ; celle qui vient d'être créée
+  n'est jamais supprimée, et les archives des autres journaux ne sont plus touchées (trouvé pendant l'étude
+  de l'interconnecteur, 2026-11-09).
+- **Splash : la barre de version affiche la version de l'application** (3.6.1). Elle affichait « version 3.5 »,
+  écrite en dur dans le dessin.
+
+### Modifié
+
+- **README × 17 : aperçu de l'interface en 4 captures** (accueil, menu principal, tableau de bord, lecteur de
+  logs Simple), dans chaque langue, comme les autres outils de la suite. Captures faites avec des données de
+  démonstration.
+- **Interface Rich (`--legacy-cli`)** : présentée comme n'étant plus développée, mais toujours accessible
+  (README × 17, site, galerie des captures Rich).
+- **Version affichée** : 3.6.1.
+
+## version 3.6.0 : construite le 2026-11-09 (archive omega-fire-3.6.tar.gz)
+
+### Ajouté
+
+- **Gestionnaire de logs au niveau d'omega-serv et d'omega-log** (demande du 2026-11-09) :
+  - **La Bibliothèque (5.1) alimente toutes les sélections de log** : 5.4 Analyser les IPs, 5.5 Supprimer
+    une IP des logs, 5.6 Rotation / Backup (listes déroulantes : Bibliothèque en tête, puis épingles, puis
+    « Chemin manuel »), 8.5 et 8.6 (logs de la Bibliothèque en tête de la liste, avant les épingles et
+    l'historique). Un log de la Bibliothèque ne se retire que depuis 5.1.
+  - **5.4 Analyser les IPs** au niveau de « Voir et traiter IP » : « Rechercher cette IP » compte ses lignes
+    dans le fichier entier ; « Retirer cette IP du log analysé » retire l'IP choisie (ligne du tableau ou
+    recherche) après la même confirmation que 5.5 ; l'analyse tourne sans figer l'interface. Top N,
+    colonnes % trafic / volume, mode blocklist et export vers 5.5 inchangés.
+  - **Viewer Simple** (5.3, 5.2, 8.5) : même cadre de statistiques qu'omega-log — refus 403 et 429, Top 5 IP
+    (au lieu du seul « Top Talker »), chemins demandés, chemins en 404 ; le cadre défile.
+  - **6.5 Exporter les statistiques des logs** : même rapport qu'omega-serv et omega-log (période 24h / 7j /
+    30j / tout, synthèse, statuts HTTP en jauges, top IP, chemins demandés, chemins en 404, répartition
+    horaire, tendance par jour), un ou plusieurs logs cochés, export JSON ou HTML (thèmes d'omega-lib).
+    Logs seulement : les bans et l'état du pare-feu restent dans 8.3 / 8.4 ; 5.10 garde sa vue rapide.
+  - **Sauvegardes planifiées réellement exécutées** (5.6) : jusqu'ici les automatisations étaient
+    enregistrées (`var/runtime/scheduled_rotations.json`) mais rien ne les lançait. Une tâche quotidienne
+    en root (timer systemd `omega-fire-rotation`, sinon une ligne de la crontab de root, sinon la ligne à
+    ajouter soi-même) lance `python -m omega_fire rotate run-automations` ; la première automatisation
+    l'installe, la dernière supprimée la retire, « Réinstaller / Désinstaller l'exécution » dans « Lister et
+    gérer ». Nouveaux : fréquence « Tous les jours », nombre de sauvegardes conservées (5, 10, 30), dernière
+    sauvegarde, prochaine et résultat. Les automatisations existantes sont reprises telles quelles.
+- `var/blocklist/blocklist.txt` et `blocklist-f2b.txt` créés vides au premier lancement (0664) : 2.7 / 2.8,
+  4.3 et 6.1 les proposaient, mais une installation neuve ne les avait pas (`var/blocklist/*` n'est jamais
+  livré). Un fichier existant n'est jamais touché.
+- **Aide → « Contact et support »** (repris d'omega-serv et d'omega-log), depuis l'aide générique (touche `a`), à côté de « Guide d'aide complet » :
+  payer un café (page PayPal), contacter le support (mail et formulaire de contact du site, affichés en
+  clair ; aucun formulaire dans l'outil, aucun mail envoyé), se déclarer utilisateur anonyme, vérifier les
+  mises à jour. Sans session graphique (SSH), l'adresse s'affiche au lieu d'ouvrir le navigateur. Omega-Fire tourne en root : le
+  navigateur s'ouvre au nom de l'utilisateur qui a fait sudo, dans sa session graphique.
+- **Déclaration anonyme, une seule fois** (omega-fire n'a pas de service qui enverrait chaque jour) : clé
+  tirée au hasard, nom et version de l'outil, continent et pays facultatifs (listes fermées, jamais de
+  texte libre) ; le message exact est affiché avant l'envoi. Rien n'est enregistré si la réception est
+  injoignable. « Ne plus me déclarer » supprime l'entrée à la réception et la clé locale
+  (`var/runtime/declaration.json`, jamais livrée dans l'archive).
+- **Vérifier les mises à jour** : compare la version installée à la liste publiée sur le site
+  (`download/sha.txt`), seulement sur clic ; « Voir les nouveautés » ouvre le fichier de la dernière
+  version.
+- README ×17 : section « Contact et support ».
+
+### Modifié
+
+- Écrans « Contact et support » et « Se déclarer » partagés dans omega-lib, avec leurs traductions
+  (17 langues) : le même écran dans tous les outils omega.
+- Le catalogue de traduction d'Omega-Fire est chaîné au catalogue partagé omega-lib (phrases des
+  écrans partagés) ; celui d'Omega-Fire reste obligatoire et l'emporte toujours. Aucun changement
+  sur les règles, les bans ni les services.
+- **Version affichée** : 3.6.
+- **Menu 6 renuméroté** : « Voir tous les exports » passe de 6.5 à **6.6** (6.5 = statistiques des logs).
+  Une ancienne entrée « 6.5 Voir tous les exports » de l'historique d'audit garde son libellé ; renvois
+  de l'aide, du guide, de la FAQ et des messages mis à jour (« visible en 6.6 »).
+- Moteur de statistiques d'omega-log porté à part (`domain/log_stats/`, `application/log_stats/`) : les
+  anciens modules d'analyse d'omega-fire, utilisés par d'autres menus, ne changent pas.
+
 
 ### Corrigé
 

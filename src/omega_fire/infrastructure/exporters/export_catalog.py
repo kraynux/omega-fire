@@ -1,5 +1,5 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
-"""Catalogue des fichiers exportes (version 3.5) : 6.5 « Voir tous les exports » et le
+"""Catalogue des fichiers exportes (version 3.5) : 6.6 « Voir tous les exports » et le
 chargement d'une liste d'IPs en 5.5. Parcourt le dossier d'exports (Reglages -> Exports,
 var/exports/ par defaut) et, dans var/blocklist/, les seuls exports de 6.1
 (export-blacklist*) — jamais les blocklists de travail elles-memes."""
@@ -22,6 +22,7 @@ _KINDS: tuple[tuple[str, str], ...] = (
     ("stats_report_", "stats"),
     ("conntrack-rapport_", "conntrack"),
     ("guide-aide_", "guide"),
+    ("logs-stats_", "log_stats"),
 )
 VIEWABLE_SUFFIXES = (".json", ".txt", ".html", ".htm", ".csv", ".log")
 

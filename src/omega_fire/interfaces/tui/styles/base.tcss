@@ -446,9 +446,16 @@ ToggleButton.-on > .toggle--button {
     height: 1fr;
 }
 
-#stats-box {
+/* Cadre de stats qui defile (repris d'omega-log / omega-serv, 2026-11-09) : #stats-box y prend sa
+   hauteur naturelle, le cadre garde la largeur fixe (sans elle, le tableau voisin est ecrase). */
+#stats-frame {
     width: 34;
     height: 1fr;
+    scrollbar-size-vertical: 1;  /* cadre etroit : une seule colonne pour la barre (comme omega-log) */
+}
+
+#stats-frame > #stats-box {
+    height: auto;
 }
 
 #live-body > DataTable {
@@ -513,4 +520,11 @@ ToggleButton.-on > .toggle--button {
 /* Ecran 1.5 (app_log_screen.py) — meme raison que #history-table. */
 #log-table {
     height: 1fr;
+}
+
+/* Barre d'actions HORS de la zone qui defile (toujours visible), comme omega-serv / omega-log :
+   Contact et support, Se declarer (ecrans partages d'omega-lib, D-016, 2026-11-09). */
+.omega-fixed-actions {
+    padding: 0 2;
+    margin-top: 0;
 }

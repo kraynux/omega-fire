@@ -13,6 +13,10 @@ Deux etats bascules via `.omega-hidden` (meme patron que les champs
 conditionnels des formulaires) : selection de la source, puis suivi live."""
 from __future__ import annotations
 
+from collections import Counter
+
+from pathlib import Path
+
 import json
 import os
 import re
@@ -21,9 +25,10 @@ import urllib.error
 import urllib.request
 from typing import TYPE_CHECKING
 
+from rich.cells import cell_len, set_cell_size
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.timer import Timer
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
@@ -33,6 +38,7 @@ from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.cli.renderers.logs_live import LogBuffer
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
+from omega_fire.interfaces.tui.screens._log_sources import library_paths
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
@@ -199,6 +205,20 @@ class _LogProvider:
             }]
 
 
+_TOP_SIZE = 5
+"""Tops du cadre de stats (IP, chemins), comme omega-log (TRAFFIC_TOP_SIZE)."""
+_TOP_WIDTH = 32
+"""Largeur du cadre avant le premier rendu (34 colonnes moins la bordure)."""
+
+
+def _format_bytes(size: float) -> str:
+    if size >= 1024 * 1024:
+        return f"{size / (1024 * 1024):.1f} MB"
+    if size >= 1024:
+        return f"{size / 1024:.1f} KB"
+    return f"{int(size)} B"
+
+
 class LiveTailScreen(OmegaScreen):
     """5.1/8.5 — selection de source puis suivi live (tableau + stats)."""
 
@@ -238,7 +258,10 @@ class LiveTailScreen(OmegaScreen):
         with Vertical(id="live-panel", classes="omega-panel omega-hidden"):
             yield Static("", id="live-title", classes="omega-title")
             with Horizontal(id="live-body"):
-                yield Static(id="stats-box", classes="omega-dash-box")
+                # Cadre qui defile (repris d'omega-log / omega-serv) : avec les tops, un Static seul a
+                # hauteur fixe coupait la fin de son contenu.
+                with VerticalScroll(id="stats-frame", classes="omega-dash-box"):
+                    yield Static(id="stats-box")
                 yield DataTable(id="logs-table")
             with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
                 yield Button(_("Arrêter / Retour"), id="stop")
@@ -273,6 +296,17 @@ class LiveTailScreen(OmegaScreen):
         table.clear()
         self._display_items = {}
         idx = 1
+
+        # Logs de la Bibliotheque (5.1) en tete (2026-11-09 : « 8.5 et 8.6 doivent aussi etre alimentes par la
+        # Bibliotheque ») ; les epingles et l'historique (raccourcis manuels d'origine) suivent.
+        pinned_paths = set(self._command.list_active_pinned().values())
+        for lib_path in library_paths():
+            if lib_path in pinned_paths:
+                continue
+            key = str(idx)
+            self._display_items[key] = {"type": "library", "name": _("Bibliothèque"), "path": lib_path}
+            table.add_row(_("Bibliothèque"), Path(lib_path).name, lib_path, key=key)
+            idx += 1
 
         for name, path in self._command.list_active_pinned().items():
             key = str(idx)
@@ -356,6 +390,9 @@ class LiveTailScreen(OmegaScreen):
         if item is None:
             self.app.notify(_("Aucune ligne sélectionnée."), severity="warning")
             return
+        if item["type"] == "library":
+            self.app.notify(_("Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."), severity="warning")
+            return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])
         else:
@@ -421,49 +458,91 @@ class LiveTailScreen(OmegaScreen):
             "available": variables.get("status-available", ""),
         }
 
-        self.query_one("#stats-box", Static).update(self._render_stats(colors, self._buffer.get_stats()))
+        self.query_one("#stats-box", Static).update(
+            self._render_stats(colors, self._buffer.get_stats(), self._buffer.get_all()))
         # Tout le tampon, du plus ancien au plus recent, comme le viewer Simple d'omega-serv (reference,
         # retour utilisateur 2026-11-02) : avant, seules les 30 plus recentes en tete, sans ascenseur.
         self._render_logs_table(colors, list(reversed(self._buffer.get_all())))
 
-    def _render_stats(self, colors: dict, stats: dict) -> Text:
-        def _format_bytes(size: float) -> str:
-            if size > 1024 * 1024:
-                return f"{size / (1024 * 1024):.1f} MB"
-            if size > 1024:
-                return f"{size / 1024:.1f} KB"
-            return f"{int(size)} B"
+    def _render_stats(self, colors: dict, stats: dict, entries: list[dict]) -> Text:
+        """Cadre de stats IDENTIQUE au viewer Simple d'omega-log / omega-serv (2026-11-09, demande
+        utilisateur : « il manque des infos comme omega-log dans le dashboard du viewer Simple ») :
+        refus 403 / 429, Top 5 IP, chemins demandes, chemins en 404. Memes phrases qu'omega-log.
+        Compteurs globaux : depuis l'ouverture ; tops : sur le tampon (lignes visibles)."""
+        heading, good, warn, bad, info = (colors["heading"], colors["available"], colors["warning"],
+                                          colors["danger"], colors["info"])
+        none = "-"
+        total = stats["total"]
+        lines = [e for e in entries if e.get("source_ip") != "ERR"]
+        status_403 = sum(1 for e in lines if e.get("status_code") == 403)
+        status_429 = sum(1 for e in lines if e.get("status_code") == 429)
+        top_ips = Counter(str(e.get("source_ip")) for e in lines if e.get("source_ip")).most_common(_TOP_SIZE)
+        top_paths = Counter(str(e.get("path")) for e in lines if e.get("path")).most_common(_TOP_SIZE)
+        top_not_found = Counter(str(e.get("path")) for e in lines
+                                if e.get("status_code") == 404 and e.get("path")).most_common(_TOP_SIZE)
 
         content = Text()
-        content.append(_("── RENDEMENT ───────────────\n"), style=colors["heading"])
-        content.append(_(" ⚡ Débit      : {rps:.1f} req/s\n").format(rps=stats['rps']), style=colors["info"])
-        avg_lat = stats["avg_latency"]
-        lat_style = colors["available"] if avg_lat < 200 else (colors["warning"] if avg_lat < 500 else colors["danger"])
-        content.append(_(" ⏱ Latence moy: {avg_lat:.0f} ms\n\n").format(avg_lat=avg_lat), style=lat_style)
+        content.append(_("── RENDEMENT ──────────────\n"), style=heading)
+        rps = none if not total else _("{requests_per_second:.1f} req/s").format(requests_per_second=stats["rps"])
+        content.append(_(" ⚡ Débit        : {rps}\n").format(rps=rps), style=info)
+        if not total:
+            content.append(_(" ⏱ Latence moy. : {none}\n\n").format(none=none))
+        else:
+            latency = stats["avg_latency"]
+            style = good if latency < 200 else (warn if latency < 500 else bad)
+            content.append(_(" ⏱ Latence moy. : {latency:.0f} ms\n\n").format(latency=latency), style=style)
 
-        content.append(_("── BANDE PASSANTE ──────────\n"), style=colors["heading"])
-        content.append(_(" 🌐 Débit réseau: {value}/s\n").format(value=_format_bytes(stats['bps'])), style=colors["main"])
-        content.append(_(" 📦 Vol. total  : {value}\n").format(value=_format_bytes(stats['bytes_total'])), style=colors["main"])
-        content.append(_(" 🗜 Taille moy. : {value}\n\n").format(value=_format_bytes(stats['avg_size'])), style=colors["main"])
+        content.append(_("── BANDE PASSANTE ─────────\n"), style=heading)
+        bps = none if not total else f"{_format_bytes(stats['bps'])}/s"
+        volume = none if not total else _format_bytes(stats["bytes_total"])
+        average = none if not total else _format_bytes(stats["avg_size"])
+        content.append(_(" 🌐 Débit réseau : {bps}\n").format(bps=bps))
+        content.append(_(" 📦 Volume total : {total}\n").format(total=volume))
+        content.append(_(" 🗜 Taille moy.  : {average}\n\n").format(average=average))
 
-        content.append(_("── STATUTS HTTP ────────────\n"), style=colors["heading"])
-        content.append(_(" 📊 Total Req.  : {total}\n").format(total=stats['total']), style=colors["main"])
-        content.append(_(" √  Succès 2xx  : {success_2xx}\n").format(success_2xx=stats['success_2xx']), style=colors["available"])
-        content.append(_(" ↔  Redir. 3xx  : {redirect_3xx}\n").format(redirect_3xx=stats['redirect_3xx']), style=colors["info"])
-        content.append(_(" ⚠  Erreurs 4xx : {errors_4xx}\n").format(errors_4xx=stats['errors_4xx']), style=colors["warning"])
-        content.append(_(" ❌ Erreurs 5xx : {errors_5xx}\n\n").format(errors_5xx=stats['errors_5xx']), style=colors["danger"])
+        content.append(_("── STATUTS HTTP ───────────\n"), style=heading)
+        content.append(_(" 📊 Requêtes     : {http_total}\n").format(http_total=total))
+        content.append(_(" √  Succès 2xx   : {status_2xx}\n").format(status_2xx=stats["success_2xx"]), style=good)
+        content.append(_(" ↔  Redir. 3xx   : {status_3xx}\n").format(status_3xx=stats["redirect_3xx"]), style=info)
+        content.append(_(" ⚠  Erreurs 4xx  : {status_4xx}\n").format(status_4xx=stats["errors_4xx"]), style=warn)
+        content.append(_(" ❌ Erreurs 5xx  : {status_5xx}\n").format(status_5xx=stats["errors_5xx"]), style=bad)
+        content.append(_(" ⛔ Refus 403    : {status_403}\n").format(status_403=status_403), style=warn)
+        content.append(_(" ⏳ Refus 429    : {status_429}\n\n").format(status_429=status_429), style=warn)
 
-        content.append(_("── CLIENTS & RÉSEAU ────────\n"), style=colors["heading"])
-        content.append(_(" 💻 IPs uniques : {unique_ips}\n").format(unique_ips=stats['unique_ips']), style=colors["main"])
-        content.append(_(" 🖧 Top Talker  : {value}\n\n").format(value=stats['top_ip'][:14]), style=colors["info"])
+        content.append(_("── CLIENTS & RÉSEAU ───────\n"), style=heading)
+        content.append(_(" 💻 IPs uniques  : {unique_ips}\n").format(unique_ips=stats["unique_ips"]))
+        # Adresse sur sa propre ligne : une IPv4 longue ou une IPv6 deborderait du cadre (34 colonnes).
+        content.append(_(" 🖧 Top 5 IP     :\n"), style=info)
+        self._append_top(content, top_ips, info)
+        if top_paths:
+            content.append(_("── CHEMINS DEMANDÉS ───────\n"), style=heading)
+            self._append_top(content, top_paths, "")
+            content.append(_("── CHEMINS EN 404 ─────────\n"), style=heading)
+            self._append_top(content, top_not_found, warn)
 
-        content.append(_("── SANTÉ & TAMPON ──────────\n"), style=colors["heading"])
-        err_rate = stats["error_rate"]
-        health_style = colors["available"] if err_rate < 5 else (colors["warning"] if err_rate < 15 else colors["danger"])
-        health_label = "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else _("DÉGRADÉ"))
-        content.append(_(" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n").format(health_label=health_label, err_rate=err_rate), style=health_style)
-        content.append(_(" 📥 Tampon Live : {buffer_size}/{BUFFER_SIZE}").format(buffer_size=stats['buffer_size'], BUFFER_SIZE=_BUFFER_SIZE), style=colors["main"])
+        content.append(_("── SANTÉ & TAMPON ─────────\n"), style=heading)
+        rate = stats["error_rate"]
+        health_style = good if rate < 5 else (warn if rate < 15 else bad)
+        health = "EXCELLENT" if rate < 2 else ("CORRECT" if rate < 10 else _("DÉGRADÉ"))
+        content.append(_(" 🌡 Santé        : {health}\n").format(health=health), style=health_style)
+        content.append(_(" ⚠  Taux d'erreur: {rate:.1f}%\n").format(rate=rate), style=health_style)
+        content.append(_(" 📥 Tampon       : {count}/{BUFFER_SIZE}").format(count=stats["buffer_size"],
+                                                                        BUFFER_SIZE=_BUFFER_SIZE))
         return content
+
+    def _append_top(self, content: Text, items: list[tuple[str, int]], style: str) -> None:
+        """Repris d'omega-log : valeur depuis le bord gauche, compte aligne a droite une colonne avant le bord."""
+        if not items:
+            content.append("    " + _("(aucun)") + "\n\n", style="dim")
+            return
+        width = self.query_one("#stats-box", Static).size.width or _TOP_WIDTH
+        count_width = max(len(str(count)) for _value, count in items)
+        room = max(8, width - 3 - count_width)
+        for value, count in items:
+            shown = value if cell_len(value) <= room else set_cell_size(value, room - 1) + "…"
+            content.append(" " + shown + " " * (room - cell_len(shown)) + " ", style=style)
+            content.append(f"{count:>{count_width}}\n", style="bold")
+        content.append("\n")
 
     def _render_logs_table(self, colors: dict, entries: list[dict]) -> None:
         table = self.query_one("#logs-table", DataTable)

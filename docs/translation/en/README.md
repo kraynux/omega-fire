@@ -28,6 +28,13 @@ Official page: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/) &
 The Textual interface is the default mode of operation, navigated through menus, validated forms (all required fields are checked before continuing) and dedicated screens, with themes, contextual help and keyboard shortcuts shared with the rest of the OMEGA suite (omega-check, omega-deep, omega-stress...). The former sequential, number-driven [Rich](https://github.com/Textualize/rich) interface remains available via `--legacy-cli` (see [Launch](#launch)).
 Preview : [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/en/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/en/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/en/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/en/omega-fire/D.png" width="24%" />
+</p>
+
 The project is designed around **Clean Architecture** principles, with a clear separation between business domain, orchestration, infrastructure and user interface.
 
 ## Table of Contents
@@ -114,7 +121,7 @@ The unified blacklist lets you work with nftables and iptables from a single scr
 - Export and re-import of lists.
 - Complete flush of one or more backends.
 - IPv4 and IPv6 support.
-- Manage blocklist files (`var/blocklist/`) and their pins directly from the dedicated screen.
+- Manage blocklist files (`var/blocklist/`) and their pins directly from the dedicated screen; the default files, `blocklist.txt` and `blocklist-f2b.txt`, are created empty on first launch.
 
 ### 3. Rules and policy management
 
@@ -156,16 +163,17 @@ The unified blacklist lets you work with nftables and iptables from a single scr
 
 - **Log library** (5.1): automatic import of the logs of detected omega-serv instances, including omega-waf's, manual pinning of a path, and retrieval of a remote log over SSH (key or agent, never a password).
 - **Favorites** (5.2): combine logs from the Library, save them under a name with a viewer and launch them directly.
-- **View logs** (5.3): one log with no setup, with the viewer of your choice — Simple (real-time dashboard), Classic (last lines then live follow) or `lnav`.
+- **View logs** (5.3): one log with no setup, with the viewer of your choice — Simple (real-time dashboard: HTTP statuses including 403 and 429 refusals, Top 5 IP, requested paths and paths returning 404, like omega-log), Classic (last lines then live follow) or `lnav`.
+- **The Library feeds every log selection**: 5.4, 5.5, 5.6, as well as 8.5 and 8.6, list it first, before the pins.
 - `lnav` integration: several logs merged into a single chronological view, encapsulated inside an Omega-Fire header/footer (see [Navigation](#navigation)).
-- Top N analysis of the most frequent IPs, exportable to be reloaded into the targeted cleanup.
+- Top N analysis of the most frequent IPs (5.4), exportable to be reloaded into the targeted cleanup; search for a specific IP in the whole file and direct removal of the chosen IP, without freezing the interface.
 - Targeted removal of one or more IPs from LOG or TXT files, typed by hand or ticked from an export.
 - Pinned files with **tickable presets**: only the usual paths actually present on the machine are offered.
-- Immediate or scheduled rotation and backups.
+- Immediate or scheduled rotation and backups, **really run every night** (systemd timer running as root, otherwise a line in root's crontab), with the number of backups kept, the last and the next backup.
 - Restore a backup.
 - Purge by age, quota, type or manual selection.
 - Advanced cleanup by folder or environment.
-- Statistics over 24 hours, 7 days or 30 days.
+- Statistics over 24 hours, 7 days or 30 days (5.10, quick view).
 - Analysis of events, movements, quotas and IPs present in jails.
 
 ### 6. Exports and reports
@@ -187,8 +195,9 @@ Available reports:
 - Statistical reports over 7 or 30 days.
 - Top N ranking of IPs.
 - Help guide and FAQ.
+- **Log statistics** (6.5): same report as omega-serv and omega-log (summary, HTTP statuses, top IP, requested paths, paths returning 404, hourly breakdown, daily trend), logs only; bans and the firewall state remain in the 7- and 30-day reports.
 
-**View all exports** (6.5): every exported file in one place, with type, date and size; an HTML report opens in the user's default web browser, a JSON or TXT file is read inside Omega-Fire, with no terminal or file manager needed.
+**View all exports** (6.6): every exported file in one place, with type, date and size; an HTML report opens in the user's default web browser, a JSON or TXT file is read inside Omega-Fire, with no terminal or file manager needed.
 
 HTML themes:
 
@@ -477,11 +486,15 @@ To launch the former Rich interface (sequential number entry) instead:
 ./omega-fire.sh --legacy-cli
 ```
 
-The legacy interface remains that of version 3.0, in French: original menu 5 (no Library, Favorites or Classic viewer), no "View all exports", no help guide or FAQ, no presets. The Textual interface carries the complete version 3.5.
+**The legacy Rich interface is no longer developed, but remains available.** The legacy interface remains that of version 3.0, in French: original menu 5 (no Library, Favorites or Classic viewer), no "View all exports", no help guide or FAQ, no presets. The Textual interface carries the complete version 3.5.
 
 ### Interface languages
 
 17 languages: French, English, Spanish, Portuguese (Brazil), Italian, German, Dutch, Polish, Russian, Chinese, Vietnamese, Thai, Indonesian, Japanese, Korean, Hindi, Arabic. Choose in the settings (`s` key, "Langue / Language", a label that is never translated), applied by restarting only the interface, or for a single run `OMEGA_FIRE_LANG=en ./omega-fire.sh` (kept through `sudo` by the launcher). In the Linux text console (TTY), languages whose script is missing from the console fonts (Vietnamese, Chinese, Thai, Japanese, Korean, Hindi, Arabic) are shown in English for the session. Arabic is displayed right to left. In Hindi, Terminator, GNOME Terminal, Xfce Terminal and Alacritty display aligned text; terminals that shape conjunct letters themselves (Kitty, Ghostty, Konsole) may shift boxes and columns. The **export language** (HTML and TXT reports) is set separately, "Same as interface" by default. The application log and the audit history stay recorded in French; history titles are shown in the chosen language. The legacy interface (`--legacy-cli`) stays in French.
+
+### Contact and support
+
+Help (`a` key) offers a **Contact and support** screen: *Buy me a coffee* (the developer's PayPal page), *Contact support* (email address and the site's contact form, shown in plain text), *Declare myself as a user (anonymous)* and *Check for updates*. The declaration is voluntary, off by default and sent only once: it is used only to count users and, if you wish, their continent or country (closed lists, never free text). It sends a randomly drawn key, the software name (`omega-fire`) and its version; never a name, a machine name, a setting, a target or a result. The IP address is not stored in the declarations, but, like any visit, it goes through the security checks and the log of the receiving server. You can withdraw at any time from the same screen (*Stop declaring me*). The update check only reads the list of versions published on the site, and never without a click.
 
 ### General flow
 

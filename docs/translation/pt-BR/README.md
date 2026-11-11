@@ -28,6 +28,13 @@ Página oficial: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/)
 A interface Textual é o modo de funcionamento padrão e navega por menus, formulários validados (todos os campos obrigatórios são verificados antes de continuar) e telas dedicadas, com temas, ajuda contextual e atalhos de teclado compartilhados com o resto da suíte OMEGA (omega-check, omega-deep, omega-stress...). A antiga interface [Rich](https://github.com/Textualize/rich), sequencial e conduzida pela digitação de números, continua disponível via `--legacy-cli` (veja [Inicialização](#inicialização)). 
 Prévia: [Capturas de tela](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/pt-BR/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/pt-BR/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/pt-BR/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/pt-BR/omega-fire/D.png" width="24%" />
+</p>
+
 O projeto é concebido segundo os princípios da **Clean Architecture**, com uma separação clara entre domínio de negócio, orquestração, infraestrutura e interface do usuário.
 
 ## Sumário
@@ -114,7 +121,7 @@ A blacklist unificada permite trabalhar com nftables e iptables a partir de uma 
 - Exportação e reimportação das listas.
 - Limpeza completa de um ou vários backends.
 - Suporte a IPv4 e IPv6.
-- Gerenciamento dos arquivos de blocklist (`var/blocklist/`) e de seus fixados diretamente pela tela dedicada.
+- Gerenciamento dos arquivos de blocklist (`var/blocklist/`) e de seus fixados diretamente pela tela dedicada; os arquivos propostos por padrão, `blocklist.txt` e `blocklist-f2b.txt`, são criados vazios na primeira execução.
 
 ### 3. Gerenciamento de regras e políticas
 
@@ -156,16 +163,17 @@ A blacklist unificada permite trabalhar com nftables e iptables a partir de uma 
 
 - **Biblioteca de logs** (5.1): importação automática dos logs das instâncias omega-serv detectadas, incluindo os do omega-waf, fixação manual de um caminho e obtenção de um log remoto por SSH (chave ou agente, nunca senha).
 - **Favoritos** (5.2): combinar logs da Biblioteca, salvá-los com um nome e um visualizador e iniciá-los diretamente.
-- **Ver os logs** (5.3): um log sem configuração, com o visualizador de sua escolha — Simples (dashboard em tempo real), Clássico (últimas linhas e depois acompanhamento ao vivo) ou `lnav`.
+- **Ver os logs** (5.3): um log sem configuração, com o visualizador de sua escolha — Simples (dashboard em tempo real: status HTTP incluindo recusas 403 e 429, Top 5 IP, caminhos solicitados e caminhos em 404, como o omega-log), Clássico (últimas linhas e depois acompanhamento ao vivo) ou `lnav`.
+- **A Biblioteca alimenta todas as seleções de log**: 5.4, 5.5, 5.6, assim como 8.5 e 8.6, a propõem no topo da lista, antes dos itens fixados.
 - Integração do `lnav`: vários logs mesclados em uma única visão cronológica, encapsulada em um header/footer do Omega-Fire (veja [Navegação](#navegação)).
-- Análise dos IPs mais frequentes com Top N, exportável para ser recarregada na limpeza direcionada.
+- Análise dos IPs mais frequentes com Top N (5.4), exportável para ser recarregada na limpeza direcionada; pesquisa de um IP específico no arquivo inteiro e remoção direta do IP escolhido, sem travar a interface.
 - Limpeza direcionada de um ou mais IPs em arquivos LOG ou TXT, digitados à mão ou marcados a partir de uma exportação.
 - Arquivos fixados com **presets para marcar**: apenas os caminhos usuais realmente presentes na máquina são propostos.
-- Rotação e backups imediatos ou automatizados.
+- Rotação e backups imediatos ou agendados, **realmente executados toda noite** (timer systemd executado como root, ou então uma linha na crontab do root), com o número de backups mantidos, o último e o próximo backup.
 - Restauração de um backup.
 - Purga por antiguidade, cota, tipo ou seleção manual.
 - Limpeza avançada por pasta ou ambiente.
-- Estatísticas de 24 horas, 7 dias ou 30 dias.
+- Estatísticas de 24 horas, 7 dias ou 30 dias (5.10, visão rápida).
 - Análise dos eventos, movimentos, cotas e IPs presentes nos jails.
 
 ### 6. Exportações e relatórios
@@ -186,9 +194,10 @@ Relatórios disponíveis:
 - Estado e diagnósticos do sistema.
 - Relatórios estatísticos de 7 ou 30 dias.
 - Ranking Top N dos IPs.
+- **Estatísticas dos logs** (6.5): mesmo relatório do omega-serv e do omega-log (resumo, status HTTP, top IP, caminhos solicitados, caminhos em 404, distribuição por hora, tendência por dia), somente logs; os bans e o estado do firewall continuam nos relatórios de 7 e 30 dias.
 - Guia de ajuda e FAQ.
 
-**Ver todas as exportações** (6.5): todos os arquivos exportados em um só lugar, com tipo, data e tamanho; um relatório HTML abre no navegador web padrão do usuário, um JSON ou TXT é lido no Omega-Fire, sem terminal nem gerenciador de arquivos.
+**Ver todas as exportações** (6.6): todos os arquivos exportados em um só lugar, com tipo, data e tamanho; um relatório HTML abre no navegador web padrão do usuário, um JSON ou TXT é lido no Omega-Fire, sem terminal nem gerenciador de arquivos.
 
 Temas HTML:
 
@@ -477,11 +486,15 @@ Para iniciar a antiga interface Rich (digitação sequencial de números) em seu
 ./omega-fire.sh --legacy-cli
 ```
 
-A interface antiga continua sendo a da versão 3.0, em francês: menu 5 original (sem Biblioteca, Favoritos nem visualizador Clássico), sem "Ver todas as exportações", sem guia de ajuda nem FAQ, sem presets. A interface Textual traz a versão 3.5 completa.
+**A antiga interface Rich não é mais desenvolvida, mas continua disponível.** A interface antiga continua sendo a da versão 3.0, em francês: menu 5 original (sem Biblioteca, Favoritos nem visualizador Clássico), sem "Ver todas as exportações", sem guia de ajuda nem FAQ, sem presets. A interface Textual traz a versão 3.5 completa.
 
 ### Idiomas da interface
 
 17 idiomas: francês, inglês, espanhol, português (Brasil), italiano, alemão, neerlandês, polonês, russo, chinês, vietnamita, tailandês, indonésio, japonês, coreano, hindi, árabe. Escolha nas configurações (tecla `s`, « Langue / Language », rótulo que nunca é traduzido), aplicada reiniciando apenas a interface, ou pontualmente com `OMEGA_FIRE_LANG=pt_BR ./omega-fire.sh` (mantido através do `sudo` pelo lançador). No console de texto do Linux (TTY), os idiomas cuja escrita não existe nas fontes de console (vietnamita, chinês, tailandês, japonês, coreano, hindi, árabe) aparecem em inglês durante a sessão. O árabe é exibido da direita para a esquerda. Em hindi, Terminator, GNOME Terminal, Xfce Terminal e Alacritty exibem o texto alinhado; os terminais que compõem eles mesmos as letras ligadas (Kitty, Ghostty, Konsole) podem deslocar quadros e colunas. O **idioma das exportações** (relatórios HTML e TXT) é configurado à parte, « Como a interface » por padrão. O registro do aplicativo e o histórico de auditoria continuam gravados em francês; os títulos do histórico aparecem no idioma escolhido. A interface antiga (`--legacy-cli`) permanece em francês.
+
+### Contato e suporte
+
+A ajuda (tecla `a`) oferece uma tela **Contato e suporte**: *Pagar um café* (página PayPal do desenvolvedor), *Contatar o suporte* (endereço de e-mail e formulário de contato do site, exibidos em claro), *Declarar-me usuário (anônimo)* e *Verificar atualizações*. A declaração é voluntária, desativada por padrão e enviada uma única vez: serve apenas para contar os usuários e, se desejado, seu continente ou país (listas fechadas, nunca texto livre). Ela envia uma chave sorteada ao acaso, o nome do software (`omega-fire`) e sua versão; nunca um nome, um nome de máquina, uma configuração, um alvo ou um resultado. O endereço IP não é registrado nas declarações, mas, como em qualquer visita, passa pelos controles de segurança e pelo registro do servidor de recepção. Retirada a qualquer momento na mesma tela (*Não me declarar mais*). A verificação de atualizações apenas lê a lista de versões publicadas no site, e nunca sem um clique.
 
 ### Percurso geral
 

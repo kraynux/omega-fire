@@ -7449,8 +7449,9 @@ def action_5_3_remove_ip_logs(ctx: ActionContext) -> None:
         # --- 5. ÉCRITURE DANS LE FICHIER ---
         try:
             with gauge_status(ctx.console, f"Suppression de {occurrences} occurrence(s)..."):
-                with open(target_path, "w", encoding="utf-8") as f:
-                    f.writelines(cleaned_lines)
+                # Sur place, binaire, relu juste avant l'ecriture (correctif 2026-11-10, voir 5.5 de la TUI).
+                from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
+                occurrences = sum(remove_ips_in_place(target_path, [target_ip]).values())
             ctx.console.print(_success(f"Suppression réussie ! {occurrences} occurrence(s) retirée(s) de {target_path.name}."))
         except Exception as e:
             ctx.console.print(_error(f"Erreur lors de l'écriture dans le fichier : {e}"))

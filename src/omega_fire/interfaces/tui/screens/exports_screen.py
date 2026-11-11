@@ -1,5 +1,5 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
-"""Ecran 6.5 — Voir tous les exports (version 3.5) : tous les fichiers exportes au meme
+"""Ecran 6.6 (6.5 avant la 3.6) — Voir tous les exports (version 3.5) : tous les fichiers exportes au meme
 endroit, sans terminal ni gestionnaire de fichiers. Un rapport HTML s'ouvre dans le
 navigateur de l'utilisateur (infrastructure/desktop/browser_opener.py) ; JSON / TXT se
 lisent dans omega-fire (lecteur Classique de 5.3). Sans session graphique (SSH,
@@ -26,7 +26,7 @@ from omega_fire.shared.i18n import _
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ACTION_TITLE = "6.5 Voir tous les exports"
+_ACTION_TITLE = "6.6 Voir tous les exports"
 
 
 class ExportsScreen(OmegaScreen):

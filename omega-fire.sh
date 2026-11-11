@@ -21,6 +21,22 @@ if [ -z "${LC_ALL:-}" ] && [ -z "${LANG:-}" ] || [ "${LANG:-}" = "C" ] || [ "${L
     fi
 fi
 
+# Contrats d'interconnexion (2026-11-10) : `synchro jeton|fiche` sort du JSON lu par omega-connect,
+# sans bannière ni élévation sudo (le jeton n'est jamais écrit en root ; sans root la fiche est
+# marquée partielle).
+if [ "${1:-}" = "synchro" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+        VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
+    elif [ -x "$SCRIPT_DIR/venv/bin/python" ]; then
+        VENV_PYTHON="$SCRIPT_DIR/venv/bin/python"
+    else
+        VENV_PYTHON="$(command -v python3)"
+    fi
+    export PYTHONPATH="$SCRIPT_DIR/src"
+    exec "$VENV_PYTHON" -m omega_fire "$@"
+fi
+
 # Couleurs pour le terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'

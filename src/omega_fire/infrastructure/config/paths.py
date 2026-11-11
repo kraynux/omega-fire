@@ -98,6 +98,27 @@ def ensure_runtime_dirs() -> None:
     """
     for directory in _ALL_RUNTIME_DIRS:
         directory.mkdir(parents=True, exist_ok=True)
+    ensure_default_blocklist_files()
+
+
+def ensure_default_blocklist_files() -> None:
+    """Cree vides blocklist.txt et blocklist-f2b.txt s'ils manquent (2026-11-09) : 2.7 / 2.8, 4.3 et
+    6.1 les proposent, mais var/blocklist/* n'est jamais livre dans l'archive, donc une installation
+    neuve ne les avait pas. Jamais d'ecrasement (O_EXCL) ; 0664 : le groupe du dossier (setgid,
+    celui de l'utilisateur) peut les remplir a la main. Un echec (installation en lecture seule) ne
+    bloque jamais le demarrage."""
+    for path in DEFAULT_PINNED_FILES:
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o664)
+        except FileExistsError:
+            continue
+        except OSError:
+            continue
+        os.close(fd)
+        try:
+            os.chmod(path, 0o664)  # l'umask de root (022) retirerait l'ecriture du groupe
+        except OSError:
+            pass
 
 
 def get_project_root() -> Path:

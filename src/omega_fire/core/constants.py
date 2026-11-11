@@ -12,7 +12,7 @@ APP_NAME = "Omega-Fire"
 APP_VERSION = "1.0.0"
 # Version affichee (header, splash, tableau de bord). APP_VERSION reste la version des
 # metadonnees de snapshot (compatibilite), a ne pas confondre.
-OMEGA_FIRE_VERSION = "3.5"
+OMEGA_FIRE_VERSION = "3.6.1"
 APP_DESCRIPTION = _("Gestionnaire de pare-feu Linux")
 # Terminal requirements
 MIN_TERMINAL_WIDTH = 80

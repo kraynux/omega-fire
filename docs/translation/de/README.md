@@ -28,6 +28,13 @@ Offizielle Seite: [OMEGA-FIRE](https://kraynux.snake-mackarel.ts.net/omega-fire/
 Die Textual-Oberfläche ist der Standardbetriebsmodus und navigiert über Menüs, validierte Formulare (alle Pflichtfelder werden vor dem Fortfahren geprüft) und eigene Bildschirme, mit Themes, kontextbezogener Hilfe und Tastenkürzeln, die mit dem Rest der OMEGA-Suite geteilt werden (omega-check, omega-deep, omega-stress...). Die alte, sequenzielle und über Zifferneingabe gesteuerte [Rich](https://github.com/Textualize/rich)-Oberfläche bleibt über `--legacy-cli` verfügbar (siehe [Start](#start)). 
 Vorschau: [Screenshots](https://kraynux.snake-mackarel.ts.net/omega-fire/screenshots/index-2.html)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/de/omega-fire/A.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/de/omega-fire/B.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/de/omega-fire/C.png" width="24%" />
+  <img src="https://raw.githubusercontent.com/kraynux/kraynux/refs/heads/main/docs/translation/de/omega-fire/D.png" width="24%" />
+</p>
+
 Das Projekt folgt den Prinzipien der **Clean Architecture**, mit einer klaren Trennung zwischen Fachdomäne, Orchestrierung, Infrastruktur und Benutzeroberfläche.
 
 ## Inhalt
@@ -114,7 +121,7 @@ Die einheitliche Blacklist erlaubt die Arbeit mit nftables und iptables vom selb
 - Export und erneuter Import der Listen.
 - Vollständige Bereinigung eines oder mehrerer Backends.
 - Unterstützung für IPv4 und IPv6.
-- Verwaltung der Blocklist-Dateien (`var/blocklist/`) und ihrer angehefteten Einträge direkt im zugehörigen Bildschirm.
+- Verwaltung der Blocklist-Dateien (`var/blocklist/`) und ihrer angehefteten Einträge direkt im zugehörigen Bildschirm; die standardmäßig angebotenen Dateien `blocklist.txt` und `blocklist-f2b.txt` werden beim ersten Start leer angelegt.
 
 ### 3. Verwaltung von Regeln und Richtlinien
 
@@ -156,16 +163,17 @@ Die einheitliche Blacklist erlaubt die Arbeit mit nftables und iptables vom selb
 
 - **Log-Bibliothek** (5.1): automatischer Import der Logs erkannter omega-serv-Instanzen, einschließlich derer von omega-waf, manuelles Anheften eines Pfads und Abruf eines entfernten Logs per SSH (Schlüssel oder Agent, nie ein Passwort).
 - **Favoriten** (5.2): Logs aus der Bibliothek kombinieren, unter einem Namen mit einem Viewer speichern und direkt starten.
-- **Logs ansehen** (5.3): ein Log ohne Einrichtung, mit dem Viewer Ihrer Wahl — Einfach (Echtzeit-Dashboard), Klassisch (letzte Zeilen, dann Live-Verfolgung) oder `lnav`.
+- **Logs ansehen** (5.3): ein Log ohne Einrichtung, mit dem Viewer Ihrer Wahl — Einfach (Echtzeit-Dashboard: HTTP-Status inkl. Ablehnungen 403 und 429, Top 5 IP, angefragte Pfade und Pfade mit 404, wie omega-log), Klassisch (letzte Zeilen, dann Live-Verfolgung) oder `lnav`.
+- **Die Bibliothek speist alle Log-Auswahlen**: 5.4, 5.5, 5.6 sowie 8.5 und 8.6 zeigen sie oben in der Liste an, vor den angehefteten Einträgen.
 - Integration von `lnav`: mehrere Logs in einer einzigen chronologischen Ansicht zusammengeführt, eingebettet in einen Omega-Fire-Header/-Footer (siehe [Navigation](#navigation)).
-- Top-N-Analyse der häufigsten IPs, exportierbar, um sie in die gezielte Bereinigung neu zu laden.
+- Top-N-Analyse der häufigsten IPs (5.4), exportierbar, um sie in die gezielte Bereinigung neu zu laden; Suche nach einer bestimmten IP in der ganzen Datei und direktes Entfernen der gewählten IP, ohne die Oberfläche zu blockieren.
 - Gezielte Entfernung einer oder mehrerer IPs aus LOG- oder TXT-Dateien, von Hand eingegeben oder aus einem Export angehakt.
 - Angeheftete Dateien mit **ankreuzbaren Presets**: nur die üblichen Pfade, die auf der Maschine tatsächlich vorhanden sind, werden angeboten.
-- Rotation und sofortige oder automatisierte Sicherungen.
+- Rotation und sofortige oder geplante Sicherungen, **jede Nacht tatsächlich ausgeführt** (systemd-Timer als root, sonst eine Zeile in der crontab von root), mit der Anzahl der aufbewahrten Sicherungen, der letzten und der nächsten Sicherung.
 - Wiederherstellung einer Sicherung.
 - Bereinigung nach Alter, Kontingent, Typ oder manueller Auswahl.
 - Erweiterte Bereinigung nach Ordner oder Umgebung.
-- Statistiken über 24 Stunden, 7 Tage oder 30 Tage.
+- Statistiken über 24 Stunden, 7 Tage oder 30 Tage (5.10, Schnellansicht).
 - Analyse von Ereignissen, Bewegungen, Kontingenten und in den Jails vorhandenen IPs.
 
 ### 6. Exporte und Berichte
@@ -186,9 +194,10 @@ Verfügbare Berichte:
 - Systemzustand und -diagnose.
 - Statistikberichte über 7 oder 30 Tage.
 - Top-N-Rangliste der IPs.
+- **Log-Statistiken** (6.5): derselbe Bericht wie omega-serv und omega-log (Übersicht, HTTP-Status, Top-IPs, angefragte Pfade, Pfade mit 404, Verteilung nach Uhrzeit, Trend pro Tag), nur Logs; Bans und der Firewall-Status bleiben in den Berichten über 7 und 30 Tage.
 - Hilfeleitfaden und FAQ.
 
-**Alle Exporte ansehen** (6.5): alle exportierten Dateien an einem Ort, mit Typ, Datum und Größe; ein HTML-Bericht öffnet sich im Standard-Webbrowser des Benutzers, eine JSON- oder TXT-Datei wird in Omega-Fire gelesen, ohne Terminal oder Dateimanager.
+**Alle Exporte ansehen** (6.6): alle exportierten Dateien an einem Ort, mit Typ, Datum und Größe; ein HTML-Bericht öffnet sich im Standard-Webbrowser des Benutzers, eine JSON- oder TXT-Datei wird in Omega-Fire gelesen, ohne Terminal oder Dateimanager.
 
 HTML-Themes:
 
@@ -477,11 +486,15 @@ Um stattdessen die alte Rich-Oberfläche (sequenzielle Zifferneingabe) zu starte
 ./omega-fire.sh --legacy-cli
 ```
 
-Die alte Oberfläche bleibt die der Version 3.0, auf Französisch: ursprüngliches Menü 5 (ohne Bibliothek, Favoriten und klassischen Viewer), ohne „Alle Exporte ansehen“, ohne Hilfeleitfaden und FAQ, ohne Presets. Die Textual-Oberfläche enthält die vollständige Version 3.5.
+**Die alte Rich-Oberfläche wird nicht mehr weiterentwickelt, bleibt aber verfügbar.** Die alte Oberfläche bleibt die der Version 3.0, auf Französisch: ursprüngliches Menü 5 (ohne Bibliothek, Favoriten und klassischen Viewer), ohne „Alle Exporte ansehen“, ohne Hilfeleitfaden und FAQ, ohne Presets. Die Textual-Oberfläche enthält die vollständige Version 3.5.
 
 ### Sprachen der Oberfläche
 
 17 Sprachen: Französisch, Englisch, Spanisch, Portugiesisch (Brasilien), Italienisch, Deutsch, Niederländisch, Polnisch, Russisch, Chinesisch, Vietnamesisch, Thailändisch, Indonesisch, Japanisch, Koreanisch, Hindi, Arabisch. Auswahl in den Einstellungen (Taste `s`, « Langue / Language », eine nie übersetzte Beschriftung), angewendet durch einen Neustart nur der Oberfläche, oder einmalig mit `OMEGA_FIRE_LANG=de ./omega-fire.sh` (vom Starter über `sudo` hinweg beibehalten). In der Linux-Textkonsole (TTY) werden Sprachen, deren Schrift in den Konsolenschriften fehlt (Vietnamesisch, Chinesisch, Thailändisch, Japanisch, Koreanisch, Hindi, Arabisch), für die Sitzung auf Englisch angezeigt. Arabisch wird von rechts nach links angezeigt. Auf Hindi zeigen Terminator, GNOME Terminal, Xfce Terminal und Alacritty den Text ausgerichtet an; Terminals, die verbundene Buchstaben selbst zusammensetzen (Kitty, Ghostty, Konsole), können Rahmen und Spalten verschieben. Die **Sprache der Exporte** (HTML- und TXT-Berichte) wird getrennt eingestellt, standardmäßig « Wie die Oberfläche ». Das Anwendungsprotokoll und der Audit-Verlauf werden weiterhin auf Französisch gespeichert; die Titel des Verlaufs werden in der gewählten Sprache angezeigt. Die alte Oberfläche (`--legacy-cli`) bleibt auf Französisch.
+
+### Kontakt und Support
+
+Die Hilfe (Taste `a`) bietet einen Bildschirm **Kontakt und Support**: *Einen Kaffee spendieren* (PayPal-Seite des Entwicklers), *Support kontaktieren* (E-Mail-Adresse und Kontaktformular der Website, im Klartext angezeigt), *Mich als Nutzer melden (anonym)* und *Updates prüfen*. Die Meldung ist freiwillig, standardmäßig deaktiviert und wird nur ein einziges Mal gesendet: Sie dient nur dazu, die Nutzer zu zählen und, wenn gewünscht, ihren Kontinent oder ihr Land (geschlossene Listen, nie Freitext). Gesendet werden ein zufällig gezogener Schlüssel, der Name der Software (`omega-fire`) und ihre Version; nie ein Name, ein Rechnername, eine Einstellung, ein Ziel oder ein Ergebnis. Die IP-Adresse wird in den Meldungen nicht gespeichert, durchläuft aber wie jeder Besuch die Sicherheitsprüfungen und das Protokoll des Empfangsservers. Rückzug jederzeit über denselben Bildschirm (*Mich nicht mehr melden*). Die Update-Prüfung liest nur die Liste der auf der Website veröffentlichten Versionen, und nie ohne Klick.
 
 ### Allgemeiner Ablauf
 

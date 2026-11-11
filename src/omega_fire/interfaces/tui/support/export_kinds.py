@@ -1,6 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Libelles traduits des types d'export (infrastructure/exporters/export_catalog.py) et
-mise en forme commune a 5.5 (charger une liste d'IPs) et 6.5 (voir tous les exports)."""
+mise en forme commune a 5.5 (charger une liste d'IPs) et 6.6 (voir tous les exports)."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -22,6 +22,7 @@ def kind_label(kind: str) -> str:
         "stats": _("Statistiques"),
         "conntrack": _("Conntrack"),
         "guide": _("Guide d'aide (10)"),
+        "log_stats": _("Statistiques des logs (6.5)"),
     }
     return labels.get(kind, _("Autre"))
 
