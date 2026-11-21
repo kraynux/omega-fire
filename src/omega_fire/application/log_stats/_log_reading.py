@@ -35,6 +35,7 @@ fichier d'acces reel est pour l'essentiel trie chronologiquement, donc
 cet arret anticipe couvre le cas normal sans perte de lignes recentes.
 Seule la requete "Tout" (period=None) doit encore lire le fichier en
 entier — aucun moyen de l'eviter pour un vrai total exhaustif."""
+
 from __future__ import annotations
 
 import os
@@ -90,7 +91,9 @@ def _iter_lines_reverse(path: str) -> Iterator[str]:
             yield trailing.decode("utf-8", errors="replace")
 
 
-def _read_entries_for_period(path: str, *, period: str, now: datetime) -> list[LogEntry] | None:
+def _read_entries_for_period(
+    path: str, *, period: str, now: datetime
+) -> list[LogEntry] | None:
     """Lecture inversee avec arret anticipe — voir note de tete de
     fichier. Retourne `None` (jamais une liste vide) si le fichier est
     absent/illisible SANS elevation fournie, pour laisser l'appelant
@@ -113,7 +116,9 @@ def _read_entries_for_period(path: str, *, period: str, now: datetime) -> list[L
     return entries
 
 
-def read_entries(path: str, *, runner: ProcessRunnerPort | None = None) -> list[LogEntry]:
+def read_entries(
+    path: str, *, runner: ProcessRunnerPort | None = None
+) -> list[LogEntry]:
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
@@ -136,7 +141,10 @@ def read_entries(path: str, *, runner: ProcessRunnerPort | None = None) -> list[
 
 
 def read_entries_for_paths(
-    paths: list[str], *, period: str | None = None, now: datetime | None = None,
+    paths: list[str],
+    *,
+    period: str | None = None,
+    now: datetime | None = None,
     runner: ProcessRunnerPort | None = None,
 ) -> list[LogEntry]:
     now = now or datetime.now()

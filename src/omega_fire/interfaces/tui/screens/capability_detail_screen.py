@@ -4,6 +4,7 @@ Logique identique a
 interfaces/cli/renderers/capability_view.py::get_capability_detail :
 identifiant, statut, raison, details techniques, dernier scan, directive
 selon le statut (coloree via la palette d'extension omega-fire)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,16 +22,22 @@ if TYPE_CHECKING:
 
 _DIRECTIVES: dict[CapabilityStatus, tuple[str, str]] = {
     CapabilityStatus.AVAILABLE: (
-        _("Cette capacité est pleinement opérationnelle et disponible."), "status-available"
+        _("Cette capacité est pleinement opérationnelle et disponible."),
+        "status-available",
     ),
     CapabilityStatus.DEGRADED: (
-        _("Capacité partiellement fonctionnelle. Vérifiez la configuration des dépendances."), "status-degraded"
+        _(
+            "Capacité partiellement fonctionnelle. Vérifiez la configuration des dépendances."
+        ),
+        "status-degraded",
     ),
     CapabilityStatus.MISSING: (
-        _("Composant système manquant. Veuillez installer le package/outil requis."), "status-missing"
+        _("Composant système manquant. Veuillez installer le package/outil requis."),
+        "status-missing",
     ),
     CapabilityStatus.DISQUALIFIED: (
-        _("Capacité disqualifiée par la politique système. Vérifiez les prérequis."), "status-disqualified"
+        _("Capacité disqualifiée par la politique système. Vérifiez les prérequis."),
+        "status-disqualified",
     ),
 }
 
@@ -48,7 +55,10 @@ class CapabilityDetailScreen(OmegaScreen):
         with Vertical(classes="omega-panel"):
             yield Static(_("DÉTAIL D'UNE CAPACITÉ"), classes="omega-title")
             yield Static("", id="detail-body")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -56,7 +66,11 @@ class CapabilityDetailScreen(OmegaScreen):
         body = self.query_one("#detail-body", Static)
         cap = self._container.capability_registry.get(self._capability_id)
         if cap is None:
-            body.update(_("Capacité '{capability_id}' introuvable dans le registre.").format(capability_id=self._capability_id))
+            body.update(
+                _("Capacité '{capability_id}' introuvable dans le registre.").format(
+                    capability_id=self._capability_id
+                )
+            )
             return
 
         lines = [
@@ -64,11 +78,19 @@ class CapabilityDetailScreen(OmegaScreen):
             _("[b]Statut actuel :[/b] {value}").format(value=cap.status.value.upper()),
         ]
         if cap.reason:
-            lines.append(_("[b]Raison / cause :[/b] {reason}").format(reason=cap.reason))
+            lines.append(
+                _("[b]Raison / cause :[/b] {reason}").format(reason=cap.reason)
+            )
         if cap.detail:
-            lines.append(_("[b]Détails techniques :[/b] {detail}").format(detail=cap.detail))
+            lines.append(
+                _("[b]Détails techniques :[/b] {detail}").format(detail=cap.detail)
+            )
         if cap.last_checked:
-            dt = cap.last_checked.strftime("%Y-%m-%d %H:%M:%S") if hasattr(cap.last_checked, "strftime") else str(cap.last_checked)
+            dt = (
+                cap.last_checked.strftime("%Y-%m-%d %H:%M:%S")
+                if hasattr(cap.last_checked, "strftime")
+                else str(cap.last_checked)
+            )
             lines.append(_("[b]Dernier scan :[/b] {dt}").format(dt=dt))
 
         directive_text, variable = _DIRECTIVES.get(cap.status, ("", "foreground"))

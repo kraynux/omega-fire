@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Dossiers d'exports et de captures (ecran Reglages, retour utilisateur 2026-10-27) : chemin
 modifiable, vidage avec confirmation, garde-fous - omega-fire tourne en root."""
+
 from __future__ import annotations
 
 import asyncio
@@ -11,12 +12,15 @@ from pathlib import Path
 
 from textual.widgets import Button, Input
 
-from omega_fire.application.commands.clear_directory import check_clearable, clear_directory
+from omega_fire.application.commands.clear_directory import (
+    check_clearable,
+    clear_directory,
+)
 from omega_fire.application.exceptions import UnsafeDirectoryError
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.screens.settings_screen import SettingsScreen
 
-from .i18n_helpers import HostApp, MemorySettings, FakeContainer
+from .i18n_helpers import FakeContainer, HostApp, MemorySettings
 
 
 class ClearDirectoryTest(unittest.TestCase):
@@ -76,8 +80,10 @@ class ClearDirectoryTest(unittest.TestCase):
                 check_clearable(path, self.project)
 
     def test_project_subfolder_allowed(self) -> None:
-        self.assertEqual(check_clearable(self.project / "var" / "exports", self.project),
-                         (self.project / "var" / "exports").resolve())
+        self.assertEqual(
+            check_clearable(self.project / "var" / "exports", self.project),
+            (self.project / "var" / "exports").resolve(),
+        )
 
     def test_file_refused(self) -> None:
         f = self.base / "fichier"
@@ -127,9 +133,12 @@ class SettingsScreenDirectoriesTest(unittest.TestCase):
 
     def test_defaults_shown_short_and_not_saved(self) -> None:
         async def steps(app, pilot):
-            self.assertEqual(app.screen.query_one("#exports-dir-input", Input).value, "var/exports")
+            self.assertEqual(
+                app.screen.query_one("#exports-dir-input", Input).value, "var/exports"
+            )
             app.screen.query_one("#apply", Button).press()
             await pilot.pause()
+
         self._run(steps)
         self.assertEqual(self.settings.values["exports_dir_override"], "")
         self.assertEqual(self.settings.values["screenshots_dir_override"], "")
@@ -139,6 +148,7 @@ class SettingsScreenDirectoriesTest(unittest.TestCase):
             app.screen.query_one("#exports-dir-input", Input).value = "/srv/rapports"
             app.screen.query_one("#apply", Button).press()
             await pilot.pause()
+
         self._run(steps)
         self.assertEqual(self.settings.values["exports_dir_override"], "/srv/rapports")
 
@@ -157,6 +167,7 @@ class SettingsScreenDirectoriesTest(unittest.TestCase):
             await pilot.pause()
             await app.workers.wait_for_complete()
             await pilot.pause()
+
         app = self._run(steps)
         self.assertEqual(list(target.iterdir()), [])
         self.assertTrue(any("1 élément" in m for m in app.messages))
@@ -171,6 +182,7 @@ class SettingsScreenDirectoriesTest(unittest.TestCase):
             await pilot.pause()
             app.screen.query_one("#cancel", Button).press()
             await pilot.pause()
+
         self._run(steps)
         self.assertTrue((target / "capture.svg").exists())
 
@@ -183,5 +195,6 @@ class SettingsScreenDirectoriesTest(unittest.TestCase):
             await pilot.pause()
             await app.workers.wait_for_complete()
             await pilot.pause()
+
         app = self._run(steps)
         self.assertTrue(any("Dossier refusé" in m for m in app.messages))

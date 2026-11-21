@@ -1,23 +1,25 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class LogEntry:
     """Représente un événement individuel extrait d'un log ou de la base SQL."""
+
     timestamp: datetime
     jail: str
     action: str
     ip: str
-    message: Optional[str] = None
+    message: str | None = None
 
 
 @dataclass
 class JailStat:
     """Statistiques agrégées pour une Jail spécifique."""
+
     name: str
     total_bans: int
     is_active: bool = True
@@ -27,6 +29,7 @@ class JailStat:
 @dataclass
 class IpStat:
     """Statistiques agrégées pour une adresse IP."""
+
     ip: str
     total_bans: int
     last_ban: datetime
@@ -36,6 +39,7 @@ class IpStat:
 @dataclass
 class LogStatsSummary:
     """Synthèse complète des métriques pour une période donnée."""
+
     period_label: str
     start_date: datetime
     end_date: datetime
@@ -44,7 +48,7 @@ class LogStatsSummary:
     peak_hour: str = "--:--"
     peak_count: int = 0
     top_jail_name: str = field(default_factory=lambda: _("Aucun"))
-    top_jails: List[JailStat] = field(default_factory=list)
-    top_ips: List[IpStat] = field(default_factory=list)
-    hourly_series: List[int] = field(default_factory=lambda: [0] * 24)
+    top_jails: list[JailStat] = field(default_factory=list)
+    top_ips: list[IpStat] = field(default_factory=list)
+    hourly_series: list[int] = field(default_factory=lambda: [0] * 24)
     data_source: str = "Inconnue"

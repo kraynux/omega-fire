@@ -10,6 +10,7 @@ Fonctions pures : aucun I/O, aucune dépendance à SQLite ou au système
 de fichiers. L'exécution réelle (suppression fichier + ligne DB) est
 déléguée à application/.
 """
+
 from __future__ import annotations
 
 from omega_fire.domain.persistence.snapshots import Snapshot, SnapshotOrigin
@@ -37,16 +38,13 @@ def compute_snapshots_to_delete(
         ancien au plus récent (ordre de suppression recommandé).
     """
     auto_snapshots = [
-        s for s in snapshots
-        if s.metadata.origin == SnapshotOrigin.AUTO_PRESET
+        s for s in snapshots if s.metadata.origin == SnapshotOrigin.AUTO_PRESET
     ]
 
     if len(auto_snapshots) <= max_auto_snapshots:
         return []
 
-    auto_snapshots_sorted = sorted(
-        auto_snapshots, key=lambda s: s.metadata.created_at
-    )
+    auto_snapshots_sorted = sorted(auto_snapshots, key=lambda s: s.metadata.created_at)
 
     excess_count = len(auto_snapshots_sorted) - max_auto_snapshots
     return auto_snapshots_sorted[:excess_count]
@@ -82,4 +80,4 @@ def compute_snapshots_to_delete(
 #   appellera cette fonction après chaque création d'un snapshot
 #   AUTO_PRESET, pour savoir quoi supprimer, puis délèguera la
 #   suppression réelle au PersistencePort.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

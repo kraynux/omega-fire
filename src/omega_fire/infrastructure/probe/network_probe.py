@@ -9,6 +9,7 @@ Same approach for the default gateway, read from /proc/net/route.
 This module performs real filesystem I/O and is therefore in
 infrastructure/.
 """
+
 import socket
 import struct
 from pathlib import Path
@@ -40,7 +41,11 @@ def list_network_interfaces(exclude_loopback: bool = True) -> list[str]:
         if not _SYS_CLASS_NET.is_dir():
             return []
 
-        names = [entry.name for entry in _SYS_CLASS_NET.iterdir() if entry.is_dir() or entry.is_symlink()]
+        names = [
+            entry.name
+            for entry in _SYS_CLASS_NET.iterdir()
+            if entry.is_dir() or entry.is_symlink()
+        ]
 
         if exclude_loopback:
             names = [n for n in names if n not in _DEFAULT_EXCLUDED]

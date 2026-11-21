@@ -11,12 +11,13 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.domain.logs.rotation import compute_rotations_to_delete
 from omega_fire.infrastructure.exceptions import StorageError
@@ -26,9 +27,10 @@ from omega_fire.shared.i18n import _
 @dataclass
 class RotateLogsRequest:
     """Input for the rotate logs use case."""
+
     source_path: str
     target: str = "all"
-    reason: Optional[str] = None
+    reason: str | None = None
     compress: bool = True
     keep: int = 7
 
@@ -37,7 +39,11 @@ class RotateLogsRequest:
         if not self.source_path:
             errors.append(_("Le chemin source (source_path) ne doit pas être vide"))
         if not Path(self.source_path).exists():
-            errors.append(_("Fichier source introuvable : {source_path}").format(source_path=self.source_path))
+            errors.append(
+                _("Fichier source introuvable : {source_path}").format(
+                    source_path=self.source_path
+                )
+            )
         if self.keep < 1:
             errors.append(_("Le nombre de copies à conserver doit être d'au moins 1"))
         if self.keep > 365:
@@ -51,10 +57,11 @@ class RotateLogsRequest:
 @dataclass
 class RotateLogsResult:
     """Output of the rotate logs use case."""
+
     success: bool
     message: str
-    backup_path: Optional[Path] = None
-    backup_size_bytes: Optional[int] = None
+    backup_path: Path | None = None
+    backup_size_bytes: int | None = None
     deleted_count: int = 0
 
 
@@ -102,7 +109,9 @@ class RotateLogsCommand:
             return RotateLogsResult(
                 success=True,
                 message=(
-                    _("Sauvegarde créée avec succès, mais la purge des anciennes archives a échoué : {e}").format(e=e)
+                    _(
+                        "Sauvegarde créée avec succès, mais la purge des anciennes archives a échoué : {e}"
+                    ).format(e=e)
                 ),
                 backup_path=backup_info.path,
                 backup_size_bytes=backup_info.size_bytes,
@@ -113,12 +122,16 @@ class RotateLogsCommand:
         # Correctif 2026-11-09 : list_backups() rend le plus récent d'abord et toutes les archives
         # de var/backups, ce qui supprimait les plus récentes (y compris celle qui vient d'être créée)
         # et faisait compter les archives des autres journaux.
-        same_log = re.compile(rf"^backup_{re.escape(source.stem)}_\d{{8}}_\d{{6}}\.tar\.gz$")
+        same_log = re.compile(
+            rf"^backup_{re.escape(source.stem)}_\d{{8}}_\d{{6}}\.tar\.gz$"
+        )
         own_backups = sorted(
             (b for b in existing_backups if same_log.match(b.path.name)),
             key=lambda b: (b.created_at, b.path.name),
         )
-        existing_names = [b.path.name for b in own_backups if b.path.name != backup_info.path.name]
+        existing_names = [
+            b.path.name for b in own_backups if b.path.name != backup_info.path.name
+        ]
         existing_names.append(backup_info.path.name)
         names_to_delete = compute_rotations_to_delete(
             existing_rotations=existing_names,
@@ -137,7 +150,9 @@ class RotateLogsCommand:
 
         return RotateLogsResult(
             success=True,
-            message=_("Sauvegarde créée avec succès : {name}").format(name=backup_info.path.name),
+            message=_("Sauvegarde créée avec succès : {name}").format(
+                name=backup_info.path.name
+            ),
             backup_path=backup_info.path,
             backup_size_bytes=backup_info.size_bytes,
             deleted_count=deleted_count,
@@ -175,4 +190,4 @@ class RotateLogsCommand:
 #   ↓ construit RotateLogsRequest depuis la saisie utilisateur
 # application/commands/rotate_logs.py : RotateLogsCommand.execute()
 #   ↓ persistence_port.create_backup() / list_backups() / delete_backup()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

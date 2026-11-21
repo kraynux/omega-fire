@@ -7,25 +7,31 @@ audit logs, snapshots.
 
 This module performs real file I/O and is therefore in infrastructure/.
 """
+
 import sqlite3
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
-from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
+from pathlib import Path
+
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.domain.rules.models import (
+    FirewallRule,
+    RuleAction,
+    RuleChain,
+    RuleFamily,
+    RuleProtocol,
+)
 from omega_fire.infrastructure.storage.sqlite.connection import DatabaseConnection
 from omega_fire.infrastructure.storage.sqlite.exceptions import (
     RepositoryError,
-    EntityNotFoundError,
 )
 
 
 class BanRepository:
     """Repository for BanEntry domain objects."""
-    
+
     def __init__(self, db: DatabaseConnection):
         self._db = db
-    
+
     def save(self, ban: BanEntry) -> int:
         try:
             cursor = self._db.execute(
@@ -53,7 +59,9 @@ class BanRepository:
                 reason=str(e),
             ) from e
 
-    def mark_removed_by_ip(self, ip: str, backend: str, removed_by: str = "user") -> bool:
+    def mark_removed_by_ip(
+        self, ip: str, backend: str, removed_by: str = "user"
+    ) -> bool:
         """Mark the currently-active ban row for (ip, backend) as removed.
 
         Keyed by (ip, backend, status=active) rather than by row id — the
@@ -91,8 +99,8 @@ class BanRepository:
                 operation="mark_removed_by_ip",
                 reason=str(e),
             ) from e
-    
-    def find_by_id(self, ban_id: int) -> Optional[BanEntry]:
+
+    def find_by_id(self, ban_id: int) -> BanEntry | None:
         try:
             cursor = self._db.execute(
                 "SELECT * FROM bans WHERE id = ?",
@@ -108,7 +116,7 @@ class BanRepository:
                 operation="find_by_id",
                 reason=str(e),
             ) from e
-    
+
     def find_by_ip(self, ip: str) -> list[BanEntry]:
         try:
             cursor = self._db.execute(
@@ -122,22 +130,24 @@ class BanRepository:
                 operation="find_by_ip",
                 reason=str(e),
             ) from e
-    
-    def find_all(self, backend: Optional[str] = None, status: Optional[str] = None) -> list[BanEntry]:
+
+    def find_all(
+        self, backend: str | None = None, status: str | None = None
+    ) -> list[BanEntry]:
         try:
             query = "SELECT * FROM bans WHERE 1=1"
             params = []
-            
+
             if backend:
                 query += " AND backend = ?"
                 params.append(backend)
-            
+
             if status:
                 query += " AND status = ?"
                 params.append(status)
-            
+
             query += " ORDER BY banned_at DESC"
-            
+
             cursor = self._db.execute(query, tuple(params))
             return [self._row_to_ban(row) for row in cursor.fetchall()]
         except Exception as e:
@@ -146,7 +156,7 @@ class BanRepository:
                 operation="find_all",
                 reason=str(e),
             ) from e
-    
+
     def delete(self, ban_id: int) -> bool:
         try:
             cursor = self._db.execute(
@@ -161,16 +171,16 @@ class BanRepository:
                 operation="delete",
                 reason=str(e),
             ) from e
-    
-    def delete_by_ip(self, ip: str, backend: Optional[str] = None) -> int:
+
+    def delete_by_ip(self, ip: str, backend: str | None = None) -> int:
         try:
             query = "DELETE FROM bans WHERE ip = ?"
             params = [ip]
-            
+
             if backend:
                 query += " AND backend = ?"
                 params.append(backend)
-            
+
             cursor = self._db.execute(query, tuple(params))
             self._db.get_connection().commit()
             return cursor.rowcount
@@ -180,7 +190,7 @@ class BanRepository:
                 operation="delete_by_ip",
                 reason=str(e),
             ) from e
-    
+
     def _row_to_ban(self, row) -> BanEntry:
         return BanEntry(
             ip=row["ip"],
@@ -189,8 +199,12 @@ class BanRepository:
             source=BanSource(row["source"]),
             comment=row["comment"],
             banned_at=datetime.fromisoformat(row["banned_at"]),
-            expires_at=datetime.fromisoformat(row["expires_at"]) if row["expires_at"] else None,
-            removed_at=datetime.fromisoformat(row["removed_at"]) if row["removed_at"] else None,
+            expires_at=datetime.fromisoformat(row["expires_at"])
+            if row["expires_at"]
+            else None,
+            removed_at=datetime.fromisoformat(row["removed_at"])
+            if row["removed_at"]
+            else None,
             removed_by=row["removed_by"],
             jail_name=row["jail_name"],
         )
@@ -198,10 +212,10 @@ class BanRepository:
 
 class RuleRepository:
     """Repository for FirewallRule domain objects."""
-    
+
     def __init__(self, db: DatabaseConnection):
         self._db = db
-    
+
     def save(self, rule: FirewallRule) -> int:
         try:
             cursor = self._db.execute(
@@ -241,8 +255,8 @@ class RuleRepository:
                 operation="save",
                 reason=str(e),
             ) from e
-    
-    def find_all(self, backend: Optional[str] = None) -> list[FirewallRule]:
+
+    def find_all(self, backend: str | None = None) -> list[FirewallRule]:
         try:
             #  LE CORRECTIF : Forcer la connexion si elle est fermée
             if not getattr(self._db, "_connection", None):
@@ -250,13 +264,13 @@ class RuleRepository:
 
             query = "SELECT * FROM rules WHERE 1=1"
             params = []
-            
+
             if backend:
                 query += " AND backend = ?"
                 params.append(backend)
-            
+
             query += " ORDER BY priority DESC, id DESC"
-            
+
             cursor = self._db.execute(query, tuple(params))
             return [self._row_to_rule(row) for row in cursor.fetchall()]
         except Exception as e:
@@ -265,20 +279,20 @@ class RuleRepository:
                 operation="find_all",
                 reason=str(e),
             ) from e
-    
-    def find_by_id(self, rule_id: int) -> Optional[FirewallRule]:
+
+    def find_by_id(self, rule_id: int) -> FirewallRule | None:
         """Find a single rule by its SQLite ID.
-        
+
         Used before deletion (menu 3.2) to know the rule's backend and
         external_ref, needed to remove it from the live kernel before
         removing it from the database.
-        
+
         Args:
             rule_id: Rule ID (SQLite primary key)
-        
+
         Returns:
             FirewallRule if found, None otherwise
-        
+
         Raises:
             RepositoryError: If query fails
         """
@@ -300,16 +314,16 @@ class RuleRepository:
                 operation="find_by_id",
                 reason=str(e),
             ) from e
-    
+
     def exists_similar(
         self,
         backend: str,
         chain: str,
         action: str,
         protocol: str,
-        port_start: Optional[int],
-        source_cidr: Optional[str],
-    ) -> Optional[int]:
+        port_start: int | None,
+        source_cidr: str | None,
+    ) -> int | None:
         """Detect a duplicate rule WITHIN the same backend only.
 
         Scoped to backend: the same logical rule created independently
@@ -354,8 +368,8 @@ class RuleRepository:
         chain: str,
         action: str,
         protocol: str,
-        port_start: Optional[int],
-        source_cidr: Optional[str],
+        port_start: int | None,
+        source_cidr: str | None,
     ) -> list[FirewallRule]:
         """Find rules representing the SAME logical intent on OTHER
         backends (never the excluded one).
@@ -396,7 +410,7 @@ class RuleRepository:
                 operation="find_equivalent_rules",
                 reason=str(e),
             ) from e
-    
+
     def update_enabled(self, rule_id: int, enabled: bool) -> bool:
         try:
             cursor = self._db.execute(
@@ -411,22 +425,22 @@ class RuleRepository:
                 operation="update_enabled",
                 reason=str(e),
             ) from e
-    
-    def update_external_ref(self, rule_id: int, external_ref: Optional[str]) -> bool:
+
+    def update_external_ref(self, rule_id: int, external_ref: str | None) -> bool:
         """Update the external_ref (technical backend identifier) of a rule.
-        
+
         Used after a rule has been successfully applied to the live
         backend (menu 3.1), once its handle / raw specification has been
         retrieved from the backend adapter, so it can later be removed
         from the kernel by menu 3.2.
-        
+
         Args:
             rule_id: Rule ID (SQLite primary key)
             external_ref: New technical identifier, or None to clear it
-        
+
         Returns:
             True if a row was updated, False if not found
-        
+
         Raises:
             RepositoryError: If update fails
         """
@@ -443,8 +457,10 @@ class RuleRepository:
                 operation="update_external_ref",
                 reason=str(e),
             ) from e
-    
-    def find_by_external_ref(self, backend: str, external_ref: str) -> Optional[FirewallRule]:
+
+    def find_by_external_ref(
+        self, backend: str, external_ref: str
+    ) -> FirewallRule | None:
         try:
             if not getattr(self._db, "_connection", None):
                 self._db.connect()
@@ -463,7 +479,7 @@ class RuleRepository:
                 operation="find_by_external_ref",
                 reason=str(e),
             ) from e
-    
+
     def count_managed(self, backend: str) -> int:
         """Count currently active 'managed' rules for a backend.
 
@@ -509,7 +525,7 @@ class RuleRepository:
                 operation="delete",
                 reason=str(e),
             ) from e
-    
+
     def backup_database(self, dest: Path) -> None:
         """Copie complete et coherente de la base (API backup SQLite, WAL compris),
         avant un nettoyage (3.2 « Nettoyer et resynchroniser la base »)."""
@@ -529,7 +545,9 @@ class RuleRepository:
     def _row_to_rule(self, row: sqlite3.Row) -> FirewallRule:
         raw_chain = row["chain"]
         try:
-            chain_val = RuleChain(raw_chain.lower() if isinstance(raw_chain, str) else raw_chain)
+            chain_val = RuleChain(
+                raw_chain.lower() if isinstance(raw_chain, str) else raw_chain
+            )
         except (ValueError, KeyError, AttributeError):
             try:
                 chain_val = RuleChain.INPUT
@@ -538,31 +556,39 @@ class RuleRepository:
 
         raw_action = row["action"]
         try:
-            action_val = RuleAction(raw_action.lower() if isinstance(raw_action, str) else raw_action)
+            action_val = RuleAction(
+                raw_action.lower() if isinstance(raw_action, str) else raw_action
+            )
         except (ValueError, KeyError, AttributeError):
-            action_val = RuleAction.ACCEPT if hasattr(RuleAction, "ACCEPT") else raw_action
+            action_val = (
+                RuleAction.ACCEPT if hasattr(RuleAction, "ACCEPT") else raw_action
+            )
 
         raw_proto = row["protocol"]
         proto_val = None
         if raw_proto:
             try:
-                proto_val = RuleProtocol(raw_proto.lower() if isinstance(raw_proto, str) else raw_proto)
+                proto_val = RuleProtocol(
+                    raw_proto.lower() if isinstance(raw_proto, str) else raw_proto
+                )
             except (ValueError, KeyError, AttributeError):
                 proto_val = None
 
         raw_family = row["family"] if "family" in row.keys() and row["family"] else "ip"
         try:
-            family_val = RuleFamily(raw_family.lower() if isinstance(raw_family, str) else raw_family)
+            family_val = RuleFamily(
+                raw_family.lower() if isinstance(raw_family, str) else raw_family
+            )
         except (ValueError, KeyError, AttributeError):
             family_val = RuleFamily.IP
-
-        
 
         return FirewallRule(
             rule_id=row["id"],
             backend=row["backend"],
             family=family_val,
-            table_name=row["table_name"] if "table_name" in row.keys() and row["table_name"] else "filter",
+            table_name=row["table_name"]
+            if "table_name" in row.keys() and row["table_name"]
+            else "filter",
             chain=chain_val,
             action=action_val,
             protocol=proto_val,
@@ -572,21 +598,31 @@ class RuleRepository:
             comment=row["comment"],
             enabled=bool(row["enabled"]),
             external_ref=row["external_ref"] if "external_ref" in row.keys() else None,
-            origin=row["origin"] if "origin" in row.keys() and row["origin"] else "imported",
+            origin=row["origin"]
+            if "origin" in row.keys() and row["origin"]
+            else "imported",
             interface=row["interface"] if "interface" in row.keys() else None,
         )
-        
+
+
 class AuditRepository:
     """Repository for audit log entries."""
-    
+
     def __init__(self, db: DatabaseConnection):
         self._db = db
-    
-    def save(self, event_type: str, command_name: str, step_name: str,
-             success: bool, error_message: Optional[str] = None,
-             details: Optional[dict] = None) -> int:
+
+    def save(
+        self,
+        event_type: str,
+        command_name: str,
+        step_name: str,
+        success: bool,
+        error_message: str | None = None,
+        details: dict | None = None,
+    ) -> int:
         try:
             import json
+
             cursor = self._db.execute(
                 """
                 INSERT INTO audit_logs (event_type, timestamp, command_name, step_name,
@@ -611,7 +647,7 @@ class AuditRepository:
                 operation="save",
                 reason=str(e),
             ) from e
-    
+
     def find_recent(self, limit: int = 100) -> list[dict]:
         try:
             cursor = self._db.execute(
@@ -676,4 +712,4 @@ class AuditRepository:
 # - ports/rules.py définira le contrat que RuleRepository implémente
 # - app/bootstrap.py instanciera ces repositories et les injectera
 # - application/commands/ utilisera les ports (pas ces repositories directement)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

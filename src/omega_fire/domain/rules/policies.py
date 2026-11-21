@@ -5,9 +5,10 @@ Pure domain logic for predefined firewall policies.
 A policy is a named collection of rules applied as a batch
 to configure the firewall according to a specific profile.
 """
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+
 from omega_fire.domain.rules.models import (
     FirewallRule,
     RuleAction,
@@ -21,6 +22,7 @@ from omega_fire.shared.i18n import _
 
 class PolicyType(Enum):
     """Type of predefined firewall policy."""
+
     LOCAL = "local"
     STRICT = "strict"
     MAINTENANCE = "maintenance"
@@ -30,24 +32,25 @@ class PolicyType(Enum):
 @dataclass
 class FirewallPolicy:
     """A predefined firewall policy.
-    
+
     A policy is a named collection of rules that can be applied
     as a batch to configure the firewall according to a profile.
     """
+
     policy_type: PolicyType
     name: str
     description: str
     rules: list[FirewallRule] = field(default_factory=list)
     backend: str = "nftables"
-    
+
     def count_rules(self) -> int:
         """Return the number of rules in this policy."""
         return len(self.rules)
-    
+
     def is_empty(self) -> bool:
         """Check if the policy has no rules."""
         return len(self.rules) == 0
-    
+
     def to_ruleset(self) -> RuleSet:
         """Convert the policy rules into a RuleSet."""
         return RuleSet(rules=list(self.rules))
@@ -55,7 +58,7 @@ class FirewallPolicy:
 
 def build_local_policy(backend: str = "nftables") -> FirewallPolicy:
     """Build the LOCAL policy.
-    
+
     Profile: Default local workstation.
     - Allow all outgoing traffic
     - Allow established/related incoming connections
@@ -103,7 +106,7 @@ def build_local_policy(backend: str = "nftables") -> FirewallPolicy:
             comment="Drop all other incoming traffic",
         ),
     ]
-    
+
     return FirewallPolicy(
         policy_type=PolicyType.LOCAL,
         name="Local Workstation",
@@ -115,7 +118,7 @@ def build_local_policy(backend: str = "nftables") -> FirewallPolicy:
 
 def build_strict_policy(backend: str = "nftables") -> FirewallPolicy:
     """Build the STRICT policy.
-    
+
     Profile: Strict firewall for production servers.
     - Allow all outgoing traffic
     - Allow established/related incoming connections
@@ -197,11 +200,13 @@ def build_strict_policy(backend: str = "nftables") -> FirewallPolicy:
             comment="Drop all other incoming traffic",
         ),
     ]
-    
+
     return FirewallPolicy(
         policy_type=PolicyType.STRICT,
         name="Strict Production",
-        description=_("N'autorise que SSH/HTTP/HTTPS, journalise et bloque tout autre trafic entrant"),
+        description=_(
+            "N'autorise que SSH/HTTP/HTTPS, journalise et bloque tout autre trafic entrant"
+        ),
         rules=rules,
         backend=backend,
     )
@@ -209,7 +214,7 @@ def build_strict_policy(backend: str = "nftables") -> FirewallPolicy:
 
 def build_maintenance_policy(backend: str = "nftables") -> FirewallPolicy:
     """Build the MAINTENANCE policy.
-    
+
     Profile: Emergency maintenance mode.
     - Allow all outgoing traffic
     - Allow only SSH to maintain access
@@ -248,7 +253,7 @@ def build_maintenance_policy(backend: str = "nftables") -> FirewallPolicy:
             comment="Drop all other incoming traffic",
         ),
     ]
-    
+
     return FirewallPolicy(
         policy_type=PolicyType.MAINTENANCE,
         name="Maintenance Mode",
@@ -260,7 +265,7 @@ def build_maintenance_policy(backend: str = "nftables") -> FirewallPolicy:
 
 def build_monitoring_policy(backend: str = "nftables") -> FirewallPolicy:
     """Build the MONITORING policy.
-    
+
     Profile: Monitoring mode — observe only, no blocking.
     - Allow all traffic
     - Log everything for analysis
@@ -304,7 +309,7 @@ def build_monitoring_policy(backend: str = "nftables") -> FirewallPolicy:
             comment="Allow all outgoing (monitoring only)",
         ),
     ]
-    
+
     return FirewallPolicy(
         policy_type=PolicyType.MONITORING,
         name="Monitoring Mode",
@@ -316,14 +321,14 @@ def build_monitoring_policy(backend: str = "nftables") -> FirewallPolicy:
 
 def get_policy(policy_type: PolicyType, backend: str = "nftables") -> FirewallPolicy:
     """Get a predefined policy by type.
-    
+
     Args:
         policy_type: The type of policy to retrieve
         backend: Target backend ('nftables' or 'iptables')
-    
+
     Returns:
         The corresponding FirewallPolicy
-    
+
     Raises:
         ValueError: If the policy type is unknown
     """
@@ -333,17 +338,22 @@ def get_policy(policy_type: PolicyType, backend: str = "nftables") -> FirewallPo
         PolicyType.MAINTENANCE: build_maintenance_policy,
         PolicyType.MONITORING: build_monitoring_policy,
     }
-    
+
     builder = builders.get(policy_type)
     if builder is None:
-        raise ValueError(_("Type de politique inconnu : {policy_type}").format(policy_type=policy_type))
-    
+        raise ValueError(
+            _("Type de politique inconnu : {policy_type}").format(
+                policy_type=policy_type
+            )
+        )
+
     return builder(backend=backend)
 
 
 def list_available_policies() -> list[PolicyType]:
     """Return the list of all available policy types."""
     return list(PolicyType)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -367,4 +377,4 @@ def list_available_policies() -> list[PolicyType]:
 # - application/commands/apply_policy.py appellera get_policy() pour récupérer la politique
 # - domain/rules/service.py orchestrera l'application de la politique
 # - interfaces/cli/actions.py proposera le choix de politique à l'utilisateur via list_available_policies()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

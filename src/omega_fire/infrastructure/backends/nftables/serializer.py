@@ -8,13 +8,12 @@ into concrete nft command-line arguments.
 This module performs no I/O — it only builds command strings.
 The actual execution is done by the adapter.
 """
-from typing import Optional
 
 from omega_fire.shared.networking import CIDR
 
 
 def addr_family_keyword(cidr_or_ip: str) -> str:
-    """"ip" ou "ip6" selon la famille de l'adresse/CIDR (référentiel §50,
+    """ "ip" ou "ip6" selon la famille de l'adresse/CIDR (référentiel §50,
     plan IPv6 Phase B). Repli sur "ip" (comportement d'avant ce correctif,
     seule famille jamais gérée) si la valeur n'est pas un CIDR/IP
     reconnaissable par ipaddress — laisse nft lui-même signaler l'erreur
@@ -69,7 +68,13 @@ class NftSerializer:
         Returns:
             Command as list of arguments
         """
-        return ["nft", "delete", "element", f"{family} {table} {set_name}", f"{{ {ip} }}"]
+        return [
+            "nft",
+            "delete",
+            "element",
+            f"{family} {table} {set_name}",
+            f"{{ {ip} }}",
+        ]
 
     def build_add_rule_command(
         self,
@@ -77,10 +82,10 @@ class NftSerializer:
         table: str,
         chain: str,
         action: str,
-        protocol: Optional[str] = None,
-        port: Optional[str] = None,
-        source: Optional[str] = None,
-        destination: Optional[str] = None,
+        protocol: str | None = None,
+        port: str | None = None,
+        source: str | None = None,
+        destination: str | None = None,
         comment: str = "",
     ) -> list[str]:
         """Build the nft command to add a rule.
@@ -144,7 +149,14 @@ class NftSerializer:
         Returns:
             Command as list of arguments
         """
-        return ["nft", "delete", "rule", f"{family} {table} {chain}", "handle", str(handle)]
+        return [
+            "nft",
+            "delete",
+            "rule",
+            f"{family} {table} {chain}",
+            "handle",
+            str(handle),
+        ]
 
     def build_flush_chain_command(
         self,
@@ -211,7 +223,10 @@ class NftSerializer:
     ) -> list[str]:
         """Build the nft command to create a set."""
         return [
-            "nft", "add", "set", f"{family} {table} {set_name}",
+            "nft",
+            "add",
+            "set",
+            f"{family} {table} {set_name}",
             f"{{ type {set_type}; }}",
         ]
 
@@ -253,4 +268,4 @@ def build_add_rule_command(**kwargs) -> list[str]:
 # Comment il sera utilisé (aperçu) :
 # - infrastructure/backends/nftables/adapter.py l'appellera pour construire les commandes
 # - Les tests vérifieront que les commandes sont correctement formatées
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

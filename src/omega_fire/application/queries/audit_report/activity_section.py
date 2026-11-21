@@ -11,14 +11,15 @@ title prefixes rather than a proper field — fragile if menu titles are
 renamed, and unable to break down by backend or exact IP count (see
 session notes / models.py docstrings for BanActivity and SyncInfo).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.application.queries.audit_report.models import (
-    SyncInfo,
     JournalSummary,
+    SyncInfo,
 )
 from omega_fire.shared.i18n import action_title
 
@@ -38,8 +39,6 @@ def _matches_prefix(action: str, prefix: str) -> bool:
     return action.strip().startswith(prefix)
 
 
-
-
 def collect_sync_info(audit_logger: Any) -> SyncInfo:
     """Find the most recent successful sync event (section 5).
 
@@ -55,8 +54,7 @@ def collect_sync_info(audit_logger: Any) -> SyncInfo:
     entries = audit_logger.get_all_since(None)
 
     sync_entries = [
-        e for e in entries
-        if e.success and _matches_prefix(e.action, _SYNC_PREFIX)
+        e for e in entries if e.success and _matches_prefix(e.action, _SYNC_PREFIX)
     ]
 
     if not sync_entries:
@@ -69,7 +67,9 @@ def collect_sync_info(audit_logger: Any) -> SyncInfo:
     )
 
 
-def collect_journal_summary(audit_logger: Any, since: Optional[datetime]) -> JournalSummary:
+def collect_journal_summary(
+    audit_logger: Any, since: datetime | None
+) -> JournalSummary:
     """Collect the top 10 most frequent journal events since a given date (section 7).
 
     Args:
@@ -132,4 +132,4 @@ def collect_journal_summary(audit_logger: Any, since: Optional[datetime]) -> Jou
 # Comment il sera utilisé :
 # - report_builder.py (application/queries/audit_report/report_builder.py)
 #   appelle ces 4 fonctions pour peupler AuditReportData.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

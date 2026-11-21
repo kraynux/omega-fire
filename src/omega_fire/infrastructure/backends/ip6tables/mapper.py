@@ -3,16 +3,22 @@
 
 Maps parsed ip6tables data (from parser.py) to domain models (from domain/).
 """
-from typing import Optional
-from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.domain.rules.models import (
+    FirewallRule,
+    RuleAction,
+    RuleChain,
+    RuleFamily,
+    RuleProtocol,
+)
 from omega_fire.infrastructure.backends.rule_fidelity import iptables_rule_restorable
 
 
 class Ip6tMapper:
     """Maps parsed ip6tables data to domain models."""
 
-    def map_rule(self, parsed: dict) -> Optional[FirewallRule]:
+    def map_rule(self, parsed: dict) -> FirewallRule | None:
         """Map a parsed ip6tables rule to a FirewallRule domain model."""
         try:
             # Map action
@@ -133,4 +139,4 @@ class Ip6tMapper:
 #   - Nettoyage de la route par défaut : "::/0"/"::" (au lieu de "0.0.0.0/0")
 # Comment il est utilisé :
 # - infrastructure/backends/ip6tables/adapter.py l'appelle après parsing
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

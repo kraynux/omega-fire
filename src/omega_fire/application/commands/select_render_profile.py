@@ -3,6 +3,7 @@
 rendu (ou revenir a la detection automatique). Meme mecanisme que
 select_theme.py, clef deja lue par
 interfaces/tui/controllers/startup_controller.py::_effective_render_profile()."""
+
 from __future__ import annotations
 
 from omega_lib.terminal.models import RenderProfile
@@ -17,5 +18,9 @@ def select_render_profile(*, settings_store: SettingsStore, profile_value: str) 
     """`profile_value` vide = retour a la detection automatique ; sinon
     doit correspondre a une valeur de RenderProfile ("complete", etc.)."""
     if profile_value and profile_value not in {p.value for p in RenderProfile}:
-        raise ValueError(_("Profil de rendu inconnu : {profile_value!r}").format(profile_value=profile_value))
+        raise ValueError(
+            _("Profil de rendu inconnu : {profile_value!r}").format(
+                profile_value=profile_value
+            )
+        )
     settings_store.set(_RENDER_PROFILE_OVERRIDE_KEY, profile_value)

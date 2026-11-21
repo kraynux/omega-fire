@@ -10,21 +10,23 @@ Conforms to Omega-Fire architecture charter:
 - Consumes LogsPort via injected provider (no direct file access)
 - No dependency on domain/, application/, or infrastructure/
 """
+
 from __future__ import annotations
 
+import fcntl
+import os
 import select
 import sys
 import threading
 import time
-import os
-import fcntl
 from collections import deque
-from typing import Any, Deque, Optional
+
 from omega_fire.shared.i18n import _
 
 try:
     import termios
     import tty
+
     HAS_TERMIOS = True
 except ImportError:
     HAS_TERMIOS = False
@@ -40,7 +42,6 @@ from rich.text import Text
 
 from omega_fire.interfaces.cli.themes.registry import theme_registry
 
-
 # ----------------------------------------------------------------------
 # Constants
 # ----------------------------------------------------------------------
@@ -51,10 +52,9 @@ DEFAULT_REFRESH_RATE = 2.0
 # ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
-import os
-import fcntl
 
-def _get_key_non_blocking() -> Optional[str]:
+
+def _get_key_non_blocking() -> str | None:
     """Lit une touche en ignorant à 100 % la molette et les séquences ANSI complexes."""
     if HAS_TERMIOS and sys.stdin.isatty():
         if select.select([sys.stdin], [], [], 0.0)[0]:
@@ -100,9 +100,10 @@ def _get_key_non_blocking() -> Optional[str]:
                 return None
     return None
 
+
 def _get_theme_style(style_key: str) -> Style:
     """Récupère impérativement les styles depuis theme_registry de manière sécurisée.
-    
+
     Retourne TOUJOURS un objet Style valide (jamais None) pour éviter les crashs de rendu Rich.
     """
     try:
@@ -125,12 +126,13 @@ class LogEntryProvider:
     def get_recent_logs(self, limit: int = DEFAULT_BUFFER_SIZE) -> list[dict]:
         raise NotImplementedError
 
+
 # ----------------------------------------------------------------------
 # Log buffer (thread-safe ring buffer)
 # ----------------------------------------------------------------------
 class LogBuffer:
     def __init__(self, max_size: int = DEFAULT_BUFFER_SIZE):
-        self._buffer: Deque[dict] = deque(maxlen=max_size)
+        self._buffer: deque[dict] = deque(maxlen=max_size)
         self._lock = threading.Lock()
         self._start_time = time.time()
         self._stats = {
@@ -169,7 +171,13 @@ class LogBuffer:
 
             # 2. Capture de la Taille (avec fallback automatique si 0)
             bytes_sent = 0
-            for key in ("bytes_sent", "size", "bytes", "content_length", "body_bytes_sent"):
+            for key in (
+                "bytes_sent",
+                "size",
+                "bytes",
+                "content_length",
+                "body_bytes_sent",
+            ):
                 val = entry.get(key)
                 if val is not None:
                     val_str = str(val).strip()
@@ -181,7 +189,9 @@ class LogBuffer:
             # on estime la taille minimale de la transaction HTTP (en-têtes + chemin)
             if bytes_sent == 0:
                 path_len = len(str(entry.get("path", "")))
-                bytes_sent = 350 + path_len  # ~350 octets minimum pour une entête HTTP standard
+                bytes_sent = (
+                    350 + path_len
+                )  # ~350 octets minimum pour une entête HTTP standard
 
             self._stats["bytes_total"] += bytes_sent
 
@@ -194,10 +204,10 @@ class LogBuffer:
                     if val_str.isdigit():
                         latency = int(val_str)
                         break
-            
+
             if latency == 0:
                 latency = 25  # Valeur par défaut si non loguée
-                
+
             self._stats["latency_total"] += latency
 
             # 4. Tracking IP
@@ -241,6 +251,8 @@ class LogBuffer:
                 "avg_size": avg_size,
                 "buffer_size": len(self._buffer),
             }
+
+
 # ----------------------------------------------------------------------
 # Rendering functions
 # ----------------------------------------------------------------------
@@ -256,48 +268,128 @@ def _render_stats_panel(stats: dict, use_emoji: bool) -> Panel:
         return f"{int(size)} B"
 
     # --- 1. PERFORMANCE & RENDEMENT ---
-    content.append(_("── RENDEMENT ───────────────\n"), style=_get_theme_style("menu.title"))
+    content.append(
+        _("── RENDEMENT ───────────────\n"), style=_get_theme_style("menu.title")
+    )
     rps_icon = "⚡" if use_emoji else "RPS"
     lat_icon = "⏱" if use_emoji else "LAT"
-    
-    content.append(_(" {rps_icon} Débit      : {rps:.1f} req/s\n").format(rps_icon=rps_icon, rps=stats['rps']), style=_get_theme_style("text.info"))
-    
+
+    content.append(
+        _(" {rps_icon} Débit      : {rps:.1f} req/s\n").format(
+            rps_icon=rps_icon, rps=stats["rps"]
+        ),
+        style=_get_theme_style("text.info"),
+    )
+
     # Latence moyenne avec code couleur
-    avg_lat = stats['avg_latency']
-    lat_style = "status.available" if avg_lat < 200 else ("text.warning" if avg_lat < 500 else "text.danger")
-    content.append(_(" {lat_icon} Latence moy: {avg_lat:.0f} ms\n\n").format(lat_icon=lat_icon, avg_lat=avg_lat), style=_get_theme_style(lat_style))
+    avg_lat = stats["avg_latency"]
+    lat_style = (
+        "status.available"
+        if avg_lat < 200
+        else ("text.warning" if avg_lat < 500 else "text.danger")
+    )
+    content.append(
+        _(" {lat_icon} Latence moy: {avg_lat:.0f} ms\n\n").format(
+            lat_icon=lat_icon, avg_lat=avg_lat
+        ),
+        style=_get_theme_style(lat_style),
+    )
 
     # --- 2. TRAFIC & BANDE PASSANTE ---
-    content.append(_("── BANDE PASSANTE ──────────\n"), style=_get_theme_style("menu.title"))
+    content.append(
+        _("── BANDE PASSANTE ──────────\n"), style=_get_theme_style("menu.title")
+    )
     net_icon = "" if use_emoji else "NET"
     tot_icon = "📦" if use_emoji else "VOL"
-    
-    content.append(_(" {net_icon} Débit Réseau: {value}/s\n").format(net_icon=net_icon, value=_format_bytes(stats['bps'])), style=_get_theme_style("text.main"))
-    content.append(_(" {tot_icon} Vol. Total  : {value}\n").format(tot_icon=tot_icon, value=_format_bytes(stats['bytes_total'])), style=_get_theme_style("text.main"))
-    content.append(_(" 🗜 Taille moy. : {value}\n\n").format(value=_format_bytes(stats['avg_size'])), style=_get_theme_style("text.main"))
+
+    content.append(
+        _(" {net_icon} Débit Réseau: {value}/s\n").format(
+            net_icon=net_icon, value=_format_bytes(stats["bps"])
+        ),
+        style=_get_theme_style("text.main"),
+    )
+    content.append(
+        _(" {tot_icon} Vol. Total  : {value}\n").format(
+            tot_icon=tot_icon, value=_format_bytes(stats["bytes_total"])
+        ),
+        style=_get_theme_style("text.main"),
+    )
+    content.append(
+        _(" 🗜 Taille moy. : {value}\n\n").format(
+            value=_format_bytes(stats["avg_size"])
+        ),
+        style=_get_theme_style("text.main"),
+    )
 
     # --- 3. RÉPARTITION DES REQUÊTES ---
-    content.append(_("── STATUTS HTTP ────────────\n"), style=_get_theme_style("menu.title"))
-    content.append(_(" 📊 Total Req.  : {total}\n").format(total=stats['total']), style=_get_theme_style("text.main"))
-    content.append(_(" √  Succès 2xx  : {success_2xx}\n").format(success_2xx=stats['success_2xx']), style=_get_theme_style("status.available"))
-    content.append(_(" ↔  Redir. 3xx  : {redirect_3xx}\n").format(redirect_3xx=stats['redirect_3xx']), style=_get_theme_style("text.info"))
-    content.append(_(" ⚠  Erreurs 4xx : {errors_4xx}\n").format(errors_4xx=stats['errors_4xx']), style=_get_theme_style("text.warning"))
-    content.append(_(" ❌ Erreurs 5xx : {errors_5xx}\n\n").format(errors_5xx=stats['errors_5xx']), style=_get_theme_style("text.danger"))
+    content.append(
+        _("── STATUTS HTTP ────────────\n"), style=_get_theme_style("menu.title")
+    )
+    content.append(
+        _(" 📊 Total Req.  : {total}\n").format(total=stats["total"]),
+        style=_get_theme_style("text.main"),
+    )
+    content.append(
+        _(" √  Succès 2xx  : {success_2xx}\n").format(success_2xx=stats["success_2xx"]),
+        style=_get_theme_style("status.available"),
+    )
+    content.append(
+        _(" ↔  Redir. 3xx  : {redirect_3xx}\n").format(
+            redirect_3xx=stats["redirect_3xx"]
+        ),
+        style=_get_theme_style("text.info"),
+    )
+    content.append(
+        _(" ⚠  Erreurs 4xx : {errors_4xx}\n").format(errors_4xx=stats["errors_4xx"]),
+        style=_get_theme_style("text.warning"),
+    )
+    content.append(
+        _(" ❌ Erreurs 5xx : {errors_5xx}\n\n").format(errors_5xx=stats["errors_5xx"]),
+        style=_get_theme_style("text.danger"),
+    )
 
     # --- 4. RÉSEAU & CLIENTS ---
-    content.append(_("── CLIENTS & RÉSEAU ────────\n"), style=_get_theme_style("menu.title"))
+    content.append(
+        _("── CLIENTS & RÉSEAU ────────\n"), style=_get_theme_style("menu.title")
+    )
     ip_icon = "💻" if use_emoji else "IP "
-    content.append(_(" {ip_icon} IPs uniques : {unique_ips}\n").format(ip_icon=ip_icon, unique_ips=stats['unique_ips']), style=_get_theme_style("text.main"))
-    content.append(_(" 🖧  Top Talker  : {value}\n\n").format(value=stats['top_ip'][:14]), style=_get_theme_style("text.info"))
+    content.append(
+        _(" {ip_icon} IPs uniques : {unique_ips}\n").format(
+            ip_icon=ip_icon, unique_ips=stats["unique_ips"]
+        ),
+        style=_get_theme_style("text.main"),
+    )
+    content.append(
+        _(" 🖧  Top Talker  : {value}\n\n").format(value=stats["top_ip"][:14]),
+        style=_get_theme_style("text.info"),
+    )
 
     # --- 5. TAMPON & ÉTAT DE SANTÉ ---
-    content.append(_("── RAMP & TAMPON ───────────\n"), style=_get_theme_style("menu.title"))
-    err_rate = stats['error_rate']
-    health_style = "status.available" if err_rate < 5 else ("text.warning" if err_rate < 15 else "text.danger")
-    health_label = "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else "DEGRADED")
-    
-    content.append(_(" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n").format(health_label=health_label, err_rate=err_rate), style=_get_theme_style(health_style))
-    content.append(_(" 📥 Tampon Live : {buffer_size}/{DEFAULT_BUFFER_SIZE}").format(buffer_size=stats['buffer_size'], DEFAULT_BUFFER_SIZE=DEFAULT_BUFFER_SIZE), style=_get_theme_style("text.main"))
+    content.append(
+        _("── RAMP & TAMPON ───────────\n"), style=_get_theme_style("menu.title")
+    )
+    err_rate = stats["error_rate"]
+    health_style = (
+        "status.available"
+        if err_rate < 5
+        else ("text.warning" if err_rate < 15 else "text.danger")
+    )
+    health_label = (
+        "EXCELLENT" if err_rate < 2 else ("CORRECT" if err_rate < 10 else "DEGRADED")
+    )
+
+    content.append(
+        _(" 🌡 Santé Log   : {health_label} ({err_rate:.1f}% err)\n").format(
+            health_label=health_label, err_rate=err_rate
+        ),
+        style=_get_theme_style(health_style),
+    )
+    content.append(
+        _(" 📥 Tampon Live : {buffer_size}/{DEFAULT_BUFFER_SIZE}").format(
+            buffer_size=stats["buffer_size"], DEFAULT_BUFFER_SIZE=DEFAULT_BUFFER_SIZE
+        ),
+        style=_get_theme_style("text.main"),
+    )
 
     return Panel(
         content,
@@ -308,18 +400,47 @@ def _render_stats_panel(stats: dict, use_emoji: bool) -> Panel:
         padding=(1, 1),
     )
 
-def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = False, total_buffered: int = 0) -> Panel:
+
+def _render_logs_table(
+    entries: list[dict], show_help: bool, paused: bool = False, total_buffered: int = 0
+) -> Panel:
     if show_help:
         help_text = Text()
-        help_text.append(_("=== AIDE LIVE TAIL ===\n\n"), style=_get_theme_style("text.heading"))
-        help_text.append(_("• [q] / [m] / [ESC] : Quitter le Live Tail\n"), style=_get_theme_style("text.main"))
-        help_text.append(_("• [↑]/[↓] [PgUp]/[PgDn] : Défiler dans l'historique (fige le direct)\n"), style=_get_theme_style("text.main"))
-        help_text.append(_("• [t]               : Basculer vers le thème suivant\n"), style=_get_theme_style("text.main"))
-        help_text.append(_("• [a]               : Masquer cet écran d'aide\n\n"), style=_get_theme_style("text.main"))
-        help_text.append(_("Code couleurs HTTP & Latence :\n"), style=_get_theme_style("text.heading"))
-        help_text.append(_("  • 2xx / <200ms  : Optimal\n"), style=_get_theme_style("status.available"))
-        help_text.append(_("  • 4xx / <500ms  : Avertissement / Latence moyenne\n"), style=_get_theme_style("text.warning"))
-        help_text.append(_("  • 5xx / >500ms  : Erreur / Latence critique\n"), style=_get_theme_style("text.danger"))
+        help_text.append(
+            _("=== AIDE LIVE TAIL ===\n\n"), style=_get_theme_style("text.heading")
+        )
+        help_text.append(
+            _("• [q] / [m] / [ESC] : Quitter le Live Tail\n"),
+            style=_get_theme_style("text.main"),
+        )
+        help_text.append(
+            _("• [↑]/[↓] [PgUp]/[PgDn] : Défiler dans l'historique (fige le direct)\n"),
+            style=_get_theme_style("text.main"),
+        )
+        help_text.append(
+            _("• [t]               : Basculer vers le thème suivant\n"),
+            style=_get_theme_style("text.main"),
+        )
+        help_text.append(
+            _("• [a]               : Masquer cet écran d'aide\n\n"),
+            style=_get_theme_style("text.main"),
+        )
+        help_text.append(
+            _("Code couleurs HTTP & Latence :\n"),
+            style=_get_theme_style("text.heading"),
+        )
+        help_text.append(
+            _("  • 2xx / <200ms  : Optimal\n"),
+            style=_get_theme_style("status.available"),
+        )
+        help_text.append(
+            _("  • 4xx / <500ms  : Avertissement / Latence moyenne\n"),
+            style=_get_theme_style("text.warning"),
+        )
+        help_text.append(
+            _("  • 5xx / >500ms  : Erreur / Latence critique\n"),
+            style=_get_theme_style("text.danger"),
+        )
 
         return Panel(
             help_text,
@@ -345,13 +466,27 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
     )
 
     # Colonnes enrichies et dimensionnées proprement
-    table.add_column(_("Timestamp"), style=_get_theme_style("text.muted"), width=19, no_wrap=True)
-    table.add_column(_("IP Source"), style=_get_theme_style("text.main"), width=15, no_wrap=True)
+    table.add_column(
+        _("Timestamp"), style=_get_theme_style("text.muted"), width=19, no_wrap=True
+    )
+    table.add_column(
+        _("IP Source"), style=_get_theme_style("text.main"), width=15, no_wrap=True
+    )
     table.add_column(_("Type"), width=8, no_wrap=True)
-    table.add_column(_("Méthode"), style=_get_theme_style("text.info"), width=7, no_wrap=True)
-    table.add_column(_("Chemin"), style=_get_theme_style("text.main"), ratio=1, no_wrap=True)
+    table.add_column(
+        _("Méthode"), style=_get_theme_style("text.info"), width=7, no_wrap=True
+    )
+    table.add_column(
+        _("Chemin"), style=_get_theme_style("text.main"), ratio=1, no_wrap=True
+    )
     table.add_column(_("Statut"), justify="right", width=6, no_wrap=True)
-    table.add_column(_("Taille"), justify="right", style=_get_theme_style("text.muted"), width=8, no_wrap=True)
+    table.add_column(
+        _("Taille"),
+        justify="right",
+        style=_get_theme_style("text.muted"),
+        width=8,
+        no_wrap=True,
+    )
     table.add_column(_("Latence"), justify="right", width=8, no_wrap=True)
 
     for entry in entries:
@@ -379,7 +514,7 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
         # 3. Formatage Taille (Octets / KB)
         bytes_sent = entry.get("bytes_sent", entry.get("size", 0)) or 0
         if bytes_sent > 1024 * 1024:
-            size_str = f"{bytes_sent / (1024*1024):.1f}MB"
+            size_str = f"{bytes_sent / (1024 * 1024):.1f}MB"
         elif bytes_sent > 1024:
             size_str = f"{bytes_sent / 1024:.1f}KB"
         elif bytes_sent > 0:
@@ -414,9 +549,13 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
         )
 
     if paused:
-        title = _("⏸ Défilement (figé) — {count} affichée(s) / {total_buffered} en mémoire").format(count=len(entries), total_buffered=total_buffered)
+        title = _(
+            "⏸ Défilement (figé) — {count} affichée(s) / {total_buffered} en mémoire"
+        ).format(count=len(entries), total_buffered=total_buffered)
     else:
-        title = _("▶ Logs en temps réel ({count} / {total_buffered} entrées)").format(count=len(entries), total_buffered=total_buffered)
+        title = _("▶ Logs en temps réel ({count} / {total_buffered} entrées)").format(
+            count=len(entries), total_buffered=total_buffered
+        )
 
     return Panel(
         table,
@@ -433,7 +572,7 @@ def _render_logs_table(entries: list[dict], show_help: bool, paused: bool = Fals
 # ----------------------------------------------------------------------
 def render_logs_live(
     log_provider: LogEntryProvider,
-    console: Optional[Console] = None,
+    console: Console | None = None,
     refresh_rate: float = DEFAULT_REFRESH_RATE,
     buffer_size: int = DEFAULT_BUFFER_SIZE,
 ) -> None:
@@ -542,7 +681,7 @@ def render_logs_live(
         total_buffered = len(source_entries)
         rows = visible_rows()
         start = min(state["scroll_offset"], max(0, total_buffered - 1))
-        windowed_entries = source_entries[start:start + rows]
+        windowed_entries = source_entries[start : start + rows]
 
         body["stats"].update(_render_stats_panel(stats, use_emoji))
         body["logs"].update(
@@ -600,7 +739,9 @@ def render_logs_live(
     fetch_thread.start()
 
     try:
-        with Live(build_layout(), console=console, screen=True, refresh_per_second=4) as live:
+        with Live(
+            build_layout(), console=console, screen=True, refresh_per_second=4
+        ) as live:
             while not stop_event.is_set():
                 key = _get_key_non_blocking()
                 if key:
@@ -619,7 +760,11 @@ def render_logs_live(
                         current = get_current_theme()
 
                         if themes_list:
-                            next_idx = (themes_list.index(current) + 1) % len(themes_list) if current in themes_list else 0
+                            next_idx = (
+                                (themes_list.index(current) + 1) % len(themes_list)
+                                if current in themes_list
+                                else 0
+                            )
                             target_theme = themes_list[next_idx]
 
                             try:
@@ -642,7 +787,9 @@ def render_logs_live(
                             state["frozen_snapshot"] = buffer.get_all()
                         max_offset = max(0, len(state["frozen_snapshot"] or []) - 1)
                         step = 1 if key_lower == "up" else visible_rows()
-                        state["scroll_offset"] = min(state["scroll_offset"] + step, max_offset)
+                        state["scroll_offset"] = min(
+                            state["scroll_offset"] + step, max_offset
+                        )
 
                     # [↓] / [PageDown] -> Redescendre vers le direct
                     elif key_lower in ("down", "pagedown"):
@@ -665,6 +812,8 @@ def render_logs_live(
 
         stop_event.set()
         fetch_thread.join(timeout=1.0)
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Rendu live des logs en temps réel (menu 5.1 - Live Tail).
@@ -695,4 +844,4 @@ def render_logs_live(
 # - _render_logs_table() : Tableau Rich avec colonnes colorées.
 # - render_logs_live() : Fonction principale avec thread de fetch + Live display.
 # - Gestion propre de l'arrêt (stop_event + join).
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

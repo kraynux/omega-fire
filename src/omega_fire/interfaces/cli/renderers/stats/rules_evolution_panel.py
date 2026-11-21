@@ -13,11 +13,11 @@ This module performs no calculation — it receives already-filtered
 (date_label, rules_count, ips_count) points, chronologically sorted,
 computed upstream from list_snapshots().
 """
+
 from rich.panel import Panel
 from rich.text import Text
 
 from omega_fire.interfaces.cli.themes.registry import theme_registry
-
 
 _SPARK_CHARS = "▁▂▃▄▅▆▇█"
 
@@ -66,7 +66,13 @@ def render_rules_evolution_panel(
             "mesurer l'évolution des règles/IPs bannies. Voir menu 7.1.\n",
             style=style_muted,
         )
-        return Panel(content, title=title, title_align="left", border_style=border_style, expand=True)
+        return Panel(
+            content,
+            title=title,
+            title_align="left",
+            border_style=border_style,
+            expand=True,
+        )
 
     rules_values = [r for _, r, _ in points]
     ips_values = [i for _, _, i in points]
@@ -134,4 +140,4 @@ def render_rules_evolution_panel(
 #   la section "Évolution des Règles" à partir des mêmes données
 # - interfaces/cli/actions.py (8.3/8.4) appellera ce renderer directement
 #   pour l'affichage CLI
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

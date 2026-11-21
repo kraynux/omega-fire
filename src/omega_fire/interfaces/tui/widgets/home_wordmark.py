@@ -6,6 +6,7 @@ jetons de theme Rich/Textual (`$accent`/`$foreground`) directement dans
 le markup — pas des couleurs hex figees a la construction (meme
 mecanisme que widgets/splash_hero.py : reactif au changement de theme),
 meme technique que omega-check/widgets/home_wordmark.py (D-008)."""
+
 from __future__ import annotations
 
 from textual.widgets import Static
@@ -18,11 +19,13 @@ _WORDMARK_LINES = (
 """OMEGA-FIRE en un seul bandeau de lettres, identique a
 interfaces/cli/app.py::MAIN_MENU_LOGO_LINES, caracteres non modifies."""
 
-_MARKUP = "\n".join((
-    f"[$accent]{_WORDMARK_LINES[0]}[/]",
-    f"[$foreground]{_WORDMARK_LINES[1]}[/]",
-    f"[$accent]{_WORDMARK_LINES[2]}[/]",
-))
+_MARKUP = "\n".join(
+    (
+        f"[$accent]{_WORDMARK_LINES[0]}[/]",
+        f"[$foreground]{_WORDMARK_LINES[1]}[/]",
+        f"[$accent]{_WORDMARK_LINES[2]}[/]",
+    )
+)
 
 
 class HomeWordmark(Static):

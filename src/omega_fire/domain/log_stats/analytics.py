@@ -6,6 +6,7 @@ Pure domain logic for analyzing log entries. This module computes
 statistics, rankings, and aggregations from LogEntry objects in memory —
 it does NOT read files. Porte verbatim depuis omega-fire
 (domain/logs/analytics.py)."""
+
 from collections import Counter, defaultdict
 from datetime import datetime
 
@@ -56,14 +57,16 @@ def compute_top_ips(
         if count < min_count:
             continue
 
-        top_ips.append(TopIP(
-            ip=ip,
-            count=count,
-            first_seen=ip_first_seen.get(ip),
-            last_seen=ip_last_seen.get(ip),
-            services=sorted(ip_services.get(ip, [])),
-            http_errors=ip_http_errors.get(ip, 0),
-        ))
+        top_ips.append(
+            TopIP(
+                ip=ip,
+                count=count,
+                first_seen=ip_first_seen.get(ip),
+                last_seen=ip_last_seen.get(ip),
+                services=sorted(ip_services.get(ip, [])),
+                http_errors=ip_http_errors.get(ip, 0),
+            )
+        )
 
     top_ips.sort(key=lambda x: (-x.count, x.ip))
 
@@ -72,7 +75,9 @@ def compute_top_ips(
 
 def compute_hourly_stats(entries: list[LogEntry]) -> list[HourlyStats]:
     """Compute statistics per hour (0-23)."""
-    hourly: dict[int, HourlyStats] = {hour: HourlyStats(hour=hour) for hour in range(24)}
+    hourly: dict[int, HourlyStats] = {
+        hour: HourlyStats(hour=hour) for hour in range(24)
+    }
 
     for entry in entries:
         hour = entry.timestamp.hour
@@ -100,7 +105,9 @@ def compute_source_distribution(entries: list[LogEntry]) -> dict[str, int]:
     return dict(counts)
 
 
-def compute_time_range(entries: list[LogEntry]) -> tuple[datetime | None, datetime | None]:
+def compute_time_range(
+    entries: list[LogEntry],
+) -> tuple[datetime | None, datetime | None]:
     """Compute the time range (first and last entry timestamps)."""
     if not entries:
         return None, None
@@ -154,7 +161,9 @@ def filter_entries_by_level(entries: list[LogEntry], level: LogLevel) -> list[Lo
     return [e for e in entries if e.level == level]
 
 
-def filter_entries_by_source(entries: list[LogEntry], source: LogSource) -> list[LogEntry]:
+def filter_entries_by_source(
+    entries: list[LogEntry], source: LogSource
+) -> list[LogEntry]:
     """Filter entries by log source."""
     return [e for e in entries if e.source == source]
 
@@ -222,10 +231,18 @@ def compute_traffic_stats(entries: list[LogEntry]) -> TrafficStats:
 
     stats.status_403 = sum(1 for s in statuses if s == 403)
     stats.status_429 = sum(1 for s in statuses if s == 429)
-    stats.top_ips = [(t.ip, t.count) for t in compute_top_ips(entries, n=TRAFFIC_TOP_SIZE)]
-    paths = [(e.http_path.split("?", 1)[0], e.http_status) for e in entries if e.http_path]
-    stats.top_paths = Counter(path for path, _status in paths).most_common(TRAFFIC_TOP_SIZE)
-    stats.top_not_found = Counter(path for path, status in paths if status == 404).most_common(TRAFFIC_TOP_SIZE)
+    stats.top_ips = [
+        (t.ip, t.count) for t in compute_top_ips(entries, n=TRAFFIC_TOP_SIZE)
+    ]
+    paths = [
+        (e.http_path.split("?", 1)[0], e.http_status) for e in entries if e.http_path
+    ]
+    stats.top_paths = Counter(path for path, _status in paths).most_common(
+        TRAFFIC_TOP_SIZE
+    )
+    stats.top_not_found = Counter(
+        path for path, status in paths if status == 404
+    ).most_common(TRAFFIC_TOP_SIZE)
 
     top = compute_top_ips(entries, n=1)
     stats.unique_ips = len({e.ip for e in entries if e.has_ip()})
@@ -233,7 +250,9 @@ def compute_traffic_stats(entries: list[LogEntry]) -> TrafficStats:
         stats.top_ip, stats.top_ip_count = top[0].ip, top[0].count
 
     if stats.http_total:
-        stats.error_rate = (stats.status_4xx + stats.status_5xx) / stats.http_total * 100
+        stats.error_rate = (
+            (stats.status_4xx + stats.status_5xx) / stats.http_total * 100
+        )
     else:
         stats.error_rate = sum(1 for e in entries if e.is_error()) / len(entries) * 100
     return stats

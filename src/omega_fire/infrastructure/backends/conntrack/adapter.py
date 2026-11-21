@@ -6,15 +6,15 @@ kill connections. Uses subprocess to execute conntrack commands.
 
 This is the only module that directly calls conntrack via subprocess.
 """
+
 import os
 import subprocess
-from typing import Optional
-from omega_fire.domain.monitoring.conntrack import Connection, ConnectionState, ConnectionProtocol
-from omega_fire.infrastructure.backends.conntrack.parser import ConntrackParser
+
 from omega_fire.infrastructure.backends.conntrack.exceptions import (
     ConntrackCommandError,
     ConntrackPermissionError,
 )
+from omega_fire.infrastructure.backends.conntrack.parser import ConntrackParser
 from omega_fire.shared.i18n import _
 
 
@@ -92,10 +92,10 @@ class ConntrackAdapter:
                 # exploitable pour signaler le probleme en amont.
                 note = ""
                 if "invalid parameters" in stderr.lower():
-                    note = (
-                        _("Incompatibilité probable entre conntrack-tools et ce noyau (pas un bug "
+                    note = _(
+                        "Incompatibilité probable entre conntrack-tools et ce noyau (pas un bug "
                         "Omega-Fire — la commande système échoue identiquement en root, en dehors "
-                        "de l'application)")
+                        "de l'application)"
                     )
                 raise ConntrackCommandError(
                     command=" ".join(cmd),
@@ -158,12 +158,18 @@ class ConntrackAdapter:
             True if the connection was killed successfully
         """
         cmd = [
-            "conntrack", "-D",
-            "-s", source_ip,
-            "--sport", str(source_port),
-            "-d", destination_ip,
-            "--dport", str(destination_port),
-            "-p", protocol,
+            "conntrack",
+            "-D",
+            "-s",
+            source_ip,
+            "--sport",
+            str(source_port),
+            "-d",
+            destination_ip,
+            "--dport",
+            str(destination_port),
+            "-p",
+            protocol,
         ]
         self._run_command(cmd)
         return True
@@ -241,4 +247,4 @@ class ConntrackAdapter:
 # - app/bootstrap.py instanciera cet adapter et l'injectera via les ports
 # - application/queries/ utilisera le port (pas cet adapter directement)
 # - Les tests mockeront subprocess.run pour simuler différents états
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

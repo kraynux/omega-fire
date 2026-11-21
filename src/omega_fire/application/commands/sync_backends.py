@@ -14,6 +14,7 @@ Rather than force an ill-fitting reuse, this command keeps its own
 simple delta logic (set difference), expressed in terms of BanEntry
 for consistency with the domain vocabulary.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -23,6 +24,7 @@ from typing import Any
 @dataclass
 class BackendSyncOutcome:
     """Result of syncing a single target backend."""
+
     backend: str
     added_count: int = 0
     errors: list[str] = field(default_factory=list)
@@ -31,6 +33,7 @@ class BackendSyncOutcome:
 @dataclass
 class SyncBackendsResult:
     """Output of the sync backends use case."""
+
     outcomes: list[BackendSyncOutcome] = field(default_factory=list)
 
     @property
@@ -166,4 +169,4 @@ class SyncBackendsCommand:
 #   ↓ résout les adapters via ctx.container.get_firewall_port(name)
 #   ↓ construit le dict adapters, choisit target_backends (saisie utilisateur)
 # application/commands/sync_backends.py : SyncBackendsCommand.execute()
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

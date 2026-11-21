@@ -4,16 +4,18 @@ Structured result types for probe operations.
 Provides typed result objects that encapsulate probe outcomes
 with status, details, and error information.
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
 from omega_fire.core.enums import CapabilityStatus
-from omega_fire.shared.i18n import N_, _, lazy
+from omega_fire.shared.i18n import N_, lazy
 
 
 @dataclass
 class ProbeResult:
     """Base result type for all probe operations.
-    
+
     Attributes:
         success: Whether the probe completed successfully
         capability_id: ID of the capability being probed
@@ -22,15 +24,18 @@ class ProbeResult:
         details: Additional technical details
         error: Error message if probe failed
     """
+
     success: bool
     capability_id: str
     status: CapabilityStatus
     reason: str
     details: dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
-    
+    error: str | None = None
+
     @classmethod
-    def available(cls, capability_id: str, reason: str, details: dict = None) -> "ProbeResult":
+    def available(
+        cls, capability_id: str, reason: str, details: dict = None
+    ) -> "ProbeResult":
         """Create a successful AVAILABLE result."""
         return cls(
             success=True,
@@ -39,9 +44,11 @@ class ProbeResult:
             reason=reason,
             details=details or {},
         )
-    
+
     @classmethod
-    def degraded(cls, capability_id: str, reason: str, details: dict = None) -> "ProbeResult":
+    def degraded(
+        cls, capability_id: str, reason: str, details: dict = None
+    ) -> "ProbeResult":
         """Create a DEGRADED result."""
         return cls(
             success=True,
@@ -50,9 +57,11 @@ class ProbeResult:
             reason=reason,
             details=details or {},
         )
-    
+
     @classmethod
-    def missing(cls, capability_id: str, reason: str, details: dict = None) -> "ProbeResult":
+    def missing(
+        cls, capability_id: str, reason: str, details: dict = None
+    ) -> "ProbeResult":
         """Create a MISSING result."""
         return cls(
             success=True,
@@ -61,9 +70,11 @@ class ProbeResult:
             reason=reason,
             details=details or {},
         )
-    
+
     @classmethod
-    def disqualified(cls, capability_id: str, reason: str, details: dict = None) -> "ProbeResult":
+    def disqualified(
+        cls, capability_id: str, reason: str, details: dict = None
+    ) -> "ProbeResult":
         """Create a DISQUALIFIED result."""
         return cls(
             success=True,
@@ -72,7 +83,7 @@ class ProbeResult:
             reason=reason,
             details=details or {},
         )
-    
+
     @classmethod
     def error(cls, capability_id: str, error_msg: str) -> "ProbeResult":
         """Create an error result."""
@@ -88,18 +99,19 @@ class ProbeResult:
 @dataclass
 class CommandProbeResult:
     """Result type for command probe operations.
-    
+
     Attributes:
         present: Whether the binary is present in PATH
         functional: Whether the binary is functional
         path: Full path to the binary (if present)
         message: Human-readable description
     """
+
     present: bool
     functional: bool
-    path: Optional[str]
+    path: str | None
     message: str
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -113,7 +125,7 @@ class CommandProbeResult:
 @dataclass
 class ServiceProbeResult:
     """Result type for service probe operations.
-    
+
     Attributes:
         available: Whether the service manager is available
         exists: Whether the service exists
@@ -122,13 +134,14 @@ class ServiceProbeResult:
         state: Service state string
         message: Human-readable description
     """
+
     available: bool
     exists: bool
     active: bool
     enabled: bool
     state: str
     message: str
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -144,16 +157,17 @@ class ServiceProbeResult:
 @dataclass
 class KernelProbeResult:
     """Result type for kernel probe operations.
-    
+
     Attributes:
         available: Whether kernel support is available
         modules: List of detected kernel modules
         message: Human-readable description
     """
+
     available: bool
     modules: list[str]
     message: str
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -166,7 +180,7 @@ class KernelProbeResult:
 @dataclass
 class ScanResult:
     """Result type for complete system scan.
-    
+
     Attributes:
         capabilities_registered: Total number of capabilities registered
         capabilities_available: Number of AVAILABLE capabilities
@@ -175,13 +189,14 @@ class ScanResult:
         capabilities_disqualified: Number of DISQUALIFIED capabilities
         errors: List of error messages encountered during scan
     """
+
     capabilities_registered: int
     capabilities_available: int
     capabilities_degraded: int
     capabilities_missing: int
     capabilities_disqualified: int
     errors: list[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -192,12 +207,12 @@ class ScanResult:
             "capabilities_disqualified": self.capabilities_disqualified,
             "errors": self.errors,
         }
-    
+
     @property
     def has_errors(self) -> bool:
         """Check if scan encountered any errors."""
         return len(self.errors) > 0
-    
+
     @property
     def all_available(self) -> bool:
         """Check if all capabilities are AVAILABLE."""
@@ -238,4 +253,4 @@ class ScanResult:
 # - infrastructure/probe/*.py retourneront ces structures
 # - infrastructure/probe/capability_mapper.py les convertira en Capability
 # - Les tests vérifieront que les résultats sont corrects
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

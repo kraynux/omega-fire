@@ -7,9 +7,10 @@ a leur outil : Omega-Fire les affiche, ne les modifie pas.
 
 Reconnu d'apres la chaine (iptables/ip6tables : `-A <chaine>` de l'external_ref ;
 nftables : nom de chaine lu dans le noyau quand il est connu) ou la table nftables."""
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 # Prefixe de chaine -> outil. Noms de chaines poses par ces outils eux-memes.
 _CHAIN_PATTERNS = (
@@ -29,23 +30,29 @@ _CHAIN_PATTERNS = (
     ("OUTPUT_", "firewalld"),
     ("IN_", "firewalld"),
 )
-_NFT_TABLE_PATTERNS = {"firewalld": "firewalld", "tailscale": "Tailscale", "docker": "Docker"}
+_NFT_TABLE_PATTERNS = {
+    "firewalld": "firewalld",
+    "tailscale": "Tailscale",
+    "docker": "Docker",
+}
 _BASE_CHAINS = {"input", "output", "forward"}
 
 
-def chain_of(rule: Any) -> Optional[str]:
+def chain_of(rule: Any) -> str | None:
     """Vrai nom de chaine : lu dans le noyau, ou retrouve dans l'external_ref iptables."""
     name = getattr(rule, "chain_name", None)
     if name:
         return name
     ref = getattr(rule, "external_ref", None) or ""
-    if getattr(rule, "backend", "") in ("iptables", "ip6tables") and ref.startswith("-A "):
+    if getattr(rule, "backend", "") in ("iptables", "ip6tables") and ref.startswith(
+        "-A "
+    ):
         parts = ref.split()
         return parts[1] if len(parts) > 1 else None
     return None
 
 
-def rule_owner(rule: Any) -> Optional[str]:
+def rule_owner(rule: Any) -> str | None:
     """Nom de l'outil qui a pose la regle, ou None (Omega-Fire ou regle manuelle)."""
     chain = chain_of(rule)
     if chain and chain.lower() not in _BASE_CHAINS:
@@ -73,4 +80,4 @@ def rule_owner(rule: Any) -> Optional[str]:
 #   Omega-Fire, elle se gère avec son outil).
 # Pourquoi dans domain/ :
 # - Règle pure, aucune I/O (lit seulement les champs de FirewallRule).
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

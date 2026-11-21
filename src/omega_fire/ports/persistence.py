@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -31,7 +31,6 @@ class Snapshot:
 
 
 class PersistencePort(Protocol):
-
     @abstractmethod
     def create_backup(
         self,
@@ -40,20 +39,16 @@ class PersistencePort(Protocol):
         source_paths: list[Path],
         components: list[str] | None = None,
         metadata: dict[str, str] | None = None,
-    ) -> BackupInfo:
-        ...
+    ) -> BackupInfo: ...
 
     @abstractmethod
-    def restore_backup(self, backup: BackupInfo, *, dest_dir: Path) -> None:
-        ...
+    def restore_backup(self, backup: BackupInfo, *, dest_dir: Path) -> None: ...
 
     @abstractmethod
-    def list_backups(self, backup_dir: Path) -> list[BackupInfo]:
-        ...
+    def list_backups(self, backup_dir: Path) -> list[BackupInfo]: ...
 
     @abstractmethod
-    def delete_backup(self, backup: BackupInfo) -> None:
-        ...
+    def delete_backup(self, backup: BackupInfo) -> None: ...
 
     @abstractmethod
     def create_snapshot(
@@ -64,20 +59,18 @@ class PersistencePort(Protocol):
         jails: list,
         description: str = "",
         origin: str = "manual",
-    ) -> Snapshot:
-        ...
-        
-    @abstractmethod
-    def list_snapshots(self) -> list[Snapshot]:
-        ...
+    ) -> Snapshot: ...
 
     @abstractmethod
-    def restore_snapshot(self, snapshot_id: str) -> None:
-        ...
+    def list_snapshots(self) -> list[Snapshot]: ...
 
     @abstractmethod
-    def delete_snapshot(self, snapshot_id: str) -> None:
-        ...
+    def restore_snapshot(self, snapshot_id: str) -> None: ...
+
+    @abstractmethod
+    def delete_snapshot(self, snapshot_id: str) -> None: ...
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour la persistance (sauvegarde, restauration).
@@ -118,4 +111,4 @@ class PersistencePort(Protocol):
 # - create_backup() exige explicitement source_paths : le port ne
 #   présume jamais de ce qui doit être sauvegardé, c'est toujours
 #   l'appelant (application/) qui le précise.
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

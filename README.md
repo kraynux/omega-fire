@@ -126,6 +126,7 @@ La blacklist unifiée permet de travailler avec nftables et iptables depuis un m
 ### 3. Gestion des règles et politiques
 
 - Assistant pas à pas pour créer une règle avancée.
+- Ouverture d'un port à la demande d'omega-serv (`port ouvrir`) : un port TCP ouvert seulement depuis les réseaux indiqués, sur chaque pare-feu détecté (ufw et firewalld compris), enregistré comme une règle du menu 3.1.
 - Liste des règles système et des règles créées par Omega-Fire.
 - Suppression d'une règle par sélection.
 - Nettoyage automatique des règles inactives dans la base de référence.
@@ -495,6 +496,10 @@ Pour lancer l'ancienne interface Rich (saisie séquentielle de numéros) à la p
 ### Contact et support
 
 L'aide (touche `a`) propose un écran **Contact et support** : *Payer un café* (page PayPal du développeur), *Contacter le support* (adresse mail et formulaire de contact du site, affichés en clair), *Se déclarer utilisateur (anonyme)* et *Vérifier les mises à jour*. La déclaration est volontaire, désactivée par défaut et envoyée une seule fois : elle sert seulement à compter les utilisateurs et, si on le souhaite, leur continent ou leur pays (listes fermées, jamais de texte libre). Elle envoie une clé tirée au hasard, le nom du logiciel (`omega-fire`) et sa version ; jamais de nom, de nom de machine, de réglage, de cible ni de résultat. L'adresse IP n'est pas enregistrée dans les déclarations, mais passe, comme toute visite, par les contrôles de sécurité et le journal du serveur de réception. Retrait à tout moment depuis le même écran (*Ne plus me déclarer*). La vérification des mises à jour lit seulement la liste des versions publiées sur le site, et jamais sans clic.
+
+### Liens avec les autres outils omega
+
+Omega-Fire répond à quelques commandes sans interface, appelées par les autres outils de la suite. `./omega-fire.sh synchro jeton` et `./omega-fire.sh synchro fiche --format json` décrivent l'installation et ses capacités (pare-feu, Fail2Ban, Bibliothèque de logs), sans sudo. `./omega-fire.sh port ouvrir` ouvre un port TCP depuis des réseaux précis pour l'administration web d'omega-serv : une règle par réseau et par pare-feu détecté, ajoutée aussi à ufw ou firewalld s'ils sont actifs, enregistrée comme une règle du menu 3.1 et notée au journal d'audit. La boucle locale n'est jamais ouverte et une règle déjà présente n'est pas ajoutée deux fois. omega-serv ne l'appelle que si les deux outils sont inscrits dans la même zone omega-connect ; sudo est demandé comme pour l'interface. Quand la zone omega-connect existe, chaque ban ou levée qu'omega-fire pose lui-même dans le pare-feu (nftables, iptables, ip6tables) est publié dans le journal des bans de la zone, lu par les autres outils omega ; `./omega-fire.sh synchro bans` le remet en accord avec le pare-feu (sudo demandé). Les bans des jails Fail2Ban y sont écrits par l'action installée par omega-jail.
 
 ### Parcours général
 

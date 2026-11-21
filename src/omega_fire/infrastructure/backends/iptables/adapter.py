@@ -5,30 +5,31 @@ Implements the concrete iptables operations: ban, unban, list rules,
 list bans, flush, preset application, ruleset snapshot/restore. Uses
 subprocess to execute iptables commands.
 """
+
 import ipaddress
 import re
 import shlex
 import subprocess
-from typing import Optional, Union
-from omega_fire.domain.rules.models import FirewallRule, RuleChain
-from omega_fire.domain.rules.presets import FirewallPreset, PresetRule, list_presets
-from omega_fire.domain.rules.exceptions import PolicyNotFoundError
-from omega_fire.domain.ip_blacklist.models import BanEntry
+
 from omega_fire.domain.ip_blacklist.exceptions import (
     IPAlreadyBannedError,
     IPFamilyMismatchError,
     IPNotFoundError,
 )
-from omega_fire.shared.networking import IPAddress
-from omega_fire.ports.firewall import FirewallStats
-from omega_fire.infrastructure.backends.iptables.parser import IptParser
-from omega_fire.infrastructure.backends.iptables.serializer import IptSerializer
-from omega_fire.infrastructure.backends.iptables.mapper import IptMapper
+from omega_fire.domain.ip_blacklist.models import BanEntry
+from omega_fire.domain.rules.exceptions import PolicyNotFoundError
+from omega_fire.domain.rules.models import FirewallRule, RuleChain
+from omega_fire.domain.rules.presets import FirewallPreset, PresetRule, list_presets
 from omega_fire.infrastructure.backends.iptables.exceptions import (
     IptCommandError,
     IptPermissionError,
 )
+from omega_fire.infrastructure.backends.iptables.mapper import IptMapper
+from omega_fire.infrastructure.backends.iptables.parser import IptParser
+from omega_fire.infrastructure.backends.iptables.serializer import IptSerializer
+from omega_fire.ports.firewall import FirewallStats
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
 
 
 class IptablesAdapter:
@@ -113,7 +114,9 @@ class IptablesAdapter:
                 stderr=f"{cmd[0]} binary not found",
             )
 
-    def ban_ip(self, ip: Union[str, list[str]], chain: str = "INPUT", comment: str = "") -> bool:
+    def ban_ip(
+        self, ip: str | list[str], chain: str = "INPUT", comment: str = ""
+    ) -> bool:
         """Ban one or multiple IP addresses using iptables."""
         ip_list = []
         if isinstance(ip, list):
@@ -139,14 +142,16 @@ class IptablesAdapter:
                 continue
 
             try:
-                cmd = self._serializer.build_ban_command(ip=single_ip, chain=chain, comment=comment)
+                cmd = self._serializer.build_ban_command(
+                    ip=single_ip, chain=chain, comment=comment
+                )
                 self._run_command(cmd)
             except IptCommandError:
                 success = False
 
         return success
 
-    def unban_ip(self, ip: Union[str, list[str]], chain: str = "INPUT") -> bool:
+    def unban_ip(self, ip: str | list[str], chain: str = "INPUT") -> bool:
         """Unban one or multiple IP addresses using iptables."""
         ip_list = []
         if isinstance(ip, list):
@@ -182,7 +187,14 @@ class IptablesAdapter:
                 matching_lines = []
                 for line in output.splitlines():
                     parts = line.split()
-                    if len(parts) >= 5 and parts[1] == "DROP" and (parts[4] == single_ip or parts[4].startswith(f"{single_ip}/")):
+                    if (
+                        len(parts) >= 5
+                        and parts[1] == "DROP"
+                        and (
+                            parts[4] == single_ip
+                            or parts[4].startswith(f"{single_ip}/")
+                        )
+                    ):
                         if parts[0].isdigit():
                             matching_lines.append(int(parts[0]))
 
@@ -192,7 +204,9 @@ class IptablesAdapter:
 
                 matching_lines.sort(reverse=True)
                 for line_num in matching_lines:
-                    del_cmd = self._serializer.build_delete_rule_command(chain, line_num)
+                    del_cmd = self._serializer.build_delete_rule_command(
+                        chain, line_num
+                    )
                     self._run_command(del_cmd)
 
             except Exception:
@@ -237,7 +251,9 @@ class IptablesAdapter:
         ip_str = str(ip)
         if self.is_ip_banned(ip):
             raise IPAlreadyBannedError(ip_str, "iptables")
-        cmd = self._serializer.build_ban_command(ip=ip_str, chain="INPUT", comment=reason)
+        cmd = self._serializer.build_ban_command(
+            ip=ip_str, chain="INPUT", comment=reason
+        )
         self._run_command(cmd)
 
     def unban_single_ip(self, ip: IPAddress) -> None:
@@ -278,7 +294,11 @@ class IptablesAdapter:
         matching_lines = []
         for line in output.splitlines():
             parts = line.split()
-            if len(parts) >= 5 and parts[1] == "DROP" and (parts[4] == ip_str or parts[4].startswith(f"{ip_str}/")):
+            if (
+                len(parts) >= 5
+                and parts[1] == "DROP"
+                and (parts[4] == ip_str or parts[4].startswith(f"{ip_str}/"))
+            ):
                 if parts[0].isdigit():
                     matching_lines.append(int(parts[0]))
 
@@ -328,24 +348,33 @@ class IptablesAdapter:
             total_rules=len(parsed),
             total_packets=sum(p.get("packets", 0) for p in parsed),
             total_bytes=sum(p.get("bytes", 0) for p in parsed),
-            dropped_packets=sum(p.get("packets", 0) for p in parsed if p.get("action") == "drop"),
-            accepted_packets=sum(p.get("packets", 0) for p in parsed if p.get("action") == "accept"),
+            dropped_packets=sum(
+                p.get("packets", 0) for p in parsed if p.get("action") == "drop"
+            ),
+            accepted_packets=sum(
+                p.get("packets", 0) for p in parsed if p.get("action") == "accept"
+            ),
         )
 
     def add_rule(
         self,
         chain: str,
         action: str,
-        protocol: Optional[str] = None,
-        port: Optional[str] = None,
-        source: Optional[str] = None,
-        destination: Optional[str] = None,
+        protocol: str | None = None,
+        port: str | None = None,
+        source: str | None = None,
+        destination: str | None = None,
         comment: str = "",
     ) -> bool:
         """Add a firewall rule to iptables."""
         cmd = self._serializer.build_add_rule_command(
-            chain=chain, action=action, protocol=protocol,
-            port=port, source=source, destination=destination, comment=comment,
+            chain=chain,
+            action=action,
+            protocol=protocol,
+            port=port,
+            source=source,
+            destination=destination,
+            comment=comment,
         )
         self._run_command(cmd)
         return True
@@ -440,7 +469,7 @@ class IptablesAdapter:
         pour chaque regle posee).
         """
         output = self._run_command(["iptables", "-S"])
-        policies: dict[str, Optional[str]] = {}
+        policies: dict[str, str | None] = {}
         rule_count = 0
         for line in output.splitlines():
             stripped = line.strip()
@@ -519,7 +548,7 @@ class IptablesAdapter:
 
         return True
 
-    def _resolve_policy(self, policy_name: str) -> Optional[FirewallPreset]:
+    def _resolve_policy(self, policy_name: str) -> FirewallPreset | None:
         """Resolve a policy_name against domain.rules.presets.PRESETS.
 
         Matches by exact key ("1"-"9") or exact name, case-insensitive.
@@ -557,7 +586,10 @@ class IptablesAdapter:
         preset = self._resolve_policy(policy_name)
         if preset is None:
             raise PolicyNotFoundError(
-                policy_name, _("aucun profil FirewallPreset ne correspond (domain/rules/presets.py)")
+                policy_name,
+                _(
+                    "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
+                ),
             )
         self.apply_preset(preset)
         return sum(len(self._build_preset_rule_commands(r)) for r in preset.rules)
@@ -588,7 +620,7 @@ class IptablesAdapter:
         whole, never adjusted port by port.
         """
         chain_name = rule.chain.value.upper()
-        ports_to_apply: list[Optional[int]] = list(rule.ports) if rule.ports else [None]
+        ports_to_apply: list[int | None] = list(rule.ports) if rule.ports else [None]
 
         commands: list[list[str]] = []
 
@@ -652,4 +684,4 @@ class IptablesAdapter:
 # - app/bootstrap.py instanciera cet adapter et l'injectera via les ports
 # - application/commands/apply_preset.py utilise apply_preset()/dump_ruleset() (menu 3.4)
 # - application/commands/restore_preset_state.py utilise load_ruleset() (menu 3.4)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -11,6 +11,7 @@ NAVIGATEUR WEB par defaut de l'utilisateur (xdg-settings + gio launch), repli xd
 Si le fichier n'est pas lisible par cet utilisateur, une copie lui appartenant est faite
 dans un dossier temporaire prive. Sans session graphique (SSH, serveur), rien n'est lance :
 l'appelant affiche le chemin a la place."""
+
 from __future__ import annotations
 
 import os
@@ -22,16 +23,26 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-_SESSION_KEYS = ("DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR",
-                 "XDG_DATA_DIRS", "XDG_DATA_HOME", "XDG_CONFIG_DIRS",
-                 "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE", "DESKTOP_SESSION")
+_SESSION_KEYS = (
+    "DISPLAY",
+    "WAYLAND_DISPLAY",
+    "XAUTHORITY",
+    "DBUS_SESSION_BUS_ADDRESS",
+    "XDG_RUNTIME_DIR",
+    "XDG_DATA_DIRS",
+    "XDG_DATA_HOME",
+    "XDG_CONFIG_DIRS",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_SESSION_TYPE",
+    "DESKTOP_SESSION",
+)
 _WAIT_SECONDS = 4.0
 
 
 @dataclass(frozen=True)
 class OpenResult:
     ok: bool
-    reason: str = ""          # "no_session", "no_xdg_open", "failed", "copy_failed"
+    reason: str = ""  # "no_session", "no_xdg_open", "failed", "copy_failed"
     detail: str = ""
     opened_path: str = ""
 
@@ -73,9 +84,13 @@ def _environ_of(environ_file: Path) -> dict[str, str]:
     return env
 
 
-def session_environment(uid: int, current: dict[str, str] | None = None,
-                        proc_dir: Path = Path("/proc"), run_dir: Path = Path("/run/user"),
-                        x11_dir: Path = Path("/tmp/.X11-unix")) -> dict[str, str]:
+def session_environment(
+    uid: int,
+    current: dict[str, str] | None = None,
+    proc_dir: Path = Path("/proc"),
+    run_dir: Path = Path("/run/user"),
+    x11_dir: Path = Path("/tmp/.X11-unix"),
+) -> dict[str, str]:
     """Variables de la session graphique de `uid`. Vide si aucune session trouvee."""
     current = current if current is not None else dict(os.environ)
     session = {key: current[key] for key in _SESSION_KEYS if current.get(key)}
@@ -94,20 +109,31 @@ def session_environment(uid: int, current: dict[str, str] | None = None,
         except OSError:
             continue
         env = _environ_of(proc_dir / pid / "environ")
-        if (env.get("DISPLAY") or env.get("WAYLAND_DISPLAY")) and env.get("DBUS_SESSION_BUS_ADDRESS"):
+        if (env.get("DISPLAY") or env.get("WAYLAND_DISPLAY")) and env.get(
+            "DBUS_SESSION_BUS_ADDRESS"
+        ):
             return {key: env[key] for key in _SESSION_KEYS if env.get(key)}
     # Repli : sockets connus.
     runtime = run_dir / str(uid)
     if runtime.is_dir():
         session.setdefault("XDG_RUNTIME_DIR", str(runtime))
         if (runtime / "bus").exists():
-            session.setdefault("DBUS_SESSION_BUS_ADDRESS", f"unix:path={runtime / 'bus'}")
+            session.setdefault(
+                "DBUS_SESSION_BUS_ADDRESS", f"unix:path={runtime / 'bus'}"
+            )
         if not session.get("WAYLAND_DISPLAY"):
-            wayland = sorted(p.name for p in runtime.glob("wayland-*") if not p.name.endswith(".lock"))
+            wayland = sorted(
+                p.name
+                for p in runtime.glob("wayland-*")
+                if not p.name.endswith(".lock")
+            )
             if wayland:
                 session["WAYLAND_DISPLAY"] = wayland[0]
     if not session.get("DISPLAY"):
-        sockets = sorted(x11_dir.glob("X*")) if x11_dir.is_dir() else []
+        # Scan de securite 2026-11-21 (F2) : /tmp/.X11-unix est ouvert a tous ; un autre compte local
+        # pourrait y lancer son propre serveur X et recevoir le navigateur. Seule une vraie socket de
+        # l'utilisateur ou de root (Xorg lance en root) est acceptee.
+        sockets = sorted(p for p in x11_dir.glob("X*") if _trusted_socket(p, uid)) if x11_dir.is_dir() else []
         if sockets:
             session["DISPLAY"] = ":" + sockets[0].name[1:]
     if not (session.get("DISPLAY") or session.get("WAYLAND_DISPLAY")):
@@ -115,8 +141,17 @@ def session_environment(uid: int, current: dict[str, str] | None = None,
     return session
 
 
+def _trusted_socket(path: Path, uid: int) -> bool:
+    try:
+        info = path.lstat()
+    except OSError:
+        return False
+    return stat.S_ISSOCK(info.st_mode) and info.st_uid in (uid, 0)
+
+
 def readable_by(path: Path, uid: int, gid: int) -> bool:
     """Le fichier et tous ses dossiers parents sont-ils accessibles a uid/gid ?"""
+
     def allowed(p: Path, owner_bit: int, group_bit: int, other_bit: int) -> bool:
         try:
             st = p.stat()
@@ -131,7 +166,10 @@ def readable_by(path: Path, uid: int, gid: int) -> bool:
     path = path.resolve()
     if not allowed(path, stat.S_IRUSR, stat.S_IRGRP, stat.S_IROTH):
         return False
-    return all(allowed(parent, stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH) for parent in path.parents)
+    return all(
+        allowed(parent, stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH)
+        for parent in path.parents
+    )
 
 
 def _readable_copy(path: Path, target: _Target) -> Path:
@@ -164,13 +202,19 @@ def open_in_browser(path: Path) -> OpenResult:
 
     env = {
         "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
-        "HOME": target.home, "USER": target.name, "LOGNAME": target.name,
+        "HOME": target.home,
+        "USER": target.name,
+        "LOGNAME": target.name,
         "LANG": os.environ.get("LANG", "C.UTF-8"),
         **session,
     }
     kwargs: dict = {}
     if as_other_user:
-        kwargs.update(user=target.uid, group=target.gid, extra_groups=os.getgrouplist(target.name, target.gid))
+        kwargs.update(
+            user=target.uid,
+            group=target.gid,
+            extra_groups=os.getgrouplist(target.name, target.gid),
+        )
     cwd = target.home if os.path.isdir(target.home) else "/"
 
     # Le NAVIGATEUR WEB par defaut de l'utilisateur, pas l'application associee aux
@@ -179,32 +223,49 @@ def open_in_browser(path: Path) -> OpenResult:
     desktop_file = default_browser_desktop_file(env, cwd, kwargs, target.home)
     gio = shutil.which("gio")
     if desktop_file is not None and gio is not None:
-        result = _spawn([gio, "launch", str(desktop_file), str(opened)], env, cwd, kwargs)
+        result = _spawn(
+            [gio, "launch", str(desktop_file), str(opened)], env, cwd, kwargs
+        )
         if result.ok:
             return OpenResult(True, opened_path=str(opened))
     result = _spawn([xdg_open, str(opened)], env, cwd, kwargs)
-    return OpenResult(result.ok, result.reason, result.detail, str(opened) if result.ok else "")
+    return OpenResult(
+        result.ok, result.reason, result.detail, str(opened) if result.ok else ""
+    )
 
 
 def _desktop_dirs(home: str, environ: dict[str, str]) -> list[Path]:
     data_home = environ.get("XDG_DATA_HOME") or f"{home}/.local/share"
-    data_dirs = (environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
-    roots = [data_home, *data_dirs, f"{home}/.local/share/flatpak/exports/share", "/var/lib/flatpak/exports/share"]
+    data_dirs = (environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(
+        ":"
+    )
+    roots = [
+        data_home,
+        *data_dirs,
+        f"{home}/.local/share/flatpak/exports/share",
+        "/var/lib/flatpak/exports/share",
+    ]
     return [Path(root) / "applications" for root in roots if root]
 
 
-def find_desktop_file(desktop_id: str, home: str, environ: dict[str, str] | None = None) -> Path | None:
+def find_desktop_file(
+    desktop_id: str, home: str, environ: dict[str, str] | None = None
+) -> Path | None:
     """Fichier .desktop d'un identifiant (ex. brave-browser.desktop), selon les dossiers XDG."""
     if not desktop_id.endswith(".desktop") or "/" in desktop_id:
         return None
-    for folder in _desktop_dirs(home, environ if environ is not None else dict(os.environ)):
+    for folder in _desktop_dirs(
+        home, environ if environ is not None else dict(os.environ)
+    ):
         candidate = folder / desktop_id
         if candidate.is_file():
             return candidate
     return None
 
 
-def default_browser_desktop_file(env: dict[str, str], cwd: str, kwargs: dict, home: str) -> Path | None:
+def default_browser_desktop_file(
+    env: dict[str, str], cwd: str, kwargs: dict, home: str
+) -> Path | None:
     """`xdg-settings get default-web-browser`, execute au nom de l'utilisateur (son reglage,
     pas celui de root). None si indisponible."""
     xdg_settings = shutil.which("xdg-settings")
@@ -212,8 +273,15 @@ def default_browser_desktop_file(env: dict[str, str], cwd: str, kwargs: dict, ho
         return None
     try:
         # Sortie lue par un tube : xdg-settings rend la main sans laisser de processus fils.
-        completed = subprocess.run([xdg_settings, "get", "default-web-browser"], env=env, cwd=cwd,
-                                   stdin=subprocess.DEVNULL, capture_output=True, timeout=5, **kwargs)
+        completed = subprocess.run(
+            [xdg_settings, "get", "default-web-browser"],
+            env=env,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            timeout=5,
+            **kwargs,
+        )
     except (OSError, subprocess.SubprocessError):
         return None
     desktop_id = completed.stdout.decode(errors="ignore").strip()
@@ -230,9 +298,14 @@ def _spawn(argv: list[str], env: dict[str, str], cwd: str, kwargs: dict) -> Open
         # (rafraichissement du tableau de bord), Python libere le processus termine et ferme
         # le tube, et la premiere ecriture de Firefox sur stderr le tue (SIGPIPE).
         process = subprocess.Popen(
-            argv, env=env, cwd=cwd,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            start_new_session=True, **kwargs,
+            argv,
+            env=env,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+            **kwargs,
         )
     except OSError as exc:
         return OpenResult(False, "failed", str(exc))

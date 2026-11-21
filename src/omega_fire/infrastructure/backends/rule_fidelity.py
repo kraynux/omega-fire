@@ -10,6 +10,7 @@ peut pas etre recreee fidelement : la reappliquer en change le sens (constate le
 Controle volontairement strict (liste blanche) : tout element non reconnu rend la
 regle non restaurable. Les regles creees par Omega-Fire (3.1, 3.4) passent, puisque
 les serializers n'emettent que ces elements."""
+
 from __future__ import annotations
 
 import re
@@ -40,12 +41,20 @@ def nft_rule_restorable(family: str, table: str, chain: str, raw: str) -> bool:
         return False
     i, body = 0, tokens[:-1]
     while i < len(body):
-        t = body[i:i + 3]
-        if len(t) == 3 and t[0] in ("tcp", "udp") and t[1] == "dport" and _PORT_NFT.match(t[2]):
-            i += 3
-        elif len(t) == 3 and t[:2] == ["meta", "l4proto"] and t[2] in _PROTOCOLS:
-            i += 3
-        elif len(t) == 3 and t[0] in ("ip", "ip6") and t[1] in ("saddr", "daddr") and _ADDR.match(t[2]):
+        t = body[i : i + 3]
+        if (
+            len(t) == 3
+            and t[0] in ("tcp", "udp")
+            and t[1] == "dport"
+            and _PORT_NFT.match(t[2])
+            or len(t) == 3
+            and t[:2] == ["meta", "l4proto"]
+            and t[2] in _PROTOCOLS
+            or len(t) == 3
+            and t[0] in ("ip", "ip6")
+            and t[1] in ("saddr", "daddr")
+            and _ADDR.match(t[2])
+        ):
             i += 3
         else:
             return False
@@ -61,8 +70,12 @@ def iptables_rule_restorable(raw: str) -> bool:
         tokens = shlex.split(raw or "")
     except ValueError:
         return False
-    if len(tokens) < 2 or tokens[0] != "-A" or tokens[1].lower() not in BASE_CHAINS \
-            or tokens[1] != tokens[1].upper():
+    if (
+        len(tokens) < 2
+        or tokens[0] != "-A"
+        or tokens[1].lower() not in BASE_CHAINS
+        or tokens[1] != tokens[1].upper()
+    ):
         return False
     i, verdict = 2, None
     while i < len(tokens):
@@ -70,19 +83,25 @@ def iptables_rule_restorable(raw: str) -> bool:
         value = tokens[i + 1] if i + 1 < len(tokens) else None
         if value is None:
             return False
-        if opt == "-p" and value in _PROTOCOLS:
-            pass
-        elif opt == "-m" and value in ("tcp", "udp", "comment"):
-            pass
-        elif opt == "--dport" and _PORT_IPT.match(value):
-            pass
-        elif opt in ("-s", "-d") and _ADDR.match(value):
-            pass
-        elif opt == "--comment":
+        if (
+            opt == "-p"
+            and value in _PROTOCOLS
+            or opt == "-m"
+            and value in ("tcp", "udp", "comment")
+            or opt == "--dport"
+            and _PORT_IPT.match(value)
+            or opt in ("-s", "-d")
+            and _ADDR.match(value)
+            or opt == "--comment"
+        ):
             pass
         elif opt == "-j" and value in _IPT_VERDICTS and verdict is None:
             verdict = value
-        elif opt == "--reject-with" and verdict == "REJECT" and value in _IPT_DEFAULT_REJECT:
+        elif (
+            opt == "--reject-with"
+            and verdict == "REJECT"
+            and value in _IPT_DEFAULT_REJECT
+        ):
             pass
         else:
             return False
@@ -97,4 +116,4 @@ def iptables_rule_restorable(raw: str) -> bool:
 #   dans le snapshot (7.1), relu par restore_state (7.2).
 # Pourquoi dans infrastructure/backends/ :
 # - Dépend de la syntaxe nft / iptables -S.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

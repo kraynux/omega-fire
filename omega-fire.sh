@@ -24,8 +24,34 @@ fi
 # Contrats d'interconnexion (2026-11-10) : `synchro jeton|fiche` sort du JSON lu par omega-connect,
 # sans bannière ni élévation sudo (le jeton n'est jamais écrit en root ; sans root la fiche est
 # marquée partielle).
+# `synchro bans` (journal des bans, 2026-11-21) relit le pare-feu et écrit dans la zone omega-synchro :
+# root obligatoire, sudo demandé ici si besoin.
 if [ "${1:-}" = "synchro" ]; then
+    if [ "${2:-}" = "bans" ] && [ "$EUID" -ne 0 ]; then
+        exec sudo --preserve-env=LANG,LC_ALL,OMEGA_FIRE_LANG "$0" "$@"
+    fi
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+        VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
+    elif [ -x "$SCRIPT_DIR/venv/bin/python" ]; then
+        VENV_PYTHON="$SCRIPT_DIR/venv/bin/python"
+    else
+        VENV_PYTHON="$(command -v python3)"
+    fi
+    export PYTHONPATH="$SCRIPT_DIR/src"
+    exec "$VENV_PYTHON" -m omega_fire "$@"
+fi
+
+# Ouverture d'un port pour un outil relié par omega-connect (omega-serv, administration web, 2026-11-17) :
+# `port ouvrir ...` sort du JSON, sans bannière ; root obligatoire (sudo demandé ici si besoin), umask 007 comme
+# l'interface (fichiers sous var/ modifiables par le groupe omega-fire).
+if [ "${1:-}" = "port" ]; then
+    if [ "$EUID" -ne 0 ]; then
+        exec sudo --preserve-env=LANG,LC_ALL,OMEGA_FIRE_LANG "$0" "$@"
+    fi
+    umask 007
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    cd "$SCRIPT_DIR"
     if [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
         VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
     elif [ -x "$SCRIPT_DIR/venv/bin/python" ]; then
@@ -78,7 +104,10 @@ fi
 # cet umask garantit que ces fichiers restent lisibles ET modifiables par
 # l'utilisateur normal sans sudo — sans lui, le setgid seul ne suffit pas :
 # umask par défaut (022) donnerait rw-r--r--, groupe en lecture seule.
-umask 002
+# Scan de sécurité 2026-11-21 (F10) : 007 et non 002 — var/ contient des copies
+# de logs réservés à root, les règles du pare-feu et l'audit : jamais lisibles
+# par les autres comptes de la machine.
+umask 007
 
 # 2. Détection du répertoire racine du projet
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

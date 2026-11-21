@@ -13,6 +13,7 @@ signale une fois a l'ecran. Jamais d'erreur au demarrage.
 Console TTY Linux (police limitee) avec une langue a ecriture large (chinois, japonais,
 coreen, thai, vietnamien, hindi, arabe) : anglais pour CETTE session seulement, avec un
 message - le reglage n'est pas modifie (meme regle qu'omega-serv, omega-lib)."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -57,10 +58,14 @@ def console_fallback_from() -> str | None:
 
 
 def available_languages(catalog: LanguageCatalogPort) -> list[Language]:
-    return ordered_languages(catalog.available(), include_pseudo=INCLUDE_PSEUDO_LANGUAGE)
+    return ordered_languages(
+        catalog.available(), include_pseudo=INCLUDE_PSEUDO_LANGUAGE
+    )
 
 
-def select_language(*, settings_store: SettingsStore, catalog: LanguageCatalogPort, language_code: str) -> Language:
+def select_language(
+    *, settings_store: SettingsStore, catalog: LanguageCatalogPort, language_code: str
+) -> Language:
     """Enregistre la langue choisie ; appliquee au redemarrage de l'interface."""
     code = normalize_language_code(language_code)
     offered = {language.code: language for language in available_languages(catalog)}
@@ -71,8 +76,12 @@ def select_language(*, settings_store: SettingsStore, catalog: LanguageCatalogPo
 
 
 def install_interface_language(
-    *, settings_store: SettingsStore, catalog: LanguageCatalogPort, environ: Mapping[str, str],
-    state: TranslationState = STATE, terminal_family: str | None = None,
+    *,
+    settings_store: SettingsStore,
+    catalog: LanguageCatalogPort,
+    environ: Mapping[str, str],
+    state: TranslationState = STATE,
+    terminal_family: str | None = None,
 ) -> LanguageChoice:
     global _console_fallback_from
     try:
@@ -81,7 +90,9 @@ def install_interface_language(
         stored = ""  # reglages illisibles : francais, jamais d'erreur au demarrage
     requested = environ.get(LANGUAGE_ENV_VAR) or stored
     statuses = catalog.available()
-    offered = list(statuses) + ([PSEUDO_LANGUAGE_CODE] if INCLUDE_PSEUDO_LANGUAGE else [])
+    offered = list(statuses) + (
+        [PSEUDO_LANGUAGE_CODE] if INCLUDE_PSEUDO_LANGUAGE else []
+    )
     choice = resolve_language(requested, offered, statuses)
     if terminal_family is not None:
         _console_fallback_from = None
@@ -92,12 +103,16 @@ def install_interface_language(
     return _install_choice(choice, catalog, state)
 
 
-def _install_choice(choice: LanguageChoice, catalog: LanguageCatalogPort, state: TranslationState) -> LanguageChoice:
+def _install_choice(
+    choice: LanguageChoice, catalog: LanguageCatalogPort, state: TranslationState
+) -> LanguageChoice:
     if choice.fell_back_from is None and choice.language.code != SOURCE_LANGUAGE_CODE:
         try:
             translations = catalog.load(choice.language.code)
         except LanguageCatalogError:
-            choice = LanguageChoice(language_for(SOURCE_LANGUAGE_CODE), fell_back_from=choice.language.code)
+            choice = LanguageChoice(
+                language_for(SOURCE_LANGUAGE_CODE), fell_back_from=choice.language.code
+            )
         else:
             state.install(choice.language, translations)
             return choice
@@ -105,7 +120,9 @@ def _install_choice(choice: LanguageChoice, catalog: LanguageCatalogPort, state:
     return choice
 
 
-def select_export_language(*, settings_store: SettingsStore, catalog: LanguageCatalogPort, language_code: str) -> None:
+def select_export_language(
+    *, settings_store: SettingsStore, catalog: LanguageCatalogPort, language_code: str
+) -> None:
     """Enregistre la langue des exports ; "" = comme l'interface. Effet immediat : chaque
     export lit le reglage au moment ou il est lance."""
     if not language_code:
@@ -117,11 +134,15 @@ def select_export_language(*, settings_store: SettingsStore, catalog: LanguageCa
     settings_store.set(EXPORT_LANGUAGE_KEY, code)
 
 
-def export_language_override(settings_store: SettingsStore, interface_code: str) -> str | None:
+def export_language_override(
+    settings_store: SettingsStore, interface_code: str
+) -> str | None:
     """Langue a utiliser pour un export, ou None s'il suit la langue de l'interface (reglage
     vide, illisible ou identique)."""
     try:
-        code = normalize_language_code(settings_store.get(EXPORT_LANGUAGE_KEY, "") or "")
+        code = normalize_language_code(
+            settings_store.get(EXPORT_LANGUAGE_KEY, "") or ""
+        )
     except (OSError, ValueError):
         return None
     if not code or code == interface_code:

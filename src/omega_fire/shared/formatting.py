@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+
 from omega_fire.shared.i18n import _
 
 
@@ -19,9 +20,7 @@ def human_bytes(value: int, *, binary: bool = True) -> str:
         raise ValueError(_("human_bytes attend une valeur positive"))
     base = 1024 if binary else 1000
     units = (
-        ["B", "KiB", "MiB", "GiB", "TiB"]
-        if binary
-        else ["B", "KB", "MB", "GB", "TB"]
+        ["B", "KiB", "MiB", "GiB", "TiB"] if binary else ["B", "KB", "MB", "GB", "TB"]
     )
     size = float(value)
     for unit in units[:-1]:
@@ -69,6 +68,7 @@ def truncate(value: str, max_length: int, suffix: str = "…") -> str:
         return suffix[:max_length]
     return value[: max_length - len(suffix)] + suffix
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Fournit des formateurs génériques pour afficher des valeurs brutes de
@@ -104,4 +104,4 @@ def truncate(value: str, max_length: int, suffix: str = "…") -> str:
 # - infrastructure/exporters/txt_exporter.py utilisera human_count()
 # - interfaces/cli/renderers/tables.py utilisera pad_right() et truncate()
 # - interfaces/cli/renderers/monitoring_live.py utilisera human_duration()
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

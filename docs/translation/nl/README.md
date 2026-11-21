@@ -126,6 +126,7 @@ De geïntegreerde blacklist maakt het mogelijk met nftables en iptables te werke
 ### 3. Beheer van regels en beleid
 
 - Stapsgewijze assistent om een geavanceerde regel te maken.
+- Een poort openen op verzoek van omega-serv (`port ouvrir`): een TCP-poort die alleen vanuit de opgegeven netwerken wordt geopend, op elke gedetecteerde firewall (ufw en firewalld inbegrepen), vastgelegd als een regel uit menu 3.1.
 - Lijst van systeemregels en van regels die door Omega-Fire zijn gemaakt.
 - Verwijderen van een regel via selectie.
 - Automatische opschoning van inactieve regels in de referentiedatabase.
@@ -495,6 +496,10 @@ Om in plaats daarvan de oude Rich-interface (sequentiële invoer van nummers) te
 ### Contact en ondersteuning
 
 De hulp (toets `a`) biedt een scherm **Contact en ondersteuning**: *Trakteer op een koffie* (PayPal-pagina van de ontwikkelaar), *Contact opnemen met ondersteuning* (e-mailadres en contactformulier van de site, leesbaar weergegeven), *Mij aanmelden als gebruiker (anoniem)* en *Updates controleren*. De aanmelding is vrijwillig, standaard uitgeschakeld en wordt maar één keer verzonden: ze dient alleen om de gebruikers te tellen en, als u dat wilt, hun continent of land (gesloten lijsten, nooit vrije tekst). Ze verzendt een willekeurig gekozen sleutel, de naam van de software (`omega-fire`) en de versie; nooit een naam, een machinenaam, een instelling, een doel of een resultaat. Het IP-adres wordt niet opgeslagen in de aanmeldingen, maar gaat, zoals bij elk bezoek, door de beveiligingscontroles en het logboek van de ontvangende server. Intrekken kan op elk moment vanuit hetzelfde scherm (*Mij niet meer aanmelden*). De updatecontrole leest alleen de lijst van versies die op de site gepubliceerd zijn, en nooit zonder klik.
+
+### Koppelingen met de andere omega-tools
+
+Omega-Fire beantwoordt enkele opdrachten zonder interface, die door de andere tools van de suite worden aangeroepen. `./omega-fire.sh synchro jeton` en `./omega-fire.sh synchro fiche --format json` beschrijven de installatie en haar mogelijkheden (firewall, Fail2Ban, Logbibliotheek), zonder sudo. `./omega-fire.sh port ouvrir` opent een TCP-poort vanuit bepaalde netwerken voor het webbeheer van omega-serv: één regel per netwerk en per gedetecteerde firewall, ook toegevoegd aan ufw of firewalld als die actief zijn, vastgelegd als een regel uit menu 3.1 en genoteerd in het auditlogboek. De loopback wordt nooit geopend en een regel die al bestaat wordt niet dubbel toegevoegd. omega-serv roept de opdracht alleen aan als beide tools in dezelfde omega-connect-zone zijn ingeschreven; sudo wordt gevraagd zoals voor de interface. Als de omega-connect-zone bestaat, wordt elke ban of opheffing die omega-fire zelf in de firewall zet (nftables, iptables, ip6tables) gepubliceerd in het banjournaal van de zone, dat de andere omega-tools lezen; `./omega-fire.sh synchro bans` brengt het weer in lijn met de firewall (sudo wordt gevraagd). Bans van Fail2Ban-jails worden daar geschreven door de actie die omega-jail installeert.
 
 ### Algemeen verloop
 

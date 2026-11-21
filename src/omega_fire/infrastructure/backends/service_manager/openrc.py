@@ -8,16 +8,17 @@ This module performs real system I/O (subprocess calls) and is therefore
 in infrastructure/. It implements the ServiceManager contract defined
 in adapter.py.
 """
+
 import subprocess
-from typing import Optional
+
 from omega_fire.core.enums import ServiceManagerType
 from omega_fire.infrastructure.backends.service_manager.adapter import (
     ServiceManager,
     ServiceStatus,
 )
 from omega_fire.infrastructure.backends.service_manager.exceptions import (
-    ServiceNotFoundError,
     ServiceControlError,
+    ServiceNotFoundError,
     ServiceStatusError,
 )
 from omega_fire.shared.i18n import _
@@ -25,33 +26,33 @@ from omega_fire.shared.i18n import _
 
 class OpenRCServiceManager(ServiceManager):
     """OpenRC implementation of the ServiceManager interface.
-    
+
     Uses rc-service and rc-update commands to control services on
     OpenRC-based systems (Alpine Linux, Gentoo).
     """
-    
+
     def __init__(self):
         """Initialize the OpenRC service manager."""
         self._rc_service_bin = "rc-service"
         self._rc_update_bin = "rc-update"
-    
+
     def get_type(self) -> ServiceManagerType:
         """Get the type of service manager.
-        
+
         Returns:
             ServiceManagerType.OPENRC
         """
         return ServiceManagerType.OPENRC
-    
+
     def start(self, service_name: str) -> bool:
         """Start a service using rc-service start.
-        
+
         Args:
             service_name: Name of the service to start
-        
+
         Returns:
             True if the service was started successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the start operation fails
@@ -63,7 +64,7 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 return True
             elif "not found" in result.stderr.lower():
@@ -75,10 +76,11 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="start",
-                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
+                    reason=result.stderr.strip()
+                    or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
-        
+
         except FileNotFoundError:
             raise ServiceControlError(
                 service_name=service_name,
@@ -86,16 +88,16 @@ class OpenRCServiceManager(ServiceManager):
                 reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
-    
+
     def stop(self, service_name: str) -> bool:
         """Stop a service using rc-service stop.
-        
+
         Args:
             service_name: Name of the service to stop
-        
+
         Returns:
             True if the service was stopped successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the stop operation fails
@@ -107,7 +109,7 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 return True
             elif "not found" in result.stderr.lower():
@@ -119,10 +121,11 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="stop",
-                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
+                    reason=result.stderr.strip()
+                    or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
-        
+
         except FileNotFoundError:
             raise ServiceControlError(
                 service_name=service_name,
@@ -130,16 +133,16 @@ class OpenRCServiceManager(ServiceManager):
                 reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
-    
+
     def restart(self, service_name: str) -> bool:
         """Restart a service using rc-service restart.
-        
+
         Args:
             service_name: Name of the service to restart
-        
+
         Returns:
             True if the service was restarted successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the restart operation fails
@@ -151,7 +154,7 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 return True
             elif "not found" in result.stderr.lower():
@@ -163,10 +166,11 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="restart",
-                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
+                    reason=result.stderr.strip()
+                    or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
-        
+
         except FileNotFoundError:
             raise ServiceControlError(
                 service_name=service_name,
@@ -174,16 +178,16 @@ class OpenRCServiceManager(ServiceManager):
                 reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
-    
+
     def enable(self, service_name: str) -> bool:
         """Enable a service using rc-update add.
-        
+
         Args:
             service_name: Name of the service to enable
-        
+
         Returns:
             True if the service was enabled successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the enable operation fails
@@ -195,7 +199,7 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 return True
             elif "not found" in result.stderr.lower():
@@ -207,10 +211,11 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="enable",
-                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
+                    reason=result.stderr.strip()
+                    or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
-        
+
         except FileNotFoundError:
             raise ServiceControlError(
                 service_name=service_name,
@@ -218,16 +223,16 @@ class OpenRCServiceManager(ServiceManager):
                 reason=_("Exécutable rc-update introuvable"),
                 manager_type="openrc",
             )
-    
+
     def disable(self, service_name: str) -> bool:
         """Disable a service using rc-update del.
-        
+
         Args:
             service_name: Name of the service to disable
-        
+
         Returns:
             True if the service was disabled successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the disable operation fails
@@ -239,7 +244,7 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 return True
             elif "not found" in result.stderr.lower():
@@ -251,10 +256,11 @@ class OpenRCServiceManager(ServiceManager):
                 raise ServiceControlError(
                     service_name=service_name,
                     operation="disable",
-                    reason=result.stderr.strip() or _("Exit code {returncode}").format(returncode=result.returncode),
+                    reason=result.stderr.strip()
+                    or _("Exit code {returncode}").format(returncode=result.returncode),
                     manager_type="openrc",
                 )
-        
+
         except FileNotFoundError:
             raise ServiceControlError(
                 service_name=service_name,
@@ -262,16 +268,16 @@ class OpenRCServiceManager(ServiceManager):
                 reason=_("Exécutable rc-update introuvable"),
                 manager_type="openrc",
             )
-    
+
     def status(self, service_name: str) -> ServiceStatus:
         """Get the status of a service using rc-service status.
-        
+
         Args:
             service_name: Name of the service to query
-        
+
         Returns:
             ServiceStatus object with current status
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceStatusError: If the status query fails
@@ -283,19 +289,19 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if "not found" in result.stderr.lower():
                 raise ServiceNotFoundError(
                     service_name=service_name,
                     manager_type="openrc",
                 )
-            
+
             # Parse the output to extract status information
             active = result.returncode == 0
             enabled = self.is_enabled(service_name)
             state = "started" if active else "stopped"
             sub_state = "running" if active else "stopped"
-            
+
             return ServiceStatus(
                 service_name=service_name,
                 active=active,
@@ -304,20 +310,20 @@ class OpenRCServiceManager(ServiceManager):
                 sub_state=sub_state,
                 description="",
             )
-        
+
         except FileNotFoundError:
             raise ServiceStatusError(
                 service_name=service_name,
                 reason=_("Exécutable rc-service introuvable"),
                 manager_type="openrc",
             )
-    
+
     def is_active(self, service_name: str) -> bool:
         """Check if a service is active using rc-service status.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is active
         """
@@ -331,13 +337,13 @@ class OpenRCServiceManager(ServiceManager):
             return result.returncode == 0
         except (FileNotFoundError, subprocess.SubprocessError):
             return False
-    
+
     def is_enabled(self, service_name: str) -> bool:
         """Check if a service is enabled using rc-update show.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is enabled
         """
@@ -348,17 +354,17 @@ class OpenRCServiceManager(ServiceManager):
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 # Check if the service is in the output
                 return service_name in result.stdout
             return False
         except (FileNotFoundError, subprocess.SubprocessError):
             return False
-    
+
     def is_available(self) -> bool:
         """Check if OpenRC is available on the system.
-        
+
         Returns:
             True if rc-service is available
         """
@@ -410,4 +416,4 @@ class OpenRCServiceManager(ServiceManager):
 # - infrastructure/probe/service_probe.py instanciera OpenRCServiceManager
 # - application/commands/ utilisera l'interface ServiceManager (pas cette classe)
 # - Les tests mockeront cette classe pour simuler différents états de service
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

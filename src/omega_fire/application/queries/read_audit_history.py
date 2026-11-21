@@ -14,10 +14,11 @@ Conforms to Omega-Fire architecture charter:
   infrastructure/logging/ directly
 - No dependency on interfaces/ or infrastructure/ directly
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.ports.audit import AuditEntry
 from omega_fire.shared.i18n import _
@@ -26,6 +27,7 @@ from omega_fire.shared.i18n import _
 @dataclass
 class ReadAuditHistoryRequest:
     """Input for the read-audit-history use case."""
+
     limit: int = 500
     keyword: str = ""
 
@@ -33,6 +35,7 @@ class ReadAuditHistoryRequest:
 @dataclass
 class ReadAuditHistoryResult:
     """Output of the read-audit-history use case."""
+
     success: bool
     entries: list[AuditEntry] = field(default_factory=list)
     message: str = ""
@@ -41,26 +44,31 @@ class ReadAuditHistoryResult:
 class ReadAuditHistoryQuery:
     """Use case: read the audit trail, optionally filtered by keyword."""
 
-    def __init__(self, audit_port: Optional[Any]):
+    def __init__(self, audit_port: Any | None):
         self._audit_port = audit_port
 
     def execute(self, request: ReadAuditHistoryRequest) -> ReadAuditHistoryResult:
         if self._audit_port is None:
             return ReadAuditHistoryResult(
-                success=False, entries=[], message=_("Le registre d'audit n'est pas disponible.")
+                success=False,
+                entries=[],
+                message=_("Le registre d'audit n'est pas disponible."),
             )
 
         try:
             entries = self._audit_port.get_recent(limit=request.limit)
         except Exception as e:
             return ReadAuditHistoryResult(
-                success=False, entries=[], message=_("Erreur lors de la lecture de l'audit : {e}").format(e=e)
+                success=False,
+                entries=[],
+                message=_("Erreur lors de la lecture de l'audit : {e}").format(e=e),
             )
 
         if request.keyword:
             kw = request.keyword.lower()
             entries = [
-                e for e in entries
+                e
+                for e in entries
                 if kw in e.action.lower()
                 or kw in e.actor.lower()
                 or kw in (e.target or "").lower()
@@ -101,4 +109,4 @@ class ReadAuditHistoryQuery:
 #   ↓ résout audit_port via ctx.container.get_audit_port()
 # application/queries/read_audit_history.py : ReadAuditHistoryQuery.execute()
 #   ↓ audit_port.get_recent(limit) (infrastructure/logging/audit_logger.py)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

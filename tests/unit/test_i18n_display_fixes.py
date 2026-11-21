@@ -2,14 +2,16 @@
 """Correctifs d'affichage hindi/arabe branches dans omega-fire (OMEGA-FIRE_PLAN-DETAILLE_I18N.md,
 Q6 : modules partages dans omega-lib). Le mode bidi explicite du terminal ne s'active qu'en arabe ;
 toute autre langue lance la TUI exactement comme avant."""
+
 from __future__ import annotations
 
 import io
 import unittest
 from contextlib import redirect_stdout
 
-from omega_fire.app.bootstrap import _run_with_text_direction
 from omega_lib.i18n.terminal_bidi import ENTER_EXPLICIT_MODE, LEAVE_EXPLICIT_MODE
+
+from omega_fire.app.bootstrap import _run_with_text_direction
 
 
 class _FakeApp:
@@ -30,9 +32,8 @@ class TextDirectionTest(unittest.TestCase):
             self.assertEqual(out.getvalue(), "", code)
 
     def test_arabic_wraps_the_tui_in_explicit_bidi_mode(self) -> None:
-        from textual._styles_cache import StylesCache
-
         from omega_lib.i18n import terminal_bidi
+        from textual._styles_cache import StylesCache
 
         self.addCleanup(setattr, StylesCache, "render_line", StylesCache.render_line)
         self.addCleanup(setattr, terminal_bidi, "_installed", terminal_bidi._installed)

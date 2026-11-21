@@ -6,59 +6,62 @@ a menu entry with its label, action, prerequisites (capabilities), and children.
 
 This module performs no I/O — it only defines data structures for the menu tree.
 """
+
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Optional, Callable, Any
+from typing import Any, Optional
 
 
 @dataclass
 class MenuNode:
     """A single node in the menu tree.
-    
+
     Represents a menu entry with its label, action callback, prerequisites,
     and child nodes. The tree_builder uses these nodes to construct the
     conditional menu based on capability availability.
     """
+
     id: str
     label: str
-    action: Optional[Callable[[], Any]] = None
+    action: Callable[[], Any] | None = None
     requires: list[str] = field(default_factory=list)
     requires_any: list[str] = field(default_factory=list)
-    children: list['MenuNode'] = field(default_factory=list)
-    parent: Optional['MenuNode'] = None
+    children: list["MenuNode"] = field(default_factory=list)
+    parent: Optional["MenuNode"] = None
     enabled: bool = True
     description: str = ""
-    shortcut: Optional[str] = None
+    shortcut: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    
-    def add_child(self, child: 'MenuNode') -> 'MenuNode':
+
+    def add_child(self, child: "MenuNode") -> "MenuNode":
         """Add a child node."""
         child.parent = self
         self.children.append(child)
         return child
-    
+
     def is_leaf(self) -> bool:
         """Check if this node is a leaf (no children)."""
         return len(self.children) == 0
-    
+
     def is_actionable(self) -> bool:
         """Check if this node has an action."""
         return self.action is not None
-    
+
     def get_path(self) -> str:
         """Get the full path from root to this node."""
         if self.parent is None:
             return self.id
         parent_path = self.parent.get_path()
         return f"{parent_path}.{self.id}"
-    
-    def find_child(self, child_id: str) -> Optional['MenuNode']:
+
+    def find_child(self, child_id: str) -> Optional["MenuNode"]:
         """Find a child node by ID."""
         for child in self.children:
             if child.id == child_id:
                 return child
         return None
-    
-    def find_by_path(self, path: str) -> Optional['MenuNode']:
+
+    def find_by_path(self, path: str) -> Optional["MenuNode"]:
         """Find a node by its full path."""
         parts = path.split(".")
         current = self
@@ -68,7 +71,7 @@ class MenuNode:
                 return None
             current = child
         return current
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the node to a dictionary."""
         return {
@@ -84,7 +87,7 @@ class MenuNode:
             "children_count": len(self.children),
             "metadata": self.metadata,
         }
-    
+
     def __str__(self) -> str:
         """Return string representation."""
         return f"MenuNode(id='{self.id}', label='{self.label}')"
@@ -93,14 +96,14 @@ class MenuNode:
 def create_node(
     node_id: str,
     label: str,
-    action: Optional[Callable[[], Any]] = None,
-    requires: Optional[list[str]] = None,
-    requires_any: Optional[list[str]] = None,
+    action: Callable[[], Any] | None = None,
+    requires: list[str] | None = None,
+    requires_any: list[str] | None = None,
     description: str = "",
-    shortcut: Optional[str] = None,
+    shortcut: str | None = None,
 ) -> MenuNode:
     """Factory function to create a MenuNode.
-    
+
     Args:
         node_id: Node identifier
         label: Display label
@@ -109,7 +112,7 @@ def create_node(
         requires_any: Optional list of capabilities where AT LEAST ONE must be available
         description: Optional description
         shortcut: Optional keyboard shortcut
-    
+
     Returns:
         MenuNode instance
     """
@@ -151,4 +154,4 @@ def create_node(
 # - interfaces/cli/tree_builder.py construira l'arbre à partir de MenuNode
 # - interfaces/cli/menu_builder.py définira les nœuds du menu principal
 # - interfaces/cli/actions.py définira les callbacks des actions
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

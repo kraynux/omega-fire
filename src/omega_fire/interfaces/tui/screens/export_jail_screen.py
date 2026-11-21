@@ -8,6 +8,7 @@ arriere-plan (run_blocking, voir _base.py) — synchrone dans __init__,
 elle gelait TOUTE l'app a l'ouverture de cet ecran (retour utilisateur
 reel, mode degrade). L'export lui-meme (ecriture fichier locale) reste
 synchrone : rapide, pas de risque de gel comparable."""
+
 from __future__ import annotations
 
 import json
@@ -53,22 +54,34 @@ class ExportJailScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-form-panel"):
             yield Static(_("EXPORTER LES IPs D'UN JAIL"), classes="omega-title")
-            yield Static(_("Chargement des jails..."), id="status-hint", classes="omega-hint")
+            yield Static(
+                _("Chargement des jails..."), id="status-hint", classes="omega-hint"
+            )
 
-            yield Static(_("Jail"), id="jail-label", classes="omega-subtitle omega-hidden")
-            yield Select([], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner"))
-
-            yield Static(_("Format"), id="format-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Jail"), id="jail-label", classes="omega-subtitle omega-hidden"
+            )
             yield Select(
-                [(_("JSON (brut structure)"), "json"),
-                 (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
-                 (_("HTML (rapport visuel 3 colonnes)"), "html")],
+                [], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner")
+            )
+
+            yield Static(
+                _("Format"), id="format-label", classes="omega-subtitle omega-hidden"
+            )
+            yield Select(
+                [
+                    (_("JSON (brut structure)"), "json"),
+                    (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
+                    (_("HTML (rapport visuel 3 colonnes)"), "html"),
+                ],
                 value="json",
                 id="format-select",
                 classes="omega-hidden",
             )
 
-            yield Static(_("Thème HTML"), id="theme-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Thème HTML"), id="theme-label", classes="omega-subtitle omega-hidden"
+            )
             yield Select(
                 [(label, name) for name, label in _HTML_THEMES.items()],
                 value="omega-base",
@@ -76,12 +89,18 @@ class ExportJailScreen(OmegaScreen):
                 classes="omega-hidden",
             )
 
-            yield Static(_("Chemin de destination"), id="path-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Chemin de destination"),
+                id="path-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(id="path-input", classes="omega-hidden")
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Exporter"), id="launch", variant="primary", disabled=True)
+                    yield Button(
+                        _("Exporter"), id="launch", variant="primary", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
@@ -93,22 +112,40 @@ class ExportJailScreen(OmegaScreen):
             except Exception:
                 fail2ban_port = None
             status = get_jail_status(fail2ban_port=fail2ban_port)
-            return {j.name: sorted({str(ip) for ip in j.banned_ips}) for j in status.jails}
+            return {
+                j.name: sorted({str(ip) for ip in j.banned_ips}) for j in status.jails
+            }
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            _fetch, self._on_loaded, busy_message=_("Chargement des jails...")
+        )
 
     def _on_loaded(self, jails: dict[str, list[str]]) -> None:
         self._jails = jails
         if not jails:
-            self.query_one("#status-hint", Static).update(_("Impossible de contacter Fail2ban."))
+            self.query_one("#status-hint", Static).update(
+                _("Impossible de contacter Fail2ban.")
+            )
             return
 
         self.query_one("#status-hint", Static).set_class(True, "omega-hidden")
-        for widget_id in ("jail-label", "jail-select", "format-label", "format-select", "path-label", "path-input"):
+        for widget_id in (
+            "jail-label",
+            "jail-select",
+            "format-label",
+            "format-select",
+            "path-label",
+            "path-input",
+        ):
             self.query_one(f"#{widget_id}").set_class(False, "omega-hidden")
 
         jail_select = self.query_one("#jail-select", Select)
-        jail_select.set_options([(_("{name} ({count} IP(s))").format(name=name, count=len(ips)), name) for name, ips in jails.items()])
+        jail_select.set_options(
+            [
+                (_("{name} ({count} IP(s))").format(name=name, count=len(ips)), name)
+                for name, ips in jails.items()
+            ]
+        )
         jail_select.value = next(iter(jails))
 
         self.query_one("#launch", Button).disabled = False
@@ -118,15 +155,23 @@ class ExportJailScreen(OmegaScreen):
         if event.select.id == "format-select":
             fmt = str(event.value)
             is_html = fmt == "html"
-            self.query_one("#theme-label", Static).set_class(not is_html, "omega-hidden")
-            self.query_one("#theme-select", Select).set_class(not is_html, "omega-hidden")
-            self._refresh_default_path(str(self.query_one("#jail-select", Select).value), fmt)
+            self.query_one("#theme-label", Static).set_class(
+                not is_html, "omega-hidden"
+            )
+            self.query_one("#theme-select", Select).set_class(
+                not is_html, "omega-hidden"
+            )
+            self._refresh_default_path(
+                str(self.query_one("#jail-select", Select).value), fmt
+            )
         elif event.select.id == "jail-select":
             fmt = str(self.query_one("#format-select", Select).value)
             self._refresh_default_path(str(event.value), fmt)
 
     def _refresh_default_path(self, jail_name: str, fmt: str) -> None:
-        self.query_one("#path-input", Input).value = str(self._container.exports_dir / f"list-{jail_name}-f2b.{fmt}")
+        self.query_one("#path-input", Input).value = str(
+            self._container.exports_dir / f"list-{jail_name}-f2b.{fmt}"
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -141,14 +186,25 @@ class ExportJailScreen(OmegaScreen):
         jail_name = str(self.query_one("#jail-select", Select).value)
         ips_list = self._jails.get(jail_name, [])
         if not ips_list:
-            self.app.notify(_("Le jail '{jail_name}' ne contient aucune IP bannie à exporter.").format(jail_name=jail_name), severity="warning")
+            self.app.notify(
+                _(
+                    "Le jail '{jail_name}' ne contient aucune IP bannie à exporter."
+                ).format(jail_name=jail_name),
+                severity="warning",
+            )
             return
 
         fmt = str(self.query_one("#format-select", Select).value)
-        theme_name = str(self.query_one("#theme-select", Select).value) if fmt == "html" else "omega-base"
+        theme_name = (
+            str(self.query_one("#theme-select", Select).value)
+            if fmt == "html"
+            else "omega-base"
+        )
         final_path = self.query_one("#path-input", Input).value.strip()
         if not final_path:
-            self.app.notify(_("Saisissez un chemin de destination."), severity="warning")
+            self.app.notify(
+                _("Saisissez un chemin de destination."), severity="warning"
+            )
             return
 
         try:
@@ -161,8 +217,11 @@ class ExportJailScreen(OmegaScreen):
 
                 if fmt == "json":
                     export_data = {
-                        "source": "Omega-Fire", "jail": jail_name, "exported_at": now_str,
-                        "total_ips": len(ips_list), "ips": ips_list,
+                        "source": "Omega-Fire",
+                        "jail": jail_name,
+                        "exported_at": now_str,
+                        "total_ips": len(ips_list),
+                        "ips": ips_list,
                     }
                     with open(final_path, "w", encoding="utf-8") as f:
                         json.dump(export_data, f, indent=4, ensure_ascii=False)
@@ -170,7 +229,9 @@ class ExportJailScreen(OmegaScreen):
                 elif fmt == "txt":
                     lines = [
                         f"# Omega-Fire Blocklist Export - Jail: {jail_name}",
-                        f"# Genere le : {now_str}", f"# Total IPs : {len(ips_list)}", "",
+                        f"# Genere le : {now_str}",
+                        f"# Total IPs : {len(ips_list)}",
+                        "",
                     ]
                     lines.extend(ips_list)
                     with open(final_path, "w", encoding="utf-8") as f:
@@ -178,29 +239,53 @@ class ExportJailScreen(OmegaScreen):
 
                 elif fmt == "html":
                     col_size = (len(ips_list) + 2) // 3
-                    col1, col2, col3 = ips_list[0:col_size], ips_list[col_size:col_size * 2], ips_list[col_size * 2:]
+                    col1, col2, col3 = (
+                        ips_list[0:col_size],
+                        ips_list[col_size : col_size * 2],
+                        ips_list[col_size * 2 :],
+                    )
                     max_rows = max(len(col1), len(col2), len(col3))
                     ip_rows = [
-                        (col1[r] if r < len(col1) else "", col2[r] if r < len(col2) else "", col3[r] if r < len(col3) else "")
+                        (
+                            col1[r] if r < len(col1) else "",
+                            col2[r] if r < len(col2) else "",
+                            col3[r] if r < len(col3) else "",
+                        )
                         for r in range(max_rows)
                     ]
                     exporter = self._container.get_exporter_port("html")
                     exporter.export_data(
                         {
-                            "page_title": _("Exportation Jail Fail2ban - {jail_name}").format(jail_name=jail_name),
-                            "heading": _("Rapport d'exportation Jail : {jail_name}").format(jail_name=jail_name),
-                            "source_label": _("Jail Source"), "source_value": jail_name,
-                            "generated_at": now_str, "total_ips": len(ips_list),
-                            "ip_rows": ip_rows, "theme_name": theme_name,
+                            "page_title": _(
+                                "Exportation Jail Fail2ban - {jail_name}"
+                            ).format(jail_name=jail_name),
+                            "heading": _(
+                                "Rapport d'exportation Jail : {jail_name}"
+                            ).format(jail_name=jail_name),
+                            "source_label": _("Jail Source"),
+                            "source_value": jail_name,
+                            "generated_at": now_str,
+                            "total_ips": len(ips_list),
+                            "ip_rows": ip_rows,
+                            "theme_name": theme_name,
                         },
                         final_path,
                         template_name="ip_export.html.j2",
                     )
         except Exception as e:
-            self.app.notify(_("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("Export réussi : {count} IP(s) enregistrée(s) dans '{final_path}'.").format(count=len(ips_list), final_path=final_path))
+        self.app.notify(
+            _(
+                "Export réussi : {count} IP(s) enregistrée(s) dans '{final_path}'."
+            ).format(count=len(ips_list), final_path=final_path)
+        )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

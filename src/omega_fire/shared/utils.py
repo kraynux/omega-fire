@@ -10,8 +10,8 @@ from pathlib import Path
 from omega_fire.shared.exceptions import ValidationError
 from omega_fire.shared.i18n import _
 
-
 # --- Validation de ports -------------------------------------------------
+
 
 def validate_port(value: int | str) -> int:
     """Valide et normalise un numéro de port (1-65535).
@@ -28,7 +28,9 @@ def validate_port(value: int | str) -> int:
     try:
         port = int(value)
     except (TypeError, ValueError) as exc:
-        raise ValidationError(_("Port invalide (non entier): {value!r}").format(value=value)) from exc
+        raise ValidationError(
+            _("Port invalide (non entier): {value!r}").format(value=value)
+        ) from exc
     if not 1 <= port <= 65535:
         raise ValidationError(_("Port hors plage (1-65535): {port}").format(port=port))
     return port
@@ -45,11 +47,15 @@ def validate_port_range(value: str) -> tuple[int, int]:
         return port, port
     parts = value.split("-", 1)
     if len(parts) != 2:
-        raise ValidationError(_("Plage de ports mal formée: {value!r}").format(value=value))
+        raise ValidationError(
+            _("Plage de ports mal formée: {value!r}").format(value=value)
+        )
     start = validate_port(parts[0].strip())
     end = validate_port(parts[1].strip())
     if start > end:
-        raise ValidationError(_("Plage inversée: {start} > {end}").format(start=start, end=end))
+        raise ValidationError(
+            _("Plage inversée: {start} > {end}").format(start=start, end=end)
+        )
     return start, end
 
 
@@ -64,7 +70,9 @@ def parse_iso_datetime(value: str) -> datetime:
     Retourne un datetime UTC si aucun fuseau n'est précisé.
     """
     if not _ISO_DATE_RE.match(value):
-        raise ValidationError(_("Format de date invalide: {value!r}").format(value=value))
+        raise ValidationError(
+            _("Format de date invalide: {value!r}").format(value=value)
+        )
     normalized = value.replace(" ", "T")
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
         try:
@@ -76,6 +84,7 @@ def parse_iso_datetime(value: str) -> datetime:
 
 
 # --- Chemins & fichiers --------------------------------------------------
+
 
 def ensure_directory(path: str | Path) -> Path:
     """Crée le répertoire (et ses parents) s'il n'existe pas, puis le retourne."""
@@ -96,6 +105,7 @@ def safe_filename(value: str, default: str = "export") -> str:
 
 # --- Divers --------------------------------------------------------------
 
+
 def clamp(value: int, minimum: int, maximum: int) -> int:
     """Force `value` à rester dans l'intervalle [minimum, maximum]."""
     if value < minimum:
@@ -103,6 +113,8 @@ def clamp(value: int, minimum: int, maximum: int) -> int:
     if value > maximum:
         return maximum
     return value
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Fournit des helpers de validation génériques : ports (1-65535), plages de
@@ -139,4 +151,4 @@ def clamp(value: int, minimum: int, maximum: int) -> int:
 # - infrastructure/exporters/json_exporter.py utilisera safe_filename()
 # - interfaces/cli/prompts.py utilisera validate_port_range() pour les saisies
 # - application/commands/ban_ip.py utilisera parse_iso_datetime() pour dates
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

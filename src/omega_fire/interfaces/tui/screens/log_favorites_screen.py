@@ -2,6 +2,7 @@
 """Ecran 5.2 — Favoris (version 3.5, repris d'omega-serv / omega-log) : combiner des logs de
 la Bibliotheque, les enregistrer sous un nom avec un lecteur, puis lancer directement le
 favori. Garde-fou : 2 logs ou plus -> lnav seul (refus a l'enregistrement)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -70,22 +71,37 @@ class LogFavoritesScreen(OmegaScreen):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Supprimer"), id="delete", variant="error")
 
-            yield Static(_("Créer un favori (logs de la Bibliothèque)"), classes="omega-subtitle")
             yield Static(
-                _("Un seul log : lecteur au choix. Plusieurs logs combinés : lnav seul, le seul lecteur "
-                  "qui sait les fusionner."),
+                _("Créer un favori (logs de la Bibliothèque)"), classes="omega-subtitle"
+            )
+            yield Static(
+                _(
+                    "Un seul log : lecteur au choix. Plusieurs logs combinés : lnav seul, le seul lecteur "
+                    "qui sait les fusionner."
+                ),
                 classes="omega-hint",
             )
             yield DataTable(id="library-table")
-            yield Input(placeholder=_("Numéros des logs, séparés par des virgules (ex. 1,3)"), id="selection-input")
+            yield Input(
+                placeholder=_("Numéros des logs, séparés par des virgules (ex. 1,3)"),
+                id="selection-input",
+            )
             yield Input(placeholder=_("Nom du favori"), id="name-input")
             yield Select(
                 [(viewer_label(v), v.value) for v in ViewerType],
-                value=ViewerType.LNAV.value, id="viewer-select", allow_blank=False,
+                value=ViewerType.LNAV.value,
+                id="viewer-select",
+                allow_blank=False,
             )
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Enregistrer"), id="save")
-        with Horizontal(classes="omega-actions", id="favorites-actions"), Container(classes="omega-btn-frame"):
+        with (
+            Horizontal(classes="omega-actions", id="favorites-actions"),
+            Container(classes="omega-btn-frame"),
+        ):
             yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -107,20 +123,34 @@ class LogFavoritesScreen(OmegaScreen):
         table = self.query_one("#favorites-table", DataTable)
         table.clear()
         for favorite in self._favorites:
-            table.add_row(favorite.name, viewer_label(favorite.viewer),
-                          ", ".join(p.rsplit("/", 1)[-1] for p in favorite.paths), key=favorite.name)
+            table.add_row(
+                favorite.name,
+                viewer_label(favorite.viewer),
+                ", ".join(p.rsplit("/", 1)[-1] for p in favorite.paths),
+                key=favorite.name,
+            )
         self.query_one("#favorites-status", Static).update(
-            "" if self._favorites else _("Aucun favori : créez-en un ci-dessous."))
+            "" if self._favorites else _("Aucun favori : créez-en un ci-dessous.")
+        )
 
         self._library_entries = library_command().list_logs()
         library = self.query_one("#library-table", DataTable)
         library.clear()
         for index, entry in enumerate(self._library_entries, start=1):
-            library.add_row(str(index), origin_label(entry), state_label(entry), short_path(entry.path))
+            library.add_row(
+                str(index),
+                origin_label(entry),
+                state_label(entry),
+                short_path(entry.path),
+            )
 
     def _highlighted(self) -> Favorite | None:
         table = self.query_one("#favorites-table", DataTable)
-        if not self._favorites or table.cursor_row is None or not 0 <= table.cursor_row < len(self._favorites):
+        if (
+            not self._favorites
+            or table.cursor_row is None
+            or not 0 <= table.cursor_row < len(self._favorites)
+        ):
             return None
         return self._favorites[table.cursor_row]
 
@@ -133,7 +163,9 @@ class LogFavoritesScreen(OmegaScreen):
             if favorite is None:
                 self.app.notify(_("Sélectionnez un favori."), severity="warning")
                 return
-            if open_viewer(self.app, self._container, favorite.viewer, list(favorite.paths)):
+            if open_viewer(
+                self.app, self._container, favorite.viewer, list(favorite.paths)
+            ):
                 log_action_result(self._container, _ACTION_TITLE, status="success")
         elif button_id == "delete":
             favorite = self._highlighted()
@@ -158,16 +190,22 @@ class LogFavoritesScreen(OmegaScreen):
             if not token:
                 continue
             if not token.isdigit() or not 1 <= int(token) <= len(self._library_entries):
-                self.app.notify(_("Numéro invalide : {token}.").format(token=token), severity="warning")
+                self.app.notify(
+                    _("Numéro invalide : {token}.").format(token=token),
+                    severity="warning",
+                )
                 return
             path = self._library_entries[int(token) - 1].path
             if path not in paths:
                 paths.append(path)
         result = self._favorites_command.create(
-            name=self.query_one("#name-input", Input).value, paths=paths,
+            name=self.query_one("#name-input", Input).value,
+            paths=paths,
             viewer=ViewerType(str(self.query_one("#viewer-select", Select).value)),
         )
-        self.app.notify(result.message, severity="information" if result.success else "warning")
+        self.app.notify(
+            result.message, severity="information" if result.success else "warning"
+        )
         if result.success:
             self.query_one("#selection-input", Input).value = ""
             self.query_one("#name-input", Input).value = ""

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Catalogues gettext livres avec omega-fire (src/omega_fire/locale/), lus via omega-lib."""
+
 from __future__ import annotations
 
 import gettext
@@ -23,7 +24,9 @@ DEFAULT_LOCALE_DIR = Path(__file__).resolve().parents[2] / "locale"
 class GettextLanguageCatalog:
     """Implemente ports/language_catalog.py::LanguageCatalogPort."""
 
-    def __init__(self, locale_dir: Path = DEFAULT_LOCALE_DIR, domain: str = DOMAIN) -> None:
+    def __init__(
+        self, locale_dir: Path = DEFAULT_LOCALE_DIR, domain: str = DOMAIN
+    ) -> None:
         self._locale_dir = locale_dir
         self._domain = domain
 

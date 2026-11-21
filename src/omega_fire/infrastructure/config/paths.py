@@ -14,12 +14,11 @@ Architecture compliance (charte-architecture-review-checklist.md):
 - Consumed by app/bootstrap.py via injection, and by other layers via module constants
 - Single source of truth for all runtime paths (checklist §8)
 """
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
-
 
 # ============================================================================
 # Module-level constants (single source of truth)
@@ -40,23 +39,25 @@ VAR_DIR: Path = _PROJECT_ROOT / "var"
 DB_DIR: Path = VAR_DIR / "db"
 CACHE_DIR: Path = VAR_DIR / "cache"
 EXPORTS_DIR: Path = VAR_DIR / "exports"
-BLOCKLIST_DIR: Path = VAR_DIR / "blocklist"          # singular, matches var/blocklist/
+BLOCKLIST_DIR: Path = VAR_DIR / "blocklist"  # singular, matches var/blocklist/
 BACKUPS_DIR: Path = VAR_DIR / "backups"
 RUNTIME_DIR: Path = VAR_DIR / "runtime"
 LOGS_DIR: Path = VAR_DIR / "logs"
 
-# --- Configuration directories --- 
+# --- Configuration directories ---
 CONFIG_DIR: Path = _PROJECT_ROOT / "config"
 
 # --- Source directories ---
 SRC_DIR: Path = _PROJECT_ROOT / "src" / "omega_fire"
 TEMPLATES_DIR: Path = SRC_DIR / "domain" / "reports" / "templates"
-MIGRATIONS_DIR: Path = SRC_DIR / "infrastructure" / "storage" / "sqlite" / "migrations" / "versions"
+MIGRATIONS_DIR: Path = (
+    SRC_DIR / "infrastructure" / "storage" / "sqlite" / "migrations" / "versions"
+)
 
 # --- Key files ---
 DB_PATH: Path = DB_DIR / "omega.db"
-APP_LOG_PATH: Path = LOGS_DIR / "app.log"             # matches existing var/logs/app.log
-AUDIT_LOG_PATH: Path = LOGS_DIR / "audit.log"         # matches existing var/logs/audit.log
+APP_LOG_PATH: Path = LOGS_DIR / "app.log"  # matches existing var/logs/app.log
+AUDIT_LOG_PATH: Path = LOGS_DIR / "audit.log"  # matches existing var/logs/audit.log
 ENV_FILE: Path = _PROJECT_ROOT / ".env"
 
 # --- Default blocklist files (shared by menus 2.7, 2.8, 4.3) ---
@@ -87,6 +88,7 @@ _ALL_RUNTIME_DIRS: tuple[Path, ...] = (
 # Public API for module-level usage
 # ============================================================================
 
+
 def ensure_runtime_dirs() -> None:
     """Create all runtime directories if they don't exist.
 
@@ -116,7 +118,9 @@ def ensure_default_blocklist_files() -> None:
             continue
         os.close(fd)
         try:
-            os.chmod(path, 0o664)  # l'umask de root (022) retirerait l'ecriture du groupe
+            os.chmod(
+                path, 0o664
+            )  # l'umask de root (022) retirerait l'ecriture du groupe
         except OSError:
             pass
 
@@ -134,6 +138,7 @@ def get_project_root() -> Path:
 # AppPaths class (for dependency injection)
 # ============================================================================
 
+
 class AppPaths:
     """Centralized application paths (injectable version).
 
@@ -147,7 +152,7 @@ class AppPaths:
     For simple usage, prefer the module-level constants (BLOCKLIST_DIR, etc.).
     """
 
-    def __init__(self, base_dir: Optional[Path] = None) -> None:
+    def __init__(self, base_dir: Path | None = None) -> None:
         """Initialize the paths configuration.
 
         Args:
@@ -291,6 +296,7 @@ class AppPaths:
 # ============================================================================
 # Convenience factory
 # ============================================================================
+
 
 def get_default_paths() -> AppPaths:
     """Get the default paths configuration.

@@ -6,6 +6,7 @@ disque : l'adaptateur fail2ban lit les fichiers, ce module en deduit pour chaque
 Retour utilisateur 2026-10-28 : 4.5 cherchait `jail.d/<nom>.conf` ; omega-jail ecrit
 `jail.d/omega-jail-<nom>.conf` — le jail etait arrete puis relance par le rechargement de
 fail2ban. Meme chose pour un jail defini dans jail.local (sshd…)."""
+
 from __future__ import annotations
 
 import os
@@ -14,12 +15,12 @@ from dataclasses import dataclass, field
 
 ORIGIN_OMEGA_FIRE = "omega-fire"
 ORIGIN_OMEGA_JAIL = "omega-jail"
-ORIGIN_MAIN_CONFIG = "main-config"     # jail.conf / jail.local
+ORIGIN_MAIN_CONFIG = "main-config"  # jail.conf / jail.local
 ORIGIN_OTHER = "other"
 
 # Raisons pour lesquelles un jail ne peut pas etre supprime par omega-fire.
-BLOCKED_MAIN_CONFIG = "main-config"    # defini (aussi) dans jail.conf / jail.local
-BLOCKED_SHARED_FILE = "shared-file"    # son fichier jail.d definit d'autres jails
+BLOCKED_MAIN_CONFIG = "main-config"  # defini (aussi) dans jail.conf / jail.local
+BLOCKED_SHARED_FILE = "shared-file"  # son fichier jail.d definit d'autres jails
 
 _NOT_JAILS = {"DEFAULT", "INCLUDES", "Definition", "Init"}
 _SECTION = re.compile(r"^\[([^\]\r\n]+)\][ \t]*$", re.MULTILINE)
@@ -31,7 +32,7 @@ _OMEGA_JAIL_PREFIX = "omega-jail-"
 class ConfigFile:
     path: str
     content: str
-    main: bool = False          # jail.conf / jail.local (et non un fichier de jail.d)
+    main: bool = False  # jail.conf / jail.local (et non un fichier de jail.d)
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class JailDefinition:
     files: tuple[str, ...]
     origin: str
     filter_name: str | None = None
-    blocked: str | None = None          # None : suppression possible
+    blocked: str | None = None  # None : suppression possible
     shared_with: tuple[str, ...] = field(default_factory=tuple)
 
     @property
@@ -49,16 +50,20 @@ class JailDefinition:
 
 
 def sections_in(content: str) -> list[str]:
-    return [name.strip() for name in _SECTION.findall(content) if name.strip() not in _NOT_JAILS]
+    return [
+        name.strip()
+        for name in _SECTION.findall(content)
+        if name.strip() not in _NOT_JAILS
+    ]
 
 
 def section_block(content: str, name: str) -> str | None:
     match = re.search(rf"^\[{re.escape(name)}\][ \t]*$", content, re.MULTILINE)
     if not match:
         return None
-    rest = content[match.end():]
+    rest = content[match.end() :]
     following = _SECTION.search(rest)
-    return rest[:following.start()] if following else rest
+    return rest[: following.start()] if following else rest
 
 
 def origin_of(config: ConfigFile) -> str:
@@ -96,12 +101,20 @@ def build_definitions(configs: list[ConfigFile]) -> dict[str, JailDefinition]:
             blocked = BLOCKED_MAIN_CONFIG
         else:
             for config in own:
-                others = [other for other in sections_in(config.content) if other != name]
+                others = [
+                    other for other in sections_in(config.content) if other != name
+                ]
                 if others:
                     blocked = BLOCKED_SHARED_FILE
                     shared.extend(others)
-        result[name] = JailDefinition(name=name, files=tuple(config.path for config in files), origin=origin,
-                                      filter_name=filter_name, blocked=blocked, shared_with=tuple(shared))
+        result[name] = JailDefinition(
+            name=name,
+            files=tuple(config.path for config in files),
+            origin=origin,
+            filter_name=filter_name,
+            blocked=blocked,
+            shared_with=tuple(shared),
+        )
     return result
 
 

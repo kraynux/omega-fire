@@ -16,8 +16,9 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.domain.rules.models import (
     FirewallRule,
@@ -26,8 +27,8 @@ from omega_fire.domain.rules.models import (
     RuleFamily,
     RuleProtocol,
 )
-from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
 
 
@@ -39,25 +40,27 @@ class CreateRuleRequest:
     (menu 3.1); this use case is responsible for converting them into the
     proper domain enums before persisting.
     """
+
     name: str
     backend: str
     action: str  # "DROP" | "REJECT" | "ACCEPT"
     chain: str  # "INPUT" | "FORWARD" | "OUTPUT"
     protocol: str  # "tcp" | "udp" | "icmp" | "all"
-    source_cidr: Optional[str] = None
-    dest_cidr: Optional[str] = None
-    dst_port: Optional[int] = None
-    interface: Optional[str] = None
-    description: Optional[str] = None
+    source_cidr: str | None = None
+    dest_cidr: str | None = None
+    dst_port: int | None = None
+    interface: str | None = None
+    description: str | None = None
 
 
 @dataclass
 class CreateRuleResult:
     """Output of the create rule use case."""
+
     success: bool
-    rule_id: Optional[int]
+    rule_id: int | None
     message: str
-    duplicate_of: Optional[int] = None
+    duplicate_of: int | None = None
     applied: bool = False
 
 
@@ -84,7 +87,9 @@ _PROTOCOL_MAP = {
 class CreateRuleCommand:
     """Use case: create, persist and apply a user-defined firewall rule."""
 
-    def __init__(self, rule_repository: RuleRepository, firewall_adapter: Optional[Any] = None):
+    def __init__(
+        self, rule_repository: RuleRepository, firewall_adapter: Any | None = None
+    ):
         """Initialize the command.
 
         Args:
@@ -116,14 +121,18 @@ class CreateRuleCommand:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=_("Erreur technique lors de la vérification des doublons : {e}").format(e=e),
+                message=_(
+                    "Erreur technique lors de la vérification des doublons : {e}"
+                ).format(e=e),
             )
 
         if duplicate_id is not None:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=_("Une règle identique existe déjà en base (ID #{duplicate_id}).").format(duplicate_id=duplicate_id),
+                message=_(
+                    "Une règle identique existe déjà en base (ID #{duplicate_id})."
+                ).format(duplicate_id=duplicate_id),
                 duplicate_of=duplicate_id,
             )
 
@@ -133,7 +142,9 @@ class CreateRuleCommand:
         # valeur figée à IP causait un échec systématique de suppression
         # via 3.2 pour toute règle créée sur nftables (mauvaise table
         # visée par la commande nft delete).
-        rule_family = RuleFamily.INET if request.backend == "nftables" else RuleFamily.IP
+        rule_family = (
+            RuleFamily.INET if request.backend == "nftables" else RuleFamily.IP
+        )
 
         rule = FirewallRule(
             backend=request.backend,
@@ -158,7 +169,9 @@ class CreateRuleCommand:
             return CreateRuleResult(
                 success=False,
                 rule_id=None,
-                message=_("Erreur technique lors de l'enregistrement : {e}").format(e=e),
+                message=_("Erreur technique lors de l'enregistrement : {e}").format(
+                    e=e
+                ),
             )
 
         # --- 3. Application au backend live ---
@@ -168,7 +181,9 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    _("La règle '{name}' a été créée et enregistrée (ID #{new_id}), mais AUCUN backend n'est disponible pour l'appliquer. Elle reste inactive tant que {backend} n'est pas accessible.").format(name=request.name, new_id=new_id, backend=request.backend)
+                    _(
+                        "La règle '{name}' a été créée et enregistrée (ID #{new_id}), mais AUCUN backend n'est disponible pour l'appliquer. Elle reste inactive tant que {backend} n'est pas accessible."
+                    ).format(name=request.name, new_id=new_id, backend=request.backend)
                 ),
             )
 
@@ -180,7 +195,11 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    _("La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué : {e}. Elle reste inactive dans le noyau.").format(name=request.name, new_id=new_id, backend=request.backend, e=e)
+                    _(
+                        "La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué : {e}. Elle reste inactive dans le noyau."
+                    ).format(
+                        name=request.name, new_id=new_id, backend=request.backend, e=e
+                    )
                 ),
             )
 
@@ -190,12 +209,16 @@ class CreateRuleCommand:
                 rule_id=new_id,
                 applied=False,
                 message=(
-                    _("La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué. Elle reste inactive dans le noyau.").format(name=request.name, new_id=new_id, backend=request.backend)
+                    _(
+                        "La règle '{name}' a été enregistrée (ID #{new_id}) mais son application sur {backend} a échoué. Elle reste inactive dans le noyau."
+                    ).format(name=request.name, new_id=new_id, backend=request.backend)
                 ),
             )
 
         # --- 4. Récupération de l'identifiant technique (external_ref) ---
-        matched_ref = self._find_applied_external_ref(request, rule_chain, rule_protocol)
+        matched_ref = self._find_applied_external_ref(
+            request, rule_chain, rule_protocol
+        )
         if matched_ref is not None:
             try:
                 self._repository.update_external_ref(new_id, matched_ref)
@@ -208,7 +231,11 @@ class CreateRuleCommand:
                     rule_id=new_id,
                     applied=True,
                     message=(
-                        _("La règle '{name}' a été créée et appliquée sur {backend} (ID #{new_id}), mais son identifiant technique n'a pas pu être enregistré. Sa suppression via 3.2 pourrait ne pas la retirer automatiquement du noyau.").format(name=request.name, backend=request.backend, new_id=new_id)
+                        _(
+                            "La règle '{name}' a été créée et appliquée sur {backend} (ID #{new_id}), mais son identifiant technique n'a pas pu être enregistré. Sa suppression via 3.2 pourrait ne pas la retirer automatiquement du noyau."
+                        ).format(
+                            name=request.name, backend=request.backend, new_id=new_id
+                        )
                     ),
                 )
 
@@ -217,7 +244,9 @@ class CreateRuleCommand:
             rule_id=new_id,
             applied=True,
             message=(
-                _("La règle '{name}' a été créée et appliquée avec succès sur {backend} (ID #{new_id}).").format(name=request.name, backend=request.backend, new_id=new_id)
+                _(
+                    "La règle '{name}' a été créée et appliquée avec succès sur {backend} (ID #{new_id})."
+                ).format(name=request.name, backend=request.backend, new_id=new_id)
             ),
         )
 
@@ -225,7 +254,7 @@ class CreateRuleCommand:
         self,
         request: CreateRuleRequest,
         rule_chain: RuleChain,
-        rule_protocol: Optional[RuleProtocol],
+        rule_protocol: RuleProtocol | None,
     ) -> bool:
         """Call the appropriate adapter.add_rule() signature for the backend."""
         protocol_str = rule_protocol.value if rule_protocol else None
@@ -259,8 +288,8 @@ class CreateRuleCommand:
         self,
         request: CreateRuleRequest,
         rule_chain: RuleChain,
-        rule_protocol: Optional[RuleProtocol],
-    ) -> Optional[str]:
+        rule_protocol: RuleProtocol | None,
+    ) -> str | None:
         """Re-read the live backend state to find the rule just applied.
 
         Matches on the same network criteria used for duplicate detection
@@ -330,4 +359,4 @@ class CreateRuleCommand:
 # application/commands/create_rule.py : CreateRuleCommand.execute()
 #   ↓ RuleRepository.exists_similar() / save() / update_external_ref()
 #   ↓ adapter.add_rule() / adapter.list_rules()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

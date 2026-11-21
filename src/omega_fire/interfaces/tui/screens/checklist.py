@@ -3,6 +3,7 @@
 presets de chemins a epingler (« Gérer les épingles »), IPs d'un export Top N a retirer
 des logs (5.5). Meme style que ChoiceScreen ; retourne les valeurs cochees, ou None
 (Annuler / echap)."""
+
 from __future__ import annotations
 
 from typing import ClassVar
@@ -19,10 +20,19 @@ from omega_fire.shared.i18n import _
 class CheckListScreen(ModalScreen[list[str] | None]):
     """items : (libelle, valeur) ; checked : valeurs cochees a l'ouverture."""
 
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "back", _("Annuler"), show=True)]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "back", _("Annuler"), show=True)
+    ]
 
-    def __init__(self, *, title: str, message: str, items: list[tuple[str, str]],
-                 checked: set[str] | None = None, confirm_label: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        title: str,
+        message: str,
+        items: list[tuple[str, str]],
+        checked: set[str] | None = None,
+        confirm_label: str | None = None,
+    ) -> None:
         super().__init__()
         self._title = title
         self._message = message
@@ -35,7 +45,10 @@ class CheckListScreen(ModalScreen[list[str] | None]):
             yield Static(self._title, classes="omega-confirm-title omega-choice-title")
             yield Static(self._message, classes="omega-hint")
             yield SelectionList[str](
-                *[(label, value, value in self._checked) for label, value in self._items],
+                *[
+                    (label, value, value in self._checked)
+                    for label, value in self._items
+                ],
                 id="checklist",
             )
             with Horizontal(classes="omega-actions omega-checklist-actions"):

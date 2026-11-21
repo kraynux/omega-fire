@@ -7,17 +7,18 @@ require light I/O (shutil.disk_usage, PRAGMA integrity_check) — kept
 here rather than in infrastructure/ since they are read-only diagnostic
 checks specific to this report, not reusable infrastructure adapters.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from omega_fire.infrastructure.config.paths import BACKUPS_DIR, LOGS_DIR, DB_PATH
 from omega_fire.application.queries.audit_report.models import (
     AppHealth,
-    DiskUsage,
     DatabaseIntegrity,
+    DiskUsage,
 )
+from omega_fire.infrastructure.config.paths import BACKUPS_DIR, DB_PATH, LOGS_DIR
 from omega_fire.shared.i18n import _
 
 DISK_WARNING_THRESHOLD_PERCENT = 80
@@ -48,6 +49,7 @@ def collect_disk_usage() -> DiskUsage:
         DiskUsage with sizes in MB, free space, and an optional warning
         if free space is below the threshold.
     """
+
     def _dir_size_mb(path: Path) -> float:
         if not path.exists():
             return 0.0
@@ -55,7 +57,9 @@ def collect_disk_usage() -> DiskUsage:
         return total / (1024 * 1024)
 
     backups_size = _dir_size_mb(BACKUPS_DIR)
-    backups_count = len(list(BACKUPS_DIR.glob("*.tar.gz"))) if BACKUPS_DIR.exists() else 0
+    backups_count = (
+        len(list(BACKUPS_DIR.glob("*.tar.gz"))) if BACKUPS_DIR.exists() else 0
+    )
     logs_size = _dir_size_mb(LOGS_DIR)
     db_size = DB_PATH.stat().st_size / (1024 * 1024) if DB_PATH.exists() else 0.0
 
@@ -63,11 +67,14 @@ def collect_disk_usage() -> DiskUsage:
     free_gb = 0.0
     try:
         import shutil as _shutil
+
         usage = _shutil.disk_usage(BACKUPS_DIR if BACKUPS_DIR.exists() else Path("."))
         free_gb = usage.free / (1024 * 1024 * 1024)
         used_percent = (usage.used / usage.total) * 100 if usage.total else 0
         if used_percent >= DISK_WARNING_THRESHOLD_PERCENT:
-            warning = _("Espace disque utilisé à {used_percent:.0f}% — surveiller").format(used_percent=used_percent)
+            warning = _(
+                "Espace disque utilisé à {used_percent:.0f}% — surveiller"
+            ).format(used_percent=used_percent)
     except Exception:
         pass
 
@@ -101,7 +108,7 @@ def check_database_integrity(db_connection: Any) -> DatabaseIntegrity:
         cursor = db_connection.execute("PRAGMA integrity_check")
         row = cursor.fetchone()
         result = row[0] if row else "unknown"
-        integrity_ok = (result == "ok")
+        integrity_ok = result == "ok"
     except Exception as e:
         result = _("Erreur lors de la vérification : {e}").format(e=e)
         integrity_ok = False
@@ -111,6 +118,7 @@ def check_database_integrity(db_connection: Any) -> DatabaseIntegrity:
     schema_version = "N/A"
     try:
         from omega_fire.infrastructure.storage.sqlite.schema import get_schema_version
+
         schema_version = get_schema_version(db_connection)
     except Exception:
         pass
@@ -147,4 +155,4 @@ def check_database_integrity(db_connection: Any) -> DatabaseIntegrity:
 # Comment il sera utilisé :
 # - report_builder.py (application/queries/audit_report/report_builder.py)
 #   appelle ces 3 fonctions pour peupler AuditReportData.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

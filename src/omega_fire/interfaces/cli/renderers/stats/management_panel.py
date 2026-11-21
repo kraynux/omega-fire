@@ -11,6 +11,7 @@ firewall block".
 This module performs no calculation — it receives already-aggregated
 counters and a short list of recent entries, both computed upstream.
 """
+
 from rich.panel import Panel
 from rich.text import Text
 
@@ -57,13 +58,19 @@ def render_management_panel(
     content = Text()
 
     content.append("── ACTIVITÉ ─────────────────\n", style=style_heading)
-    content.append(f"  Changements de profil / règles : {rule_changes}\n", style=style_main)
+    content.append(
+        f"  Changements de profil / règles : {rule_changes}\n", style=style_main
+    )
     content.append(f"  Sauvegardes effectuées         : {backups}\n", style=style_main)
     content.append(f"  Restaurations effectuées       : {restores}\n", style=style_main)
 
     content.append("\n── FIABILITÉ ────────────────\n", style=style_heading)
-    rate_style = style_success if success_rate >= 95 else (style_warning if success_rate >= 80 else style_danger)
-    content.append(f"  Taux de succès : ", style=style_main)
+    rate_style = (
+        style_success
+        if success_rate >= 95
+        else (style_warning if success_rate >= 80 else style_danger)
+    )
+    content.append("  Taux de succès : ", style=style_main)
     content.append(f"{success_rate:.1f}%", style=rate_style)
     content.append(f"  ({total_actions} action(s) au total)\n", style=style_muted)
 
@@ -76,7 +83,9 @@ def render_management_panel(
             content.append(f"{status_symbol} ", style=status_style)
             content.append(f"{description}\n", style=style_main)
     else:
-        content.append("\n  Aucune action enregistrée sur cette période.\n", style=style_muted)
+        content.append(
+            "\n  Aucune action enregistrée sur cette période.\n", style=style_muted
+        )
 
     return Panel(
         content,
@@ -120,4 +129,4 @@ def render_management_panel(
 #   la section "Gestion" à partir des mêmes données agrégées
 # - interfaces/cli/actions.py (8.3/8.4) appellera ce renderer directement
 #   pour l'affichage CLI
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -12,6 +12,7 @@
 Necessite GNU gettext (xgettext, msginit, msgmerge, msgfmt) - jamais a l'execution d'omega-fire,
 seulement ici et dans build-release.sh.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,7 +35,9 @@ _J2_CALL = re.compile(r'_\(\s*"((?:[^"\\]|\\.)*)"\s*\)')
 def run(args: list[str]) -> subprocess.CompletedProcess:
     # cwd=PROJECT : references "#: src/omega_fire/..." relatives, jamais le chemin absolu de la
     # machine de developpement dans les catalogues livres.
-    result = subprocess.run(args, capture_output=True, text=True, check=False, cwd=PROJECT)
+    result = subprocess.run(
+        args, capture_output=True, text=True, check=False, cwd=PROJECT
+    )
     if result.returncode != 0:
         sys.exit(f"echec : {' '.join(args)}\n{result.stderr}")
     return result
@@ -50,31 +53,74 @@ def po_files() -> list[Path]:
 
 def extract() -> None:
     LOCALE.mkdir(parents=True, exist_ok=True)
-    py_files = sorted(str(p.relative_to(PROJECT)) for p in SRC.rglob("*.py") if "__pycache__" not in p.parts)
+    py_files = sorted(
+        str(p.relative_to(PROJECT))
+        for p in SRC.rglob("*.py")
+        if "__pycache__" not in p.parts
+    )
     with tempfile.TemporaryDirectory() as tmp:
         listing = Path(tmp) / "files.txt"
         listing.write_text("\n".join(py_files) + "\n", encoding="utf-8")
         py_pot = Path(tmp) / "py.pot"
-        run(["xgettext", "--language=Python", "--from-code=UTF-8", *[f"--keyword={k}" for k in KEYWORDS],
-             "--add-comments=Traducteurs", f"--package-name={DOMAIN}", "--no-wrap", "--sort-by-file",
-             "-o", str(py_pot), "-f", str(listing)])
+        run(
+            [
+                "xgettext",
+                "--language=Python",
+                "--from-code=UTF-8",
+                *[f"--keyword={k}" for k in KEYWORDS],
+                "--add-comments=Traducteurs",
+                f"--package-name={DOMAIN}",
+                "--no-wrap",
+                "--sort-by-file",
+                "-o",
+                str(py_pot),
+                "-f",
+                str(listing),
+            ]
+        )
         # Modeles Jinja2 : {{ _("...") }} releves ici (xgettext ne lit pas Jinja) - marques au
         # lot « langue des exports » (Q3).
         j2_pot = Path(tmp) / "j2.pot"
         entries: dict[str, list[str]] = {}
         for template in sorted(SRC.rglob("*.j2")):
-            for number, line in enumerate(template.read_text(encoding="utf-8").splitlines(), 1):
+            for number, line in enumerate(
+                template.read_text(encoding="utf-8").splitlines(), 1
+            ):
                 for match in _J2_CALL.finditer(line):
-                    entries.setdefault(match.group(1), []).append(f"{template.relative_to(PROJECT)}:{number}")
-        lines = ['msgid ""', 'msgstr ""', '"Content-Type: text/plain; charset=UTF-8\\n"', ""]
+                    entries.setdefault(match.group(1), []).append(
+                        f"{template.relative_to(PROJECT)}:{number}"
+                    )
+        lines = [
+            'msgid ""',
+            'msgstr ""',
+            '"Content-Type: text/plain; charset=UTF-8\\n"',
+            "",
+        ]
         for msgid, refs in entries.items():
             lines += [f"#: {' '.join(refs)}"]
             if "{" in msgid:
                 lines += ["#, python-brace-format"]
             lines += [f"msgid {json.dumps(msgid, ensure_ascii=False)}", 'msgstr ""', ""]
         j2_pot.write_text("\n".join(lines), encoding="utf-8")
-        run(["msgcat", "--use-first", "--no-wrap", "-o", str(POT), str(py_pot), str(j2_pot)])
-    count = sum(1 for line in POT.read_text(encoding="utf-8").splitlines() if line.startswith("msgid ")) - 1
+        run(
+            [
+                "msgcat",
+                "--use-first",
+                "--no-wrap",
+                "-o",
+                str(POT),
+                str(py_pot),
+                str(j2_pot),
+            ]
+        )
+    count = (
+        sum(
+            1
+            for line in POT.read_text(encoding="utf-8").splitlines()
+            if line.startswith("msgid ")
+        )
+        - 1
+    )
     print(f"{shown(POT)} : {count} phrases")
 
 
@@ -111,9 +157,12 @@ def init(language: str) -> None:
     plural = PLURAL_FORMS.get(language, "nplurals=2; plural=(n != 1);")
     text = text.replace('"Language: \\n"', f'"Language: {language}\\n"', 1)
     text = re.sub(r'"Plural-Forms: [^"]*"\n', "", text)
-    text = text.replace('"Content-Transfer-Encoding: 8bit\\n"',
-                        f'"Content-Transfer-Encoding: 8bit\\n"\n"Plural-Forms: {plural}\\n"\n"X-Omega-Status: testing\\n"', 1)
-    text = text.replace("#, fuzzy\nmsgid \"\"", "msgid \"\"", 1)
+    text = text.replace(
+        '"Content-Transfer-Encoding: 8bit\\n"',
+        f'"Content-Transfer-Encoding: 8bit\\n"\n"Plural-Forms: {plural}\\n"\n"X-Omega-Status: testing\\n"',
+        1,
+    )
+    text = text.replace('#, fuzzy\nmsgid ""', 'msgid ""', 1)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     print(f"cree : {shown(target)} (statut : en test)")
@@ -137,8 +186,12 @@ def status() -> None:
     if not po_files():
         print("aucune langue (seulement le francais, langue source)")
     for po in po_files():
-        result = subprocess.run(["msgfmt", "--statistics", "-o", "/dev/null", str(po)],
-                                capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            ["msgfmt", "--statistics", "-o", "/dev/null", str(po)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         print(f"{po.parts[-3]:6} {result.stderr.strip()}")
 
 
@@ -152,8 +205,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("compile")
     sub.add_parser("status")
     args = parser.parse_args(argv)
-    {"extract": extract, "update": update, "compile": compile_all, "status": status}.get(
-        args.command, lambda: init(args.language))()
+    {
+        "extract": extract,
+        "update": update,
+        "compile": compile_all,
+        "status": status,
+    }.get(args.command, lambda: init(args.language))()
     return 0
 
 

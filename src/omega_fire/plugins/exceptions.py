@@ -6,30 +6,36 @@ Conformes à la charte Omega-Fire :
 - Ne dépendent d'aucune autre couche (domain/, application/, infrastructure/).
 - Utilisées uniquement par loader.py et manager.py.
 """
+
 from __future__ import annotations
+
 from omega_fire.shared.i18n import _
 
 
 class PluginsError(Exception):
     """Exception de base pour toutes les erreurs de plugins."""
-    pass
 
 
 class PluginNotFoundError(PluginsError):
     """Le plugin demandé n'existe pas ou n'est pas installé."""
-    
+
     def __init__(self, plugin_name: str, message: str | None = None):
         self.plugin_name = plugin_name
-        super().__init__(message or _("Plugin introuvable : '{plugin_name}'").format(plugin_name=plugin_name))
+        super().__init__(
+            message
+            or _("Plugin introuvable : '{plugin_name}'").format(plugin_name=plugin_name)
+        )
 
 
 class PluginLoadError(PluginsError):
     """Le plugin existe mais ne peut pas être chargé (import, syntaxe, dépendance)."""
-    
+
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
-        msg = _("Impossible de charger le plugin '{plugin_name}'").format(plugin_name=plugin_name)
+        msg = _("Impossible de charger le plugin '{plugin_name}'").format(
+            plugin_name=plugin_name
+        )
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -37,7 +43,7 @@ class PluginLoadError(PluginsError):
 
 class PluginValidationError(PluginsError):
     """Le plugin est chargé mais ne respecte pas le contrat attendu."""
-    
+
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
@@ -49,11 +55,13 @@ class PluginValidationError(PluginsError):
 
 class PluginActivationError(PluginsError):
     """Le plugin ne peut pas être activé (prérequis manquants, conflit)."""
-    
+
     def __init__(self, plugin_name: str, reason: str | None = None):
         self.plugin_name = plugin_name
         self.reason = reason
-        msg = _("Impossible d'activer le plugin '{plugin_name}'").format(plugin_name=plugin_name)
+        msg = _("Impossible d'activer le plugin '{plugin_name}'").format(
+            plugin_name=plugin_name
+        )
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -61,12 +69,14 @@ class PluginActivationError(PluginsError):
 
 class PluginConflictError(PluginsError):
     """Deux plugins sont en conflit (mêmes capacités, mêmes hooks)."""
-    
+
     def __init__(self, plugin_a: str, plugin_b: str, reason: str | None = None):
         self.plugin_a = plugin_a
         self.plugin_b = plugin_b
         self.reason = reason
-        msg = _("Conflit entre plugins '{plugin_a}' et '{plugin_b}'").format(plugin_a=plugin_a, plugin_b=plugin_b)
+        msg = _("Conflit entre plugins '{plugin_a}' et '{plugin_b}'").format(
+            plugin_a=plugin_a, plugin_b=plugin_b
+        )
         if reason:
             msg += f" : {reason}"
         super().__init__(msg)
@@ -74,13 +84,16 @@ class PluginConflictError(PluginsError):
 
 class PluginDependencyError(PluginsError):
     """Un plugin requis est manquant pour activer un autre plugin."""
-    
+
     def __init__(self, plugin_name: str, missing_dependency: str):
         self.plugin_name = plugin_name
         self.missing_dependency = missing_dependency
         super().__init__(
-            _("Plugin '{plugin_name}' nécessite le plugin '{missing_dependency}' qui n'est pas disponible").format(plugin_name=plugin_name, missing_dependency=missing_dependency)
+            _(
+                "Plugin '{plugin_name}' nécessite le plugin '{missing_dependency}' qui n'est pas disponible"
+            ).format(plugin_name=plugin_name, missing_dependency=missing_dependency)
         )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -108,4 +121,4 @@ class PluginDependencyError(PluginsError):
 # - PluginActivationError : prérequis non satisfaits, conflit de capacités.
 # - PluginConflictError : deux plugins déclarent les mêmes capacités/hooks.
 # - PluginDependencyError : plugin requis manquant pour activer un autre.
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

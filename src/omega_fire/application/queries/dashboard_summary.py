@@ -4,11 +4,12 @@
 Provides read-only access to the monitoring dashboard data.
 Used by Section 8.1 of the menu.
 """
+
 from __future__ import annotations
 
+from omega_fire.application.dto.views import DashboardView
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
-from omega_fire.application.dto.views import DashboardView
 from omega_fire.shared.i18n import _
 
 
@@ -26,12 +27,22 @@ def get_dashboard_summary(registry: CapabilityRegistry) -> str:
     lines = [
         _("═══ TABLEAU DE BORD ═══"),
         "",
-        _("  Connexions actives   : {active_connections}").format(active_connections=view.active_connections),
-        _("  IPs bannies (total)  : {banned_ips_total}").format(banned_ips_total=view.banned_ips_total),
-        _("  Règles actives       : {rules_total}").format(rules_total=view.rules_total),
-        _("  Jails actifs         : {jails_active}").format(jails_active=view.jails_active),
-        _("  Uptime               : {uptime_seconds:.0f}s").format(uptime_seconds=view.uptime_seconds),
-        _("  Dernier scan         : {value}").format(value=view.last_scan or _('N/A')),
+        _("  Connexions actives   : {active_connections}").format(
+            active_connections=view.active_connections
+        ),
+        _("  IPs bannies (total)  : {banned_ips_total}").format(
+            banned_ips_total=view.banned_ips_total
+        ),
+        _("  Règles actives       : {rules_total}").format(
+            rules_total=view.rules_total
+        ),
+        _("  Jails actifs         : {jails_active}").format(
+            jails_active=view.jails_active
+        ),
+        _("  Uptime               : {uptime_seconds:.0f}s").format(
+            uptime_seconds=view.uptime_seconds
+        ),
+        _("  Dernier scan         : {value}").format(value=view.last_scan or _("N/A")),
         "",
     ]
 
@@ -58,8 +69,7 @@ def build_dashboard_view(registry: CapabilityRegistry) -> DashboardView:
         DashboardView with current data
     """
     degraded = [
-        cap.id for cap in registry.list_all()
-        if cap.status == CapabilityStatus.DEGRADED
+        cap.id for cap in registry.list_all() if cap.status == CapabilityStatus.DEGRADED
     ]
 
     # In real implementation, counts would come from infrastructure adapters
@@ -72,6 +82,7 @@ def build_dashboard_view(registry: CapabilityRegistry) -> DashboardView:
         last_scan="",
         degraded_capabilities=degraded,
     )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -95,4 +106,4 @@ def build_dashboard_view(registry: CapabilityRegistry) -> DashboardView:
 # - build_dashboard_view() : construit le DashboardView structuré
 # - Liste les capacités dégradées depuis le registry
 # - Les compteurs réels viendront des infrastructure adapters
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

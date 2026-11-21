@@ -5,24 +5,9 @@ Orchestrates business operations on logs.
 This service coordinates the domain modules (parser, analytics, rotation, cleanup)
 and enforces business rules by raising domain exceptions.
 """
+
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.logs.models import (
-    LogEntry,
-    LogSource,
-    LogLevel,
-    LogStats,
-    LogAnalysis,
-    TopIP,
-)
-from omega_fire.domain.logs.exceptions import (
-    LogParseError,
-    LogAnalysisError,
-    LogRotationError,
-    LogCleanupError,
-    InvalidRetentionError,
-)
-from omega_fire.domain.logs.parser import parse_log_lines
+
 from omega_fire.domain.logs.analytics import (
     compute_stats,
     compute_top_ips,
@@ -32,45 +17,59 @@ from omega_fire.domain.logs.analytics import (
     filter_entries_by_time_range,
     filter_error_entries,
 )
-from omega_fire.domain.logs.rotation import (
-    RotationPolicy,
-    RotationPlan,
-    plan_rotation,
-)
 from omega_fire.domain.logs.cleanup import (
-    RetentionPolicy,
     CleanupPlan,
     FileInfo,
+    RetentionPolicy,
     plan_cleanup,
     validate_retention_parameters,
+)
+from omega_fire.domain.logs.exceptions import (
+    InvalidRetentionError,
+    LogAnalysisError,
+    LogCleanupError,
+    LogParseError,
+    LogRotationError,
+)
+from omega_fire.domain.logs.models import (
+    LogAnalysis,
+    LogEntry,
+    LogLevel,
+    LogSource,
+    LogStats,
+    TopIP,
+)
+from omega_fire.domain.logs.parser import parse_log_lines
+from omega_fire.domain.logs.rotation import (
+    RotationPlan,
+    RotationPolicy,
+    plan_rotation,
 )
 from omega_fire.shared.i18n import _
 
 
 class LogsService:
     """Domain service for log operations."""
-    
+
     def parse_lines(
         self,
         lines: list[str],
-        log_path: Optional[str] = None,
-        source: Optional[LogSource] = None,
+        log_path: str | None = None,
+        source: LogSource | None = None,
     ) -> list[LogEntry]:
         """Parse raw log lines into structured LogEntry objects."""
         try:
             return parse_log_lines(lines, log_path=log_path, source=source)
         except Exception as e:
             raise LogParseError(
-                log_path or "unknown",
-                0,
-                _("Échec de la lecture : {e}").format(e=e)
+                log_path or "unknown", 0, _("Échec de la lecture : {e}").format(e=e)
             ) from e
-    
+
     def analyze_entries(
         self,
         entries: list[LogEntry],
         total_lines: int = 0,
-        log_path: Optional[str] = None,
+        log_path: str | None = None,
         top_n: int = 10,
     ) -> LogStats:
         """Analyze log entries and compute statistics."""
@@ -83,10 +82,9 @@ class LogsService:
             )
         except Exception as e:
             raise LogAnalysisError(
-                "stats_computation",
-                _("Échec de l'analyse : {e}").format(e=e)
+                "stats_computation", _("Échec de l'analyse : {e}").format(e=e)
             ) from e
-    
+
     def get_top_ips(
         self,
         entries: list[LogEntry],
@@ -95,20 +93,20 @@ class LogsService:
     ) -> list[TopIP]:
         """Get the Top N IP addresses by occurrence count."""
         return compute_top_ips(entries, n=n, min_count=min_count)
-    
+
     def filter_entries(
         self,
         entries: list[LogEntry],
-        ip: Optional[str] = None,
-        level: Optional[LogLevel] = None,
-        source: Optional[LogSource] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        ip: str | None = None,
+        level: LogLevel | None = None,
+        source: LogSource | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         errors_only: bool = False,
     ) -> list[LogEntry]:
         """Filter log entries by various criteria."""
         filtered = entries
-        
+
         if ip:
             filtered = filter_entries_by_ip(filtered, ip)
         if level:
@@ -119,18 +117,18 @@ class LogsService:
             filtered = filter_entries_by_time_range(filtered, start_time, end_time)
         if errors_only:
             filtered = filter_error_entries(filtered)
-        
+
         return filtered
-    
+
     def plan_rotation(
         self,
         log_path: str,
         policy: RotationPolicy,
-        file_size_bytes: Optional[int] = None,
-        file_mtime: Optional[datetime] = None,
-        line_count: Optional[int] = None,
-        last_rotation: Optional[datetime] = None,
-        existing_rotations: Optional[list[str]] = None,
+        file_size_bytes: int | None = None,
+        file_mtime: datetime | None = None,
+        line_count: int | None = None,
+        last_rotation: datetime | None = None,
+        existing_rotations: list[str] | None = None,
         rotation_number: int = 1,
     ) -> RotationPlan:
         """Plan a log rotation operation."""
@@ -138,9 +136,11 @@ class LogsService:
         if errors:
             raise LogRotationError(
                 log_path,
-                _("Politique de rotation invalide : {value}").format(value='; '.join(errors))
+                _("Politique de rotation invalide : {value}").format(
+                    value="; ".join(errors)
+                ),
             )
-        
+
         try:
             return plan_rotation(
                 log_path=log_path,
@@ -154,26 +154,25 @@ class LogsService:
             )
         except Exception as e:
             raise LogRotationError(
-                log_path,
-                _("Échec de la préparation de la rotation : {e}").format(e=e)
+                log_path, _("Échec de la préparation de la rotation : {e}").format(e=e)
             ) from e
-    
+
     def plan_cleanup(
         self,
         files: list[FileInfo],
         policy: RetentionPolicy,
-        now: Optional[datetime] = None,
+        now: datetime | None = None,
     ) -> CleanupPlan:
         """Plan a cleanup operation based on retention policy.
-        
+
         Args:
             files: List of all log and archive files
             policy: Retention policy to apply
             now: Current time for age calculation (default: datetime.now())
-        
+
         Returns:
             CleanupPlan describing what needs to be deleted
-        
+
         Raises:
             LogCleanupError: If the policy is invalid
             InvalidRetentionError: If retention parameters are invalid
@@ -183,22 +182,24 @@ class LogsService:
             raise InvalidRetentionError(
                 "retention_policy",
                 policy,
-                _("Politique de conservation invalide : {value}").format(value='; '.join(errors))
+                _("Politique de conservation invalide : {value}").format(
+                    value="; ".join(errors)
+                ),
             )
-        
+
         try:
             return plan_cleanup(files=files, policy=policy, now=now)
         except Exception as e:
             raise LogCleanupError(
                 _("multiple files"),
-                _("Échec de la préparation du nettoyage : {e}").format(e=e)
+                _("Échec de la préparation du nettoyage : {e}").format(e=e),
             ) from e
-    
+
     def validate_retention_parameters(
         self,
-        max_age_days: Optional[int] = None,
-        max_archive_age_days: Optional[int] = None,
-        max_total_size_bytes: Optional[int] = None,
+        max_age_days: int | None = None,
+        max_archive_age_days: int | None = None,
+        max_total_size_bytes: int | None = None,
     ) -> list[str]:
         """Validate retention parameters."""
         return validate_retention_parameters(
@@ -206,12 +207,12 @@ class LogsService:
             max_archive_age_days=max_archive_age_days,
             max_total_size_bytes=max_total_size_bytes,
         )
-    
+
     def create_full_analysis(
         self,
         entries: list[LogEntry],
         total_lines: int = 0,
-        log_path: Optional[str] = None,
+        log_path: str | None = None,
         top_n: int = 10,
     ) -> LogAnalysis:
         """Create a complete log analysis with entries and statistics."""
@@ -221,12 +222,13 @@ class LogsService:
             log_path=log_path,
             top_n=top_n,
         )
-        
+
         return LogAnalysis(
             entries=entries,
             stats=stats,
             top_ips=stats.top_ips,
         )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -253,4 +255,4 @@ class LogsService:
 # - application/commands/rotate_logs.py appellera plan_rotation() pour calculer le plan
 # - application/queries/dashboard_summary.py appellera create_full_analysis() pour le tableau de bord
 # - interfaces/cli/actions.py proposera les options de filtrage via filter_entries()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

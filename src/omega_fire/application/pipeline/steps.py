@@ -5,10 +5,11 @@ Provides reusable step factories and step composition utilities
 for building ExecutionPlans. This module does NOT execute steps —
 it only defines and composes them.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from omega_fire.application.pipeline.planner import PipelineStep, create_step
 from omega_fire.shared.i18n import _
@@ -27,10 +28,13 @@ def make_validation_step(
     Returns:
         PipelineStep configured for validation
     """
+
     def _execute() -> None:
         errors = validate_fn()
         if errors:
-            raise ValueError(_("Échec de la validation : {value}").format(value='; '.join(errors)))
+            raise ValueError(
+                _("Échec de la validation : {value}").format(value="; ".join(errors))
+            )
 
     return create_step(
         name=name,
@@ -44,7 +48,7 @@ def make_backend_step(
     name: str,
     execute_fn: Callable[[], Any],
     backend: str,
-    rollback_fn: Optional[Callable[[], Any]] = None,
+    rollback_fn: Callable[[], Any] | None = None,
 ) -> PipelineStep:
     """Create a step that requires a specific backend capability.
 
@@ -109,10 +113,10 @@ def make_notification_step(
 
 
 def compose_steps(
-    validation: Optional[PipelineStep] = None,
-    execution: Optional[PipelineStep] = None,
-    audit: Optional[PipelineStep] = None,
-    notification: Optional[PipelineStep] = None,
+    validation: PipelineStep | None = None,
+    execution: PipelineStep | None = None,
+    audit: PipelineStep | None = None,
+    notification: PipelineStep | None = None,
 ) -> list[PipelineStep]:
     """Compose a standard step sequence, omitting None entries.
 
@@ -135,6 +139,7 @@ def compose_steps(
     if notification is not None:
         steps.append(notification)
     return steps
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -160,4 +165,4 @@ def compose_steps(
 # - make_audit_step() : crée un step d'audit (skippable)
 # - make_notification_step() : crée un step de notification (skippable)
 # - compose_steps() : assemble une séquence standard de steps
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

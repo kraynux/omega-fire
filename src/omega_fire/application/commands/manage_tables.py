@@ -35,13 +35,18 @@ Conforms to Omega-Fire architecture charter:
 - Auditing gere par l'appelant (interfaces/cli/_execute_action_flow ou
   interfaces/tui/support/action_audit.py), jamais duplique ici
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
 from omega_fire.application.commands.apply_preset import state_file_for
 from omega_fire.application.queries.foreign_rules import foreign_rules_by_backend
-from omega_fire.application.queries.policy_divergence import PolicyAnalysis, analyze_policies
+from omega_fire.application.queries.policy_divergence import (
+    PolicyAnalysis,
+    analyze_policies,
+)
 from omega_fire.shared.i18n import _
 
 _BASE_CHAINS_NFT = ("input", "output", "forward")
@@ -52,6 +57,7 @@ _TARGET_BACKENDS = ("nftables", "iptables", "ip6tables")
 @dataclass
 class TableActionResult:
     """Sortie commune a toutes les commandes mutantes de ce module."""
+
     success: bool
     message: str
 
@@ -59,12 +65,13 @@ class TableActionResult:
 @dataclass
 class TableStatusEntry:
     """Etat d'UN backend, tel que rapporte par GetTablesStatusQuery."""
+
     backend: str
     available: bool
     table_exists: bool = False
-    policies: dict[str, Optional[str]] = field(default_factory=dict)
+    policies: dict[str, str | None] = field(default_factory=dict)
     rule_count: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -72,10 +79,11 @@ class TablesStatusResult:
     """Sortie de GetTablesStatusQuery — jamais un statut agrege unique,
     chaque backend reste visible individuellement (meme principe que
     ApplyPresetAllBackendsResult.outcomes)."""
+
     entries: list[TableStatusEntry]
     policy_divergences: list[str] = field(default_factory=list)
     # Effet reel, cause et remede (application/queries/policy_divergence.py).
-    policy_analysis: Optional[PolicyAnalysis] = None
+    policy_analysis: PolicyAnalysis | None = None
 
 
 class GetTablesStatusQuery:
@@ -98,19 +106,27 @@ class GetTablesStatusQuery:
             try:
                 status = adapter.get_table_status()
             except Exception as e:
-                entries.append(TableStatusEntry(backend=backend, available=True, error=str(e)))
+                entries.append(
+                    TableStatusEntry(backend=backend, available=True, error=str(e))
+                )
                 continue
-            entries.append(TableStatusEntry(
-                backend=backend,
-                available=True,
-                table_exists=status["table_exists"],
-                policies=status["policies"],
-                rule_count=status["rule_count"],
-            ))
+            entries.append(
+                TableStatusEntry(
+                    backend=backend,
+                    available=True,
+                    table_exists=status["table_exists"],
+                    policies=status["policies"],
+                    rule_count=status["rule_count"],
+                )
+            )
         return TablesStatusResult(
             entries=entries,
             policy_divergences=self._detect_divergences(entries),
-            policy_analysis=analyze_policies(entries, foreign_rules_by_backend(self._adapters), self._preset_backends()),
+            policy_analysis=analyze_policies(
+                entries,
+                foreign_rules_by_backend(self._adapters),
+                self._preset_backends(),
+            ),
         )
 
     @staticmethod
@@ -126,7 +142,9 @@ class GetTablesStatusQuery:
 
     @staticmethod
     def _detect_divergences(entries: list[TableStatusEntry]) -> list[str]:
-        usable = [e for e in entries if e.available and e.table_exists and e.error is None]
+        usable = [
+            e for e in entries if e.available and e.table_exists and e.error is None
+        ]
         divergences: list[str] = []
         for chain in ("input", "output", "forward"):
             seen: dict[str, str] = {}
@@ -135,7 +153,9 @@ class GetTablesStatusQuery:
                 if policy:
                     seen[entry.backend] = policy.lower()
             if len(set(seen.values())) > 1:
-                divergences.append(f"{chain} : " + ", ".join(f"{b}={p}" for b, p in seen.items()))
+                divergences.append(
+                    f"{chain} : " + ", ".join(f"{b}={p}" for b, p in seen.items())
+                )
         return divergences
 
 
@@ -158,10 +178,19 @@ class InitializeTablesCommand:
                     self._adapter.set_chain_policy(chain, "accept")
                     created.append(chain)
         except Exception as e:
-            return TableActionResult(False, _("Échec de l'initialisation : {e}").format(e=e))
+            return TableActionResult(
+                False, _("Échec de l'initialisation : {e}").format(e=e)
+            )
         if not created:
-            return TableActionResult(True, _("Table et chaînes déjà initialisées — rien à faire."))
-        return TableActionResult(True, _("Chaîne(s) initialisée(s) (policy accept) : {value}.").format(value=', '.join(created)))
+            return TableActionResult(
+                True, _("Table et chaînes déjà initialisées — rien à faire.")
+            )
+        return TableActionResult(
+            True,
+            _("Chaîne(s) initialisée(s) (policy accept) : {value}.").format(
+                value=", ".join(created)
+            ),
+        )
 
 
 class ResetChainPoliciesCommand:
@@ -183,8 +212,18 @@ class ResetChainPoliciesCommand:
             for chain in chains:
                 self._adapter.set_chain_policy(chain, policy_word)
         except Exception as e:
-            return TableActionResult(False, _("Échec de la réinitialisation des politiques sur {backend} : {e}").format(backend=self._backend, e=e))
-        return TableActionResult(True, _("Politiques remises à ACCEPT sur {backend} (input/output/forward).").format(backend=self._backend))
+            return TableActionResult(
+                False,
+                _(
+                    "Échec de la réinitialisation des politiques sur {backend} : {e}"
+                ).format(backend=self._backend, e=e),
+            )
+        return TableActionResult(
+            True,
+            _(
+                "Politiques remises à ACCEPT sur {backend} (input/output/forward)."
+            ).format(backend=self._backend),
+        )
 
 
 class FlushBackendTableCommand:
@@ -202,8 +241,18 @@ class FlushBackendTableCommand:
         try:
             count = self._adapter.flush()
         except Exception as e:
-            return TableActionResult(False, _("Échec du vidage de {backend} : {e}").format(backend=self._backend, e=e))
-        return TableActionResult(True, _("{backend} vidé ({count} règle(s) retirée(s)).").format(backend=self._backend, count=count))
+            return TableActionResult(
+                False,
+                _("Échec du vidage de {backend} : {e}").format(
+                    backend=self._backend, e=e
+                ),
+            )
+        return TableActionResult(
+            True,
+            _("{backend} vidé ({count} règle(s) retirée(s)).").format(
+                backend=self._backend, count=count
+            ),
+        )
 
 
 class FlushAllTablesSyncCommand:
@@ -221,7 +270,9 @@ class FlushAllTablesSyncCommand:
         self._adapters = adapters
 
     def execute(self) -> TableActionResult:
-        target_backends = [name for name in _TARGET_BACKENDS if self._adapters.get(name) is not None]
+        target_backends = [
+            name for name in _TARGET_BACKENDS if self._adapters.get(name) is not None
+        ]
         if not target_backends:
             return TableActionResult(False, _("Aucun backend firewall disponible."))
 
@@ -235,8 +286,10 @@ class FlushAllTablesSyncCommand:
                 errors.append(f"{backend} ({e})")
 
         if not flushed:
-            return TableActionResult(False, _("Échec sur tous les backends : ") + "; ".join(errors))
-        message = _("Backend(s) vidé(s) : {value}.").format(value=', '.join(flushed))
+            return TableActionResult(
+                False, _("Échec sur tous les backends : ") + "; ".join(errors)
+            )
+        message = _("Backend(s) vidé(s) : {value}.").format(value=", ".join(flushed))
         if errors:
             message += _(" Échec(s) : ") + "; ".join(errors) + "."
         return TableActionResult(True, message)
@@ -258,11 +311,15 @@ class DeleteTableCommand:
         try:
             self._adapter.delete_table()
         except Exception as e:
-            return TableActionResult(False, _("Échec de la suppression de la table : {e}").format(e=e))
+            return TableActionResult(
+                False, _("Échec de la suppression de la table : {e}").format(e=e)
+            )
         return TableActionResult(
             True,
-            _("Table nftables (inet filter) supprimée — plus aucun filtrage actif sur ce "
-            "backend tant qu'elle n'est pas réinitialisée (3.5.2)."),
+            _(
+                "Table nftables (inet filter) supprimée — plus aucun filtrage actif sur ce "
+                "backend tant qu'elle n'est pas réinitialisée (3.5.2)."
+            ),
         )
 
 
@@ -295,4 +352,4 @@ class DeleteTableCommand:
 #   / interfaces/tui/screens/table_management_screen.py
 #   ↓ resout les adapters via ctx.container.get_firewall_port(backend)
 # application/commands/manage_tables.py : (une des 6 classes ci-dessus)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

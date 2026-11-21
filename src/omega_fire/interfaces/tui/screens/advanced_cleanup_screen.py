@@ -4,6 +4,7 @@
 destructive (patron #1). Logique identique a
 interfaces/cli/actions.py::action_5_7_advanced_cleanup : app.log/
 audit.log toujours exclus (fichiers actifs, geres par 1.5/7.3)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -21,7 +22,6 @@ from omega_fire.infrastructure.config.paths import (
     CACHE_DIR,
     EXPORTS_DIR,
     LOGS_DIR,
-    _PROJECT_ROOT,
 )
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
@@ -54,7 +54,9 @@ class AdvancedCleanupScreen(OmegaScreen):
         with Vertical(classes="omega-form-panel"):
             yield Static(_("NETTOYAGE AVANCÉ DES FICHIERS"), classes="omega-title")
             yield Static(
-                _("app.log et audit.log sont toujours exclus (fichiers actifs) — voir 1.5 / 7.3."),
+                _(
+                    "app.log et audit.log sont toujours exclus (fichiers actifs) — voir 1.5 / 7.3."
+                ),
                 classes="omega-hint",
             )
 
@@ -83,13 +85,23 @@ class AdvancedCleanupScreen(OmegaScreen):
                 id="criteria-select",
             )
 
-            yield Static(_("Âge minimum (jours)"), id="age-label", classes="omega-subtitle")
+            yield Static(
+                _("Âge minimum (jours)"), id="age-label", classes="omega-subtitle"
+            )
             yield Input(value="30", id="age-input")
 
-            yield Static(_("Taille minimale (MB)"), id="size-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Taille minimale (MB)"),
+                id="size-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="5.0", id="size-input", classes="omega-hidden")
 
-            yield Static(_("Extension recherchée"), id="ext-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Extension recherchée"),
+                id="ext-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="log", id="ext-input", classes="omega-hidden")
 
             with Horizontal(classes="omega-actions"):
@@ -162,30 +174,41 @@ class AdvancedCleanupScreen(OmegaScreen):
                 stat = f.stat()
                 mtime = datetime.fromtimestamp(stat.st_mtime)
                 size_mb = stat.st_size / (1024 * 1024)
-                if min_age_days is not None and now - mtime < timedelta(days=min_age_days):
+                if min_age_days is not None and now - mtime < timedelta(
+                    days=min_age_days
+                ):
                     continue
                 if min_size_mb is not None and size_mb < min_size_mb:
                     continue
-                if target_extension is not None and not f.name.lower().endswith(f".{target_extension}"):
+                if target_extension is not None and not f.name.lower().endswith(
+                    f".{target_extension}"
+                ):
                     continue
                 matching.append(f)
             except Exception:
                 continue
 
         if not matching:
-            self.app.notify(_("Aucun fichier ne correspond à vos critères de filtrage."), severity="warning")
+            self.app.notify(
+                _("Aucun fichier ne correspond à vos critères de filtrage."),
+                severity="warning",
+            )
             return
 
         total_mb = sum(f.stat().st_size for f in matching) / (1024 * 1024)
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LE NETTOYAGE"),
-                message=_("Supprimer définitivement {count} fichier(s) ({total_mb:.2f} MB) ?").format(count=len(matching), total_mb=total_mb),
+                message=_(
+                    "Supprimer définitivement {count} fichier(s) ({total_mb:.2f} MB) ?"
+                ).format(count=len(matching), total_mb=total_mb),
             ),
             lambda confirmed: self._delete_if_confirmed(confirmed, matching, total_mb),
         )
 
-    def _delete_if_confirmed(self, confirmed: bool | None, matching: list[Path], total_mb: float) -> None:
+    def _delete_if_confirmed(
+        self, confirmed: bool | None, matching: list[Path], total_mb: float
+    ) -> None:
         if not confirmed:
             return
 
@@ -197,12 +220,28 @@ class AdvancedCleanupScreen(OmegaScreen):
                 deleted_count += 1
             except Exception as e:
                 error_count += 1
-                self.app.notify(_("Erreur pour '{name}' : {e}").format(name=f.name, e=e), severity="error")
+                self.app.notify(
+                    _("Erreur pour '{name}' : {e}").format(name=f.name, e=e),
+                    severity="error",
+                )
 
         if deleted_count:
-            self.app.notify(_("Nettoyage terminé : {deleted_count} fichier(s) supprimé(s), {total_mb:.2f} MB libérés.").format(deleted_count=deleted_count, total_mb=total_mb))
+            self.app.notify(
+                _(
+                    "Nettoyage terminé : {deleted_count} fichier(s) supprimé(s), {total_mb:.2f} MB libérés."
+                ).format(deleted_count=deleted_count, total_mb=total_mb)
+            )
         if error_count:
-            self.app.notify(_("{error_count} erreur(s) lors de la suppression.").format(error_count=error_count), severity="error")
+            self.app.notify(
+                _("{error_count} erreur(s) lors de la suppression.").format(
+                    error_count=error_count
+                ),
+                severity="error",
+            )
 
-        log_action_result(self._container, _ACTION_TITLE, status="success" if deleted_count else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if deleted_count else "failure",
+        )
         self.dismiss()

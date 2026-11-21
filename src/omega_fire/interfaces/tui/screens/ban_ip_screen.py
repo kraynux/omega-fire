@@ -15,6 +15,7 @@ ci-dessous reproduit donc fidelement le meme comportement que le CLI
 actuel, ou fail2ban n'apparait jamais dans ce choix de backend malgre
 2.1 le listant dans ses capacites requises (menu_builder.py,
 requires_any=["nftables","iptables","fail2ban_client"])."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -70,14 +71,17 @@ class BanIpScreen(OmegaScreen):
             yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
             if self._supported_backends:
                 options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
-                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name)
+                    for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
                 yield Static(_("Aucun backend disponible."), classes="omega-hint")
 
             yield Static(_("Commentaire (optionnel)"), classes="omega-subtitle")
-            yield Input(placeholder=_("ex. tentative bruteforce SSH"), id="comment-input")
+            yield Input(
+                placeholder=_("ex. tentative bruteforce SSH"), id="comment-input"
+            )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
@@ -94,7 +98,9 @@ class BanIpScreen(OmegaScreen):
             return
 
         if not self._supported_backends:
-            self.app.notify(_("Aucun backend disponible pour le bannissement."), severity="error")
+            self.app.notify(
+                _("Aucun backend disponible pour le bannissement."), severity="error"
+            )
             return
 
         raw_ip = self.query_one("#ip-input", Input).value.strip()
@@ -108,12 +114,17 @@ class BanIpScreen(OmegaScreen):
             # ban/unban anterieur (comparaison SQL "WHERE ip = ?").
             ip = str(ipaddress.ip_address(raw_ip))
         except ValueError:
-            self.app.notify(_("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip), severity="warning")
+            self.app.notify(
+                _("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip),
+                severity="warning",
+            )
             return
 
         backend_choice = str(self.query_one("#backend-select", Select).value)
         target_backends = (
-            list(self._supported_backends) if backend_choice == _ALL_BACKENDS else [backend_choice]
+            list(self._supported_backends)
+            if backend_choice == _ALL_BACKENDS
+            else [backend_choice]
         )
 
         comment = self.query_one("#comment-input", Input).value.strip()
@@ -123,10 +134,18 @@ class BanIpScreen(OmegaScreen):
             ConfirmScreen(
                 title=_("CONFIRMER LE BANNISSEMENT"),
                 message=(
-                    _("IP : {ip}\nBackend(s) : {backend_label}\nCommentaire : {value}").format(ip=ip, backend_label=backend_label, value=comment or _('(aucun)'))
+                    _(
+                        "IP : {ip}\nBackend(s) : {backend_label}\nCommentaire : {value}"
+                    ).format(
+                        ip=ip,
+                        backend_label=backend_label,
+                        value=comment or _("(aucun)"),
+                    )
                 ),
             ),
-            lambda confirmed: self._ban_if_confirmed(confirmed, ip, target_backends, comment),
+            lambda confirmed: self._ban_if_confirmed(
+                confirmed, ip, target_backends, comment
+            ),
         )
 
     def _ban_if_confirmed(
@@ -144,16 +163,36 @@ class BanIpScreen(OmegaScreen):
 
         ban_repository = getattr(self._container, "ban_repository", None)
         result = BanIpToAllBackendsCommand(adapters, ban_repository).execute(
-            BanIpAllBackendsRequest(ips=[ip], comment=comment, target_backends=target_backends)
+            BanIpAllBackendsRequest(
+                ips=[ip], comment=comment, target_backends=target_backends
+            )
         )
 
         for backend, outcome in result.outcomes.items():
             if outcome.banned:
-                self.app.notify(_("IP {ip} bannie avec succès.").format(ip=ip), title=backend, severity="information")
+                self.app.notify(
+                    _("IP {ip} bannie avec succès.").format(ip=ip),
+                    title=backend,
+                    severity="information",
+                )
             elif outcome.already_banned:
-                self.app.notify(_("IP {ip} déjà bannie (aucun doublon ajouté).").format(ip=ip), title=backend, severity="warning")
+                self.app.notify(
+                    _("IP {ip} déjà bannie (aucun doublon ajouté).").format(ip=ip),
+                    title=backend,
+                    severity="warning",
+                )
             for failed_ip, reason in outcome.errors:
-                self.app.notify(_("Échec pour {failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
+                self.app.notify(
+                    _("Échec pour {failed_ip} : {reason}").format(
+                        failed_ip=failed_ip, reason=reason
+                    ),
+                    title=backend,
+                    severity="error",
+                )
 
-        log_action_result(self._container, _ACTION_TITLE, status="success" if result.success else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if result.success else "failure",
+        )
         self.dismiss()

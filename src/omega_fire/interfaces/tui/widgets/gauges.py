@@ -2,6 +2,7 @@
 # Porte d'omega-log (interfaces/tui/widgets/gauges.py) le 2026-11-09 (OMEGA-FIRE_PLAN_LOGS_NIVEAU_SERV_LOG.md) : garder identique a la source.
 """Jauges horizontales en texte pour les ecrans de statistiques (2026-11-06) : une barre pleine
 proportionnelle a la valeur sur une piste grisee, meme lecture que les barres du rapport HTML."""
+
 from __future__ import annotations
 
 from rich.cells import cell_len, set_cell_size
@@ -27,8 +28,15 @@ def fit(label: str, width: int) -> str:
 
 
 def append_gauge_line(
-    content: Text, label: str, value: int, maximum: int, *, label_width: int, bar_width: int,
-    style: str, suffix: str = "",
+    content: Text,
+    label: str,
+    value: int,
+    maximum: int,
+    *,
+    label_width: int,
+    bar_width: int,
+    style: str,
+    suffix: str = "",
 ) -> None:
     filled, empty = gauge(value, maximum, bar_width)
     content.append(" " + fit(label, label_width) + " ")

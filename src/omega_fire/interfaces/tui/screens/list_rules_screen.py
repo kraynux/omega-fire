@@ -4,6 +4,7 @@ depuis les backends disponibles puis affiche le tableau complet, meme
 logique que interfaces/cli/actions.py::action_3_3_list_rules. Colonne
 Backend coloree via la palette d'extension omega-fire (backend-nftables/
 iptables/fail2ban/conntrack, Phase 0)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -47,15 +48,27 @@ class ListRulesScreen(OmegaScreen):
             yield Static(_("LISTE DES RÈGLES"), classes="omega-title")
             yield Static("", id="sync-hint", classes="omega-hint")
             yield DataTable(id="rules-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
         table = self.query_one("#rules-table", DataTable)
         table.add_columns(
-            _("ID"), _("Backend"), _("Origine"), _("Nom / Description"), _("Chaîne"),
-            _("Action"), _("Proto"), _("Port"), _("IP Source"), _("IP Dest."), _("État"),
+            _("ID"),
+            _("Backend"),
+            _("Origine"),
+            _("Nom / Description"),
+            _("Chaîne"),
+            _("Action"),
+            _("Proto"),
+            _("Port"),
+            _("IP Source"),
+            _("IP Dest."),
+            _("État"),
         )
 
         hint = self.query_one("#sync-hint", Static)
@@ -87,52 +100,90 @@ class ListRulesScreen(OmegaScreen):
             hint.update(list_result.message)
             return
         if not list_result.rules:
-            hint.update(_("Aucune règle pare-feu enregistrée ou active sur le système."))
+            hint.update(
+                _("Aucune règle pare-feu enregistrée ou active sur le système.")
+            )
             return
 
         variables = self.app.get_css_variables()
         foreign_tools: dict[str, int] = {}
         for r in list_result.rules:
-            chain_str = r.chain.value.upper() if hasattr(r.chain, "value") else str(r.chain or "INPUT").upper()
-            action_str = r.action.value.upper() if hasattr(r.action, "value") else str(r.action or "ACCEPT").upper()
-            proto_str = r.protocol.value.upper() if r.protocol and hasattr(r.protocol, "value") else "ALL"
+            chain_str = (
+                r.chain.value.upper()
+                if hasattr(r.chain, "value")
+                else str(r.chain or "INPUT").upper()
+            )
+            action_str = (
+                r.action.value.upper()
+                if hasattr(r.action, "value")
+                else str(r.action or "ACCEPT").upper()
+            )
+            proto_str = (
+                r.protocol.value.upper()
+                if r.protocol and hasattr(r.protocol, "value")
+                else "ALL"
+            )
             port_str = str(r.port_start) if r.port_start else "ANY"
             name_str = r.comment or _("Règle #{rule_id}").format(rule_id=r.rule_id)
 
             backend_color = variables.get(_BACKEND_VARIABLE.get(r.backend, ""), "")
-            backend_cell = Text(r.backend, style=f"bold {backend_color}" if backend_color else "bold")
+            backend_cell = Text(
+                r.backend, style=f"bold {backend_color}" if backend_color else "bold"
+            )
 
             error_color = variables.get("error", "")
             success_color = variables.get("success", "")
             warning_color = variables.get("warning", "")
-            action_color = error_color if action_str in ("DROP", "REJECT") else success_color
+            action_color = (
+                error_color if action_str in ("DROP", "REJECT") else success_color
+            )
             action_cell = Text(action_str, style=action_color)
 
             owner = rule_owner(r)
             if owner:
                 foreign_tools[owner] = foreign_tools.get(owner, 0) + 1
             origin_cell = (
-                Text(owner, style=f"italic {warning_color}") if owner
-                else Text("SYSTEME", style=warning_color) if r.origin == "imported"
+                Text(owner, style=f"italic {warning_color}")
+                if owner
+                else Text("SYSTEME", style=warning_color)
+                if r.origin == "imported"
                 else Text("OMEGA", style=success_color)
             )
-            status_cell = Text(_("ACTIF"), style=success_color) if r.enabled else Text(_("INACTIF"))
+            status_cell = (
+                Text(_("ACTIF"), style=success_color)
+                if r.enabled
+                else Text(_("INACTIF"))
+            )
 
             table.add_row(
-                str(r.rule_id), backend_cell, origin_cell, name_str, chain_str,
-                action_cell, proto_str, port_str, r.source_cidr or "ANY",
-                r.dest_cidr or "ANY", status_cell,
+                str(r.rule_id),
+                backend_cell,
+                origin_cell,
+                name_str,
+                chain_str,
+                action_cell,
+                proto_str,
+                port_str,
+                r.source_cidr or "ANY",
+                r.dest_cidr or "ANY",
+                status_cell,
                 key=str(r.rule_id),
             )
 
         if foreign_tools:
-            hint.update(hint_text + "\n" + _(
-                "{count} règle(s) d'autres outils ({tools}) : affichées pour information, "
-                "Omega-Fire ne les modifie pas."
-            ).format(
-                count=sum(foreign_tools.values()),
-                tools=", ".join(f"{tool} {n}" for tool, n in sorted(foreign_tools.items())),
-            ))
+            hint.update(
+                hint_text
+                + "\n"
+                + _(
+                    "{count} règle(s) d'autres outils ({tools}) : affichées pour information, "
+                    "Omega-Fire ne les modifie pas."
+                ).format(
+                    count=sum(foreign_tools.values()),
+                    tools=", ".join(
+                        f"{tool} {n}" for tool, n in sorted(foreign_tools.items())
+                    ),
+                )
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":

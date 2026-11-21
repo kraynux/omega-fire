@@ -17,6 +17,7 @@ Conforme à la charte d'architecture Omega-Fire :
   grand terminal (mesuré : ~900ms sur 271x55) -- on ne redessine que les
   lignes réellement modifiées (pyte.Screen.dirty).
 """
+
 from __future__ import annotations
 
 import base64
@@ -30,12 +31,10 @@ import termios
 import time
 import tty
 from pathlib import Path
-from typing import Optional
 
 import pyte
 from rich.console import Console
 
-from omega_fire.interfaces.cli.themes.registry import theme_registry
 from omega_fire.infrastructure.lnav import (
     TerminalResponder,
     kill_lnav,
@@ -43,6 +42,7 @@ from omega_fire.infrastructure.lnav import (
     resize_pty,
     spawn_lnav,
 )
+from omega_fire.interfaces.cli.themes.registry import theme_registry
 from omega_fire.shared.i18n import _
 
 HEADER_ROWS = 1
@@ -58,8 +58,8 @@ CLEAR_SCREEN = CSI + "2J"
 MENU_LABEL = _("8.6 Visualiser les logs serveurs (lnav)")
 
 MAX_DRAIN_SECONDS = 0.02  # plafond dur : on rend la main au clavier au
-                          # moins toutes les 20ms, même si lnav continue
-                          # d'écrire (horloge d'en-tête, curseur...).
+# moins toutes les 20ms, même si lnav continue
+# d'écrire (horloge d'en-tête, curseur...).
 
 
 def move_to(row: int, col: int = 1) -> str:
@@ -79,8 +79,14 @@ def pad_line(text: str, width: int) -> str:
 # distinction entre colonnes que fait lnav (des couleurs différentes = des
 # champs différents) tout en restant intégralement piloté par le thème actif.
 _NAMED_HUES = {
-    "red": "red", "green": "green", "yellow": "yellow", "blue": "blue",
-    "magenta": "magenta", "cyan": "cyan", "white": "neutral", "black": "neutral",
+    "red": "red",
+    "green": "green",
+    "yellow": "yellow",
+    "blue": "blue",
+    "magenta": "magenta",
+    "cyan": "cyan",
+    "white": "neutral",
+    "black": "neutral",
     "default": "neutral",
 }
 
@@ -126,11 +132,12 @@ def chrome_bar_style():
     sombre explicite ("bg.header") + texte clair ("text.heading") plutôt
     qu'un simple `reverse`."""
     from rich.style import Style
+
     bg = theme_registry.get_style("bg.header").color
     return theme_registry.get_style("text.heading") + Style(bgcolor=bg, bold=True)
 
 
-def compute_baseline_bg(screen: "pyte.Screen", cols: int) -> str:
+def compute_baseline_bg(screen: pyte.Screen, cols: int) -> str:
     """Devine le fond "normal" du contenu de lnav (pas nos barres à nous,
     pas les barres internes lnav, pas la ligne courante), en prenant le
     fond le plus fréquent parmi les cellules non vides de tout l'écran.
@@ -157,7 +164,9 @@ def compute_baseline_bg(screen: "pyte.Screen", cols: int) -> str:
     return max(counts, key=counts.get)
 
 
-def render_row_colored(screen: "pyte.Screen", y: int, cols: int, baseline_bg: str = "default") -> str:
+def render_row_colored(
+    screen: pyte.Screen, y: int, cols: int, baseline_bg: str = "default"
+) -> str:
     """Construit une ligne ANSI colorée via theme_registry, en regroupant
     les colonnes consécutives qui partagent le même style (même famille de
     teinte + état surligné) en un seul segment stylé.
@@ -171,7 +180,7 @@ def render_row_colored(screen: "pyte.Screen", y: int, cols: int, baseline_bg: st
     default = screen.default_char
     segments: list[tuple[str, str]] = []
     current_text: list[str] = []
-    current_key: Optional[str] = None
+    current_key: str | None = None
 
     for col in range(cols):
         ch = buffer_row.get(col, default)
@@ -189,7 +198,11 @@ def render_row_colored(screen: "pyte.Screen", y: int, cols: int, baseline_bg: st
     out = []
     for text, key in segments:
         hue, highlighted_s = key.split("|")
-        style = chrome_bar_style() if highlighted_s == "True" else theme_registry.get_style(HUE_TO_STYLE[hue])
+        style = (
+            chrome_bar_style()
+            if highlighted_s == "True"
+            else theme_registry.get_style(HUE_TO_STYLE[hue])
+        )
         out.append(style.render(text))
     return "".join(out)
 
@@ -197,7 +210,7 @@ def render_row_colored(screen: "pyte.Screen", y: int, cols: int, baseline_bg: st
 _BREADCRUMB_ISO_TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2})")
 
 
-def extract_current_line_text(screen: "pyte.Screen") -> Optional[str]:
+def extract_current_line_text(screen: pyte.Screen) -> str | None:
     """Retrouve le texte brut de la ligne actuellement focalisée par lnav.
 
     lnav a sa propre commande native pour marquer + copier ('m' puis 'c'),
@@ -243,7 +256,7 @@ def osc52_copy(text: str) -> bytes:
     return f"\x1b]52;c;{b64}\x07".encode()
 
 
-def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -> None:
+def render_lnav_live(log_paths: list[Path], console: Console | None = None) -> None:
     """Encapsule lnav sur `log_paths` (fusionnés automatiquement par lnav
     si plusieurs) dans le terminal courant, avec header/footer Omega-Fire
     persistants. Bloquant jusqu'à Ctrl-Q ou fermeture de lnav.
@@ -295,19 +308,23 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
 
         theme_name = theme_registry.get_active().display_name
 
-        header_plain = _("🛡  OMEGA-FIRE  │  Thème: {theme_name}  │  {MENU_LABEL}").format(theme_name=theme_name, MENU_LABEL=MENU_LABEL)
+        header_plain = _(
+            "🛡  OMEGA-FIRE  │  Thème: {theme_name}  │  {MENU_LABEL}"
+        ).format(theme_name=theme_name, MENU_LABEL=MENU_LABEL)
         header_line = (
             title_style.render(_("🛡  OMEGA-FIRE"))
-            + muted_style.render(_("  │  Thème: {theme_name}  │  ").format(theme_name=theme_name))
+            + muted_style.render(
+                _("  │  Thème: {theme_name}  │  ").format(theme_name=theme_name)
+            )
             + heading_style.render(MENU_LABEL)
             + muted_style.render(" " * max(cols - len(header_plain), 0))
         )
 
         sep_line = border_style.render("─" * cols)
 
-        shortcuts_plain = (
-            _("📋 Analyse lnav  │  [↑↓] Naviguer  │  [←→] Défiler  │  [g/G] Début/Fin  │  "
-            "[Ctrl-C] Marquer+Copier  │  [t]hème  │  [Ctrl-Q] Quitter")
+        shortcuts_plain = _(
+            "📋 Analyse lnav  │  [↑↓] Naviguer  │  [←→] Défiler  │  [g/G] Début/Fin  │  "
+            "[Ctrl-C] Marquer+Copier  │  [t]hème  │  [Ctrl-Q] Quitter"
         )
         shortcuts_line = (
             muted_style.render(_("📋 Analyse lnav  │  "))
@@ -326,13 +343,24 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
         )
 
         names = ", ".join(p.name for p in log_paths)
-        status_line = muted_style.render(pad_line(_("Fichiers ({count}) : {names}").format(count=len(log_paths), names=names), cols))
+        status_line = muted_style.render(
+            pad_line(
+                _("Fichiers ({count}) : {names}").format(
+                    count=len(log_paths), names=names
+                ),
+                cols,
+            )
+        )
 
         buf = (
-            move_to(1) + header_line
-            + move_to(rows - 2) + sep_line
-            + move_to(rows - 1) + shortcuts_line
-            + move_to(rows) + status_line
+            move_to(1)
+            + header_line
+            + move_to(rows - 2)
+            + sep_line
+            + move_to(rows - 1)
+            + shortcuts_line
+            + move_to(rows)
+            + status_line
         )
         os.write(out_fd, buf.encode())
 
@@ -341,7 +369,10 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
         baseline_bg = compute_baseline_bg(screen, cols)
         buf = [CLEAR_SCREEN]
         for y in range(len(screen.display)):
-            buf.append(move_to(HEADER_ROWS + 1 + y) + render_row_colored(screen, y, cols, baseline_bg))
+            buf.append(
+                move_to(HEADER_ROWS + 1 + y)
+                + render_row_colored(screen, y, cols, baseline_bg)
+            )
         os.write(out_fd, "".join(buf).encode())
         draw_chrome(cols, rows)
         screen.dirty.clear()
@@ -353,15 +384,18 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
         if not screen.dirty:
             return 0
         display = screen.display  # une seule évaluation : c'est une
-                                   # propriété qui recalcule tout l'écran
-                                   # à chaque accès, pas une liste mise en
-                                   # cache -- l'appeler deux fois par ligne
-                                   # dans la boucle a ete la cause d'un
-                                   # ralentissement mesuré pendant le spike.
+        # propriété qui recalcule tout l'écran
+        # à chaque accès, pas une liste mise en
+        # cache -- l'appeler deux fois par ligne
+        # dans la boucle a ete la cause d'un
+        # ralentissement mesuré pendant le spike.
         buf = []
         for y in sorted(screen.dirty):
             if 0 <= y < len(display):
-                buf.append(move_to(HEADER_ROWS + 1 + y) + render_row_colored(screen, y, cols, baseline_bg))
+                buf.append(
+                    move_to(HEADER_ROWS + 1 + y)
+                    + render_row_colored(screen, y, cols, baseline_bg)
+                )
         n = len(buf)
         os.write(out_fd, "".join(buf).encode())
         screen.dirty.clear()
@@ -431,7 +465,11 @@ def render_lnav_live(log_paths: list[Path], console: Optional[Console] = None) -
                     themes_list = theme_registry.get_theme_names()
                     if themes_list:
                         current = theme_registry.get_active().name
-                        next_idx = (themes_list.index(current) + 1) % len(themes_list) if current in themes_list else 0
+                        next_idx = (
+                            (themes_list.index(current) + 1) % len(themes_list)
+                            if current in themes_list
+                            else 0
+                        )
                         theme_registry.set_active(themes_list[next_idx], silent=True)
                         full_redraw(term_cols, term_rows)
                     key = key.replace(b"t", b"")

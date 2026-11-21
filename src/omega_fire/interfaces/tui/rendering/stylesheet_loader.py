@@ -2,6 +2,7 @@
 """Chargement des feuilles de style selon le profil de rendu deja decide.
 Porte depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -26,7 +27,8 @@ def stylesheet_paths_for(profile: RenderProfile) -> tuple[Path, Path, Path]:
     outil omega-) ensuite, le fichier du profil vient enfin affiner/
     surcharger."""
     return (
-        _STYLES_DIR / "base.tcss", _STYLES_DIR / "terminal_frame.tcss",
+        _STYLES_DIR / "base.tcss",
+        _STYLES_DIR / "terminal_frame.tcss",
         _STYLES_DIR / _PROFILE_STYLESHEETS[profile],
     )
 

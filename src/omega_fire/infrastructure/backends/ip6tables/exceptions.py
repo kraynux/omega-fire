@@ -6,22 +6,34 @@ These express failures in ip6tables command execution, parsing,
 or configuration. They are caught by the application layer
 and translated into stable error messages.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class Ip6tablesError(CoreError):
     """Base exception for ip6tables operations."""
+
     def __init__(self, message: str, context: dict = None):
         super().__init__(message, context)
 
 
 class Ip6tCommandError(Ip6tablesError):
     """Raised when an ip6tables command fails."""
-    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
+
+    def __init__(
+        self, command: str, returncode: int, stderr: str, context: dict = None
+    ):
         super().__init__(
-            _("Échec de la commande ip6tables (code {returncode}) : {command}").format(returncode=returncode, command=command),
-            {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
+            _("Échec de la commande ip6tables (code {returncode}) : {command}").format(
+                returncode=returncode, command=command
+            ),
+            {
+                **(context or {}),
+                "command": command,
+                "returncode": returncode,
+                "stderr": stderr,
+            },
         )
         self.command = command
         self.returncode = returncode
@@ -30,6 +42,7 @@ class Ip6tCommandError(Ip6tablesError):
 
 class Ip6tParseError(Ip6tablesError):
     """Raised when ip6tables output cannot be parsed."""
+
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
             _("Sortie d'ip6tables illisible : {reason}").format(reason=reason),
@@ -41,9 +54,12 @@ class Ip6tParseError(Ip6tablesError):
 
 class Ip6tChainNotFoundError(Ip6tablesError):
     """Raised when a referenced ip6tables chain does not exist."""
+
     def __init__(self, chain_name: str, table: str = "filter", context: dict = None):
         super().__init__(
-            _("Chaîne ip6tables « {chain_name} » introuvable dans la table « {table} »").format(chain_name=chain_name, table=table),
+            _(
+                "Chaîne ip6tables « {chain_name} » introuvable dans la table « {table} »"
+            ).format(chain_name=chain_name, table=table),
             {**(context or {}), "chain_name": chain_name, "table": table},
         )
         self.chain_name = chain_name
@@ -52,9 +68,12 @@ class Ip6tChainNotFoundError(Ip6tablesError):
 
 class Ip6tRuleNotFoundError(Ip6tablesError):
     """Raised when a referenced ip6tables rule does not exist."""
+
     def __init__(self, rule_num: int, chain_name: str = "", context: dict = None):
         super().__init__(
-            _("Règle ip6tables n° {rule_num} introuvable dans la chaîne « {chain_name} »").format(rule_num=rule_num, chain_name=chain_name),
+            _(
+                "Règle ip6tables n° {rule_num} introuvable dans la chaîne « {chain_name} »"
+            ).format(rule_num=rule_num, chain_name=chain_name),
             {**(context or {}), "rule_num": rule_num, "chain_name": chain_name},
         )
         self.rule_num = rule_num
@@ -63,9 +82,12 @@ class Ip6tRuleNotFoundError(Ip6tablesError):
 
 class Ip6tPermissionError(Ip6tablesError):
     """Raised when ip6tables operations require elevated privileges."""
+
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            _("Permission refusée pour l'opération ip6tables : {operation}. Lancez omega-fire en root.").format(operation=operation),
+            _(
+                "Permission refusée pour l'opération ip6tables : {operation}. Lancez omega-fire en root."
+            ).format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation
@@ -92,4 +114,4 @@ class Ip6tPermissionError(Ip6tablesError):
 # Comment elles seront utilisées (aperçu) :
 # - infrastructure/backends/ip6tables/adapter.py les lèvera lors des opérations
 # - application/pipeline/ les capturera via les ports
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

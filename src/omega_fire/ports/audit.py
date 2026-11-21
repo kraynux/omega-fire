@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -12,6 +12,7 @@ from typing import Protocol
 
 class AuditLevel(str, Enum):
     """Niveau de gravité d'une entrée d'audit."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -32,6 +33,7 @@ class AuditEntry:
         success: True si l'action a réussi, False sinon.
         error_message: message d'erreur si success=False.
     """
+
     timestamp: datetime
     level: AuditLevel
     action: str
@@ -143,7 +145,9 @@ class AuditPort(Protocol):
             Nombre d'entrées effectivement supprimées.
         """
         ...
- # <-- INFO DEV ---------------------------------------------------------
+
+
+# <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour le registre d'audit.
 # - Fournit AuditEntry (dataclass frozen) et AuditLevel (enum).
@@ -176,4 +180,4 @@ class AuditPort(Protocol):
 # - infrastructure/logging/audit_logger.py implémentera AuditPort
 # - interfaces/cli/actions.py appellera audit_port.get_recent() pour menu 1.4
 # - Les tests mockeront AuditPort pour valider le pipeline sans I/O réel
-#---------------------------------------------------------------------->       
+# ---------------------------------------------------------------------->

@@ -13,6 +13,7 @@ Static borde en CSS (`.omega-dash-box`) avec `border_title`, plutot qu'un
 Rich Panel : meme convention que le reste de interfaces/tui/ (bordure = CSS,
 contenu = Rich seulement pour le texte colore, jamais empiler les deux
 mecanismes de bordure)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -106,10 +107,14 @@ class DashboardScreen(OmegaScreen):
                 ban_repository=getattr(self._container, "ban_repository", None),
                 fail2ban_port=self._safe(self._container.get_fail2ban_port),
                 firewall_ports={
-                    backend: self._safe(lambda b=backend: self._container.get_firewall_port(b))
+                    backend: self._safe(
+                        lambda b=backend: self._container.get_firewall_port(b)
+                    )
                     for backend in ("nftables", "iptables", "ip6tables")
                 },
-                capability_registry=getattr(self._container, "capability_registry", None),
+                capability_registry=getattr(
+                    self._container, "capability_registry", None
+                ),
             )
         except Exception:
             self._provider = None
@@ -149,30 +154,32 @@ class DashboardScreen(OmegaScreen):
             snapshot = self._provider.get_snapshot()
         except Exception:
             return stats
-        stats.update({
-            "conntrack_count": snapshot.active_connections,
-            "dropped_packets": snapshot.counters.dropped_packets,
-            "banned_count": getattr(snapshot, "banned_count", 0),
-            "rules_count": getattr(snapshot, "rules_count", 0),
-            "jails_count": getattr(snapshot, "jails_count", 0),
-            "active_alerts": getattr(snapshot, "active_alerts", 0),
-            "top_attackers": getattr(snapshot, "top_attackers", []),
-            "recent_actions": getattr(snapshot, "recent_actions", []),
-            "active_policy": getattr(snapshot, "active_policy", "N/A"),
-            "last_sync_time": getattr(snapshot, "last_sync_time", "N/A"),
-            "last_sync_status": getattr(snapshot, "last_sync_status", "N/A"),
-            "last_ban": getattr(snapshot, "last_ban", {}),
-            "last_unban": getattr(snapshot, "last_unban", {}),
-            "fail2ban_alerts": getattr(snapshot, "fail2ban_alerts", []),
-            "backend_latency": getattr(snapshot, "backend_latency", {}),
-            "drop_accept_ratio": getattr(snapshot, "drop_accept_ratio", {}),
-            "jail_load": getattr(snapshot, "jail_load", []),
-            "last_backup": getattr(snapshot, "last_backup", {}),
-            "config_integrity": getattr(snapshot, "config_integrity", "N/A"),
-            "plugins": getattr(snapshot, "plugins", {}),
-            "version": getattr(snapshot, "version", "N/A"),
-            "registry_update": getattr(snapshot, "registry_update", "N/A"),
-        })
+        stats.update(
+            {
+                "conntrack_count": snapshot.active_connections,
+                "dropped_packets": snapshot.counters.dropped_packets,
+                "banned_count": getattr(snapshot, "banned_count", 0),
+                "rules_count": getattr(snapshot, "rules_count", 0),
+                "jails_count": getattr(snapshot, "jails_count", 0),
+                "active_alerts": getattr(snapshot, "active_alerts", 0),
+                "top_attackers": getattr(snapshot, "top_attackers", []),
+                "recent_actions": getattr(snapshot, "recent_actions", []),
+                "active_policy": getattr(snapshot, "active_policy", "N/A"),
+                "last_sync_time": getattr(snapshot, "last_sync_time", "N/A"),
+                "last_sync_status": getattr(snapshot, "last_sync_status", "N/A"),
+                "last_ban": getattr(snapshot, "last_ban", {}),
+                "last_unban": getattr(snapshot, "last_unban", {}),
+                "fail2ban_alerts": getattr(snapshot, "fail2ban_alerts", []),
+                "backend_latency": getattr(snapshot, "backend_latency", {}),
+                "drop_accept_ratio": getattr(snapshot, "drop_accept_ratio", {}),
+                "jail_load": getattr(snapshot, "jail_load", []),
+                "last_backup": getattr(snapshot, "last_backup", {}),
+                "config_integrity": getattr(snapshot, "config_integrity", "N/A"),
+                "plugins": getattr(snapshot, "plugins", {}),
+                "version": getattr(snapshot, "version", "N/A"),
+                "registry_update": getattr(snapshot, "registry_update", "N/A"),
+            }
+        )
         return stats
 
     def _refresh(self) -> None:
@@ -188,16 +195,34 @@ class DashboardScreen(OmegaScreen):
 
         self.query_one("#box-services", Static).update(self._panel_services(colors))
         self.query_one("#box-system", Static).update(self._panel_system(colors, stats))
-        self.query_one("#box-counters", Static).update(self._panel_counters(colors, stats))
-        self.query_one("#box-network", Static).update(self._panel_network(colors, stats))
+        self.query_one("#box-counters", Static).update(
+            self._panel_counters(colors, stats)
+        )
+        self.query_one("#box-network", Static).update(
+            self._panel_network(colors, stats)
+        )
         self.query_one("#box-uptime", Static).update(self._panel_uptime(colors, stats))
-        self.query_one("#box-policy-sync", Static).update(self._panel_policy_sync(colors, stats))
-        self.query_one("#box-bans-alerts", Static).update(self._panel_bans_alerts(colors, stats))
-        self.query_one("#box-top-attackers", Static).update(self._panel_top_attackers(colors, stats))
-        self.query_one("#box-recent-actions", Static).update(self._panel_recent_actions(colors, stats))
-        self.query_one("#box-firewall-metrics", Static).update(self._panel_firewall_metrics(colors, stats))
-        self.query_one("#box-advanced-network", Static).update(self._panel_advanced_network(colors, stats))
-        self.query_one("#box-maintenance", Static).update(self._panel_maintenance(colors, stats))
+        self.query_one("#box-policy-sync", Static).update(
+            self._panel_policy_sync(colors, stats)
+        )
+        self.query_one("#box-bans-alerts", Static).update(
+            self._panel_bans_alerts(colors, stats)
+        )
+        self.query_one("#box-top-attackers", Static).update(
+            self._panel_top_attackers(colors, stats)
+        )
+        self.query_one("#box-recent-actions", Static).update(
+            self._panel_recent_actions(colors, stats)
+        )
+        self.query_one("#box-firewall-metrics", Static).update(
+            self._panel_firewall_metrics(colors, stats)
+        )
+        self.query_one("#box-advanced-network", Static).update(
+            self._panel_advanced_network(colors, stats)
+        )
+        self.query_one("#box-maintenance", Static).update(
+            self._panel_maintenance(colors, stats)
+        )
 
     # ------------------------------------------------------------------
     # Conteneur 1 : Services (registre des capacites)
@@ -245,7 +270,12 @@ class DashboardScreen(OmegaScreen):
                 content.append(f"{symbol}\n", style=style)
 
             if overflow_count > 0:
-                content.append(_("  … +{overflow_count} autre(s) (voir 1.1)\n").format(overflow_count=overflow_count), style="dim")
+                content.append(
+                    _("  … +{overflow_count} autre(s) (voir 1.1)\n").format(
+                        overflow_count=overflow_count
+                    ),
+                    style="dim",
+                )
 
         return content
 
@@ -254,23 +284,46 @@ class DashboardScreen(OmegaScreen):
     # ------------------------------------------------------------------
     def _panel_system(self, colors: dict, stats: dict) -> Text:
         content = Text()
-        content.append(_("  🗲 CPU : {value}\n").format(value=_render_progress_bar(stats['cpu'])), style=colors["main"])
+        content.append(
+            _("  🗲 CPU : {value}\n").format(value=_render_progress_bar(stats["cpu"])),
+            style=colors["main"],
+        )
         if stats.get("temps"):
-            temp_str = " / ".join(f"{v:.0f}°C" for v in list(stats["temps"].values())[:3])
-            content.append(_("       Temp: {temp_str}\n").format(temp_str=temp_str), style=colors["main"])
+            temp_str = " / ".join(
+                f"{v:.0f}°C" for v in list(stats["temps"].values())[:3]
+            )
+            content.append(
+                _("       Temp: {temp_str}\n").format(temp_str=temp_str),
+                style=colors["main"],
+            )
         if stats.get("fans"):
-            fan_str = " / ".join(f"{v:.0f} RPM" for v in list(stats["fans"].values())[:2])
-            content.append(_("       Fans: {fan_str}\n").format(fan_str=fan_str), style=colors["main"])
+            fan_str = " / ".join(
+                f"{v:.0f} RPM" for v in list(stats["fans"].values())[:2]
+            )
+            content.append(
+                _("       Fans: {fan_str}\n").format(fan_str=fan_str),
+                style=colors["main"],
+            )
 
         content.append("\n")
-        content.append(_("  🖤 RAM : {value}\n").format(value=_render_progress_bar(stats['mem_percent'])), style=colors["main"])
+        content.append(
+            _("  🖤 RAM : {value}\n").format(
+                value=_render_progress_bar(stats["mem_percent"])
+            ),
+            style=colors["main"],
+        )
         content.append(
             f"       ({_bytes_to_human(stats['mem_used'])} / {_bytes_to_human(stats['mem_total'])})\n",
             style="dim",
         )
 
         content.append("\n")
-        content.append(_("  💿 Disk: {value}\n").format(value=_render_progress_bar(stats['disk_percent'])), style=colors["main"])
+        content.append(
+            _("  💿 Disk: {value}\n").format(
+                value=_render_progress_bar(stats["disk_percent"])
+            ),
+            style=colors["main"],
+        )
         content.append(
             f"       ({_bytes_to_human(stats['disk_used'])} / {_bytes_to_human(stats['disk_total'])})\n",
             style="dim",
@@ -278,18 +331,29 @@ class DashboardScreen(OmegaScreen):
 
         content.append("\n")
         content.append(
-            _("  🗘 Swap: {swap_percent:5.1f}% ({value} / {value2})\n").format(swap_percent=stats['swap_percent'], value=_bytes_to_human(stats['swap_used']), value2=_bytes_to_human(stats['swap_total'])),
+            _("  🗘 Swap: {swap_percent:5.1f}% ({value} / {value2})\n").format(
+                swap_percent=stats["swap_percent"],
+                value=_bytes_to_human(stats["swap_used"]),
+                value2=_bytes_to_human(stats["swap_total"]),
+            ),
             style=colors["main"],
         )
 
         content.append("\n")
         content.append(
-            _("  ⚖ Load: {load_1:.2f} {load_5:.2f} {load_15:.2f}\n").format(load_1=stats['load_1'], load_5=stats['load_5'], load_15=stats['load_15']),
+            _("  ⚖ Load: {load_1:.2f} {load_5:.2f} {load_15:.2f}\n").format(
+                load_1=stats["load_1"], load_5=stats["load_5"], load_15=stats["load_15"]
+            ),
             style=colors["main"],
         )
 
         content.append("\n")
-        content.append(_("  ⚙ Processus: {num_processes}").format(num_processes=stats['num_processes']), style=colors["main"])
+        content.append(
+            _("  ⚙ Processus: {num_processes}").format(
+                num_processes=stats["num_processes"]
+            ),
+            style=colors["main"],
+        )
         return content
 
     # ------------------------------------------------------------------
@@ -302,11 +366,23 @@ class DashboardScreen(OmegaScreen):
         alerts = stats.get("active_alerts", 0)
 
         content = Text()
-        content.append(_("  󰦞 IPs bannies   : {banned:<5}\n").format(banned=banned), style=colors["danger"])
-        content.append(_("  󱁝 Règles actives: {rules:<5}\n").format(rules=rules), style=colors["main"])
-        content.append(_("  󰦝 Jails actifs  : {jails:<5}\n").format(jails=jails), style=colors["warning"])
+        content.append(
+            _("  󰦞 IPs bannies   : {banned:<5}\n").format(banned=banned),
+            style=colors["danger"],
+        )
+        content.append(
+            _("  󱁝 Règles actives: {rules:<5}\n").format(rules=rules),
+            style=colors["main"],
+        )
+        content.append(
+            _("  󰦝 Jails actifs  : {jails:<5}\n").format(jails=jails),
+            style=colors["warning"],
+        )
         if alerts > 0:
-            content.append(_("  ⚠ Alertes       : {alerts:<5}\n").format(alerts=alerts), style=colors["danger"])
+            content.append(
+                _("  ⚠ Alertes       : {alerts:<5}\n").format(alerts=alerts),
+                style=colors["danger"],
+            )
         return content
 
     # ------------------------------------------------------------------
@@ -314,24 +390,45 @@ class DashboardScreen(OmegaScreen):
     # ------------------------------------------------------------------
     def _panel_network(self, colors: dict, stats: dict) -> Text:
         content = Text()
-        content.append(_("  TCP Connexions TCP (OS) : {value}\n").format(value=stats.get('tcp_established', 0)), style=colors["main"])
+        content.append(
+            _("  TCP Connexions TCP (OS) : {value}\n").format(
+                value=stats.get("tcp_established", 0)
+            ),
+            style=colors["main"],
+        )
 
         conntrack_count = stats.get("conntrack_count", "N/A")
         dropped = stats.get("dropped_packets", 0)
-        content.append(_("  🛡 Sessions Conntrack  : {conntrack_count}\n").format(conntrack_count=conntrack_count), style=colors["info"])
+        content.append(
+            _("  🛡 Sessions Conntrack  : {conntrack_count}\n").format(
+                conntrack_count=conntrack_count
+            ),
+            style=colors["info"],
+        )
         if dropped:
-            content.append(_("       Paquets dropés  : {dropped}\n").format(dropped=dropped), style=colors["danger"])
+            content.append(
+                _("       Paquets dropés  : {dropped}\n").format(dropped=dropped),
+                style=colors["danger"],
+            )
 
         users = stats.get("users", [])
         if users:
             user_names = ", ".join(u.name for u in users[:3])
-            content.append(_("  Usr Utilisateurs: {user_names}\n").format(user_names=user_names), style=colors["main"])
+            content.append(
+                _("  Usr Utilisateurs: {user_names}\n").format(user_names=user_names),
+                style=colors["main"],
+            )
         else:
-            content.append(_("  Usr Aucun utilisateur connecté\n"), style=colors["main"])
+            content.append(
+                _("  Usr Aucun utilisateur connecté\n"), style=colors["main"]
+            )
 
         sent = _bytes_to_human(stats.get("net_bytes_sent", 0))
         recv = _bytes_to_human(stats.get("net_bytes_recv", 0))
-        content.append(_("  🖧 Réseau: ↓{recv}  ↑{sent}\n").format(recv=recv, sent=sent), style=colors["main"])
+        content.append(
+            _("  🖧 Réseau: ↓{recv}  ↑{sent}\n").format(recv=recv, sent=sent),
+            style=colors["main"],
+        )
         return content
 
     # ------------------------------------------------------------------
@@ -342,7 +439,12 @@ class DashboardScreen(OmegaScreen):
         days = int(uptime_sec // 86400)
         hours = int((uptime_sec % 86400) // 3600)
         minutes = int((uptime_sec % 3600) // 60)
-        return Text(_("  🕒 Uptime: {days}j {hours}h {minutes}m").format(days=days, hours=hours, minutes=minutes), style=colors["main"])
+        return Text(
+            _("  🕒 Uptime: {days}j {hours}h {minutes}m").format(
+                days=days, hours=hours, minutes=minutes
+            ),
+            style=colors["main"],
+        )
 
     # ------------------------------------------------------------------
     # Conteneur 6 : Politique & Synchronisation
@@ -355,13 +457,25 @@ class DashboardScreen(OmegaScreen):
         content = Text()
         content.append(_("  Politique active : "), style=colors["main"])
         content.append(f"[{policy.upper()}]\n", style=colors["warning"])
-        content.append(_("  Dernière sync    : {last_sync}\n").format(last_sync=last_sync), style=colors["main"])
+        content.append(
+            _("  Dernière sync    : {last_sync}\n").format(last_sync=last_sync),
+            style=colors["main"],
+        )
         if sync_status == "success":
-            content.append(_("       Statut          : ✔ Réussie\n"), style=colors["available"])
+            content.append(
+                _("       Statut          : ✔ Réussie\n"), style=colors["available"]
+            )
         elif sync_status == "failed":
-            content.append(_("       Statut          : ❌ Échouée\n"), style=colors["missing"])
+            content.append(
+                _("       Statut          : ❌ Échouée\n"), style=colors["missing"]
+            )
         else:
-            content.append(_("       Statut          : {sync_status}\n").format(sync_status=sync_status), style="dim")
+            content.append(
+                _("       Statut          : {sync_status}\n").format(
+                    sync_status=sync_status
+                ),
+                style="dim",
+            )
         return content
 
     # ------------------------------------------------------------------
@@ -374,16 +488,41 @@ class DashboardScreen(OmegaScreen):
 
         content = Text()
         if last_ban:
-            content.append(_("  Dernier ban   : {value}\n").format(value=last_ban.get('ip', 'N/A')), style=colors["danger"])
-            content.append(_("       Backend     : {value}\n").format(value=last_ban.get('backend', 'N/A')), style="dim")
-            content.append(_("       Timestamp   : {value}\n").format(value=last_ban.get('time', 'N/A')), style="dim")
+            content.append(
+                _("  Dernier ban   : {value}\n").format(
+                    value=last_ban.get("ip", "N/A")
+                ),
+                style=colors["danger"],
+            )
+            content.append(
+                _("       Backend     : {value}\n").format(
+                    value=last_ban.get("backend", "N/A")
+                ),
+                style="dim",
+            )
+            content.append(
+                _("       Timestamp   : {value}\n").format(
+                    value=last_ban.get("time", "N/A")
+                ),
+                style="dim",
+            )
         else:
             content.append(_("  Dernier ban   : Aucun\n"), style="dim")
 
         content.append("\n")
         if last_unban:
-            content.append(_("  Dernier unban : {value}\n").format(value=last_unban.get('ip', 'N/A')), style=colors["available"])
-            content.append(_("       Timestamp   : {value}\n").format(value=last_unban.get('time', 'N/A')), style="dim")
+            content.append(
+                _("  Dernier unban : {value}\n").format(
+                    value=last_unban.get("ip", "N/A")
+                ),
+                style=colors["available"],
+            )
+            content.append(
+                _("       Timestamp   : {value}\n").format(
+                    value=last_unban.get("time", "N/A")
+                ),
+                style="dim",
+            )
 
         content.append("\n")
         if active_alerts:
@@ -405,7 +544,12 @@ class DashboardScreen(OmegaScreen):
         content = Text()
         for i, (ip, count) in enumerate(top_ips[:5], 1):
             style = colors["danger"] if count > 50 else colors["warning"]
-            content.append(_("  {i}. {ip:<15} ({count} tentatives)\n").format(i=i, ip=ip, count=count), style=style)
+            content.append(
+                _("  {i}. {ip:<15} ({count} tentatives)\n").format(
+                    i=i, ip=ip, count=count
+                ),
+                style=style,
+            )
         return content
 
     # ------------------------------------------------------------------
@@ -432,7 +576,9 @@ class DashboardScreen(OmegaScreen):
         content.append(_("  Latence backends :\n"), style=colors["heading"])
         if latency:
             for backend, ms in latency.items():
-                content.append(f"       {backend:<12} : {ms} ms\n", style=colors["main"])
+                content.append(
+                    f"       {backend:<12} : {ms} ms\n", style=colors["main"]
+                )
         else:
             content.append(_("       (aucune mesure)\n"), style="dim")
         return content
@@ -447,11 +593,21 @@ class DashboardScreen(OmegaScreen):
         dns = stats.get("dns", [])
 
         content = Text()
-        content.append(_("  🌍 IP réseau (sortante) : {outbound_ip}\n").format(outbound_ip=outbound_ip), style=colors["info"])
+        content.append(
+            _("  🌍 IP réseau (sortante) : {outbound_ip}\n").format(
+                outbound_ip=outbound_ip
+            ),
+            style=colors["info"],
+        )
         content.append(_("\n  Interfaces   :\n"), style=colors["heading"])
         for iface in interfaces[:4]:
-            content.append(f"       {iface['name']:<10} : {iface['ip']}\n", style=colors["main"])
-        content.append(_("\n  🖥 Passerelle   : {gateway}\n").format(gateway=gateway), style=colors["main"])
+            content.append(
+                f"       {iface['name']:<10} : {iface['ip']}\n", style=colors["main"]
+            )
+        content.append(
+            _("\n  🖥 Passerelle   : {gateway}\n").format(gateway=gateway),
+            style=colors["main"],
+        )
         content.append(_("  🔍 DNS          : "), style=colors["main"])
         if dns:
             content.append(", ".join(dns[:3]) + "\n", style=colors["main"])
@@ -471,12 +627,19 @@ class DashboardScreen(OmegaScreen):
         content = Text()
         if last_backup:
             content.append(_("  🗜 Dernier backup :\n"), style=colors["heading"])
-            content.append(_("       Date : {value}\n").format(value=last_backup.get('date', 'N/A')), style=colors["main"])
+            content.append(
+                _("       Date : {value}\n").format(
+                    value=last_backup.get("date", "N/A")
+                ),
+                style=colors["main"],
+            )
             status = last_backup.get("status", "N/A")
             if status == "ok":
                 content.append(_("       Statut: ✔ OK\n"), style=colors["available"])
             elif status == "late":
-                content.append(_("       Statut: ⚠ En retard\n"), style=colors["warning"])
+                content.append(
+                    _("       Statut: ⚠ En retard\n"), style=colors["warning"]
+                )
             else:
                 content.append(_("       Statut: ❌ Échoué\n"), style=colors["missing"])
         else:
@@ -491,6 +654,14 @@ class DashboardScreen(OmegaScreen):
         else:
             content.append(f"{config_integrity}\n", style="dim")
 
-        content.append(_("\n  📦 Version Omega-Fire : {version}\n").format(version=version), style=colors["info"])
-        content.append(_("       MAJ registre     : {registry_update}\n").format(registry_update=registry_update), style="dim")
+        content.append(
+            _("\n  📦 Version Omega-Fire : {version}\n").format(version=version),
+            style=colors["info"],
+        )
+        content.append(
+            _("       MAJ registre     : {registry_update}\n").format(
+                registry_update=registry_update
+            ),
+            style="dim",
+        )
         return content

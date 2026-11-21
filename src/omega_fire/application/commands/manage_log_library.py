@@ -6,12 +6,13 @@ epingles existantes ; aucune I/O directe hors lecture de l'etat des fichiers.
 Decisions utilisateur (2026-10-28) : la Bibliotheque ne fait que l'IMPORT des logs —
 automatique depuis les instances omega-serv detectees, epinglage a la main, ou copie d'un
 log distant par scp — et alimente 5.2 et 5.3 uniquement."""
+
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterable
 
 from omega_fire.domain.logs.favorite import Favorite
 from omega_fire.domain.logs.library import (
@@ -21,7 +22,11 @@ from omega_fire.domain.logs.library import (
     LibraryRecord,
     LogFile,
 )
-from omega_fire.domain.logs.remote_source import RemoteLogSource, build_scp_command, safe_cache_filename
+from omega_fire.domain.logs.remote_source import (
+    RemoteLogSource,
+    build_scp_command,
+    safe_cache_filename,
+)
 from omega_fire.domain.logs.viewer_type import ViewerType, allowed_viewers
 from omega_fire.infrastructure.storage.files.json_store import JsonStore, JsonStoreError
 from omega_fire.shared.i18n import _
@@ -54,16 +59,26 @@ def refresh_log_file(record: LibraryRecord) -> LogFile:
     try:
         stat = Path(record.path).stat()
     except OSError:
-        return LogFile(path=record.path, access=record.access, source=record.source, exists=False)
+        return LogFile(
+            path=record.path, access=record.access, source=record.source, exists=False
+        )
     return LogFile(
-        path=record.path, access=record.access, source=record.source, exists=True,
-        size_bytes=stat.st_size, modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+        path=record.path,
+        access=record.access,
+        source=record.source,
+        exists=True,
+        size_bytes=stat.st_size,
+        modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
     )
 
 
 class LogLibraryCommand:
-    def __init__(self, store: JsonStore, relative_path: str = LIBRARY_RELATIVE_PATH,
-                 ignored_relative_path: str = IGNORED_RELATIVE_PATH) -> None:
+    def __init__(
+        self,
+        store: JsonStore,
+        relative_path: str = LIBRARY_RELATIVE_PATH,
+        ignored_relative_path: str = IGNORED_RELATIVE_PATH,
+    ) -> None:
         self._store = store
         self._relative_path = relative_path
         self._ignored_path = ignored_relative_path
@@ -77,17 +92,23 @@ class LogLibraryCommand:
         records: list[LibraryRecord] = []
         for item in _load_list(self._store, self._relative_path):
             if isinstance(item, dict) and item.get("path"):
-                records.append(LibraryRecord(path=str(item["path"]), access=str(item.get("access") or ACCESS_FILE),
-                                             source=item.get("source")))
+                records.append(
+                    LibraryRecord(
+                        path=str(item["path"]),
+                        access=str(item.get("access") or ACCESS_FILE),
+                        source=item.get("source"),
+                    )
+                )
         return records
 
     def list_logs(self) -> list[LogFile]:
         return [refresh_log_file(r) for r in self.records()]
 
     def _save(self, records: Iterable[LibraryRecord]) -> None:
-        self._store.save(self._relative_path, [
-            {"path": r.path, "access": r.access, "source": r.source} for r in records
-        ])
+        self._store.save(
+            self._relative_path,
+            [{"path": r.path, "access": r.access, "source": r.source} for r in records],
+        )
 
     def add(self, records: Iterable[LibraryRecord]) -> int:
         """Ajoute les chemins absents (un chemin deja present garde son entree). Renvoie le
@@ -109,20 +130,35 @@ class LogLibraryCommand:
         if not path:
             return LibraryActionResult(False, _("Chemin requis."))
         if not Path(path).is_absolute():
-            return LibraryActionResult(False, _("Chemin absolu requis (ex. /var/log/nginx/access.log)."))
+            return LibraryActionResult(
+                False, _("Chemin absolu requis (ex. /var/log/nginx/access.log).")
+            )
         if self.add([LibraryRecord(path=path, access=ACCESS_FILE)]):
-            return LibraryActionResult(True, _("Ajouté à la Bibliothèque : {path}").format(path=path), 1)
-        return LibraryActionResult(True, _("Déjà dans la Bibliothèque : {path}").format(path=path), 0)
+            return LibraryActionResult(
+                True, _("Ajouté à la Bibliothèque : {path}").format(path=path), 1
+            )
+        return LibraryActionResult(
+            True, _("Déjà dans la Bibliothèque : {path}").format(path=path), 0
+        )
 
-    def import_omega_serv(self, instances: Iterable[tuple[str, Iterable[Path]]],
-                          *, automatic: bool = False) -> LibraryActionResult:
+    def import_omega_serv(
+        self,
+        instances: Iterable[tuple[str, Iterable[Path]]],
+        *,
+        automatic: bool = False,
+    ) -> LibraryActionResult:
         """instances : (nom de l'instance, journaux) — detectes par
         infrastructure/probe/omega_serv_detector.py. automatic : import a l'ouverture de 5.1,
         qui saute les journaux retires a la main ; sinon tout est reimporte."""
-        records = [LibraryRecord(path=str(path), access=ACCESS_OMEGA_SERV, source=name)
-                   for name, paths in instances for path in paths]
+        records = [
+            LibraryRecord(path=str(path), access=ACCESS_OMEGA_SERV, source=name)
+            for name, paths in instances
+            for path in paths
+        ]
         if not records:
-            return LibraryActionResult(False, _("Aucune instance omega-serv détectée sur cette machine."))
+            return LibraryActionResult(
+                False, _("Aucune instance omega-serv détectée sur cette machine.")
+            )
         if automatic:
             ignored = self._ignored()
             records = [r for r in records if r.path not in ignored]
@@ -130,8 +166,12 @@ class LogLibraryCommand:
             self._store.save(self._ignored_path, [])
         added = self.add(records)
         return LibraryActionResult(
-            True, _("{added} journal(aux) omega-serv importé(s), {known} déjà présent(s).").format(
-                added=added, known=len(records) - added), added)
+            True,
+            _(
+                "{added} journal(aux) omega-serv importé(s), {known} déjà présent(s)."
+            ).format(added=added, known=len(records) - added),
+            added,
+        )
 
     def remove(self, paths: Iterable[str]) -> int:
         targets = set(paths)
@@ -139,14 +179,22 @@ class LogLibraryCommand:
         kept = [r for r in current if r.path not in targets]
         if len(kept) != len(current):
             self._save(kept)
-            removed_serv = {r.path for r in current if r.path in targets and r.access == ACCESS_OMEGA_SERV}
+            removed_serv = {
+                r.path
+                for r in current
+                if r.path in targets and r.access == ACCESS_OMEGA_SERV
+            }
             if removed_serv:
-                self._store.save(self._ignored_path, sorted(self._ignored() | removed_serv))
+                self._store.save(
+                    self._ignored_path, sorted(self._ignored() | removed_serv)
+                )
         return len(current) - len(kept)
 
 
 class LogFavoritesCommand:
-    def __init__(self, store: JsonStore, relative_path: str = FAVORITES_RELATIVE_PATH) -> None:
+    def __init__(
+        self, store: JsonStore, relative_path: str = FAVORITES_RELATIVE_PATH
+    ) -> None:
         self._store = store
         self._relative_path = relative_path
 
@@ -154,36 +202,57 @@ class LogFavoritesCommand:
         favorites: list[Favorite] = []
         for item in _load_list(self._store, self._relative_path):
             try:
-                favorites.append(Favorite(name=str(item["name"]), paths=tuple(str(p) for p in item["paths"]),
-                                          viewer=ViewerType(item["viewer"])))
+                favorites.append(
+                    Favorite(
+                        name=str(item["name"]),
+                        paths=tuple(str(p) for p in item["paths"]),
+                        viewer=ViewerType(item["viewer"]),
+                    )
+                )
             except (KeyError, TypeError, ValueError):
                 continue
         return favorites
 
-    def create(self, *, name: str, paths: list[str], viewer: ViewerType) -> LibraryActionResult:
+    def create(
+        self, *, name: str, paths: list[str], viewer: ViewerType
+    ) -> LibraryActionResult:
         name = name.strip()
         if not name:
             return LibraryActionResult(False, _("Nom requis."))
         if not paths:
             return LibraryActionResult(False, _("Au moins un log est requis."))
         if viewer not in allowed_viewers(len(paths)):
-            return LibraryActionResult(False, _(
-                "{count} logs sélectionnés : seul lnav peut les ouvrir ensemble.").format(count=len(paths)))
+            return LibraryActionResult(
+                False,
+                _(
+                    "{count} logs sélectionnés : seul lnav peut les ouvrir ensemble."
+                ).format(count=len(paths)),
+            )
         favorites = [f for f in self.list_favorites() if f.name != name]
         favorites.append(Favorite(name=name, paths=tuple(paths), viewer=viewer))
-        self._store.save(self._relative_path, [
-            {"name": f.name, "paths": list(f.paths), "viewer": f.viewer.value} for f in favorites
-        ])
-        return LibraryActionResult(True, _("Favori « {name} » enregistré.").format(name=name), 1)
+        self._store.save(
+            self._relative_path,
+            [
+                {"name": f.name, "paths": list(f.paths), "viewer": f.viewer.value}
+                for f in favorites
+            ],
+        )
+        return LibraryActionResult(
+            True, _("Favori « {name} » enregistré.").format(name=name), 1
+        )
 
     def remove(self, name: str) -> bool:
         favorites = self.list_favorites()
         kept = [f for f in favorites if f.name != name]
         if len(kept) == len(favorites):
             return False
-        self._store.save(self._relative_path, [
-            {"name": f.name, "paths": list(f.paths), "viewer": f.viewer.value} for f in kept
-        ])
+        self._store.save(
+            self._relative_path,
+            [
+                {"name": f.name, "paths": list(f.paths), "viewer": f.viewer.value}
+                for f in kept
+            ],
+        )
         return True
 
 
@@ -191,7 +260,9 @@ class RemoteLogSourcesCommand:
     """Sources distantes SSH (reprises d'omega-serv) : enregistrer, supprimer, recuperer la
     copie locale (var/log/remote/) puis l'ajouter a la Bibliotheque."""
 
-    def __init__(self, store: JsonStore, relative_path: str = REMOTE_SOURCES_RELATIVE_PATH) -> None:
+    def __init__(
+        self, store: JsonStore, relative_path: str = REMOTE_SOURCES_RELATIVE_PATH
+    ) -> None:
         self._store = store
         self._relative_path = relative_path
 
@@ -199,21 +270,46 @@ class RemoteLogSourcesCommand:
         sources: list[RemoteLogSource] = []
         for item in _load_list(self._store, self._relative_path):
             try:
-                sources.append(RemoteLogSource(
-                    label=str(item["label"]), host=str(item["host"]), remote_path=str(item["remote_path"]),
-                    user=item.get("user"), port=item.get("port"), identity_file=item.get("identity_file")))
+                sources.append(
+                    RemoteLogSource(
+                        label=str(item["label"]),
+                        host=str(item["host"]),
+                        remote_path=str(item["remote_path"]),
+                        user=item.get("user"),
+                        port=item.get("port"),
+                        identity_file=item.get("identity_file"),
+                    )
+                )
             except (KeyError, TypeError):
                 continue
         return sources
 
     def _save(self, sources: list[RemoteLogSource]) -> None:
-        self._store.save(self._relative_path, [
-            {"label": s.label, "host": s.host, "remote_path": s.remote_path, "user": s.user,
-             "port": s.port, "identity_file": s.identity_file} for s in sources
-        ])
+        self._store.save(
+            self._relative_path,
+            [
+                {
+                    "label": s.label,
+                    "host": s.host,
+                    "remote_path": s.remote_path,
+                    "user": s.user,
+                    "port": s.port,
+                    "identity_file": s.identity_file,
+                }
+                for s in sources
+            ],
+        )
 
-    def save_source(self, *, label: str, host: str, remote_path: str, user: str = "",
-                    port: str = "", identity_file: str = "") -> LibraryActionResult:
+    def save_source(
+        self,
+        *,
+        label: str,
+        host: str,
+        remote_path: str,
+        user: str = "",
+        port: str = "",
+        identity_file: str = "",
+    ) -> LibraryActionResult:
         if not label.strip():
             return LibraryActionResult(False, _("Label requis."))
         if not host.strip():
@@ -228,26 +324,52 @@ class RemoteLogSourcesCommand:
                 port_value = 0
             if not 1 <= port_value <= 65535:
                 return LibraryActionResult(False, _("Port invalide (1-65535)."))
-        source = RemoteLogSource(label=label.strip(), host=host.strip(), remote_path=remote_path.strip(),
-                                 user=user.strip() or None, port=port_value,
-                                 identity_file=identity_file.strip() or None)
+        source = RemoteLogSource(
+            label=label.strip(),
+            host=host.strip(),
+            remote_path=remote_path.strip(),
+            user=user.strip() or None,
+            port=port_value,
+            identity_file=identity_file.strip() or None,
+        )
         sources = [s for s in self.list_sources() if s.label != source.label]
         sources.append(source)
         self._save(sources)
-        return LibraryActionResult(True, _("Source « {label} » enregistrée.").format(label=source.label), 1)
+        return LibraryActionResult(
+            True, _("Source « {label} » enregistrée.").format(label=source.label), 1
+        )
 
     def remove(self, label: str) -> None:
         self._save([s for s in self.list_sources() if s.label != label])
 
-    def fetch(self, source: RemoteLogSource, cache_dir: Path, library: LogLibraryCommand,
-              runner: Callable[[list[str]], tuple[bool, str]]) -> LibraryActionResult:
+    def fetch(
+        self,
+        source: RemoteLogSource,
+        cache_dir: Path,
+        library: LogLibraryCommand,
+        runner: Callable[[list[str]], tuple[bool, str]],
+    ) -> LibraryActionResult:
         local_dest = cache_dir / safe_cache_filename(source.label)
         cache_dir.mkdir(parents=True, exist_ok=True)
         ok, detail = runner(build_scp_command(source, local_dest))
         if not ok:
-            return LibraryActionResult(False, _("Échec de la récupération : {detail}").format(detail=detail))
-        library.add([LibraryRecord(path=str(local_dest), access=ACCESS_SSH, source=source.label)])
-        return LibraryActionResult(True, _("Récupéré dans {path} et ajouté à la Bibliothèque.").format(path=local_dest), 1)
+            return LibraryActionResult(
+                False, _("Échec de la récupération : {detail}").format(detail=detail)
+            )
+        library.add(
+            [
+                LibraryRecord(
+                    path=str(local_dest), access=ACCESS_SSH, source=source.label
+                )
+            ]
+        )
+        return LibraryActionResult(
+            True,
+            _("Récupéré dans {path} et ajouté à la Bibliothèque.").format(
+                path=local_dest
+            ),
+            1,
+        )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -258,4 +380,4 @@ class RemoteLogSourcesCommand:
 #   log_remote_sources.json ; copies distantes : var/log/remote/.
 # Garde-fou : un favori de 2 logs ou plus ne peut utiliser que lnav
 # (domain/logs/viewer_type.py), refusé à la création.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

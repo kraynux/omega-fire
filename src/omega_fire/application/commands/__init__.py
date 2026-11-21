@@ -32,4 +32,4 @@
 # - Les commandes applicatives seront importées depuis ce package
 # - Les modules application/commands/* seront consommés sans exposition forcée ici
 # - Les tests vérifieront que le package est importable sans effet de bord
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

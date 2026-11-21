@@ -36,27 +36,33 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
-from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from omega_fire.domain.rules.presets import FirewallPreset
+from dataclasses import dataclass, field
+from typing import Any
+
 from omega_fire.application.commands.apply_preset import (
     ApplyPresetCommand,
     ApplyPresetRequest,
 )
-from omega_fire.application.commands.backup_state import _collect_banned_ips, _collect_jails
+from omega_fire.application.commands.backup_state import (
+    _collect_banned_ips,
+    _collect_jails,
+)
+from omega_fire.domain.rules.presets import FirewallPreset
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class ApplyPresetAllBackendsRequest:
     """Input for the apply-preset-to-all-backends use case."""
+
     preset: FirewallPreset
 
 
 @dataclass
 class BackendApplyOutcome:
     """Result of applying the preset to a single backend."""
+
     backend: str
     success: bool
     message: str
@@ -65,9 +71,10 @@ class BackendApplyOutcome:
 @dataclass
 class ApplyPresetAllBackendsResult:
     """Output of the apply-preset-to-all-backends use case."""
+
     success: bool  # True if AT LEAST one backend succeeded
     outcomes: list[BackendApplyOutcome] = field(default_factory=list)
-    snapshot_warning: Optional[str] = None
+    snapshot_warning: str | None = None
 
 
 class ApplyPresetToAllBackendsCommand:
@@ -99,9 +106,12 @@ class ApplyPresetToAllBackendsCommand:
         self._persistence_port = persistence_port
         self._rule_repository = rule_repository
 
-    def execute(self, request: ApplyPresetAllBackendsRequest) -> ApplyPresetAllBackendsResult:
+    def execute(
+        self, request: ApplyPresetAllBackendsRequest
+    ) -> ApplyPresetAllBackendsResult:
         target_backends = [
-            name for name in ("nftables", "iptables", "ip6tables")
+            name
+            for name in ("nftables", "iptables", "ip6tables")
             if self._adapters.get(name) is not None
         ]
 
@@ -109,7 +119,9 @@ class ApplyPresetToAllBackendsCommand:
             return ApplyPresetAllBackendsResult(
                 success=False,
                 outcomes=[],
-                snapshot_warning=_("Aucun backend firewall disponible pour appliquer un profil."),
+                snapshot_warning=_(
+                    "Aucun backend firewall disponible pour appliquer un profil."
+                ),
             )
 
         snapshot_warning = None
@@ -164,11 +176,13 @@ class ApplyPresetToAllBackendsCommand:
                 rule_repository=self._rule_repository,
             ).execute(ApplyPresetRequest(preset=request.preset, backend=backend))
 
-            outcomes.append(BackendApplyOutcome(
-                backend=backend,
-                success=single_result.success,
-                message=single_result.message,
-            ))
+            outcomes.append(
+                BackendApplyOutcome(
+                    backend=backend,
+                    success=single_result.success,
+                    message=single_result.message,
+                )
+            )
 
         overall_success = any(o.success for o in outcomes)
 
@@ -178,14 +192,19 @@ class ApplyPresetToAllBackendsCommand:
             snapshot_warning=snapshot_warning,
         )
 
-    def _capture_full_snapshot(self, preset: FirewallPreset, target_backends: list[str]) -> None:
+    def _capture_full_snapshot(
+        self, preset: FirewallPreset, target_backends: list[str]
+    ) -> None:
         """Capture l'état complet (tous backends) UNE SEULE fois, avant de
         toucher le premier backend — voir docstring du module.
         """
-        banned_ips = _collect_banned_ips({
-            k: v for k, v in self._adapters.items()
-            if k in ("nftables", "iptables", "ip6tables", "fail2ban")
-        })
+        banned_ips = _collect_banned_ips(
+            {
+                k: v
+                for k, v in self._adapters.items()
+                if k in ("nftables", "iptables", "ip6tables", "fail2ban")
+            }
+        )
 
         rules = []
         for backend_name in ("nftables", "iptables", "ip6tables"):
@@ -248,4 +267,4 @@ class ApplyPresetToAllBackendsCommand:
 #   ApplyPresetToAllBackendsCommand.execute()
 #   ↓ _capture_full_snapshot() (une fois)
 #   ↓ pour chaque backend : ApplyPresetCommand(...).execute() (inchangée)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

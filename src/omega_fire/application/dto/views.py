@@ -5,16 +5,18 @@ These dataclasses represent read-only projections of domain data,
 formatted for display by the interface layer. They are NOT domain
 models — they are shaped for rendering.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass(slots=True)
 class CapabilityView:
     """Read-only view of a single capability for display."""
+
     capability_id: str
     status: str
     category: str = ""
@@ -29,6 +31,7 @@ class CapabilityView:
 @dataclass(slots=True)
 class CapabilityRegistryView:
     """Read-only view of the full capability registry for display."""
+
     capabilities: list[CapabilityView] = field(default_factory=list)
     total: int = 0
     available: int = 0
@@ -37,14 +40,21 @@ class CapabilityRegistryView:
     disqualified: int = 0
 
     def summary_line(self) -> str:
-        return (
-            _("Total: {total} | Disponible: {available} | Dégradé: {degraded} | Manquant: {missing} | Disqualifié: {disqualified}").format(total=self.total, available=self.available, degraded=self.degraded, missing=self.missing, disqualified=self.disqualified)
+        return _(
+            "Total: {total} | Disponible: {available} | Dégradé: {degraded} | Manquant: {missing} | Disqualifié: {disqualified}"
+        ).format(
+            total=self.total,
+            available=self.available,
+            degraded=self.degraded,
+            missing=self.missing,
+            disqualified=self.disqualified,
         )
 
 
 @dataclass(slots=True)
 class BannedIPView:
     """Read-only view of a single banned IP for display."""
+
     ip: str
     backend: str
     status: str
@@ -57,6 +67,7 @@ class BannedIPView:
 @dataclass(slots=True)
 class BannedIPListView:
     """Read-only view of all banned IPs for display."""
+
     entries: list[BannedIPView] = field(default_factory=list)
     total: int = 0
     backends_queried: list[str] = field(default_factory=list)
@@ -66,6 +77,7 @@ class BannedIPListView:
 @dataclass(slots=True)
 class RuleView:
     """Read-only view of a single firewall rule for display."""
+
     rule_id: str
     backend: str
     chain: str = ""
@@ -82,6 +94,7 @@ class RuleView:
 @dataclass(slots=True)
 class RuleListView:
     """Read-only view of all firewall rules for display."""
+
     rules: list[RuleView] = field(default_factory=list)
     total: int = 0
     backend: str = ""
@@ -90,6 +103,7 @@ class RuleListView:
 @dataclass(slots=True)
 class JailView:
     """Read-only view of a single fail2ban jail for display."""
+
     jail_name: str
     status: str = "unknown"
     banned_count: int = 0
@@ -101,6 +115,7 @@ class JailView:
 @dataclass(slots=True)
 class JailListView:
     """Read-only view of all fail2ban jails for display."""
+
     jails: list[JailView] = field(default_factory=list)
     total: int = 0
     active: int = 0
@@ -110,6 +125,7 @@ class JailListView:
 @dataclass(slots=True)
 class ConntrackView:
     """Read-only view of conntrack status for display."""
+
     total_entries: int = 0
     established: int = 0
     time_wait: int = 0
@@ -122,6 +138,7 @@ class ConntrackView:
 @dataclass(slots=True)
 class DashboardView:
     """Read-only view of the monitoring dashboard for display."""
+
     active_connections: int = 0
     banned_ips_total: int = 0
     rules_total: int = 0
@@ -134,6 +151,7 @@ class DashboardView:
 @dataclass(slots=True)
 class LogTopIPView:
     """Read-only view of top IPs from log analysis."""
+
     ip: str
     count: int = 0
     last_seen: str = ""
@@ -143,10 +161,12 @@ class LogTopIPView:
 @dataclass(slots=True)
 class LogTopIPListView:
     """Read-only view of top IPs list for display."""
+
     entries: list[LogTopIPView] = field(default_factory=list)
     period: str = ""
     log_source: str = ""
     total_lines_analyzed: int = 0
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -174,4 +194,4 @@ class LogTopIPListView:
 # - DashboardView : affichage dashboard (Section 8)
 # - LogTopIPView / LogTopIPListView : affichage top IPs (Section 5)
 # - to_line() / summary_line() : helpers de formatage texte
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

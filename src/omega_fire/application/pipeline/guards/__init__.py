@@ -32,4 +32,4 @@
 # - Les gardes de rollback seront importées depuis ce package
 # - Les modules application/pipeline/guards/* seront consommés sans exposition forcée ici
 # - Les tests vérifieront que le package est importable sans effet de bord
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

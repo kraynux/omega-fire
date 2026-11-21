@@ -2,6 +2,7 @@
 """Marquage i18n (OMEGA-FIRE_PLAN-DETAILLE_I18N.md, lot 4) : ce qui est relu par le code ne doit
 jamais passer par _() - historique d'audit, faux stderr des adaptateurs, valeurs comparees dans
 les modeles HTML - et aucune phrase n'est traduite avant l'installation de la langue."""
+
 from __future__ import annotations
 
 import ast
@@ -18,7 +19,11 @@ DECISIONS = PROJECT.parent / "I18N_DECISIONS.md"
 
 def _marked_calls(tree: ast.AST):
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_":
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "_"
+        ):
             yield node
 
 
@@ -35,10 +40,15 @@ class MarkingContractsTest(unittest.TestCase):
         for path, tree in _sources():
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign) and any(
-                        isinstance(t, ast.Name) and t.id.endswith("ACTION_TITLE") for t in node.targets):
+                    isinstance(t, ast.Name) and t.id.endswith("ACTION_TITLE")
+                    for t in node.targets
+                ):
                     with self.subTest(fichier=path.name, ligne=node.lineno):
                         self.assertIsInstance(node.value, ast.Constant)
-                if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "log_action_result":
+                if (
+                    isinstance(node, ast.Call)
+                    and getattr(node.func, "id", None) == "log_action_result"
+                ):
                     with self.subTest(fichier=path.name, ligne=node.lineno):
                         self.assertFalse(list(_marked_calls(node)))
 
@@ -48,7 +58,10 @@ class MarkingContractsTest(unittest.TestCase):
                 annotations = []
                 if isinstance(node, ast.arg) and node.annotation is not None:
                     annotations.append(node.annotation)
-                elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns is not None:
+                elif (
+                    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and node.returns is not None
+                ):
                     annotations.append(node.returns)
                 elif isinstance(node, ast.AnnAssign):
                     annotations.append(node.annotation)
@@ -67,43 +80,83 @@ class MarkingContractsTest(unittest.TestCase):
     def test_texts_compared_in_html_templates_never_marked(self) -> None:
         compared: set[str] = set()
         for template in SRC.rglob("*.j2"):
-            for test in re.finditer(r"\{%-?\s*(?:el)?if\s+(.*?)-?%\}", template.read_text(encoding="utf-8"), re.S):
+            for test in re.finditer(
+                r"\{%-?\s*(?:el)?if\s+(.*?)-?%\}",
+                template.read_text(encoding="utf-8"),
+                re.DOTALL,
+            ):
                 compared.update(re.findall(r"""["']([^"']+)["']""", test.group(1)))
-        rules_export = ast.parse((SRC / "interfaces/tui/screens/export_rules_screen.py").read_text(encoding="utf-8"))
-        marked = {c.args[0].value for c in _marked_calls(rules_export)
-                  if c.args and isinstance(c.args[0], ast.Constant)}
+        rules_export = ast.parse(
+            (SRC / "interfaces/tui/screens/export_rules_screen.py").read_text(
+                encoding="utf-8"
+            )
+        )
+        marked = {
+            c.args[0].value
+            for c in _marked_calls(rules_export)
+            if c.args and isinstance(c.args[0], ast.Constant)
+        }
         self.assertFalse(compared & marked)
 
     def test_nothing_translated_before_language_is_installed(self) -> None:
         # Modules charges par bootstrap + early_language AVANT install_language_early() : une
         # phrase traduite au chargement y resterait en francais.
-        code = ("import sys; import omega_fire.app.bootstrap, omega_fire.app.early_language; "
-                "print('\\n'.join(m.__file__ for n, m in sys.modules.items() "
-                "if n.startswith('omega_fire') and getattr(m, '__file__', None)))")
-        files = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
-                               cwd=PROJECT, env={"PYTHONPATH": str(PROJECT / "src")}).stdout.split()
+        code = (
+            "import sys; import omega_fire.app.bootstrap, omega_fire.app.early_language; "
+            "print('\\n'.join(m.__file__ for n, m in sys.modules.items() "
+            "if n.startswith('omega_fire') and getattr(m, '__file__', None)))"
+        )
+        files = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=PROJECT,
+            env={"PYTHONPATH": str(PROJECT / "src")},
+        ).stdout.split()
         self.assertTrue(files)
 
         def import_time_calls(node: ast.AST):
             for child in ast.iter_child_nodes(node):
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
-                    for default in child.args.defaults + [d for d in child.args.kw_defaults if d]:
+                if isinstance(
+                    child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+                ):
+                    for default in child.args.defaults + [
+                        d for d in child.args.kw_defaults if d
+                    ]:
                         yield from (c for c in _marked_calls(default))
                     continue
-                if isinstance(child, ast.Call) and getattr(child.func, "id", None) == "_":
+                if (
+                    isinstance(child, ast.Call)
+                    and getattr(child.func, "id", None) == "_"
+                ):
                     yield child
                 yield from import_time_calls(child)
 
         for name in files:
             with self.subTest(module=Path(name).name):
-                self.assertFalse(list(import_time_calls(ast.parse(Path(name).read_text(encoding="utf-8")))))
+                self.assertFalse(
+                    list(
+                        import_time_calls(
+                            ast.parse(Path(name).read_text(encoding="utf-8"))
+                        )
+                    )
+                )
 
 
-@unittest.skipUnless(DECISIONS.is_file(), "decisions de l'inventaire absentes (hors poste de developpement)")
+@unittest.skipUnless(
+    DECISIONS.is_file(),
+    "decisions de l'inventaire absentes (hors poste de developpement)",
+)
 class MarkingCompleteTest(unittest.TestCase):
     def test_every_text_to_translate_is_marked(self) -> None:
-        result = subprocess.run([sys.executable, str(PROJECT / "tools" / "i18n_mark.py")],
-                                capture_output=True, text=True, check=True, cwd=PROJECT)
+        result = subprocess.run(
+            [sys.executable, str(PROJECT / "tools" / "i18n_mark.py")],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=PROJECT,
+        )
         self.assertIn("0 textes marques dans 0 fichiers", result.stdout, result.stdout)
 
 

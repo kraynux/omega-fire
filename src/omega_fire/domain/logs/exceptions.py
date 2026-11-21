@@ -6,113 +6,147 @@ These express business rule violations, not technical failures
 of file reading or log parsing. They are caught by application/
 and translated into Results or user-facing messages.
 """
+
 from omega_fire.shared.i18n import _
 
 
 class LogsError(Exception):
     """Base exception for logs domain.
-    
+
     All domain-specific exceptions for logs inherit from this.
     """
-    pass
 
 
 class LogNotFoundError(LogsError):
     """Raised when attempting to analyze a log file that does not exist.
-    
+
     Business rule: a log file must exist before it can be analyzed.
     """
+
     def __init__(self, log_path: str):
         self.log_path = log_path
-        super().__init__(_("Fichier journal introuvable : {log_path}").format(log_path=log_path))
+        super().__init__(
+            _("Fichier journal introuvable : {log_path}").format(log_path=log_path)
+        )
 
 
 class LogParseError(LogsError):
     """Raised when a log line cannot be parsed according to expected format.
-    
+
     Examples: malformed log line, missing IP, invalid timestamp format,
     unrecognized log structure.
     """
+
     def __init__(self, log_path: str, line_number: int, reason: str):
         self.log_path = log_path
         self.line_number = line_number
         self.reason = reason
         super().__init__(
-            _("Erreur de lecture de {log_path} à la ligne {line_number} : {reason}").format(log_path=log_path, line_number=line_number, reason=reason)
+            _(
+                "Erreur de lecture de {log_path} à la ligne {line_number} : {reason}"
+            ).format(log_path=log_path, line_number=line_number, reason=reason)
         )
 
 
 class InvalidLogFormatError(LogsError):
     """Raised when the overall log format is invalid or unsupported.
-    
+
     Examples: binary file instead of text, encoding error,
     completely unrecognized structure.
     """
+
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(_("Format de journal invalide pour {log_path} : {reason}").format(log_path=log_path, reason=reason))
+        super().__init__(
+            _("Format de journal invalide pour {log_path} : {reason}").format(
+                log_path=log_path, reason=reason
+            )
+        )
 
 
 class LogAnalysisError(LogsError):
     """Raised when a log analysis operation fails.
-    
+
     Examples: Top N computation failed, statistics generation error,
     invalid analysis parameters.
     """
+
     def __init__(self, analysis_type: str, reason: str):
         self.analysis_type = analysis_type
         self.reason = reason
-        super().__init__(_("Erreur d'analyse du journal ({analysis_type}) : {reason}").format(analysis_type=analysis_type, reason=reason))
+        super().__init__(
+            _("Erreur d'analyse du journal ({analysis_type}) : {reason}").format(
+                analysis_type=analysis_type, reason=reason
+            )
+        )
 
 
 class LogRotationError(LogsError):
     """Raised when log rotation fails.
-    
+
     Examples: backup directory not writable, compression failed,
     rotation conflict, insufficient permissions.
     """
+
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(_("Erreur de rotation du journal {log_path} : {reason}").format(log_path=log_path, reason=reason))
+        super().__init__(
+            _("Erreur de rotation du journal {log_path} : {reason}").format(
+                log_path=log_path, reason=reason
+            )
+        )
 
 
 class LogCleanupError(LogsError):
     """Raised when log cleanup or purge fails.
-    
+
     Examples: retention policy violation, cleanup conflict,
     backup deletion failed.
     """
+
     def __init__(self, log_path: str, reason: str):
         self.log_path = log_path
         self.reason = reason
-        super().__init__(_("Erreur de nettoyage du journal {log_path} : {reason}").format(log_path=log_path, reason=reason))
+        super().__init__(
+            _("Erreur de nettoyage du journal {log_path} : {reason}").format(
+                log_path=log_path, reason=reason
+            )
+        )
 
 
 class BackupNotFoundError(LogsError):
     """Raised when attempting to restore a backup that does not exist.
-    
+
     Business rule: a backup must exist before it can be restored.
     """
+
     def __init__(self, backup_path: str):
         self.backup_path = backup_path
-        super().__init__(_("Sauvegarde introuvable : {backup_path}").format(backup_path=backup_path))
+        super().__init__(
+            _("Sauvegarde introuvable : {backup_path}").format(backup_path=backup_path)
+        )
 
 
 class InvalidRetentionError(LogsError):
     """Raised when retention parameters are invalid.
-    
+
     Examples: negative retention period, invalid line count,
     conflicting retention rules.
     """
+
     def __init__(self, parameter: str, value, reason: str):
         self.parameter = parameter
         self.value = value
         self.reason = reason
         super().__init__(
-            _("Paramètre de conservation « {parameter} » invalide (valeur={value}) : {reason}").format(parameter=parameter, value=value, reason=reason)
+            _(
+                "Paramètre de conservation « {parameter} » invalide (valeur={value}) : {reason}"
+            ).format(parameter=parameter, value=value, reason=reason)
         )
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit les exceptions métier spécifiques au sous-domaine logs. Ces exceptions expriment des violations de règles métier (log introuvable, format invalide, analyse impossible, rotation échouée), pas des pannes techniques du système de fichiers.
@@ -142,4 +176,4 @@ class InvalidRetentionError(LogsError):
 # domain/logs/service.py les lèvera quand une règle métier est violée
 # application/commands/rotate_logs.py les capturera et les traduira en Result.fail()
 # interfaces/cli/actions.py affichera le message à l'utilisateur
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

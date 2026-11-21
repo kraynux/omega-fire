@@ -13,6 +13,7 @@ timeout si le service est present mais inactif) se fait en arriere-plan
 la faire de facon synchrone dans __init__/compose() gelait TOUTE l'app
 au clic sur 4.1 des que Fail2ban ne repondait pas immediatement (retour
 utilisateur reel, mode degrade)."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -44,20 +45,36 @@ class JailsStatusScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(_("ANALYSE ET ÉTAT DES JAILS"), classes="omega-title")
-            yield Static(_("Chargement de l'état des jails..."), id="status-hint", classes="omega-hint")
+            yield Static(
+                _("Chargement de l'état des jails..."),
+                id="status-hint",
+                classes="omega-hint",
+            )
 
             yield DataTable(id="jails-table", classes="omega-hidden")
             yield Static(
                 _("Sélectionnez une ligne pour voir les IPs bannies de ce jail."),
-                id="ips-hint", classes="omega-hint omega-hidden",
+                id="ips-hint",
+                classes="omega-hint omega-hidden",
             )
 
-            yield Static(_("Rechercher une IP dans tous les jails"), id="search-title", classes="omega-subtitle omega-hidden")
-            yield Input(placeholder=_("ex. 192.168.1.10"), id="search-input", classes="omega-hidden")
+            yield Static(
+                _("Rechercher une IP dans tous les jails"),
+                id="search-title",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Input(
+                placeholder=_("ex. 192.168.1.10"),
+                id="search-input",
+                classes="omega-hidden",
+            )
             with Horizontal(classes="omega-actions omega-hidden", id="search-row"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Rechercher"), id="search")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -69,19 +86,26 @@ class JailsStatusScreen(OmegaScreen):
                 fail2ban_port = None
             # Version 3.5 (point 7) : origine de chaque jail (omega-jail, Omega-Fire, jail.local…).
             try:
-                self._definitions = dict(fail2ban_port.jail_definitions()) if fail2ban_port else {}
+                self._definitions = (
+                    dict(fail2ban_port.jail_definitions()) if fail2ban_port else {}
+                )
             except Exception:
                 self._definitions = {}
             return get_jail_status(fail2ban_port=fail2ban_port)
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Chargement de l'état des jails..."))
+        self.run_blocking(
+            _fetch, self._on_loaded, busy_message=_("Chargement de l'état des jails...")
+        )
 
     def _on_loaded(self, result: JailStatusResult) -> None:
         self._result = result
         hint = self.query_one("#status-hint", Static)
 
         if not result.jails:
-            hint.update(result.message or _("Impossible de communiquer avec le service Fail2ban."))
+            hint.update(
+                result.message
+                or _("Impossible de communiquer avec le service Fail2ban.")
+            )
             return
 
         hint.set_class(True, "omega-hidden")
@@ -89,15 +113,28 @@ class JailsStatusScreen(OmegaScreen):
         table = self.query_one("#jails-table", DataTable)
         table.set_class(False, "omega-hidden")
         table.cursor_type = "row"
-        table.add_columns(_("Nom"), _("Origine"), _("Statut"), _("Bannis"), _("Filtre"), _("Log Path"),
-                          _("Tentatives max"), _("Ban Time"))
+        table.add_columns(
+            _("Nom"),
+            _("Origine"),
+            _("Statut"),
+            _("Bannis"),
+            _("Filtre"),
+            _("Log Path"),
+            _("Tentatives max"),
+            _("Ban Time"),
+        )
         for jail in result.jails:
             status = _("Actif") if jail.active else _("Inactif")
             definition = self._definitions.get(jail.name)
             table.add_row(
-                jail.name, origin_label(definition.origin if definition else None), status,
-                str(jail.banned_count), jail.filter or "N/A",
-                jail.log_path or "N/A", str(jail.max_retry), f"{jail.ban_time}s",
+                jail.name,
+                origin_label(definition.origin if definition else None),
+                status,
+                str(jail.banned_count),
+                jail.filter or "N/A",
+                jail.log_path or "N/A",
+                str(jail.max_retry),
+                f"{jail.ban_time}s",
                 key=jail.name,
             )
 
@@ -116,9 +153,18 @@ class JailsStatusScreen(OmegaScreen):
             return
         ips = [str(ip) for ip in jail.banned_ips]
         if not ips:
-            hint.update(_("Aucune IP actuellement bannie dans '{jail_name}'.").format(jail_name=jail_name))
+            hint.update(
+                _("Aucune IP actuellement bannie dans '{jail_name}'.").format(
+                    jail_name=jail_name
+                )
+            )
         else:
-            hint.update(_("IP(s) bannie(s) dans '{jail_name}' ({count}) : ").format(jail_name=jail_name, count=len(ips)) + ", ".join(ips))
+            hint.update(
+                _("IP(s) bannie(s) dans '{jail_name}' ({count}) : ").format(
+                    jail_name=jail_name, count=len(ips)
+                )
+                + ", ".join(ips)
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -138,11 +184,22 @@ class JailsStatusScreen(OmegaScreen):
             return
 
         found_in = [
-            jail.name for jail in self._result.jails
+            jail.name
+            for jail in self._result.jails
             if any(str(ip) == target_ip for ip in jail.banned_ips)
         ]
         hint = self.query_one("#ips-hint", Static)
         if found_in:
-            hint.update(_("{target_ip} trouvée dans {count} jail(s) : {value} — utilisez 4.2 pour la retirer.").format(target_ip=target_ip, count=len(found_in), value=', '.join(found_in)))
+            hint.update(
+                _(
+                    "{target_ip} trouvée dans {count} jail(s) : {value} — utilisez 4.2 pour la retirer."
+                ).format(
+                    target_ip=target_ip, count=len(found_in), value=", ".join(found_in)
+                )
+            )
         else:
-            hint.update(_("{target_ip} n'a été trouvée dans aucun jail actif.").format(target_ip=target_ip))
+            hint.update(
+                _("{target_ip} n'a été trouvée dans aucun jail actif.").format(
+                    target_ip=target_ip
+                )
+            )

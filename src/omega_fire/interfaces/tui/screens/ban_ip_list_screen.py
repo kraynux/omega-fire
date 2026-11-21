@@ -6,6 +6,7 @@ epingle, chemin libre), chacune n'affichant que son propre champ. La
 gestion des epingles reutilise PinnedPathsScreen (Phase 2) plutot que de
 dupliquer le CRUD ici. Logique identique a
 interfaces/cli/actions.py::action_2_2_ban_list."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -20,7 +21,9 @@ from omega_fire.application.commands.ban_ip_all_backends import (
     BanIpAllBackendsRequest,
     BanIpToAllBackendsCommand,
 )
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
 from omega_fire.infrastructure.config.paths import (
     BLOCKLIST_DIR,
     DEFAULT_BLOCKLIST_FILE,
@@ -33,8 +36,8 @@ from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
-from omega_fire.shared.parsing import extract_ips
 from omega_fire.shared.i18n import _
+from omega_fire.shared.parsing import extract_ips
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -64,12 +67,16 @@ def _extract_valid_ips(text: str) -> set[str]:
 def _safe_extract_from_file(filepath: str) -> tuple[set[str], str]:
     """Retourne (IPs, message d'erreur eventuel)."""
     if not os.path.exists(filepath):
-        return set(), _("Le fichier '{filepath}' n'existe pas.").format(filepath=filepath)
+        return set(), _("Le fichier '{filepath}' n'existe pas.").format(
+            filepath=filepath
+        )
     try:
         with open(filepath, "rb") as f:
             header = f.read(1024)
             if header.startswith(b"%PDF") or b"\x00" in header:
-                return set(), _("Le fichier sélectionné est binaire/PDF (attendu : fichier texte).")
+                return set(), _(
+                    "Le fichier sélectionné est binaire/PDF (attendu : fichier texte)."
+                )
     except Exception as e:
         return set(), _("Erreur de lecture binaire : {e}").format(e=e)
 
@@ -116,9 +123,22 @@ class BanIpListScreen(OmegaScreen):
             yield Static(_("Source des adresses"), classes="omega-subtitle")
             yield Select(
                 [
-                    (_("Saisie manuelle (IPs séparées par espaces/virgules)"), _SRC_MANUAL),
-                    (_("Fichier par défaut ({name})").format(name=DEFAULT_BLOCKLIST_FILE.name), _SRC_DEFAULT),
-                    (_("Fichier Fail2ban par défaut ({name})").format(name=DEFAULT_F2B_BLOCKLIST_FILE.name), _SRC_F2B_DEFAULT),
+                    (
+                        _("Saisie manuelle (IPs séparées par espaces/virgules)"),
+                        _SRC_MANUAL,
+                    ),
+                    (
+                        _("Fichier par défaut ({name})").format(
+                            name=DEFAULT_BLOCKLIST_FILE.name
+                        ),
+                        _SRC_DEFAULT,
+                    ),
+                    (
+                        _("Fichier Fail2ban par défaut ({name})").format(
+                            name=DEFAULT_F2B_BLOCKLIST_FILE.name
+                        ),
+                        _SRC_F2B_DEFAULT,
+                    ),
                     (_("Parcourir var/blocklist/"), _SRC_BROWSE),
                     (_("Fichier épinglé"), _SRC_PINNED),
                     (_("Chemin de fichier personnalisé"), _SRC_CUSTOM),
@@ -127,25 +147,52 @@ class BanIpListScreen(OmegaScreen):
                 id="source-select",
             )
 
-            yield Static(_("IPs (séparées par espaces/virgules)"), id="manual-label", classes="omega-subtitle")
+            yield Static(
+                _("IPs (séparées par espaces/virgules)"),
+                id="manual-label",
+                classes="omega-subtitle",
+            )
             yield Input(id="manual-input")
 
-            yield Static(_("Fichier dans var/blocklist/"), id="browse-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._browse_options(), id="browse-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Fichier dans var/blocklist/"),
+                id="browse-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Select(
+                self._browse_options(),
+                id="browse-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
 
-            yield Static(_("Fichier épinglé"), id="pinned-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._pinned_options(), id="pinned-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Fichier épinglé"),
+                id="pinned-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Select(
+                self._pinned_options(),
+                id="pinned-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
             with Horizontal(classes="omega-actions", id="pinned-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static(_("Chemin complet du fichier"), id="custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Chemin complet du fichier"),
+                id="custom-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(id="custom-input", classes="omega-hidden")
 
             yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
             if self._supported_backends:
                 options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
-                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name)
+                    for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
@@ -164,7 +211,11 @@ class BanIpListScreen(OmegaScreen):
     def _browse_options(self) -> list[tuple[str, str]]:
         if not os.path.exists(str(BLOCKLIST_DIR)):
             return []
-        files = [f for f in sorted(os.listdir(str(BLOCKLIST_DIR))) if os.path.isfile(os.path.join(str(BLOCKLIST_DIR), f))]
+        files = [
+            f
+            for f in sorted(os.listdir(str(BLOCKLIST_DIR)))
+            if os.path.isfile(os.path.join(str(BLOCKLIST_DIR), f))
+        ]
         return [(f, f) for f in files]
 
     def _pinned_options(self) -> list[tuple[str, str]]:
@@ -177,22 +228,43 @@ class BanIpListScreen(OmegaScreen):
         if event.select.id != "source-select":
             return
         source = str(event.value)
-        self.query_one("#manual-label", Static).set_class(source != _SRC_MANUAL, "omega-hidden")
-        self.query_one("#manual-input", Input).set_class(source != _SRC_MANUAL, "omega-hidden")
-        self.query_one("#browse-label", Static).set_class(source != _SRC_BROWSE, "omega-hidden")
-        self.query_one("#browse-select", Select).set_class(source != _SRC_BROWSE, "omega-hidden")
-        self.query_one("#pinned-label", Static).set_class(source != _SRC_PINNED, "omega-hidden")
-        self.query_one("#pinned-select", Select).set_class(source != _SRC_PINNED, "omega-hidden")
-        self.query_one("#pinned-actions", Horizontal).set_class(source != _SRC_PINNED, "omega-hidden")
-        self.query_one("#custom-label", Static).set_class(source != _SRC_CUSTOM, "omega-hidden")
-        self.query_one("#custom-input", Input).set_class(source != _SRC_CUSTOM, "omega-hidden")
+        self.query_one("#manual-label", Static).set_class(
+            source != _SRC_MANUAL, "omega-hidden"
+        )
+        self.query_one("#manual-input", Input).set_class(
+            source != _SRC_MANUAL, "omega-hidden"
+        )
+        self.query_one("#browse-label", Static).set_class(
+            source != _SRC_BROWSE, "omega-hidden"
+        )
+        self.query_one("#browse-select", Select).set_class(
+            source != _SRC_BROWSE, "omega-hidden"
+        )
+        self.query_one("#pinned-label", Static).set_class(
+            source != _SRC_PINNED, "omega-hidden"
+        )
+        self.query_one("#pinned-select", Select).set_class(
+            source != _SRC_PINNED, "omega-hidden"
+        )
+        self.query_one("#pinned-actions", Horizontal).set_class(
+            source != _SRC_PINNED, "omega-hidden"
+        )
+        self.query_one("#custom-label", Static).set_class(
+            source != _SRC_CUSTOM, "omega-hidden"
+        )
+        self.query_one("#custom-input", Input).set_class(
+            source != _SRC_CUSTOM, "omega-hidden"
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.dismiss()
             return
         if event.button.id == "manage-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_pinned_select)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container),
+                self._refresh_pinned_select,
+            )
             return
         if event.button.id != "launch":
             return
@@ -223,8 +295,12 @@ class BanIpListScreen(OmegaScreen):
                 return
 
         elif source == _SRC_F2B_DEFAULT:
-            source_label = _("Fichier {name}").format(name=DEFAULT_F2B_BLOCKLIST_FILE.name)
-            extracted_ips, err = _safe_extract_from_file(str(DEFAULT_F2B_BLOCKLIST_FILE))
+            source_label = _("Fichier {name}").format(
+                name=DEFAULT_F2B_BLOCKLIST_FILE.name
+            )
+            extracted_ips, err = _safe_extract_from_file(
+                str(DEFAULT_F2B_BLOCKLIST_FILE)
+            )
             if err:
                 self.app.notify(err, severity="error")
                 return
@@ -234,8 +310,12 @@ class BanIpListScreen(OmegaScreen):
             if selected_file is None or selected_file == Select.BLANK:
                 self.app.notify(_("Choisissez un fichier."), severity="warning")
                 return
-            source_label = _("Fichier '{selected_file}'").format(selected_file=selected_file)
-            extracted_ips, err = _safe_extract_from_file(os.path.join(str(BLOCKLIST_DIR), str(selected_file)))
+            source_label = _("Fichier '{selected_file}'").format(
+                selected_file=selected_file
+            )
+            extracted_ips, err = _safe_extract_from_file(
+                os.path.join(str(BLOCKLIST_DIR), str(selected_file))
+            )
             if err:
                 self.app.notify(err, severity="error")
                 return
@@ -243,9 +323,14 @@ class BanIpListScreen(OmegaScreen):
         elif source == _SRC_PINNED:
             target_path = self.query_one("#pinned-select", Select).value
             if target_path is None or target_path == Select.BLANK:
-                self.app.notify(_("Choisissez un fichier épinglé (ou épinglez-en un)."), severity="warning")
+                self.app.notify(
+                    _("Choisissez un fichier épinglé (ou épinglez-en un)."),
+                    severity="warning",
+                )
                 return
-            source_label = _("Épinglé '{value}'").format(value=os.path.basename(str(target_path)))
+            source_label = _("Épinglé '{value}'").format(
+                value=os.path.basename(str(target_path))
+            )
             extracted_ips, err = _safe_extract_from_file(str(target_path))
             if err:
                 self.app.notify(err, severity="error")
@@ -254,9 +339,13 @@ class BanIpListScreen(OmegaScreen):
         elif source == _SRC_CUSTOM:
             target_path = self.query_one("#custom-input", Input).value.strip()
             if not target_path:
-                self.app.notify(_("Saisissez un chemin de fichier."), severity="warning")
+                self.app.notify(
+                    _("Saisissez un chemin de fichier."), severity="warning"
+                )
                 return
-            source_label = _("Fichier libre '{value}'").format(value=os.path.basename(target_path))
+            source_label = _("Fichier libre '{value}'").format(
+                value=os.path.basename(target_path)
+            )
             extracted_ips, err = _safe_extract_from_file(target_path)
             if err:
                 self.app.notify(err, severity="error")
@@ -264,15 +353,22 @@ class BanIpListScreen(OmegaScreen):
 
         unique_ips = sorted(extracted_ips)
         if not unique_ips:
-            self.app.notify(_("Aucune adresse IP valide trouvée dans la source."), severity="warning")
+            self.app.notify(
+                _("Aucune adresse IP valide trouvée dans la source."),
+                severity="warning",
+            )
             return
 
         if not self._supported_backends:
-            self.app.notify(_("Aucun backend disponible pour le bannissement."), severity="error")
+            self.app.notify(
+                _("Aucun backend disponible pour le bannissement."), severity="error"
+            )
             return
         backend_choice = str(self.query_one("#backend-select", Select).value)
         target_backends = (
-            list(self._supported_backends) if backend_choice == _ALL_BACKENDS else [backend_choice]
+            list(self._supported_backends)
+            if backend_choice == _ALL_BACKENDS
+            else [backend_choice]
         )
         comment = self.query_one("#comment-input", Input).value.strip()
 
@@ -280,15 +376,27 @@ class BanIpListScreen(OmegaScreen):
             ConfirmScreen(
                 title=_("CONFIRMER LE BANNISSEMENT"),
                 message=(
-                    _("Source : {source_label}\nIPs à bannir : {count}\nBackend(s) : {value}").format(source_label=source_label, count=len(unique_ips), value=', '.join(target_backends))
+                    _(
+                        "Source : {source_label}\nIPs à bannir : {count}\nBackend(s) : {value}"
+                    ).format(
+                        source_label=source_label,
+                        count=len(unique_ips),
+                        value=", ".join(target_backends),
+                    )
                 ),
             ),
-            lambda confirmed: self._ban_if_confirmed(confirmed, unique_ips, source_label, target_backends, comment),
+            lambda confirmed: self._ban_if_confirmed(
+                confirmed, unique_ips, source_label, target_backends, comment
+            ),
         )
 
     def _ban_if_confirmed(
-        self, confirmed: bool | None, unique_ips: list[str], source_label: str,
-        target_backends: list[str], comment: str,
+        self,
+        confirmed: bool | None,
+        unique_ips: list[str],
+        source_label: str,
+        target_backends: list[str],
+        comment: str,
     ) -> None:
         if not confirmed:
             return
@@ -302,17 +410,37 @@ class BanIpListScreen(OmegaScreen):
 
         ban_repository = getattr(self._container, "ban_repository", None)
         result = BanIpToAllBackendsCommand(adapters, ban_repository).execute(
-            BanIpAllBackendsRequest(ips=unique_ips, comment=comment, target_backends=target_backends)
+            BanIpAllBackendsRequest(
+                ips=unique_ips, comment=comment, target_backends=target_backends
+            )
         )
 
         for backend, outcome in result.outcomes.items():
             self.app.notify(
-                _("{count} nouvelle(s), {count2} déjà bannie(s), {count3} erreur(s).").format(count=len(outcome.banned), count2=len(outcome.already_banned), count3=len(outcome.errors)),
-                title=_("{backend} ({source_label})").format(backend=backend, source_label=source_label),
+                _(
+                    "{count} nouvelle(s), {count2} déjà bannie(s), {count3} erreur(s)."
+                ).format(
+                    count=len(outcome.banned),
+                    count2=len(outcome.already_banned),
+                    count3=len(outcome.errors),
+                ),
+                title=_("{backend} ({source_label})").format(
+                    backend=backend, source_label=source_label
+                ),
                 severity="information" if not outcome.errors else "warning",
             )
             for failed_ip, reason in outcome.errors:
-                self.app.notify(_("{failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
+                self.app.notify(
+                    _("{failed_ip} : {reason}").format(
+                        failed_ip=failed_ip, reason=reason
+                    ),
+                    title=backend,
+                    severity="error",
+                )
 
-        log_action_result(self._container, _ACTION_TITLE, status="success" if result.success else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if result.success else "failure",
+        )
         self.dismiss()

@@ -9,6 +9,7 @@ Conforms to Omega-Fire architecture charter:
 - No dependency on domain/, application/, or infrastructure/
 - Actual nftables operations are delegated to infrastructure/backends/nftables/
 """
+
 from omega_fire.shared.i18n import _
 
 # ----------------------------------------------------------------------
@@ -28,12 +29,12 @@ PLUGIN_HOOKS = ["before_ban", "after_ban", "before_unban", "after_unban"]
 # ----------------------------------------------------------------------
 def activate() -> None:
     """Activate the nftables plugin."""
-    pass  # Actual activation handled by infrastructure adapter
+    # Actual activation handled by infrastructure adapter
 
 
 def deactivate() -> None:
     """Deactivate the nftables plugin."""
-    pass  # Actual deactivation handled by infrastructure adapter
+    # Actual deactivation handled by infrastructure adapter
 
 
 # ----------------------------------------------------------------------
@@ -41,22 +42,19 @@ def deactivate() -> None:
 # ----------------------------------------------------------------------
 def before_ban(ip: str, **kwargs) -> None:
     """Hook called before banning an IP."""
-    pass
 
 
 def after_ban(ip: str, **kwargs) -> None:
     """Hook called after banning an IP."""
-    pass
 
 
 def before_unban(ip: str, **kwargs) -> None:
     """Hook called before unbanning an IP."""
-    pass
 
 
 def after_unban(ip: str, **kwargs) -> None:
     """Hook called after unbanning an IP."""
-    pass
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -83,4 +81,4 @@ def after_unban(ip: str, **kwargs) -> None:
 # - PLUGIN_HOOKS : ["before_ban", "after_ban", "before_unban", "after_unban"].
 # - activate() / deactivate() : fonctions de cycle de vie (stubs ici).
 # - Hooks : stubs vides, implémentation réelle dans infrastructure/.
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

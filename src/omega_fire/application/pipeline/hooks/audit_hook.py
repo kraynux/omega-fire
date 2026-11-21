@@ -6,15 +6,18 @@ steps succeeded/failed, rollbacks triggered, capabilities skipped.
 It stores events in memory only — actual persistence (file writing,
 database) is delegated to infrastructure/logging/.
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
+
 from omega_fire.shared.i18n import _
 
 
 class AuditEventType(Enum):
     """Type of audit event."""
+
     COMMAND_STARTED = "command_started"
     COMMAND_COMPLETED = "command_completed"
     COMMAND_FAILED = "command_failed"
@@ -32,21 +35,22 @@ class AuditEventType(Enum):
 @dataclass
 class AuditEvent:
     """A single audit event.
-    
+
     Represents an occurrence during pipeline execution that should
     be recorded for audit purposes.
     """
+
     event_type: AuditEventType
     timestamp: datetime = field(default_factory=datetime.now)
-    command_name: Optional[str] = None
-    step_name: Optional[str] = None
+    command_name: str | None = None
+    step_name: str | None = None
     details: dict[str, Any] = field(default_factory=dict)
     success: bool = True
-    error_message: Optional[str] = None
-    
+    error_message: str | None = None
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the event to a dictionary.
-        
+
         Returns:
             Dictionary representation of the event
         """
@@ -63,41 +67,41 @@ class AuditEvent:
 
 class AuditHook:
     """Hook that records pipeline execution events.
-    
+
     This hook maintains an in-memory list of audit events. It does NOT
     persist events to disk or database — that is the responsibility
     of infrastructure/logging/ which can consume these events.
     """
-    
+
     def __init__(self, max_events: int = 1000):
         """Initialize the audit hook.
-        
+
         Args:
             max_events: Maximum number of events to keep in memory.
                        Older events are discarded when this limit is reached.
         """
         self._events: list[AuditEvent] = []
         self._max_events = max_events
-    
+
     def record_event(self, event: AuditEvent) -> None:
         """Record an audit event.
-        
+
         Args:
             event: The audit event to record
         """
         self._events.append(event)
-        
+
         # Trim old events if we exceed the limit
         if len(self._events) > self._max_events:
-            self._events = self._events[-self._max_events:]
-    
+            self._events = self._events[-self._max_events :]
+
     def record_command_started(
         self,
         command_name: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a command has started.
-        
+
         Args:
             command_name: Name of the command
             details: Optional additional details
@@ -108,14 +112,14 @@ class AuditHook:
             details=details or {},
         )
         self.record_event(event)
-    
+
     def record_command_completed(
         self,
         command_name: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a command has completed successfully.
-        
+
         Args:
             command_name: Name of the command
             details: Optional additional details
@@ -127,15 +131,15 @@ class AuditHook:
             success=True,
         )
         self.record_event(event)
-    
+
     def record_command_failed(
         self,
         command_name: str,
         error_message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a command has failed.
-        
+
         Args:
             command_name: Name of the command
             error_message: Error message
@@ -149,15 +153,15 @@ class AuditHook:
             error_message=error_message,
         )
         self.record_event(event)
-    
+
     def record_step_executed(
         self,
         command_name: str,
         step_name: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a step has been executed successfully.
-        
+
         Args:
             command_name: Name of the command
             step_name: Name of the step
@@ -171,16 +175,16 @@ class AuditHook:
             success=True,
         )
         self.record_event(event)
-    
+
     def record_step_failed(
         self,
         command_name: str,
         step_name: str,
         error_message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a step has failed.
-        
+
         Args:
             command_name: Name of the command
             step_name: Name of the step
@@ -196,16 +200,16 @@ class AuditHook:
             error_message=error_message,
         )
         self.record_event(event)
-    
+
     def record_step_skipped(
         self,
         command_name: str,
         step_name: str,
         reason: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a step has been skipped.
-        
+
         Args:
             command_name: Name of the command
             step_name: Name of the step
@@ -220,16 +224,16 @@ class AuditHook:
             success=True,
         )
         self.record_event(event)
-    
+
     def record_rollback_triggered(
         self,
         command_name: str,
         step_name: str,
         reason: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a rollback has been triggered.
-        
+
         Args:
             command_name: Name of the command
             step_name: Name of the step that failed
@@ -245,14 +249,14 @@ class AuditHook:
             error_message=reason,
         )
         self.record_event(event)
-    
+
     def record_rollback_completed(
         self,
         command_name: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a rollback has completed successfully.
-        
+
         Args:
             command_name: Name of the command
             details: Optional additional details
@@ -264,15 +268,15 @@ class AuditHook:
             success=True,
         )
         self.record_event(event)
-    
+
     def record_rollback_failed(
         self,
         command_name: str,
         error_message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a rollback has failed.
-        
+
         Args:
             command_name: Name of the command
             error_message: Error message
@@ -286,17 +290,17 @@ class AuditHook:
             error_message=error_message,
         )
         self.record_event(event)
-    
+
     def record_capability_missing(
         self,
         command_name: str,
         capability_id: str,
         status: str,
         reason: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a required capability is missing.
-        
+
         Args:
             command_name: Name of the command
             capability_id: ID of the missing capability
@@ -314,19 +318,21 @@ class AuditHook:
                 "reason": reason,
             },
             success=False,
-            error_message=_("Capacité « {capability_id} » : {status} ({reason})").format(capability_id=capability_id, status=status, reason=reason),
+            error_message=_(
+                "Capacité « {capability_id} » : {status} ({reason})"
+            ).format(capability_id=capability_id, status=status, reason=reason),
         )
         self.record_event(event)
-    
+
     def record_permission_denied(
         self,
         command_name: str,
         required_permission: str,
         reason: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that a permission check failed.
-        
+
         Args:
             command_name: Name of the command
             required_permission: Required permission
@@ -342,18 +348,20 @@ class AuditHook:
                 "reason": reason,
             },
             success=False,
-            error_message=_("Permission refusée : {required_permission} requis").format(required_permission=required_permission),
+            error_message=_("Permission refusée : {required_permission} requis").format(
+                required_permission=required_permission
+            ),
         )
         self.record_event(event)
-    
+
     def record_degraded_mode_activated(
         self,
         command_name: str,
         skipped_capabilities: list[str],
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Record that degraded mode has been activated.
-        
+
         Args:
             command_name: Name of the command
             skipped_capabilities: List of capabilities that were skipped
@@ -369,83 +377,84 @@ class AuditHook:
             success=True,
         )
         self.record_event(event)
-    
+
     def get_events(self) -> list[AuditEvent]:
         """Get all recorded events.
-        
+
         Returns:
             List of audit events
         """
         return list(self._events)
-    
+
     def get_events_by_type(self, event_type: AuditEventType) -> list[AuditEvent]:
         """Get events filtered by type.
-        
+
         Args:
             event_type: Type of events to retrieve
-        
+
         Returns:
             List of events matching the type
         """
         return [e for e in self._events if e.event_type == event_type]
-    
+
     def get_events_by_command(self, command_name: str) -> list[AuditEvent]:
         """Get events filtered by command name.
-        
+
         Args:
             command_name: Name of the command
-        
+
         Returns:
             List of events for the specified command
         """
         return [e for e in self._events if e.command_name == command_name]
-    
+
     def get_recent_events(self, count: int = 10) -> list[AuditEvent]:
         """Get the most recent events.
-        
+
         Args:
             count: Number of events to retrieve
-        
+
         Returns:
             List of the most recent events
         """
         return self._events[-count:]
-    
+
     def get_failed_events(self) -> list[AuditEvent]:
         """Get all failed events.
-        
+
         Returns:
             List of events where success=False
         """
         return [e for e in self._events if not e.success]
-    
+
     def get_successful_events(self) -> list[AuditEvent]:
         """Get all successful events.
-        
+
         Returns:
             List of events where success=True
         """
         return [e for e in self._events if e.success]
-    
+
     def clear(self) -> None:
         """Clear all recorded events."""
         self._events.clear()
-    
+
     def count(self) -> int:
         """Get the total number of recorded events.
-        
+
         Returns:
             Number of events
         """
         return len(self._events)
-    
+
     def to_dicts(self) -> list[dict[str, Any]]:
         """Convert all events to dictionaries.
-        
+
         Returns:
             List of event dictionaries
         """
         return [e.to_dict() for e in self._events]
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -474,4 +483,4 @@ class AuditHook:
 # - infrastructure/logging/audit_logger.py consommera les événements via get_events() et les persistera
 # - interfaces/cli/actions.py affichera les événements récents via get_recent_events()
 # - Les tests vérifieront que les événements sont correctement enregistrés
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

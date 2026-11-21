@@ -4,6 +4,7 @@
 """Exceptions génériques partagées par les utilitaires transverses."""
 
 from __future__ import annotations
+
 from omega_fire.shared.i18n import _
 
 
@@ -43,8 +44,14 @@ class ShellCommandError(SharedError):
     def __str__(self) -> str:
         base = super().__str__()
         if self.command is not None:
-            cmd = " ".join(self.command) if isinstance(self.command, list) else self.command
-            base = _("{base} [cmd={cmd!r} rc={return_code}]").format(base=base, cmd=cmd, return_code=self.return_code)
+            cmd = (
+                " ".join(self.command)
+                if isinstance(self.command, list)
+                else self.command
+            )
+            base = _("{base} [cmd={cmd!r} rc={return_code}]").format(
+                base=base, cmd=cmd, return_code=self.return_code
+            )
         return base
 
 
@@ -62,6 +69,8 @@ class ValidationError(SharedError):
     Utilisée uniquement pour des contrôles utilitaires, pas pour
     des invariants métier (qui eux vivent dans domain/).
     """
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit les exceptions génériques transverses partagées par les utilitaires
@@ -102,4 +111,4 @@ class ValidationError(SharedError):
 # - infrastructure/ capturera ces erreurs pour les encapsuler en erreurs
 #   techniques métier (BackendError, StorageError) avant remontée
 # - application/ ne verra jamais ces exceptions brutes (encapsulation)
-#---------------------------------------------------------------------->          
+# ---------------------------------------------------------------------->

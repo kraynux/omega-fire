@@ -4,14 +4,15 @@
 Pure domain logic for IP ban entries. No external dependencies.
 This module defines what a ban IS, not how it is stored or applied.
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class BanStatus(Enum):
     """Lifecycle status of a ban entry."""
+
     ACTIVE = "active"
     EXPIRED = "expired"
     REMOVED = "removed"
@@ -19,6 +20,7 @@ class BanStatus(Enum):
 
 class BanSource(Enum):
     """Origin of a ban entry."""
+
     MANUAL = "manual"
     SYNC = "sync"
     IMPORT = "import"
@@ -32,15 +34,16 @@ class BanEntry:
     Pure domain model. The 'backend' field is a label only
     ('nftables', 'iptables', 'fail2ban'), not a dependency.
     """
+
     ip: str
     backend: str  # label: 'nftables' | 'iptables' | 'fail2ban'
     status: BanStatus = BanStatus.ACTIVE
-    jail_name: Optional[str] = None
-    comment: Optional[str] = None
+    jail_name: str | None = None
+    comment: str | None = None
     banned_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
-    removed_at: Optional[datetime] = None
-    removed_by: Optional[str] = None  # 'user' | 'auto' | 'sync'
+    expires_at: datetime | None = None
+    removed_at: datetime | None = None
+    removed_by: str | None = None  # 'user' | 'auto' | 'sync'
     source: BanSource = BanSource.MANUAL
 
     def is_active(self) -> bool:
@@ -65,6 +68,7 @@ class BanEntry:
 @dataclass
 class IPList:
     """Collection of ban entries with query helpers."""
+
     entries: list[BanEntry] = field(default_factory=list)
 
     def add(self, entry: BanEntry) -> None:
@@ -86,7 +90,8 @@ class IPList:
     def get_by_jail(self, jail_name: str) -> list[BanEntry]:
         """Return bans associated with a specific fail2ban jail."""
         return [e for e in self.entries if e.jail_name == jail_name]
-        
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle
 # - Définit les modèles métier pour la blacklist d'IPs. Ce sont des dataclasses pures — elles ne savent rien de nftables, iptables, fail2ban, SQLite ou Rich.
@@ -104,4 +109,4 @@ class IPList:
 # - backend est une chaîne label, pas une référence à un adaptateur
 # - Les méthodes is_active() / is_expired() contiennent la règle métier du cycle de vie
 # - IPList est un conteneur avec des requêtes métier (pas du SQL)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

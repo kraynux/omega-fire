@@ -3,6 +3,7 @@
 (OMEGA-SERV_ETUDE-FAISABILITE_LOGS_DISTANTS.md, 2026-10-15) : recupere a la demande le log
 d'une machine du reseau via `scp`. Aucun mot de passe : l'authentification est celle du
 `ssh` du systeme (agent, ~/.ssh/config) ; `identity_file` n'est qu'un CHEMIN de cle."""
+
 from __future__ import annotations
 
 import hashlib
@@ -33,14 +34,23 @@ def build_scp_command(source: RemoteLogSource, local_dest: Path) -> list[str]:
         command += ["-P", str(source.port)]
     if source.identity_file:
         command += ["-i", source.identity_file]
-    command += ["-o", "ConnectTimeout=10", "-o", "BatchMode=yes",
-                f"{target_host}:{source.remote_path}", str(local_dest)]
+    command += [
+        "-o",
+        "ConnectTimeout=10",
+        "-o",
+        "BatchMode=yes",
+        f"{target_host}:{source.remote_path}",
+        str(local_dest),
+    ]
     return command
 
 
 def safe_cache_filename(label: str, *, suffix: str = ".log") -> str:
     """Nom de fichier local derive du label, jamais le label brut (aucune traversee de
     chemin). Deterministe : re-recuperer ecrase sa propre copie."""
-    slug = _SLUG_RE.sub("-", label.strip().lower()).strip("-")[:_MAX_SLUG_LENGTH] or "source"
+    slug = (
+        _SLUG_RE.sub("-", label.strip().lower()).strip("-")[:_MAX_SLUG_LENGTH]
+        or "source"
+    )
     digest = hashlib.sha256(label.encode("utf-8")).hexdigest()[:8]
     return f"{slug}-{digest}{suffix}"

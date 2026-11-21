@@ -12,12 +12,12 @@ exceptions.py) may define their own specific exceptions, but should
 inherit from the relevant class here rather than from CoreError
 directly, to keep a single infrastructure-wide hierarchy.
 """
+
 from omega_fire.core.exceptions import CoreError
 
 
 class InfrastructureError(CoreError):
     """Base exception for all infrastructure/ technical failures."""
-    pass
 
 
 class CommandExecutionError(InfrastructureError):
@@ -26,27 +26,22 @@ class CommandExecutionError(InfrastructureError):
     Should carry enough context (command, stdout, stderr, exit code)
     for application/ to translate it into a user-facing message.
     """
-    pass
 
 
 class ServiceUnavailableError(InfrastructureError):
     """Raised when a required system service is unavailable."""
-    pass
 
 
 class StorageError(InfrastructureError):
     """Raised when a storage operation fails (file I/O, archive, DB)."""
-    pass
 
 
 class ParseError(InfrastructureError):
     """Raised when parsing external command output fails."""
-    pass
 
 
 class AdapterConfigurationError(InfrastructureError):
     """Raised when an adapter is misconfigured (missing path, bad settings)."""
-    pass
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -77,4 +72,4 @@ class AdapterConfigurationError(InfrastructureError):
 # Comment il sera utilisé (aperçu) :
 # - infrastructure/storage/files/persistence_adapter.py importera
 #   StorageError d'ici (pas celui de sqlite/exceptions.py).
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

@@ -17,29 +17,28 @@ Conforms to Omega-Fire architecture charter:
 - Uses keybindings.py for standardized shortcuts
 - No dependency on domain/, application/, or infrastructure/
 """
-import sys
-import os
-import tty
-import termios
+
 import fcntl
+import os
+import sys
+import termios
 import threading
-from typing import Optional
+import tty
 
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.text import Text
 from rich.align import Align
-from rich.live import Live
+from rich.console import Console, Group
 from rich.layout import Layout
+from rich.live import Live
+from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
-from omega_fire.interfaces.cli.themes.registry import theme_registry
-from omega_fire.interfaces.cli.renderers.styles import (
-    get_terminal_width,
-    get_terminal_height,
-)
 from omega_fire.interfaces.cli import keybindings as kb
-
+from omega_fire.interfaces.cli.renderers.styles import (
+    get_terminal_height,
+    get_terminal_width,
+)
+from omega_fire.interfaces.cli.themes.registry import theme_registry
 
 # ----------------------------------------------------------------------
 # Logo ASCII valide (bouclier + banniere OMEGA-FIRE, 23 lignes)
@@ -77,7 +76,6 @@ OMEGA_FIRE_LOGO_LINES: list[str] = [
     "▀█░▒▓████████▓▒░█▀",
     "▀█░▒▓████▓▒░█▀",
     "▀▀▀▀▀▀▀▀▀▀",
-
     "FIREWALL | RULES | BAN & IP CONTROL | ORCHESTRATION | LOGS",
     "INTER-OPERABILITE | AUDIT | EXPORT | BACKUP | MONITORING",
 ]
@@ -88,6 +86,7 @@ _OMEGA_BOX = (4, 8)
 _OMEGA_LOGO_ROWS = (5, 7)  # les 3 lignes du logo lui-meme, a l'interieur du container
 _SHIELD = (9, 20)
 _TAGLINE_START = 21
+
 
 def _render_omega_fire_logo() -> Group:
     """Construit le logo complet (bouclier + banniere) avec coloration
@@ -134,9 +133,7 @@ def _render_omega_fire_logo() -> Group:
         if _LFS_BOX[0] <= i <= _LFS_BOX[1]:
             for ch in raw:
                 t.append(ch, style=item_s if ch in "┌┐└┘─│" else title_s)
-        elif i == _VERSION_BAR:
-            t.append(raw, style=item_s)
-        elif i in (_OMEGA_BOX[0], _OMEGA_BOX[1]):
+        elif i == _VERSION_BAR or i in (_OMEGA_BOX[0], _OMEGA_BOX[1]):
             t.append(raw, style=item_s)
         elif _OMEGA_LOGO_ROWS[0] <= i <= _OMEGA_LOGO_ROWS[1]:
             row_style = logo_row_styles[i]
@@ -165,6 +162,7 @@ def _render_omega_fire_logo() -> Group:
                 t.append(ch, style=title_s if ch == "|" else item_s)
         lines.append(Align.center(t))
     return Group(*lines)
+
 
 # ----------------------------------------------------------------------
 # Textes du splash screen
@@ -210,12 +208,12 @@ def _getch() -> str:
         _flush_stdin()
         tty.setcbreak(fd)
         first = sys.stdin.read(1)
-        if first != '\x1b':
+        if first != "\x1b":
             _flush_stdin()
             return first
         _set_nonblocking(fd)
         try:
-            seq = ''
+            seq = ""
             for _ in range(5):
                 try:
                     ch = sys.stdin.read(1)
@@ -223,12 +221,12 @@ def _getch() -> str:
                         seq += ch
                     else:
                         break
-                except (IOError, OSError):
+                except OSError:
                     break
         finally:
             _set_blocking(fd)
         _flush_stdin()
-        return '\x1b' + seq
+        return "\x1b" + seq
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
@@ -310,10 +308,14 @@ def _build_help_body() -> Group:
 
     content.append(table)
     content.append(Text(""))
-    content.append(Align.center(Text(
-        "Appuyez sur Esc ou Enter pour fermer cette aide",
-        style=muted_s,
-    )))
+    content.append(
+        Align.center(
+            Text(
+                "Appuyez sur Esc ou Enter pour fermer cette aide",
+                style=muted_s,
+            )
+        )
+    )
 
     return Group(*content)
 
@@ -333,8 +335,8 @@ def _build_theme_select_body(selected_index: int) -> Group:
     content.append(Text(""))
 
     for i, theme_name in enumerate(available_themes):
-        is_current = (theme_name == current_name)
-        is_selected = (i == selected_index)
+        is_current = theme_name == current_name
+        is_selected = i == selected_index
 
         line = Text()
         marker = "★" if is_current else " "
@@ -351,10 +353,14 @@ def _build_theme_select_body(selected_index: int) -> Group:
         content.append(line)
         content.append(Text(""))
 
-    content.append(Align.center(Text(
-        "↑↓ Naviguer │ Enter Valider │ Esc Annuler",
-        style=muted_s,
-    )))
+    content.append(
+        Align.center(
+            Text(
+                "↑↓ Naviguer │ Enter Valider │ Esc Annuler",
+                style=muted_s,
+            )
+        )
+    )
 
     return Group(*content)
 
@@ -363,15 +369,15 @@ def _build_theme_select_body(selected_index: int) -> Group:
 # Main splash renderer (SPLASH model with keyboard capture)
 # ----------------------------------------------------------------------
 def render_splash(
-    console: Optional[Console] = None,
+    console: Console | None = None,
     wait_for_key: bool = True,
 ) -> bool:
     """Render the splash screen using the SPLASH model.
-    
+
     CRITICAL: Uses theme_registry.get_style() for splash text colors.
     This ensures the text actually changes when the theme changes,
     instead of using hardcoded splash_*_style properties.
-    
+
     Captures keyboard shortcuts (a, t, q) like the main menu.
     Shows overlays for help and theme selection.
 
@@ -387,17 +393,17 @@ def render_splash(
     console = console or Console(theme=theme_registry.get_rich_theme())
     theme = theme_registry.get_active()
     use_emoji = theme.prefers_emojis
-    
+
     # Overlay state
     overlay_mode = ""  # "", "help", "theme_select"
     overlay_selected = 0
-    
+
     def build_layout() -> Layout:
         """Build the complete splash screen layout."""
         # Refresh theme reference (in case theme changed during splash)
         current_theme = theme_registry.get_active()
         current_use_emoji = current_theme.prefers_emojis
-        
+
         root = Layout()
         root.split_column(
             Layout(name="header", size=3),
@@ -405,22 +411,35 @@ def render_splash(
             Layout(name="prompt", size=3),
             Layout(name="footer", size=3),
         )
-        
+
         # === HEADER ===
         term_width = get_terminal_width()
         term_height = get_terminal_height()
-        
+
         shield = "\U0001f6e1\ufe0f " if current_use_emoji else ""
         header_text = Text()
-        header_text.append(f"{shield}OMEGA-FIRE {VERSION}", style=theme_registry.get_style("menu.title"))
-        header_text.append(f"       │  ", style=theme_registry.get_style("text.muted"))
-        header_text.append(f"Thème: {current_theme.display_name}", style=theme_registry.get_style("text.muted"))
-        header_text.append(f"  │  Terminal: {term_width}x{term_height}", style=theme_registry.get_style("text.muted"))
-        
-        root["header"].update(
-            Panel(header_text, border_style=theme_registry.get_style("border.default"), padding=(0, 2))
+        header_text.append(
+            f"{shield}OMEGA-FIRE {VERSION}",
+            style=theme_registry.get_style("menu.title"),
         )
-        
+        header_text.append("       │  ", style=theme_registry.get_style("text.muted"))
+        header_text.append(
+            f"Thème: {current_theme.display_name}",
+            style=theme_registry.get_style("text.muted"),
+        )
+        header_text.append(
+            f"  │  Terminal: {term_width}x{term_height}",
+            style=theme_registry.get_style("text.muted"),
+        )
+
+        root["header"].update(
+            Panel(
+                header_text,
+                border_style=theme_registry.get_style("border.default"),
+                padding=(0, 2),
+            )
+        )
+
         # === BODY ===
         if overlay_mode == "help":
             root["body"].update(
@@ -433,7 +452,9 @@ def render_splash(
         elif overlay_mode == "theme_select":
             root["body"].update(
                 Panel(
-                    Align.center(_build_theme_select_body(overlay_selected), vertical="middle"),
+                    Align.center(
+                        _build_theme_select_body(overlay_selected), vertical="middle"
+                    ),
                     border_style=theme_registry.get_style("border.default"),
                     padding=(1, 2),
                 )
@@ -441,20 +462,28 @@ def render_splash(
         else:
             # Normal splash content - CRITICAL: use dynamic theme styles
             body_content = []
-            
+
             # Title & Subtitle use text.heading (changes with theme)
             title = HEADER_LINE if current_use_emoji else HEADER_LINE_ASCII
-            body_content.append(Align.center(Text(title, style=theme_registry.get_style("text.heading"))))
-            
+            body_content.append(
+                Align.center(
+                    Text(title, style=theme_registry.get_style("text.heading"))
+                )
+            )
+
             subtitle = SUBTITLE_LINE if current_use_emoji else SUBTITLE_LINE_ASCII
-            body_content.append(Align.center(Text(subtitle, style=theme_registry.get_style("text.heading"))))
+            body_content.append(
+                Align.center(
+                    Text(subtitle, style=theme_registry.get_style("text.heading"))
+                )
+            )
             body_content.append(Text(""))
-            
+
             # Logo : bouclier + banniere, colore par zone via theme_registry
             body_content.append(_render_omega_fire_logo())
-            
+
             body_group = Group(*body_content)
-            
+
             root["body"].update(
                 Panel(
                     Align.center(body_group, vertical="middle"),
@@ -462,7 +491,7 @@ def render_splash(
                     padding=(1, 2),
                 )
             )
-        
+
         # === PROMPT ===
         if overlay_mode:
             prompt_text = Text(
@@ -475,24 +504,34 @@ def render_splash(
                 style=theme_registry.get_style("text.main"),
             )
         root["prompt"].update(
-            Panel(prompt_text, border_style=theme_registry.get_style("border.default"), padding=(0, 2))
+            Panel(
+                prompt_text,
+                border_style=theme_registry.get_style("border.default"),
+                padding=(0, 2),
+            )
         )
-        
+
         # === FOOTER ===
         footer_text = _render_splash_footer(current_use_emoji)
         root["footer"].update(
-            Panel(footer_text, border_style=theme_registry.get_style("border.default"), padding=(0, 2))
+            Panel(
+                footer_text,
+                border_style=theme_registry.get_style("border.default"),
+                padding=(0, 2),
+            )
         )
-        
+
         return root
-    
+
     # Entrée = poursuivre, q/Ctrl+C = quitter — cf. docstring et
     # référentiel §51. Défaut True : wait_for_key=False (pas d'attente
     # de touche) doit laisser l'appelant poursuivre normalement.
     should_proceed = True
 
     console.clear()
-    with Live(build_layout(), console=console, screen=True, refresh_per_second=4) as live:
+    with Live(
+        build_layout(), console=console, screen=True, refresh_per_second=4
+    ) as live:
         stop_event = threading.Event()
 
         def refresh_loop():
@@ -525,10 +564,14 @@ def render_splash(
                             overlay_mode = ""
                             live.update(build_layout())
                         elif kb.is_arrow_up(key):
-                            overlay_selected = (overlay_selected - 1) % len(available_themes)
+                            overlay_selected = (overlay_selected - 1) % len(
+                                available_themes
+                            )
                             live.update(build_layout())
                         elif kb.is_arrow_down(key):
-                            overlay_selected = (overlay_selected + 1) % len(available_themes)
+                            overlay_selected = (overlay_selected + 1) % len(
+                                available_themes
+                            )
                             live.update(build_layout())
                         elif kb.is_enter(key) or kb.is_arrow_right(key):
                             selected_theme = available_themes[overlay_selected]
@@ -552,7 +595,9 @@ def render_splash(
                     elif kb.is_theme(key):
                         available_themes = _get_available_themes()
                         try:
-                            current_idx = available_themes.index(theme_registry.get_active().name)
+                            current_idx = available_themes.index(
+                                theme_registry.get_active().name
+                            )
                         except ValueError:
                             current_idx = 0
                         overlay_mode = "theme_select"
@@ -670,4 +715,4 @@ def render_splash(
 # - Le splash screen est affiche avant le menu principal
 # - L'utilisateur peut tester les themes et voir l'aide avant d'entrer dans le menu
 # - Appuyer sur Enter pour acceder au menu principal
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -18,6 +18,7 @@ get_jail_status() par jail, jusqu'a 10s de timeout chacun) et l'execution
 du ban/unban se font en arriere-plan (run_blocking, voir _base.py) — les
 faire de facon synchrone dans __init__/compose() ou dans le handler de
 confirmation gelait TOUTE l'app (retour utilisateur reel, mode degrade)."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -39,7 +40,12 @@ _ACTION_TITLE = "4.2 Bannir / Debannir dans un jail"
 _NO_QUICK_PICK = "__none__"
 
 _HIDDEN_UNTIL_LOADED = (
-    "jail-label", "jail-select", "action-label", "action-select", "ips-label", "ips-input",
+    "jail-label",
+    "jail-select",
+    "action-label",
+    "action-select",
+    "ips-label",
+    "ips-input",
 )
 
 
@@ -55,32 +61,67 @@ class JailBanUnbanScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-form-panel"):
             yield Static(_("BANNIR / DÉBANNIR DANS UN JAIL"), classes="omega-title")
-            yield Static(_("Chargement des jails..."), id="status-hint", classes="omega-hint")
+            yield Static(
+                _("Chargement des jails..."), id="status-hint", classes="omega-hint"
+            )
 
-            yield Static(_("Jail"), id="jail-label", classes="omega-subtitle omega-hidden")
-            yield Select([], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Jail"), id="jail-label", classes="omega-subtitle omega-hidden"
+            )
+            yield Select(
+                [], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner")
+            )
 
-            yield Static(_("Action"), id="action-label", classes="omega-subtitle omega-hidden")
-            yield Select([(_("Bannir"), "ban"), (_("Débannir"), "unban")], value="ban", id="action-select", classes="omega-hidden")
+            yield Static(
+                _("Action"), id="action-label", classes="omega-subtitle omega-hidden"
+            )
+            yield Select(
+                [(_("Bannir"), "ban"), (_("Débannir"), "unban")],
+                value="ban",
+                id="action-select",
+                classes="omega-hidden",
+            )
 
-            yield Static(_("IP bannie à reprendre (optionnel)"), id="quick-pick-label", classes="omega-hidden")
-            yield Select([], id="quick-pick-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("IP bannie à reprendre (optionnel)"),
+                id="quick-pick-label",
+                classes="omega-hidden",
+            )
+            yield Select(
+                [],
+                id="quick-pick-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
 
-            yield Static(_("Adresse(s) IP"), id="ips-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Adresse(s) IP"),
+                id="ips-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(
-                placeholder=_("ex. 10.0.0.5, 10.0.0.6  (ou numéros d'index en débannissement)"),
-                id="ips-input", classes="omega-hidden",
+                placeholder=_(
+                    "ex. 10.0.0.5, 10.0.0.6  (ou numéros d'index en débannissement)"
+                ),
+                id="ips-input",
+                classes="omega-hidden",
             )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Exécuter"), id="launch", variant="primary", disabled=True)
+                    yield Button(
+                        _("Exécuter"), id="launch", variant="primary", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.run_blocking(self._collect_jails, self._on_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            self._collect_jails,
+            self._on_loaded,
+            busy_message=_("Chargement des jails..."),
+        )
 
     def _collect_jails(self) -> dict[str, list[str]]:
         try:
@@ -106,7 +147,11 @@ class JailBanUnbanScreen(OmegaScreen):
         hint = self.query_one("#status-hint", Static)
 
         if not jails_info:
-            hint.update(_("Impossible de communiquer avec le service Fail2ban (aucun jail détecté)."))
+            hint.update(
+                _(
+                    "Impossible de communiquer avec le service Fail2ban (aucun jail détecté)."
+                )
+            )
             return
 
         hint.set_class(True, "omega-hidden")
@@ -114,7 +159,15 @@ class JailBanUnbanScreen(OmegaScreen):
             self.query_one(f"#{widget_id}").set_class(False, "omega-hidden")
 
         jail_select = self.query_one("#jail-select", Select)
-        jail_select.set_options([(_("{name} ({count} bannie(s))").format(name=name, count=len(ips)), name) for name, ips in jails_info.items()])
+        jail_select.set_options(
+            [
+                (
+                    _("{name} ({count} bannie(s))").format(name=name, count=len(ips)),
+                    name,
+                )
+                for name, ips in jails_info.items()
+            ]
+        )
         jail_select.value = next(iter(jails_info))
 
         self.query_one("#launch", Button).disabled = False
@@ -140,13 +193,16 @@ class JailBanUnbanScreen(OmegaScreen):
         banned_ips = self._jails_info.get(jail_name, [])
 
         show_quick_pick = action == "unban" and bool(banned_ips)
-        self.query_one("#quick-pick-label", Static).set_class(not show_quick_pick, "omega-hidden")
+        self.query_one("#quick-pick-label", Static).set_class(
+            not show_quick_pick, "omega-hidden"
+        )
         quick_pick = self.query_one("#quick-pick-select", Select)
         quick_pick.set_class(not show_quick_pick, "omega-hidden")
 
         if show_quick_pick:
             quick_pick.set_options(
-                [(_("(choisir une IP bannie)"), _NO_QUICK_PICK)] + [(ip, ip) for ip in banned_ips]
+                [(_("(choisir une IP bannie)"), _NO_QUICK_PICK)]
+                + [(ip, ip) for ip in banned_ips]
             )
             quick_pick.value = _NO_QUICK_PICK
 
@@ -163,7 +219,10 @@ class JailBanUnbanScreen(OmegaScreen):
 
         raw_input = self.query_one("#ips-input", Input).value.strip()
         if not raw_input:
-            self.app.notify(_("Saisissez au moins une IP (ou un numéro d'index)."), severity="warning")
+            self.app.notify(
+                _("Saisissez au moins une IP (ou un numéro d'index)."),
+                severity="warning",
+            )
             return
 
         raw_items = [item.strip() for item in raw_input.split(",") if item.strip()]
@@ -176,33 +235,54 @@ class JailBanUnbanScreen(OmegaScreen):
                     resolved_ip = currently_banned[num_idx]
                 else:
                     self.app.notify(
-                        _("Le numéro [{item}] ne correspond a aucune IP bannie dans '{jail_name}' — ignore.").format(item=item, jail_name=jail_name),
+                        _(
+                            "Le numéro [{item}] ne correspond a aucune IP bannie dans '{jail_name}' — ignore."
+                        ).format(item=item, jail_name=jail_name),
                         severity="warning",
                     )
                     continue
             try:
                 ipaddress.ip_address(resolved_ip)
             except ValueError:
-                self.app.notify(_("Format d'adresse IP invalide : '{item}' — ignore.").format(item=item), severity="warning")
+                self.app.notify(
+                    _("Format d'adresse IP invalide : '{item}' — ignore.").format(
+                        item=item
+                    ),
+                    severity="warning",
+                )
                 continue
             if resolved_ip not in target_ips:
                 target_ips.append(resolved_ip)
 
         if not target_ips:
-            self.app.notify(_("Aucune entrée valide dans la saisie."), severity="warning")
+            self.app.notify(
+                _("Aucune entrée valide dans la saisie."), severity="warning"
+            )
             return
 
         action_verb = "bannir" if action_type == "ban" else "debannir"
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER L'ACTION"),
-                message=_("Jail : {jail_name}\nAction : {action_verb}\nIP(s) : {value}").format(jail_name=jail_name, action_verb=action_verb, value=', '.join(target_ips)),
+                message=_(
+                    "Jail : {jail_name}\nAction : {action_verb}\nIP(s) : {value}"
+                ).format(
+                    jail_name=jail_name,
+                    action_verb=action_verb,
+                    value=", ".join(target_ips),
+                ),
             ),
-            lambda confirmed: self._execute_if_confirmed(confirmed, jail_name, action_type, target_ips),
+            lambda confirmed: self._execute_if_confirmed(
+                confirmed, jail_name, action_type, target_ips
+            ),
         )
 
     def _execute_if_confirmed(
-        self, confirmed: bool | None, jail_name: str, action_type: str, target_ips: list[str]
+        self,
+        confirmed: bool | None,
+        jail_name: str,
+        action_type: str,
+        target_ips: list[str],
     ) -> None:
         if not confirmed:
             return
@@ -216,11 +296,25 @@ class JailBanUnbanScreen(OmegaScreen):
 
             for ip in target_ips:
                 if action_type == "ban" and ip in banned_set:
-                    notifications.append((_("IP {ip} : déjà bannie dans '{jail_name}'.").format(ip=ip, jail_name=jail_name), "warning"))
+                    notifications.append(
+                        (
+                            _("IP {ip} : déjà bannie dans '{jail_name}'.").format(
+                                ip=ip, jail_name=jail_name
+                            ),
+                            "warning",
+                        )
+                    )
                     skipped_count += 1
                     continue
                 if action_type == "unban" and ip not in banned_set:
-                    notifications.append((_("IP {ip} : absente de la liste des bannis du jail '{jail_name}'.").format(ip=ip, jail_name=jail_name), "warning"))
+                    notifications.append(
+                        (
+                            _(
+                                "IP {ip} : absente de la liste des bannis du jail '{jail_name}'."
+                            ).format(ip=ip, jail_name=jail_name),
+                            "warning",
+                        )
+                    )
                     skipped_count += 1
                     continue
 
@@ -228,12 +322,20 @@ class JailBanUnbanScreen(OmegaScreen):
                 error_detail = ""
                 try:
                     if action_type == "ban":
-                        from omega_fire.application.commands.jail_ban import JailBanCommand, JailBanRequest
+                        from omega_fire.application.commands.jail_ban import (
+                            JailBanCommand,
+                            JailBanRequest,
+                        )
+
                         cmd_result = JailBanCommand(fail2ban_port).execute(
                             JailBanRequest(jail_name=jail_name, ip=ip)
                         )
                     else:
-                        from omega_fire.application.commands.jail_unban import JailUnbanCommand, JailUnbanRequest
+                        from omega_fire.application.commands.jail_unban import (
+                            JailUnbanCommand,
+                            JailUnbanRequest,
+                        )
+
                         cmd_result = JailUnbanCommand(fail2ban_port).execute(
                             JailUnbanRequest(jail_name=jail_name, ip=ip)
                         )
@@ -245,11 +347,25 @@ class JailBanUnbanScreen(OmegaScreen):
 
                 if executed_successfully:
                     msg_action = "bannie" if action_type == "ban" else "debannie"
-                    notifications.append((_("IP {ip} {msg_action} avec succès dans '{jail_name}'.").format(ip=ip, msg_action=msg_action, jail_name=jail_name), "information"))
+                    notifications.append(
+                        (
+                            _(
+                                "IP {ip} {msg_action} avec succès dans '{jail_name}'."
+                            ).format(ip=ip, msg_action=msg_action, jail_name=jail_name),
+                            "information",
+                        )
+                    )
                     success_count += 1
                 else:
                     suffix = f" ({error_detail})" if error_detail else ""
-                    notifications.append((_("IP {ip} : échec de l'action Fail2ban.{suffix}").format(ip=ip, suffix=suffix), "error"))
+                    notifications.append(
+                        (
+                            _("IP {ip} : échec de l'action Fail2ban.{suffix}").format(
+                                ip=ip, suffix=suffix
+                            ),
+                            "error",
+                        )
+                    )
 
             return notifications, success_count, skipped_count
 
@@ -257,9 +373,22 @@ class JailBanUnbanScreen(OmegaScreen):
             notifications, success_count, skipped_count = result
             for message, severity in notifications:
                 self.app.notify(message, severity=severity)
-            self.app.notify(_("Bilan : {success_count} IP(s) traitée(s), {skipped_count} ignorée(s).").format(success_count=success_count, skipped_count=skipped_count), title=jail_name)
-            log_action_result(self._container, _ACTION_TITLE, status="success" if success_count else "failure")
+            self.app.notify(
+                _(
+                    "Bilan : {success_count} IP(s) traitée(s), {skipped_count} ignorée(s)."
+                ).format(success_count=success_count, skipped_count=skipped_count),
+                title=jail_name,
+            )
+            log_action_result(
+                self._container,
+                _ACTION_TITLE,
+                status="success" if success_count else "failure",
+            )
             self.dismiss()
 
         busy_label = _("Bannissement") if action_type == "ban" else _("Débannissement")
-        self.run_blocking(_execute, _on_done, busy_message=_("{busy_label} en cours...").format(busy_label=busy_label))
+        self.run_blocking(
+            _execute,
+            _on_done,
+            busy_message=_("{busy_label} en cours...").format(busy_label=busy_label),
+        )

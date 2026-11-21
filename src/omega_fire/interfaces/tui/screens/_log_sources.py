@@ -6,6 +6,7 @@ comme omega-serv et omega-log).
 Ordre : logs de la Bibliotheque (5.1 : omega-serv detecte, epingles, copies SSH) en tete, puis les
 epingles partagees des menus 2 / 4 / 5 / 6 (blocklists comprises) absentes de la Bibliotheque, puis
 « Chemin manuel ». Jamais de doublon : un chemin present aux deux endroits n'apparait qu'une fois."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -22,7 +23,9 @@ def library_paths() -> list[str]:
         return []
 
 
-def log_source_options(pinned: Iterable[str], manual_value: str | None) -> list[tuple[str, str]]:
+def log_source_options(
+    pinned: Iterable[str], manual_value: str | None
+) -> list[tuple[str, str]]:
     """(libelle, valeur) pour un Select : Bibliotheque, puis epingles, puis « Chemin manuel » (si
     `manual_value` n'est pas None)."""
     seen: set[str] = set()

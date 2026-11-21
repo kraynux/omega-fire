@@ -19,14 +19,14 @@ Conforms to Omega-Fire architecture charter:
   introduces no new collection mechanism
 - Never modifies any of the sources it reads
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Optional
-from omega_fire.shared.i18n import _
+from typing import Any
 
 from omega_fire.core.constants import OMEGA_FIRE_VERSION
+from omega_fire.shared.i18n import _
 
 # Un jail dont le nombre d'IPs actuellement bannies atteint ce seuil est
 # signalé comme "pic d'activité" dans fail2ban_alerts.
@@ -59,6 +59,7 @@ class ConntrackCounters:
     anywhere in the project (nftables/iptables counters are never
     read by any adapter built so far) — assumed empty, not invented.
     """
+
     dropped_packets: int = 0
 
 
@@ -75,6 +76,7 @@ class DashboardSnapshot:
     getattr() defaults (_default_fw_stats()) apply for exactly those,
     and only those.
     """
+
     active_connections: int
     counters: ConntrackCounters = field(default_factory=ConntrackCounters)
 
@@ -107,14 +109,14 @@ class DashboardSnapshotProvider:
 
     def __init__(
         self,
-        monitoring_port: Optional[Any],
-        audit_port: Optional[Any],
-        rule_repository: Optional[Any] = None,
-        log_aggregator: Optional[Any] = None,
-        ban_repository: Optional[Any] = None,
-        fail2ban_port: Optional[Any] = None,
-        firewall_ports: Optional[dict[str, Any]] = None,
-        capability_registry: Optional[Any] = None,
+        monitoring_port: Any | None,
+        audit_port: Any | None,
+        rule_repository: Any | None = None,
+        log_aggregator: Any | None = None,
+        ban_repository: Any | None = None,
+        fail2ban_port: Any | None = None,
+        firewall_ports: dict[str, Any] | None = None,
+        capability_registry: Any | None = None,
     ):
         self._monitoring_port = monitoring_port
         self._audit_port = audit_port
@@ -197,8 +199,9 @@ class DashboardSnapshotProvider:
         unavailable backend — never treated as a divergence.
         """
         import json
-        from omega_fire.infrastructure.config.paths import RUNTIME_DIR
+
         from omega_fire.domain.rules.presets import get_preset
+        from omega_fire.infrastructure.config.paths import RUNTIME_DIR
 
         for backend in ("nftables", "iptables", "ip6tables"):
             state_file = RUNTIME_DIR / f"active_preset_{backend}.json"
@@ -460,24 +463,36 @@ class DashboardSnapshotProvider:
             loaded_names.add(jail.name)
             if jail.banned_count >= _JAIL_ACTIVITY_SPIKE_THRESHOLD:
                 alerts.append(
-                    _("{name} : {banned_count} IPs bannies (pic d'activité)").format(name=jail.name, banned_count=jail.banned_count)
+                    _("{name} : {banned_count} IPs bannies (pic d'activité)").format(
+                        name=jail.name, banned_count=jail.banned_count
+                    )
                 )
 
         try:
             from pathlib import Path
+
             jail_d_dir = Path(_FAIL2BAN_JAIL_D_DIR)
             if jail_d_dir.is_dir():
                 from omega_fire.domain.fail2ban.definitions import enabled_jails
-                files = sorted(jail_d_dir.glob("*.conf")) + sorted(jail_d_dir.glob("*.local"))
+
+                files = sorted(jail_d_dir.glob("*.conf")) + sorted(
+                    jail_d_dir.glob("*.local")
+                )
                 contents = []
                 for path in files:
                     try:
-                        contents.append(path.read_text(encoding="utf-8", errors="replace"))
+                        contents.append(
+                            path.read_text(encoding="utf-8", errors="replace")
+                        )
                     except OSError:
                         continue
                 configured_names = enabled_jails(contents)
                 for name in sorted(configured_names - loaded_names):
-                    alerts.append(_("{name} : configuré (jail.d) mais non chargé").format(name=name))
+                    alerts.append(
+                        _("{name} : configuré (jail.d) mais non chargé").format(
+                            name=name
+                        )
+                    )
         except Exception:
             pass
 
@@ -494,6 +509,7 @@ class DashboardSnapshotProvider:
         duplicate_groups = []
         try:
             from omega_fire.domain.rules.fingerprint import group_rules
+
             rules = self._rule_repository.find_all() if self._rule_repository else []
             duplicate_groups = [g for g in group_rules(rules) if g.count > 1]
         except Exception:
@@ -504,6 +520,7 @@ class DashboardSnapshotProvider:
             from omega_fire.application.queries.audit_report.anomalies_section import (
                 collect_anomalies,
             )
+
             adapters = dict(self._firewall_ports)
             if self._fail2ban_port is not None:
                 adapters["fail2ban"] = self._fail2ban_port
@@ -521,11 +538,15 @@ class DashboardSnapshotProvider:
 
         parts = []
         if duplicate_groups:
-            parts.append(_("{count} doublon(s) de règle").format(count=len(duplicate_groups)))
+            parts.append(
+                _("{count} doublon(s) de règle").format(count=len(duplicate_groups))
+            )
 
         critical = [a for a in anomalies if getattr(a, "severity", "") == "critical"]
         if critical:
-            parts.append(_("{count} anomalie(s) critique(s)").format(count=len(critical)))
+            parts.append(
+                _("{count} anomalie(s) critique(s)").format(count=len(critical))
+            )
         elif anomalies:
             parts.append(_("{count} anomalie(s)").format(count=len(anomalies)))
 
@@ -592,4 +613,4 @@ class DashboardSnapshotProvider:
 # interfaces/cli/actions.py : action_8_1_live_dashboard(ctx)
 #   ↓ instancie DashboardSnapshotProvider avec les ports/repositories résolus
 # interfaces/cli/renderers/dashboard.py : fw_stats_provider.get_snapshot()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

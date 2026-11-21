@@ -8,28 +8,36 @@ for data transformation.
 
 This is the only module that directly calls nft via subprocess.
 """
-import subprocess
+
 import re
-from typing import Optional, Union, List
+import subprocess
+
+from omega_fire.domain.ip_blacklist.exceptions import (
+    IPAlreadyBannedError,
+    IPNotFoundError,
+)
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.domain.rules.exceptions import PolicyNotFoundError
 from omega_fire.domain.rules.models import FirewallRule, RuleChain
 from omega_fire.domain.rules.presets import FirewallPreset, PresetRule, list_presets
-from omega_fire.domain.rules.exceptions import PolicyNotFoundError
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
-from omega_fire.domain.ip_blacklist.exceptions import IPAlreadyBannedError, IPNotFoundError
-from omega_fire.shared.networking import IPAddress
-from omega_fire.shared.parsing import IPV4_PATTERN, IPV6_PATTERN
-from omega_fire.ports.firewall import FirewallStats
-from omega_fire.infrastructure.backends.nftables.parser import NftParser
-from omega_fire.infrastructure.backends.nftables.serializer import NftSerializer, addr_family_keyword
-from omega_fire.infrastructure.backends.nftables.mapper import NftMapper
 from omega_fire.infrastructure.backends.nftables.exceptions import (
     NftCommandError,
     NftPermissionError,
 )
+from omega_fire.infrastructure.backends.nftables.mapper import NftMapper
+from omega_fire.infrastructure.backends.nftables.parser import NftParser
+from omega_fire.infrastructure.backends.nftables.serializer import (
+    NftSerializer,
+    addr_family_keyword,
+)
+from omega_fire.ports.firewall import FirewallStats
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
+from omega_fire.shared.parsing import IPV4_PATTERN, IPV6_PATTERN
 
-
-_IPTABLES_NFT_WARNING = re.compile(r"table\s+(\S+)\s+(\S+)\s+is managed by iptables-nft")
+_IPTABLES_NFT_WARNING = re.compile(
+    r"table\s+(\S+)\s+(\S+)\s+is managed by iptables-nft"
+)
 
 
 def iptables_nft_tables(text: str) -> set[tuple[str, str]]:
@@ -159,9 +167,36 @@ class NftablesAdapter:
         saddr_kw = "ip6" if set_type == "ipv6_addr" else "ip"
         init_cmds = [
             ["nft", "add", "table", family, table],
-            ["nft", "add", "set", family, table, set_name, f"{{ type {set_type}; flags timeout; }}"],
-            ["nft", "add", "chain", family, table, "input", "{ type filter hook input priority 0; policy accept; }"],
-            ["nft", "add", "rule", family, table, "input", saddr_kw, "saddr", f"@{set_name}", "drop"],
+            [
+                "nft",
+                "add",
+                "set",
+                family,
+                table,
+                set_name,
+                f"{{ type {set_type}; flags timeout; }}",
+            ],
+            [
+                "nft",
+                "add",
+                "chain",
+                family,
+                table,
+                "input",
+                "{ type filter hook input priority 0; policy accept; }",
+            ],
+            [
+                "nft",
+                "add",
+                "rule",
+                family,
+                table,
+                "input",
+                saddr_kw,
+                "saddr",
+                f"@{set_name}",
+                "drop",
+            ],
         ]
         for cmd in init_cmds:
             try:
@@ -181,7 +216,12 @@ class NftablesAdapter:
         init_cmds = [
             ["nft", "add", "table", family, table],
             [
-                "nft", "add", "chain", family, table, chain,
+                "nft",
+                "add",
+                "chain",
+                family,
+                table,
+                chain,
                 f"{{ type filter hook {chain} priority 0; policy accept; }}",
             ],
         ]
@@ -194,7 +234,7 @@ class NftablesAdapter:
 
     def ban_ip(
         self,
-        ip: Union[str, List[str]],
+        ip: str | list[str],
         table: str = "filter",
         family: str = "inet",
         set_name: str = "blackhole",
@@ -216,7 +256,11 @@ class NftablesAdapter:
         for single_ip in ip_list:
             try:
                 cmd = self._serializer.build_ban_command(
-                    ip=single_ip, table=table, family=family, set_name=set_name, comment=comment
+                    ip=single_ip,
+                    table=table,
+                    family=family,
+                    set_name=set_name,
+                    comment=comment,
                 )
                 self._run_command(cmd)
             except NftCommandError as e:
@@ -228,7 +272,7 @@ class NftablesAdapter:
 
     def unban_ip(
         self,
-        ip: Union[str, List[str]],
+        ip: str | list[str],
         table: str = "filter",
         family: str = "inet",
         set_name: str = "blackhole",
@@ -257,7 +301,9 @@ class NftablesAdapter:
 
         return success
 
-    def ban_single_ip(self, ip: IPAddress, *, reason: str = "", timeout_seconds: int | None = None) -> None:
+    def ban_single_ip(
+        self, ip: IPAddress, *, reason: str = "", timeout_seconds: int | None = None
+    ) -> None:
         """Ban a single IP (FirewallPort.ban_ip contract).
 
         Coexists with ban_ip() (batch, bool return) — does not replace it;
@@ -277,7 +323,11 @@ class NftablesAdapter:
         set_type = "ipv6_addr" if ip.version == 6 else "ipv4_addr"
         self._ensure_blackhole_set(set_name=set_name, set_type=set_type)
         cmd = self._serializer.build_ban_command(
-            ip=ip_str, table="filter", family="inet", set_name=set_name, comment=reason,
+            ip=ip_str,
+            table="filter",
+            family="inet",
+            set_name=set_name,
+            comment=reason,
             timeout_seconds=timeout_seconds,
         )
         try:
@@ -287,9 +337,15 @@ class NftablesAdapter:
                 raise
             # Set cree sans `flags timeout` (version ancienne, ou cree a la main) : ban pose sans
             # expiration plutot que pas de ban du tout.
-            self._run_command(self._serializer.build_ban_command(
-                ip=ip_str, table="filter", family="inet", set_name=set_name, comment=reason,
-            ))
+            self._run_command(
+                self._serializer.build_ban_command(
+                    ip=ip_str,
+                    table="filter",
+                    family="inet",
+                    set_name=set_name,
+                    comment=reason,
+                )
+            )
 
     def unban_single_ip(self, ip: IPAddress) -> None:
         """Unban a single IP (FirewallPort.unban_ip contract).
@@ -307,7 +363,10 @@ class NftablesAdapter:
         if not self.is_ip_banned(ip):
             raise IPNotFoundError(ip_str)
         cmd = self._serializer.build_unban_command(
-            ip=ip_str, table="filter", family="inet", set_name=self._blackhole_set_name(ip.version)
+            ip=ip_str,
+            table="filter",
+            family="inet",
+            set_name=self._blackhole_set_name(ip.version),
         )
         self._run_command(cmd)
 
@@ -351,12 +410,13 @@ class NftablesAdapter:
         # exclue, ip6 filter était donc compté deux fois (nftables + ip6tables).
         # Sans avertissement (nft ancien) : ip/filter et ip6/filter, les tables
         # lues par iptables -S et ip6tables -S.
-        compat_tables = iptables_nft_tables(getattr(self, "_last_stderr", "") + "\n" + output)
+        compat_tables = iptables_nft_tables(
+            getattr(self, "_last_stderr", "") + "\n" + output
+        )
         if not compat_tables:
             compat_tables = {("ip", "filter"), ("ip6", "filter")}
         parsed = [
-            p for p in parsed
-            if (p.get("family"), p.get("table")) not in compat_tables
+            p for p in parsed if (p.get("family"), p.get("table")) not in compat_tables
         ]
 
         return self._mapper.map_rules(parsed)
@@ -372,7 +432,7 @@ class NftablesAdapter:
         self,
         table: str = "filter",
         family: str = "inet",
-        set_name: Optional[str] = None,
+        set_name: str | None = None,
     ) -> list[BanEntry]:
         """List all banned IPs from nftables with their comments.
 
@@ -390,7 +450,11 @@ class NftablesAdapter:
         identique à avant ce correctif pour tout système n'ayant jamais
         banni d'IPv6.
         """
-        set_names = [set_name] if set_name is not None else list(self._BLACKHOLE_SET_BY_VERSION.values())
+        set_names = (
+            [set_name]
+            if set_name is not None
+            else list(self._BLACKHOLE_SET_BY_VERSION.values())
+        )
 
         seen_ips: dict[str, str] = {}
         for name in set_names:
@@ -402,7 +466,9 @@ class NftablesAdapter:
 
             matches = self._BAN_ELEMENT_PATTERN.findall(output)
             for ip_addr, comment_text in matches:
-                comment_final = comment_text if comment_text else "Règle active nftables"
+                comment_final = (
+                    comment_text if comment_text else "Règle active nftables"
+                )
                 seen_ips[ip_addr] = comment_final
 
         return [
@@ -449,7 +515,8 @@ class NftablesAdapter:
             return FirewallStats(0, 0, 0, 0, 0)
 
         parsed = [
-            p for p in self._parser.parse_ruleset(output)
+            p
+            for p in self._parser.parse_ruleset(output)
             if not (p.get("family") == "ip" and p.get("table") == "filter")
         ]
 
@@ -457,8 +524,12 @@ class NftablesAdapter:
             total_rules=len(parsed),
             total_packets=sum(p.get("packets", 0) for p in parsed),
             total_bytes=sum(p.get("bytes", 0) for p in parsed),
-            dropped_packets=sum(p.get("packets", 0) for p in parsed if p.get("action") == "drop"),
-            accepted_packets=sum(p.get("packets", 0) for p in parsed if p.get("action") == "accept"),
+            dropped_packets=sum(
+                p.get("packets", 0) for p in parsed if p.get("action") == "drop"
+            ),
+            accepted_packets=sum(
+                p.get("packets", 0) for p in parsed if p.get("action") == "accept"
+            ),
         )
 
     def is_ip_banned(self, ip: IPAddress) -> bool:
@@ -477,7 +548,9 @@ class NftablesAdapter:
         """
         ip_str = str(ip)
         set_name = self._blackhole_set_name(ip.version)
-        return any(b.ip.split("/")[0] == ip_str for b in self.list_bans(set_name=set_name))
+        return any(
+            b.ip.split("/")[0] == ip_str for b in self.list_bans(set_name=set_name)
+        )
 
     def add_rule(
         self,
@@ -485,10 +558,10 @@ class NftablesAdapter:
         table: str,
         chain: str,
         action: str,
-        protocol: Optional[str] = None,
-        port: Optional[str] = None,
-        source: Optional[str] = None,
-        destination: Optional[str] = None,
+        protocol: str | None = None,
+        port: str | None = None,
+        source: str | None = None,
+        destination: str | None = None,
         comment: str = "",
     ) -> bool:
         """Add a firewall rule to nftables.
@@ -576,7 +649,9 @@ class NftablesAdapter:
 
     _BASE_CHAINS = ("input", "output", "forward")
 
-    def chain_exists(self, chain_name: str, family: str = "inet", table: str = "filter") -> bool:
+    def chain_exists(
+        self, chain_name: str, family: str = "inet", table: str = "filter"
+    ) -> bool:
         """Whether a given base chain currently exists.
 
         Utilise par InitializeTablesCommand (menu 3.5.2, "premiere
@@ -618,7 +693,7 @@ class NftablesAdapter:
                 }
             raise
 
-        policies: dict[str, Optional[str]] = {}
+        policies: dict[str, str | None] = {}
         for chain in self._BASE_CHAINS:
             match = re.search(rf"chain {chain} \{{[^}}]*?policy (\w+);", output)
             policies[chain] = match.group(1) if match else None
@@ -737,7 +812,9 @@ class NftablesAdapter:
         try:
             self._run_command(["nft", "flush", "table", "inet", "filter"])
         except NftCommandError as e:
-            if not ("No such file or directory" in str(e) or "does not exist" in str(e)):
+            if not (
+                "No such file or directory" in str(e) or "does not exist" in str(e)
+            ):
                 raise
 
         content = self._strip_ip_filter_table(content)
@@ -783,7 +860,9 @@ class NftablesAdapter:
         except NftCommandError as e:
             # Table pas encore créée (première utilisation) : rien à
             # vider, on continue normalement vers sa création.
-            if not ("No such file or directory" in str(e) or "does not exist" in str(e)):
+            if not (
+                "No such file or directory" in str(e) or "does not exist" in str(e)
+            ):
                 raise
 
         try:
@@ -796,7 +875,12 @@ class NftablesAdapter:
             chain_name = chain_policy.chain.value
             policy_word = chain_policy.default_action.value
             cmd = [
-                "nft", "add", "chain", family, table, chain_name,
+                "nft",
+                "add",
+                "chain",
+                family,
+                table,
+                chain_name,
                 f"{{ type filter hook {chain_name} priority 0; policy {policy_word}; }}",
             ]
             # Une chaîne de base (input/output/forward) peut déjà exister
@@ -822,7 +906,7 @@ class NftablesAdapter:
 
         return True
 
-    def _resolve_policy(self, policy_name: str) -> Optional[FirewallPreset]:
+    def _resolve_policy(self, policy_name: str) -> FirewallPreset | None:
         """Resolve a policy_name against domain.rules.presets.PRESETS.
 
         Matches by exact key ("1"-"9") or exact name, case-insensitive.
@@ -859,10 +943,16 @@ class NftablesAdapter:
         preset = self._resolve_policy(policy_name)
         if preset is None:
             raise PolicyNotFoundError(
-                policy_name, _("aucun profil FirewallPreset ne correspond (domain/rules/presets.py)")
+                policy_name,
+                _(
+                    "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
+                ),
             )
         self.apply_preset(preset)
-        return sum(len(self._build_preset_rule_commands("inet", "filter", r)) for r in preset.rules)
+        return sum(
+            len(self._build_preset_rule_commands("inet", "filter", r))
+            for r in preset.rules
+        )
 
     def set_chain_policy(
         self,
@@ -898,7 +988,12 @@ class NftablesAdapter:
                 raise
 
         cmd = [
-            "nft", "add", "chain", family, table, chain_name,
+            "nft",
+            "add",
+            "chain",
+            family,
+            table,
+            chain_name,
             f"{{ type filter hook {chain_name} priority 0; policy {policy}; }}",
         ]
         try:
@@ -908,7 +1003,9 @@ class NftablesAdapter:
                 raise
         return True
 
-    def _build_preset_rule_commands(self, family: str, table: str, rule: PresetRule) -> list[list[str]]:
+    def _build_preset_rule_commands(
+        self, family: str, table: str, rule: PresetRule
+    ) -> list[list[str]]:
         """Translate a domain PresetRule into one or more nft add-rule commands.
 
         A PresetRule with multiple ports (e.g. ports=[22, 80, 443]) is
@@ -923,7 +1020,7 @@ class NftablesAdapter:
         # Un port à la fois : la liste du profil si elle existe, sinon
         # [None] pour ne construire qu'une seule commande (cas sans
         # port, ex. loopback_only, match_established, ICMP).
-        ports_to_apply: list[Optional[int]] = list(rule.ports) if rule.ports else [None]
+        ports_to_apply: list[int | None] = list(rule.ports) if rule.ports else [None]
 
         commands: list[list[str]] = []
 
@@ -948,15 +1045,20 @@ class NftablesAdapter:
                 cmd.extend([rule.protocol.value, "dport", str(single_port)])
 
             if rule.source_cidr:
-                cmd.extend([addr_family_keyword(rule.source_cidr), "saddr", rule.source_cidr])
+                cmd.extend(
+                    [addr_family_keyword(rule.source_cidr), "saddr", rule.source_cidr]
+                )
 
             if rule.dest_cidr:
-                cmd.extend([addr_family_keyword(rule.dest_cidr), "daddr", rule.dest_cidr])
+                cmd.extend(
+                    [addr_family_keyword(rule.dest_cidr), "daddr", rule.dest_cidr]
+                )
 
             cmd.append(rule.action.value)
             commands.append(cmd)
 
         return commands
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -999,4 +1101,4 @@ class NftablesAdapter:
 # - app/bootstrap.py instanciera cet adapter et l'injectera via les ports
 # - application/commands/create_rule.py utilise add_rule() (menu 3.1)
 # - application/commands/apply_preset.py utilise apply_preset()/dump_ruleset() (menu 3.4)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

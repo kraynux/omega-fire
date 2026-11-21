@@ -10,6 +10,7 @@ run-automations`, qui sauvegarde chaque log dont l'automatisation est arrivee a 
 Difference avec omega-log (decision utilisateur 2026-11-09) : la tache tourne en ROOT, comme omega-fire
 (ses logs sont souvent reserves a root) - timer systemd systeme, sinon ligne de la crontab de root,
 sinon ligne a ajouter soi-meme. Gabarits purs, aucune I/O ici."""
+
 from __future__ import annotations
 
 import shlex
@@ -32,7 +33,9 @@ def is_due(automation: dict, now: datetime) -> bool:
 
 def next_run(automation: dict) -> datetime | None:
     try:
-        reference = datetime.fromisoformat(str(automation.get("last_run_at") or automation["created_at"]))
+        reference = datetime.fromisoformat(
+            str(automation.get("last_run_at") or automation["created_at"])
+        )
         return reference + timedelta(days=int(automation["days_interval"]))
     except (KeyError, TypeError, ValueError):
         return None
@@ -51,6 +54,7 @@ def build_rotation_service_unit(*, python_executable: str, project_root: str) ->
         "[Service]\n"
         "Type=oneshot\n"
         f"WorkingDirectory={project_root}\n"
+        "UMask=0007\n"  # scan de securite 2026-11-21 (F10) : rien de var/ lisible par les autres comptes
         f"ExecStart={rotation_command(python_executable)}\n"
     )
 
@@ -74,15 +78,21 @@ def build_rotation_cron_line(*, python_executable: str, project_root: str) -> st
     """Sortie ajoutee a var/logs/rotation-automations.log : cron n'envoie jamais de courriel pour rien."""
     root = shlex.quote(project_root)
     log = shlex.quote(f"{project_root}/var/logs/rotation-automations.log")
-    return f"45 3 * * * cd {root} && {rotation_command(python_executable)} >> {log} 2>&1  {CRON_MARKER}"
+    # umask 007 : scan de securite 2026-11-21 (F10), comme UMask= du service.
+    return f"45 3 * * * umask 007; cd {root} && {rotation_command(python_executable)} >> {log} 2>&1  {CRON_MARKER}"
 
 
 def without_marked_line(existing_crontab: str) -> list[str]:
     """Lignes de la crontab de root sauf celle d'omega-fire."""
-    return [line for line in existing_crontab.splitlines() if not line.rstrip().endswith(CRON_MARKER)]
+    return [
+        line
+        for line in existing_crontab.splitlines()
+        if not line.rstrip().endswith(CRON_MARKER)
+    ]
 
 
 def render_manual_rotation_instructions(*, cron_line: str) -> str:
-    return _("Aucun planificateur détecté (ni systemd, ni crontab). Ajoutez cette ligne vous-même à votre "
-             "planificateur (crontab -e, /etc/cron.d/, tâche OpenRC ou runit équivalente) :\n\n{cron_line}").format(
-        cron_line=cron_line)
+    return _(
+        "Aucun planificateur détecté (ni systemd, ni crontab). Ajoutez cette ligne vous-même à votre "
+        "planificateur (crontab -e, /etc/cron.d/, tâche OpenRC ou runit équivalente) :\n\n{cron_line}"
+    ).format(cron_line=cron_line)

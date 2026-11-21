@@ -18,13 +18,13 @@ Conforms to Omega-Fire architecture charter:
 - Delegates grouping to domain/rules/fingerprint.py (pure business logic)
 - No dependency on interfaces/
 """
-from dataclasses import dataclass, field
-from typing import Optional
 
-from omega_fire.domain.rules.models import FirewallRule
+from dataclasses import dataclass, field
+
 from omega_fire.domain.rules.fingerprint import RuleGroup, group_rules
-from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
+from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
 
 
@@ -36,6 +36,7 @@ class ExportRulesSummaryRequest:
         origin_filter: "all" | "managed" | "imported"
         active_only: If True, excludes rules with enabled=False
     """
+
     origin_filter: str = "all"
     active_only: bool = False
 
@@ -50,6 +51,7 @@ class ExportRulesSummaryResult:
         groups: Rules grouped by network-similarity fingerprint (HTML export)
         message: Human-readable summary or error
     """
+
     success: bool
     full_list: list[FirewallRule] = field(default_factory=list)
     groups: list[RuleGroup] = field(default_factory=list)
@@ -62,7 +64,9 @@ class ExportRulesSummaryQuery:
     def __init__(self, rule_repository: RuleRepository):
         self._repository = rule_repository
 
-    def execute(self, request: Optional[ExportRulesSummaryRequest] = None) -> ExportRulesSummaryResult:
+    def execute(
+        self, request: ExportRulesSummaryRequest | None = None
+    ) -> ExportRulesSummaryResult:
         request = request or ExportRulesSummaryRequest()
 
         try:
@@ -70,7 +74,9 @@ class ExportRulesSummaryQuery:
         except RepositoryError as e:
             return ExportRulesSummaryResult(
                 success=False,
-                message=_("Erreur technique lors de la lecture des règles : {e}").format(e=e),
+                message=_(
+                    "Erreur technique lors de la lecture des règles : {e}"
+                ).format(e=e),
             )
 
         # --- Filtrage par origine ---
@@ -98,7 +104,9 @@ class ExportRulesSummaryQuery:
             success=True,
             full_list=rules,
             groups=groups,
-            message=_("{count} règle(s) trouvée(s), regroupées en {count2} entrée(s) distincte(s).").format(count=len(rules), count2=len(groups)),
+            message=_(
+                "{count} règle(s) trouvée(s), regroupées en {count2} entrée(s) distincte(s)."
+            ).format(count=len(rules), count2=len(groups)),
         )
 
 
@@ -141,4 +149,4 @@ class ExportRulesSummaryQuery:
 #   ↓ RuleRepository.find_all()
 #   ↓ domain/rules/fingerprint.py : group_rules()
 #   ↓ résultat transmis aux exporters (JsonExporter/TxtExporter/HtmlExporter)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

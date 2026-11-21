@@ -5,6 +5,7 @@ Phase 0) — resolue a l'affichage via `App.get_css_variables()`, la seule
 maniere de convertir un jeton CSS Textual ($status-available) en couleur
 Rich concrete utilisable dans le contenu d'une cellule de DataTable (les
 classes CSS ne s'appliquent qu'au widget entier, jamais par cellule)."""
+
 from __future__ import annotations
 
 from rich.text import Text
@@ -41,5 +42,7 @@ class CapabilitiesTable(DataTable[str]):
         variables = self.app.get_css_variables()
         for cap in sorted(capabilities, key=lambda c: c.id):
             color = variables.get(_STATUS_VARIABLE[cap.status], "")
-            badge = Text(_STATUS_LABELS[cap.status], style=f"bold {color}" if color else "bold")
+            badge = Text(
+                _STATUS_LABELS[cap.status], style=f"bold {color}" if color else "bold"
+            )
             self.add_row(badge, cap.id.upper(), cap.reason or "—", key=cap.id)

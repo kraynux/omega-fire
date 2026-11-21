@@ -2,6 +2,7 @@
 """Modale de choix d'un fichier exporte (version 3.5) : 5.5 y charge une liste d'IPs
 exportee en 5.4 (Top N), 6.1 (blacklist) ou 4.8 (jail). Retourne le chemin choisi, ou
 None (Annuler / echap)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,7 +20,9 @@ from omega_fire.shared.i18n import _
 
 
 class ExportPickerScreen(ModalScreen[Path | None]):
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "back", _("Annuler"), show=True)]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "back", _("Annuler"), show=True)
+    ]
 
     def __init__(self, *, title: str, message: str, files: list[ExportFile]) -> None:
         super().__init__()

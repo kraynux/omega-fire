@@ -14,8 +14,8 @@ Conforms to Omega-Fire architecture charter:
   already resolved by the caller)
 - No subprocess calls
 """
-from dataclasses import dataclass, field
-from typing import Optional
+
+from dataclasses import dataclass
 
 from omega_fire.infrastructure.storage.files.json_store import JsonStore, JsonStoreError
 from omega_fire.shared.i18n import _
@@ -36,6 +36,7 @@ HISTORY_LIMIT = 5
 @dataclass
 class LiveTailPinResult:
     """Output of an add/remove operation on pins or history."""
+
     success: bool
     message: str = ""
 
@@ -61,13 +62,15 @@ class ManageLiveTailPinsCommand:
     def __init__(
         self,
         json_store: JsonStore,
-        defaults: Optional[dict[str, str]] = None,
+        defaults: dict[str, str] | None = None,
         custom_relative_path: str = CUSTOM_PINS_RELATIVE_PATH,
         disabled_relative_path: str = DISABLED_PINS_RELATIVE_PATH,
         history_relative_path: str = HISTORY_RELATIVE_PATH,
     ):
         self._store = json_store
-        self._defaults = dict(defaults if defaults is not None else DEFAULT_LIVE_TAIL_PINS)
+        self._defaults = dict(
+            defaults if defaults is not None else DEFAULT_LIVE_TAIL_PINS
+        )
         self._custom_path = custom_relative_path
         self._disabled_path = disabled_relative_path
         self._history_path = history_relative_path
@@ -139,7 +142,9 @@ class ManageLiveTailPinsCommand:
             disabled.remove(name)
             self._store.save(self._disabled_path, disabled)
 
-        return LiveTailPinResult(success=True, message=_("Épingle '{name}' ajoutée.").format(name=name))
+        return LiveTailPinResult(
+            success=True, message=_("Épingle '{name}' ajoutée.").format(name=name)
+        )
 
     def remove_pinned(self, name: str) -> LiveTailPinResult:
         """Remove a pin by name — deletes it from custom pins if
@@ -158,8 +163,13 @@ class ManageLiveTailPinsCommand:
             self._store.save(self._disabled_path, disabled)
 
         if not was_custom and name not in self._defaults:
-            return LiveTailPinResult(success=False, message=_("'{name}' n'est pas une épingle connue.").format(name=name))
-        return LiveTailPinResult(success=True, message=_("Épingle '{name}' supprimée.").format(name=name))
+            return LiveTailPinResult(
+                success=False,
+                message=_("'{name}' n'est pas une épingle connue.").format(name=name),
+            )
+        return LiveTailPinResult(
+            success=True, message=_("Épingle '{name}' supprimée.").format(name=name)
+        )
 
     def record_history(self, path: str) -> None:
         """Insert a path at the front of history, deduplicated, capped."""
@@ -172,10 +182,14 @@ class ManageLiveTailPinsCommand:
     def remove_history_entry(self, path: str) -> LiveTailPinResult:
         history = self._load_list(self._history_path)
         if path not in history:
-            return LiveTailPinResult(success=False, message=_("Entrée d'historique introuvable."))
+            return LiveTailPinResult(
+                success=False, message=_("Entrée d'historique introuvable.")
+            )
         history.remove(path)
         self._store.save(self._history_path, history)
-        return LiveTailPinResult(success=True, message=_("Entrée d'historique supprimée."))
+        return LiveTailPinResult(
+            success=True, message=_("Entrée d'historique supprimée.")
+        )
 
     def purge_all(self) -> None:
         """Reset to factory state: deletes custom pins, disabled
@@ -183,7 +197,11 @@ class ManageLiveTailPinsCommand:
         them); no confirmation here — the caller (interfaces/) owns
         any user confirmation prompt.
         """
-        for relative_path in (self._custom_path, self._disabled_path, self._history_path):
+        for relative_path in (
+            self._custom_path,
+            self._disabled_path,
+            self._history_path,
+        ):
             self._store.delete(relative_path)
 
 
@@ -223,4 +241,4 @@ class ManageLiveTailPinsCommand:
 # interfaces/cli/actions.py : action_5_1_live_tail(ctx), sous-menu [G]
 # application/commands/manage_live_tail_pins.py : ManageLiveTailPinsCommand
 #   ↓ JsonStore (infrastructure/storage/files/json_store.py), base_dir=var/runtime/
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

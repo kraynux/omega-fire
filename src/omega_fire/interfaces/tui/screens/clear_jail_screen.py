@@ -8,6 +8,7 @@ get_jail_status()/flush_jail() (fail2ban-client, jusqu'a 10s de timeout
 chacun) s'executent en arriere-plan (run_blocking, voir _base.py) —
 synchrones dans __init__/le handler de confirmation, ils gelaient TOUTE
 l'app (retour utilisateur reel, mode degrade)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -41,12 +42,20 @@ class ClearJailScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-form-panel"):
             yield Static(_("VIDER LES IPs D'UN JAIL"), classes="omega-title")
-            yield Static(_("Chargement des jails..."), id="status-hint", classes="omega-hint")
-            yield Static(_("Jail"), id="jail-label", classes="omega-subtitle omega-hidden")
-            yield Select([], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Chargement des jails..."), id="status-hint", classes="omega-hint"
+            )
+            yield Static(
+                _("Jail"), id="jail-label", classes="omega-subtitle omega-hidden"
+            )
+            yield Select(
+                [], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner")
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Vider"), id="launch", variant="error", disabled=True)
+                    yield Button(
+                        _("Vider"), id="launch", variant="error", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
@@ -60,7 +69,9 @@ class ClearJailScreen(OmegaScreen):
             status = get_jail_status(fail2ban_port=fail2ban_port)
             return fail2ban_port, {j.name: j.banned_count for j in status.jails}
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            _fetch, self._on_loaded, busy_message=_("Chargement des jails...")
+        )
 
     def _on_loaded(self, result) -> None:
         fail2ban_port, jails = result
@@ -68,14 +79,26 @@ class ClearJailScreen(OmegaScreen):
         self._jails = jails
 
         if not jails:
-            self.query_one("#status-hint", Static).update(_("Impossible de communiquer avec le service Fail2ban."))
+            self.query_one("#status-hint", Static).update(
+                _("Impossible de communiquer avec le service Fail2ban.")
+            )
             return
 
         self.query_one("#status-hint", Static).set_class(True, "omega-hidden")
         self.query_one("#jail-label", Static).set_class(False, "omega-hidden")
         jail_select = self.query_one("#jail-select", Select)
         jail_select.set_class(False, "omega-hidden")
-        jail_select.set_options([(_("{name} ({count} IP(s) bannie(s))").format(name=name, count=count), name) for name, count in jails.items()])
+        jail_select.set_options(
+            [
+                (
+                    _("{name} ({count} IP(s) bannie(s))").format(
+                        name=name, count=count
+                    ),
+                    name,
+                )
+                for name, count in jails.items()
+            ]
+        )
         jail_select.value = next(iter(jails))
         self.query_one("#launch", Button).disabled = False
 
@@ -89,13 +112,20 @@ class ClearJailScreen(OmegaScreen):
         jail_name = str(self.query_one("#jail-select", Select).value)
         ip_count = self._jails.get(jail_name, 0)
         if ip_count == 0:
-            self.app.notify(_("Le jail '{jail_name}' est déjà totalement vide.").format(jail_name=jail_name), severity="information")
+            self.app.notify(
+                _("Le jail '{jail_name}' est déjà totalement vide.").format(
+                    jail_name=jail_name
+                ),
+                severity="information",
+            )
             return
 
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LE VIDAGE"),
-                message=_("Débannir {ip_count} IP(s) du jail '{jail_name}' ?").format(ip_count=ip_count, jail_name=jail_name),
+                message=_("Débannir {ip_count} IP(s) du jail '{jail_name}' ?").format(
+                    ip_count=ip_count, jail_name=jail_name
+                ),
             ),
             lambda confirmed: self._clear_if_confirmed(confirmed, jail_name),
         )
@@ -108,12 +138,30 @@ class ClearJailScreen(OmegaScreen):
             return self._fail2ban_port.flush_jail(jail_name)
 
         def _on_done(unbanned_count: int) -> None:
-            self.app.notify(_("Jail '{jail_name}' totalement vide ({unbanned_count} IP(s) retirée(s)).").format(jail_name=jail_name, unbanned_count=unbanned_count))
+            self.app.notify(
+                _(
+                    "Jail '{jail_name}' totalement vide ({unbanned_count} IP(s) retirée(s))."
+                ).format(jail_name=jail_name, unbanned_count=unbanned_count)
+            )
             log_action_result(self._container, _ACTION_TITLE, status="success")
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(_("Échec du vidage du jail '{jail_name}' : {error}").format(jail_name=jail_name, error=error), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
+            self.app.notify(
+                _("Échec du vidage du jail '{jail_name}' : {error}").format(
+                    jail_name=jail_name, error=error
+                ),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(error)
+            )
 
-        self.run_blocking(_execute, _on_done, busy_message=_("Vidage du jail '{jail_name}'...").format(jail_name=jail_name), on_error=_on_error)
+        self.run_blocking(
+            _execute,
+            _on_done,
+            busy_message=_("Vidage du jail '{jail_name}'...").format(
+                jail_name=jail_name
+            ),
+            on_error=_on_error,
+        )

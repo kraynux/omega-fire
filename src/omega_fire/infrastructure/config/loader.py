@@ -8,98 +8,99 @@ for accessing configuration values.
 This module performs file I/O to load configuration and is therefore
 in infrastructure/.
 """
+
 from pathlib import Path
-from typing import Optional
-from omega_fire.infrastructure.config.settings import AppSettings, load_settings
+
 from omega_fire.infrastructure.config.paths import AppPaths
+from omega_fire.infrastructure.config.settings import AppSettings, load_settings
 from omega_fire.shared.i18n import _
 
 
 class ConfigLoader:
     """Loads and manages application configuration."""
-    
+
     def __init__(
         self,
-        base_dir: Optional[Path] = None,
-        env_file: Optional[Path] = None,
+        base_dir: Path | None = None,
+        env_file: Path | None = None,
     ):
         """Initialize the configuration loader.
-        
+
         Args:
             base_dir: Base directory of the application
             env_file: Optional path to .env file
         """
         self._base_dir = base_dir or Path.cwd()
         self._env_file = env_file
-        self._settings: Optional[AppSettings] = None
-        self._paths: Optional[AppPaths] = None
-    
+        self._settings: AppSettings | None = None
+        self._paths: AppPaths | None = None
+
     def load(self) -> AppSettings:
         """Load configuration from all sources.
-        
+
         Returns:
             AppSettings instance
         """
         if self._settings is not None:
             return self._settings
-        
+
         # Determine .env file path
         env_file = self._env_file
         if env_file is None:
             default_env = self._base_dir / ".env"
             if default_env.exists():
                 env_file = default_env
-        
+
         # Load settings
         self._settings = load_settings(
             env_file=env_file,
             base_dir=self._base_dir,
         )
-        
+
         # Initialize paths
         self._paths = self._settings.paths
-        
+
         return self._settings
-    
+
     def get_settings(self) -> AppSettings:
         """Get the loaded settings.
-        
+
         Returns:
             AppSettings instance
-        
+
         Raises:
             RuntimeError: If settings haven't been loaded yet
         """
         if self._settings is None:
             raise RuntimeError(_("Réglages non chargés : appeler load() d'abord."))
         return self._settings
-    
+
     def get_paths(self) -> AppPaths:
         """Get the application paths.
-        
+
         Returns:
             AppPaths instance
-        
+
         Raises:
             RuntimeError: If settings haven't been loaded yet
         """
         if self._paths is None:
             raise RuntimeError(_("Chemins non chargés : appeler load() d'abord."))
         return self._paths
-    
+
     def reload(self) -> AppSettings:
         """Reload configuration from all sources.
-        
+
         Returns:
             Fresh AppSettings instance
         """
         self._settings = None
         self._paths = None
         return self.load()
-    
+
     def is_loaded(self) -> bool:
         """Check if configuration has been loaded.
-        
+
         Returns:
             True if settings are loaded
         """
@@ -107,15 +108,15 @@ class ConfigLoader:
 
 
 def load_config(
-    base_dir: Optional[Path] = None,
-    env_file: Optional[Path] = None,
+    base_dir: Path | None = None,
+    env_file: Path | None = None,
 ) -> AppSettings:
     """Convenience function to load configuration.
-    
+
     Args:
         base_dir: Optional base directory
         env_file: Optional path to .env file
-    
+
     Returns:
         AppSettings instance
     """
@@ -149,4 +150,4 @@ def load_config(
 #   ctx.container.scanner.scan() pour recharger la configuration — pas
 #   de commande application/ dédiée (même mécanisme que le menu 1.3)
 # - Les tests mockeront les fichiers de configuration
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

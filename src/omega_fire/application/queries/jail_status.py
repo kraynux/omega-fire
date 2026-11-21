@@ -14,10 +14,11 @@ Conforms to Omega-Fire architecture charter:
 - Returns formatted string for UI display
 - No dependency on interfaces/ or infrastructure/ directly
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
 
 from omega_fire.ports.fail2ban import JailInfo
 from omega_fire.shared.i18n import _
@@ -36,7 +37,8 @@ class JailStatusResult:
         total_banned_ips: Total banned IPs across all jails.
         message: Human-readable summary.
     """
-    jails: List[JailInfo]
+
+    jails: list[JailInfo]
     total_jails: int
     active_jails: int
     inactive_jails: int
@@ -45,7 +47,7 @@ class JailStatusResult:
 
 
 def get_jail_status(
-    fail2ban_port: Optional[Any] = None,
+    fail2ban_port: Any | None = None,
 ) -> JailStatusResult:
     """4.1 (et Phase 2 du Menu 4) : récupère l'état de tous les jails Fail2ban.
 
@@ -71,7 +73,9 @@ def get_jail_status(
             active_jails=0,
             inactive_jails=0,
             total_banned_ips=0,
-            message=_("⚠️ Port Fail2banPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
+            message=_(
+                "⚠️ Port Fail2banPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."
+            ),
         )
 
     try:
@@ -96,7 +100,9 @@ def get_jail_status(
             active_jails=active,
             inactive_jails=inactive,
             total_banned_ips=total_banned,
-            message=_("{count} jail(s) détecté(s), {active} actif(s), {total_banned} IP(s) bannie(s).").format(count=len(jails), active=active, total_banned=total_banned),
+            message=_(
+                "{count} jail(s) détecté(s), {active} actif(s), {total_banned} IP(s) bannie(s)."
+            ).format(count=len(jails), active=active, total_banned=total_banned),
         )
 
     except Exception as e:
@@ -154,4 +160,4 @@ def get_jail_status(
 #   ↓
 # Retourne JailStatusResult → consommé directement (JailInfo réel) par
 # l'appelant, qui gère lui-même son propre rendu (interfaces/)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

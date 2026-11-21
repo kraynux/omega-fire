@@ -5,44 +5,45 @@ Provides system detection capabilities for Omega-Fire.
 This package contains probes for commands, services, and kernel modules,
 along with the scanner that orchestrates them and populates the capability registry.
 """
-from omega_fire.infrastructure.probe.command_probe import (
-    CommandProbe,
-    probe_command,
-    is_command_available,
-)
-from omega_fire.infrastructure.probe.service_probe import (
-    ServiceProbe,
-    probe_service,
-    is_service_active,
-)
-from omega_fire.infrastructure.probe.kernel_probe import (
-    KernelProbe,
-    probe_kernel,
-    is_nftables_supported,
-    is_iptables_supported,
-)
-from omega_fire.infrastructure.probe.scanner import (
-    SystemScanner,
-    scan_system,
-)
+
 from omega_fire.infrastructure.probe.capability_mapper import (
     CapabilityMapper,
     map_command_to_capability,
     map_service_to_capability,
 )
+from omega_fire.infrastructure.probe.command_probe import (
+    CommandProbe,
+    is_command_available,
+    probe_command,
+)
 from omega_fire.infrastructure.probe.exceptions import (
+    CapabilityMappingError,
     ProbeError,
     ProbeExecutionError,
     ProbeTimeoutError,
-    CapabilityMappingError,
     ScannerError,
 )
+from omega_fire.infrastructure.probe.kernel_probe import (
+    KernelProbe,
+    is_iptables_supported,
+    is_nftables_supported,
+    probe_kernel,
+)
 from omega_fire.infrastructure.probe.results import (
-    ProbeResult,
     CommandProbeResult,
-    ServiceProbeResult,
     KernelProbeResult,
+    ProbeResult,
     ScanResult,
+    ServiceProbeResult,
+)
+from omega_fire.infrastructure.probe.scanner import (
+    SystemScanner,
+    scan_system,
+)
+from omega_fire.infrastructure.probe.service_probe import (
+    ServiceProbe,
+    is_service_active,
+    probe_service,
 )
 
 __all__ = [
@@ -105,4 +106,4 @@ __all__ = [
 # - app/bootstrap.py importera scan_system pour initialiser le registre
 # - Les tests importeront les probes individuellement
 # - interfaces/cli/actions.py importera scan_system pour le re-scan manuel
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

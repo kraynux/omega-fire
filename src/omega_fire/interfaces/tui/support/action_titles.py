@@ -15,6 +15,7 @@ L'historique garde le titre tel qu'il a ete ecrit - en francais, et relu par le 
 3. sinon, titre deja traduit dans une autre langue (8.3/8.4 ecrivaient le titre traduit
    avant le 2026-10-28) : on retrouve la phrase source dans les catalogues ;
 4. sinon : affiche tel quel."""
+
 from __future__ import annotations
 
 import re
@@ -23,7 +24,7 @@ from collections.abc import Callable, Iterable, Mapping
 
 from omega_fire.shared.i18n import _
 
-_NUMBERED = re.compile(r"^(\d+(?:\.\d+)*)\s+(.+)$", re.S)
+_NUMBERED = re.compile(r"^(\d+(?:\.\d+)*)\s+(.+)$", re.DOTALL)
 
 
 def _normalized(text: str) -> str:
@@ -49,10 +50,16 @@ class ActionTitleTranslator:
         source, pour les titres courts ecrits par les ecrans ou par --legacy-cli
         (« Rotation & Backup Logs » -> « Rotation / Backup des logs »)."""
         self._menu_labels = dict(menu_labels)
-        self._renumbered = {number: tuple(labels) for number, labels in (renumbered or {}).items()}
-        known = list(self._menu_labels.values()) + [l for ls in self._renumbered.values() for l in ls]
+        self._renumbered = {
+            number: tuple(labels) for number, labels in (renumbered or {}).items()
+        }
+        known = list(self._menu_labels.values()) + [
+            l for ls in self._renumbered.values() for l in ls
+        ]
         self._label_of = {_normalized(label): label for label in known}
-        self._label_of.update({_normalized(alias): label for alias, label in (aliases or {}).items()})
+        self._label_of.update(
+            {_normalized(alias): label for alias, label in (aliases or {}).items()}
+        )
         self._catalog_codes = catalog_codes
         self._catalog_phrases = catalog_phrases
         self._sources: set[str] | None = None
@@ -78,8 +85,10 @@ class ActionTitleTranslator:
         if numbered:
             number, text = numbered.group(1), numbered.group(2)
             current = self._menu_labels.get(number)
-            if current is not None and (number not in self._renumbered
-                                        or _normalized(text) == _normalized(current)):
+            if current is not None and (
+                number not in self._renumbered
+                or _normalized(text) == _normalized(current)
+            ):
                 return f"{number} {_(current)}"
             label = self._label_of.get(_normalized(text))
             if label is not None:
@@ -88,6 +97,12 @@ class ActionTitleTranslator:
         return _(source) if source is not None else stored
 
 
-def menu_labels_by_action(sections: Mapping[str, tuple[str, Iterable]]) -> dict[str, str]:
+def menu_labels_by_action(
+    sections: Mapping[str, tuple[str, Iterable]],
+) -> dict[str, str]:
     """Numero d'action -> libelle source, depuis section_registry.SECTIONS."""
-    return {item.action_id: item.label for _title, items in sections.values() for item in items}
+    return {
+        item.action_id: item.label
+        for _title, items in sections.values()
+        for item in items
+    }

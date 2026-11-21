@@ -3,6 +3,7 @@
 dans l'ordre des menus), fiche detaillee avec ses liens « Voir aussi », FAQ, export HTML
 de tout le guide avec la FAQ (theme au choix), ou de la FAQ seule. Ouvert par le bouton « 10. AIDE » de l'accueil et depuis
 l'aide generique ; la touche `a` reste l'aide de l'ecran courant."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -71,13 +72,19 @@ class GuideMenuScreen(OmegaScreen):
         with Vertical(classes="omega-panel"):
             yield Static(_("GUIDE D'AIDE"), classes="omega-title")
             yield Static(
-                _("Toutes les fiches d'aide d'Omega-Fire, dans l'ordre des menus. Entrée : ouvrir la "
-                  "fiche. Depuis n'importe quel écran, la touche `a` ouvre la fiche de cet écran."),
+                _(
+                    "Toutes les fiches d'aide d'Omega-Fire, dans l'ordre des menus. Entrée : ouvrir la "
+                    "fiche. Depuis n'importe quel écran, la touche `a` ouvre la fiche de cet écran."
+                ),
                 classes="omega-hint",
             )
             with Horizontal(id="guide-export", classes="omega-actions"):
-                yield Select([(label, name) for name, label in _HTML_THEMES.items()], value="omega-base",
-                             id="guide-theme", allow_blank=False)
+                yield Select(
+                    [(label, name) for name, label in _HTML_THEMES.items()],
+                    value="omega-base",
+                    id="guide-theme",
+                    allow_blank=False,
+                )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Exporter le guide en HTML"), id="export-html")
             yield DataTable(id="guide-table")
@@ -119,14 +126,25 @@ class GuideMenuScreen(OmegaScreen):
         elif event.button.id == "open":
             self._open_highlighted()
         elif event.button.id == "export-html":
-            export_guide_html(self, self._container, str(self.query_one("#guide-theme", Select).value))
+            export_guide_html(
+                self, self._container, str(self.query_one("#guide-theme", Select).value)
+            )
         elif event.button.id == "faq":
-            self.app.push_screen(FaqScreen(container=self._container,
-                                           theme_name=str(self.query_one("#guide-theme", Select).value)))
+            self.app.push_screen(
+                FaqScreen(
+                    container=self._container,
+                    theme_name=str(self.query_one("#guide-theme", Select).value),
+                )
+            )
 
 
-def export_guide_html(screen: OmegaScreen, container: DependencyContainer, theme_name: str,
-                      *, faq_only: bool = False) -> None:
+def export_guide_html(
+    screen: OmegaScreen,
+    container: DependencyContainer,
+    theme_name: str,
+    *,
+    faq_only: bool = False,
+) -> None:
     """Guide complet (fiches + FAQ) ou FAQ seule, dans le dossier d'exports (visible en 6.6),
     dans la « Langue des exports » des Reglages comme les autres exports (retour utilisateur
     2026-10-28 : guide et FAQ sortaient toujours dans la langue de l'interface)."""
@@ -138,27 +156,45 @@ def export_guide_html(screen: OmegaScreen, container: DependencyContainer, theme
     def write() -> None:
         with translating_as(export_state):
             # Fiches, titres et FAQ reconstruits ICI, sous la langue des exports.
-            context = guide_html_context([] if faq_only else guide_pages(), theme_name,
-                                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"), faq=faq_entries(),
-                                         faq_only=faq_only)
-            container.get_exporter_port("html").export_data(context, path, template_name="guide.html.j2")
+            context = guide_html_context(
+                [] if faq_only else guide_pages(),
+                theme_name,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                faq=faq_entries(),
+                faq_only=faq_only,
+            )
+            container.get_exporter_port("html").export_data(
+                context, path, template_name="guide.html.j2"
+            )
 
     def done(_result: None) -> None:
-        message = _("FAQ exportée : {path} (visible en 6.6).") if faq_only else \
-            _("Guide exporté : {path} (visible en 6.6).")
+        message = (
+            _("FAQ exportée : {path} (visible en 6.6).")
+            if faq_only
+            else _("Guide exporté : {path} (visible en 6.6).")
+        )
         screen.app.notify(message.format(path=path), timeout=8)
         log_action_result(container, _ACTION_TITLE, status="success")
 
     def failed(error: Exception) -> None:
-        screen.app.notify(_("Erreur lors de l'écriture du fichier d'export : {e}").format(e=error),
-                          severity="error")
+        screen.app.notify(
+            _("Erreur lors de l'écriture du fichier d'export : {e}").format(e=error),
+            severity="error",
+        )
         log_action_result(container, _ACTION_TITLE, status="failure", error=str(error))
 
-    screen.run_blocking(write, done, busy_message=_("Export du guide en cours..."), on_error=failed)
+    screen.run_blocking(
+        write, done, busy_message=_("Export du guide en cours..."), on_error=failed
+    )
 
 
-def guide_html_context(pages: list[GuidePage], theme_name: str, generated_at: str,
-                       faq: tuple[FaqEntry, ...] = (), faq_only: bool = False) -> dict:
+def guide_html_context(
+    pages: list[GuidePage],
+    theme_name: str,
+    generated_at: str,
+    faq: tuple[FaqEntry, ...] = (),
+    faq_only: bool = False,
+) -> dict:
     """Donnees du modele guide.html.j2 : sections dans l'ordre, fiches avec leurs rubriques,
     puis la FAQ groupee par categorie (ordre de redaction)."""
     sections: list[dict] = []
@@ -166,25 +202,39 @@ def guide_html_context(pages: list[GuidePage], theme_name: str, generated_at: st
         if not sections or sections[-1]["title"] != page.section:
             sections.append({"title": page.section, "pages": []})
         entry = page.entry
-        sections[-1]["pages"].append({
-            "anchor": "p-" + page.page_id.replace(".", "-"),
-            "title": page.title,
-            "summary": _(entry.summary) if entry else page.text,
-            "usage": [_(text) for text in entry.usage] if entry else [],
-            "consequences": [_(text) for text in entry.consequences] if entry else [],
-            "warnings": [_(text) for text in entry.warnings] if entry else [],
-            "mechanism": _(entry.mechanism) if entry and entry.mechanism else "",
-            "see_also": [("p-" + ref.replace(".", "-"), ref) for ref in (entry.see_also if entry else [])],
-            "lines": list(page.lines),
-        })
+        sections[-1]["pages"].append(
+            {
+                "anchor": "p-" + page.page_id.replace(".", "-"),
+                "title": page.title,
+                "summary": _(entry.summary) if entry else page.text,
+                "usage": [_(text) for text in entry.usage] if entry else [],
+                "consequences": [_(text) for text in entry.consequences]
+                if entry
+                else [],
+                "warnings": [_(text) for text in entry.warnings] if entry else [],
+                "mechanism": _(entry.mechanism) if entry and entry.mechanism else "",
+                "see_also": [
+                    ("p-" + ref.replace(".", "-"), ref)
+                    for ref in (entry.see_also if entry else [])
+                ],
+                "lines": list(page.lines),
+            }
+        )
     faq_groups: list[dict] = []
     for index, item in enumerate(faq):
         if not faq_groups or faq_groups[-1]["title"] != item.category:
             faq_groups.append({"title": item.category, "entries": []})
-        faq_groups[-1]["entries"].append({"anchor": f"faq-{index + 1}", "question": item.question,
-                                          "answer": item.answer})
+        faq_groups[-1]["entries"].append(
+            {
+                "anchor": f"faq-{index + 1}",
+                "question": item.question,
+                "answer": item.answer,
+            }
+        )
     return {
-        "page_title": _("FAQ - Omega-Fire") if faq_only else _("Guide d'aide - Omega-Fire"),
+        "page_title": _("FAQ - Omega-Fire")
+        if faq_only
+        else _("Guide d'aide - Omega-Fire"),
         "heading": _("FAQ Omega-Fire") if faq_only else _("Guide d'aide Omega-Fire"),
         "faq_title": _("FAQ"),
         "faq_groups": faq_groups,
@@ -192,8 +242,11 @@ def guide_html_context(pages: list[GuidePage], theme_name: str, generated_at: st
         "theme_name": theme_name,
         "sections": sections,
         "labels": {
-            "contents": _("Sommaire"), "usage": _("Comment l'utiliser"),
-            "consequences": _("Conséquences"), "warnings": _("À savoir"), "see_also": _("Voir aussi"),
+            "contents": _("Sommaire"),
+            "usage": _("Comment l'utiliser"),
+            "consequences": _("Conséquences"),
+            "warnings": _("À savoir"),
+            "see_also": _("Voir aussi"),
         },
     }
 
@@ -210,7 +263,9 @@ class GuideDetailScreen(OmegaScreen):
     }
     """
 
-    def __init__(self, page: GuidePage, *, pages: list[GuidePage] | None = None) -> None:
+    def __init__(
+        self, page: GuidePage, *, pages: list[GuidePage] | None = None
+    ) -> None:
         super().__init__()
         self._page = page
         self._pages = pages or guide_pages()
@@ -223,11 +278,18 @@ class GuideDetailScreen(OmegaScreen):
             yield Static(page.section, classes="omega-hint")
             yield Static("")
             yield Static(page_body(page))
-        links = [ref for ref in (page.entry.see_also if page.entry else []) if page_by_id(ref, self._pages)]
+        links = [
+            ref
+            for ref in (page.entry.see_also if page.entry else [])
+            if page_by_id(ref, self._pages)
+        ]
         with Horizontal(classes="omega-actions", id="guide-detail-actions"):
             for ref in links:
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Voir {ref}").format(ref=ref), id=f"see-{ref.replace('.', '-')}")
+                    yield Button(
+                        _("Voir {ref}").format(ref=ref),
+                        id=f"see-{ref.replace('.', '-')}",
+                    )
             with Container(classes="omega-btn-frame"):
                 yield Button(_("Retour"), id="back")
         yield Footer()
@@ -237,7 +299,9 @@ class GuideDetailScreen(OmegaScreen):
         if button_id == "back":
             self.dismiss()
         elif button_id.startswith("see-"):
-            target = page_by_id(button_id.removeprefix("see-").replace("-", "."), self._pages)
+            target = page_by_id(
+                button_id.removeprefix("see-").replace("-", "."), self._pages
+            )
             if target is not None:
                 self.app.push_screen(GuideDetailScreen(target, pages=self._pages))
 
@@ -254,7 +318,9 @@ class FaqScreen(OmegaScreen):
     }
     """
 
-    def __init__(self, *, container: DependencyContainer, theme_name: str = "omega-base") -> None:
+    def __init__(
+        self, *, container: DependencyContainer, theme_name: str = "omega-base"
+    ) -> None:
         super().__init__()
         self._container = container
         self._theme_name = theme_name

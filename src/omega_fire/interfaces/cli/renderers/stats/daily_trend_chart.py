@@ -9,6 +9,7 @@ to a smaller number of data points (7 days, or ~4-5 weekly buckets).
 This module performs no calculation — it receives already-aggregated
 (label, count) pairs and only renders them.
 """
+
 from rich.panel import Panel
 from rich.text import Text
 
@@ -117,4 +118,4 @@ def render_daily_trend_chart(
 #   la section correspondante à partir des mêmes données
 # - interfaces/cli/actions.py (8.3/8.4) appellera ce renderer directement
 #   pour l'affichage CLI (indépendamment du chemin d'export HTML)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

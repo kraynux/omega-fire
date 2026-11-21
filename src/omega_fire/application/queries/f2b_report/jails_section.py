@@ -21,6 +21,7 @@ reste par-jail, faute d'alternative : "currently failed"/"total
 failed" ne sont exposés nulle part ailleurs (état vivant du
 FailManager de fail2ban, jamais persisté).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -75,7 +76,9 @@ def collect_jails_detail(
         recent_bans: list[RecentBan] = []
         if history_available:
             try:
-                raw_bans = history_reader.get_recent_bans(info.name, limit=MAX_RECENT_BANS)
+                raw_bans = history_reader.get_recent_bans(
+                    info.name, limit=MAX_RECENT_BANS
+                )
                 recent_bans = [
                     RecentBan(
                         ip=b["ip"],
@@ -88,20 +91,22 @@ def collect_jails_detail(
             except Exception:
                 recent_bans = []
 
-        details.append(JailDetail(
-            name=info.name,
-            currently_failed=status.get("currently_failed", 0),
-            total_failed=status.get("total_failed", 0),
-            currently_banned=info.banned_count,
-            total_banned=status.get("total_banned", 0),
-            maxretry=str(info.max_retry),
-            bantime=str(info.ban_time),
-            findtime=str(info.find_time),
-            banned_ips=displayed_ips,
-            banned_ips_overflow=overflow,
-            recent_bans=recent_bans,
-            history_available=history_available,
-        ))
+        details.append(
+            JailDetail(
+                name=info.name,
+                currently_failed=status.get("currently_failed", 0),
+                total_failed=status.get("total_failed", 0),
+                currently_banned=info.banned_count,
+                total_banned=status.get("total_banned", 0),
+                maxretry=str(info.max_retry),
+                bantime=str(info.ban_time),
+                findtime=str(info.find_time),
+                banned_ips=displayed_ips,
+                banned_ips_overflow=overflow,
+                recent_bans=recent_bans,
+                history_available=history_available,
+            )
+        )
 
     return details
 
@@ -130,4 +135,4 @@ def collect_jails_detail(
 # Comment il sera utilisé :
 # - report_builder.py appelle collect_jails_detail() pour peupler
 #   F2bReportData.jails.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

@@ -5,6 +5,7 @@ Phase 0 de la feuille de route : couleurs de statut de capacite et
 d'identite de backend, sans equivalent generique dans omega_lib.theme).
 Seul fichier, avec le reste de interfaces/tui/, autorise a combiner
 donnees de theme et API Textual. Porte depuis omega-check (D-008)."""
+
 from __future__ import annotations
 
 from omega_lib.theme.policies import TUI_THEMES, ThemeDefinition

@@ -126,6 +126,7 @@ Zunifikowana czarna lista pozwala pracować z nftables i iptables z jednego ekra
 ### 3. Zarządzanie regułami i politykami
 
 - Kreator krok po kroku do tworzenia zaawansowanej reguły.
+- Otwarcie portu na żądanie omega-serv (`port ouvrir`): port TCP otwarty tylko z podanych sieci, na każdej wykrytej zaporze (łącznie z ufw i firewalld), zapisany jak reguła z menu 3.1.
 - Lista reguł systemowych i reguł utworzonych przez Omega-Fire.
 - Usuwanie reguły przez zaznaczenie.
 - Automatyczne czyszczenie nieaktywnych reguł w bazie referencyjnej.
@@ -495,6 +496,10 @@ Aby zamiast tego uruchomić stary interfejs Rich (sekwencyjne wpisywanie numeró
 ### Kontakt i wsparcie
 
 Pomoc (klawisz `a`) oferuje ekran **Kontakt i wsparcie**: *Postaw kawę* (strona PayPal dewelopera), *Skontaktuj się ze wsparciem* (adres e-mail i formularz kontaktowy strony, wyświetlane jawnie), *Zgłoś mnie jako użytkownika (anonimowo)* oraz *Sprawdź aktualizacje*. Zgłoszenie jest dobrowolne, domyślnie wyłączone i wysyłane tylko raz: służy wyłącznie do liczenia użytkowników oraz, jeśli tego chcesz, ich kontynentu lub kraju (zamknięte listy, nigdy dowolny tekst). Wysyła losowo wygenerowany klucz, nazwę programu (`omega-fire`) i jego wersję; nigdy imienia i nazwiska, nazwy maszyny, ustawienia, celu ani wyniku. Adres IP nie jest zapisywany w zgłoszeniach, ale — jak przy każdej wizycie — przechodzi przez kontrole bezpieczeństwa i dziennik serwera odbiorczego. Wycofanie w dowolnym momencie z tego samego ekranu (*Nie zgłaszaj mnie więcej*). Sprawdzanie aktualizacji odczytuje jedynie listę wersji opublikowanych na stronie, i nigdy bez kliknięcia.
+
+### Powiązania z innymi narzędziami omega
+
+Omega-Fire odpowiada na kilka poleceń bez interfejsu, wywoływanych przez inne narzędzia pakietu. `./omega-fire.sh synchro jeton` i `./omega-fire.sh synchro fiche --format json` opisują instalację i jej możliwości (zapora, Fail2Ban, Biblioteka logów), bez sudo. `./omega-fire.sh port ouvrir` otwiera port TCP z określonych sieci dla administracji webowej omega-serv: jedna reguła na sieć i na wykrytą zaporę, dodana także do ufw lub firewalld, jeśli są aktywne, zapisana jak reguła z menu 3.1 i odnotowana w dzienniku audytu. Pętla zwrotna nigdy nie jest otwierana, a istniejąca już reguła nie jest dodawana drugi raz. omega-serv wywołuje to polecenie tylko wtedy, gdy oba narzędzia są zapisane w tej samej strefie omega-connect; sudo jest wymagane tak jak dla interfejsu. Gdy strefa omega-connect istnieje, każda blokada lub jej zdjęcie nałożone przez samo omega-fire w zaporze (nftables, iptables, ip6tables) trafia do dziennika blokad strefy, czytanego przez inne narzędzia omega; `./omega-fire.sh synchro bans` ponownie uzgadnia go z zaporą (wymaga sudo). Blokady z jaili Fail2Ban zapisuje tam akcja instalowana przez omega-jail.
 
 ### Ogólny przebieg
 

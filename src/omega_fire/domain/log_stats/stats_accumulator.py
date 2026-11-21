@@ -8,6 +8,7 @@ exactement le meme resultat qu'une lecture d'un bloc.
 
 Sert le rapport de Statistiques (`to_report`) et le top IP de « Voir et traiter IP » (`top_ips`).
 Pur domaine, aucune I/O."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -82,7 +83,15 @@ class StatsAccumulator:
         self.total += other.total
         self.error_level += other.error_level
         self.hourly = [mine + theirs for mine, theirs in zip(self.hourly, other.hourly)]
-        for name in ("per_day", "statuses", "ips", "ip_errors", "paths", "path_errors", "not_found"):
+        for name in (
+            "per_day",
+            "statuses",
+            "ips",
+            "ip_errors",
+            "paths",
+            "path_errors",
+            "not_found",
+        ):
             getattr(self, name).update(getattr(other, name))
         self.bytes_total += other.bytes_total
         self.has_size = self.has_size or other.has_size
@@ -103,9 +112,14 @@ class StatsAccumulator:
         report.peak_hour, report.peak_count = peak, self.hourly[peak]
 
         report.first_day, report.last_day = min(self.per_day), max(self.per_day)
-        start = max(report.first_day, report.last_day - timedelta(days=MAX_TREND_DAYS - 1))
+        start = max(
+            report.first_day, report.last_day - timedelta(days=MAX_TREND_DAYS - 1)
+        )
         report.daily = [
-            ((start + timedelta(days=offset)).isoformat(), self.per_day.get(start + timedelta(days=offset), 0))
+            (
+                (start + timedelta(days=offset)).isoformat(),
+                self.per_day.get(start + timedelta(days=offset), 0),
+            )
             for offset in range((report.last_day - start).days + 1)
         ]
 
@@ -113,10 +127,18 @@ class StatsAccumulator:
         if report.http_total:
             for group in STATUS_GROUPS:
                 first = int(group[0]) * 100
-                report.statuses[group] = sum(n for status, n in self.statuses.items() if first <= status < first + 100)
+                report.statuses[group] = sum(
+                    n
+                    for status, n in self.statuses.items()
+                    if first <= status < first + 100
+                )
             report.statuses["403"] = self.statuses.get(403, 0)
             report.statuses["429"] = self.statuses.get(429, 0)
-            report.error_rate = (report.statuses["4xx"] + report.statuses["5xx"]) / report.http_total * 100
+            report.error_rate = (
+                (report.statuses["4xx"] + report.statuses["5xx"])
+                / report.http_total
+                * 100
+            )
         else:
             report.error_rate = self.error_level / self.total * 100
 
@@ -130,14 +152,25 @@ class StatsAccumulator:
     def top_ips(self, n: int = 10) -> list[TopIP]:
         """Meme forme et meme ordre que `analytics.compute_top_ips` (ecran « Voir et traiter IP »)."""
         return [
-            TopIP(ip=ip, count=count, first_seen=self.ip_first.get(ip), last_seen=self.ip_last.get(ip),
-                  services=sorted(self.ip_services.get(ip, set())), http_errors=self.ip_errors.get(ip, 0))
-            for ip, count in sorted(self.ips.items(), key=lambda item: (-item[1], item[0]))[:n]
+            TopIP(
+                ip=ip,
+                count=count,
+                first_seen=self.ip_first.get(ip),
+                last_seen=self.ip_last.get(ip),
+                services=sorted(self.ip_services.get(ip, set())),
+                http_errors=self.ip_errors.get(ip, 0),
+            )
+            for ip, count in sorted(
+                self.ips.items(), key=lambda item: (-item[1], item[0])
+            )[:n]
         ]
 
 
 def _ranked(counts: Counter[str], errors: Counter[str], size: int) -> list[RankedItem]:
-    return [RankedItem(value, count, errors.get(value, 0)) for value, count in counts.most_common(size)]
+    return [
+        RankedItem(value, count, errors.get(value, 0))
+        for value, count in counts.most_common(size)
+    ]
 
 
 def accumulate(entries: list[LogEntry]) -> StatsAccumulator:

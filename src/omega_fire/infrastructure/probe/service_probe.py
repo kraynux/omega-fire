@@ -8,49 +8,53 @@ adapter to query service status.
 This module performs real system I/O (service manager queries) and is
 therefore in infrastructure/.
 """
-from typing import Optional
+
 from omega_fire.core.enums import ServiceManagerType
-from omega_fire.infrastructure.backends.service_manager.detector import ServiceManagerDetector
 from omega_fire.infrastructure.backends.service_manager.adapter import ServiceManager
-from omega_fire.infrastructure.backends.service_manager.systemd import SystemdServiceManager
-from omega_fire.infrastructure.backends.service_manager.openrc import OpenRCServiceManager
-from omega_fire.infrastructure.backends.service_manager.runit import RunitServiceManager
+from omega_fire.infrastructure.backends.service_manager.detector import (
+    ServiceManagerDetector,
+)
 from omega_fire.infrastructure.backends.service_manager.exceptions import (
     NoServiceManagerDetectedError,
     ServiceNotFoundError,
-    ServiceStatusError,
 )
-from omega_fire.infrastructure.probe.exceptions import ProbeExecutionError
+from omega_fire.infrastructure.backends.service_manager.openrc import (
+    OpenRCServiceManager,
+)
+from omega_fire.infrastructure.backends.service_manager.runit import RunitServiceManager
+from omega_fire.infrastructure.backends.service_manager.systemd import (
+    SystemdServiceManager,
+)
 from omega_fire.shared.i18n import N_, lazy
 
 
 class ServiceProbe:
     """Probes the presence and status of system services.
-    
+
     Uses the detected service manager to query service status.
     Automatically selects the appropriate adapter based on the
     detected service manager type.
     """
-    
+
     def __init__(self):
         """Initialize the service probe."""
         self._detector = ServiceManagerDetector()
-        self._manager: Optional[ServiceManager] = None
-    
+        self._manager: ServiceManager | None = None
+
     def _get_manager(self) -> ServiceManager:
         """Get the appropriate service manager adapter.
-        
+
         Returns:
             ServiceManager instance for the detected manager type
-        
+
         Raises:
             NoServiceManagerDetectedError: If no service manager is detected
         """
         if self._manager is not None:
             return self._manager
-        
+
         detected_type = self._detector.detect()
-        
+
         if detected_type == ServiceManagerType.SYSTEMD:
             self._manager = SystemdServiceManager()
         elif detected_type == ServiceManagerType.OPENRC:
@@ -59,15 +63,15 @@ class ServiceProbe:
             self._manager = RunitServiceManager()
         else:
             raise NoServiceManagerDetectedError()
-        
+
         return self._manager
-    
+
     def check_service_status(self, service_name: str) -> dict:
         """Check the status of a service.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             Dictionary with service status:
             - available: bool (service manager available)
@@ -79,20 +83,24 @@ class ServiceProbe:
         """
         try:
             manager = self._get_manager()
-            
+
             # Check if service exists
             try:
                 status = manager.status(service_name)
-                
+
                 return {
                     "available": True,
                     "exists": True,
                     "active": status.active,
                     "enabled": status.enabled,
                     "state": status.state,
-                    "message": lazy(N_("Service « {service_name} » : {state}"), service_name=service_name, state=status.state),
+                    "message": lazy(
+                        N_("Service « {service_name} » : {state}"),
+                        service_name=service_name,
+                        state=status.state,
+                    ),
                 }
-            
+
             except ServiceNotFoundError:
                 return {
                     "available": True,
@@ -100,9 +108,12 @@ class ServiceProbe:
                     "active": False,
                     "enabled": False,
                     "state": "not_found",
-                    "message": lazy(N_("Service « {service_name} » introuvable"), service_name=service_name),
+                    "message": lazy(
+                        N_("Service « {service_name} » introuvable"),
+                        service_name=service_name,
+                    ),
                 }
-        
+
         except NoServiceManagerDetectedError:
             return {
                 "available": False,
@@ -112,7 +123,7 @@ class ServiceProbe:
                 "state": "no_manager",
                 "message": lazy(N_("Aucun gestionnaire de services détecté")),
             }
-        
+
         except Exception as e:
             return {
                 "available": False,
@@ -122,13 +133,13 @@ class ServiceProbe:
                 "state": "error",
                 "message": lazy(N_("Erreur de la sonde de service : {e}"), e=e),
             }
-    
+
     def is_service_active(self, service_name: str) -> bool:
         """Check if a service is currently active.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is active
         """
@@ -137,13 +148,13 @@ class ServiceProbe:
             return manager.is_active(service_name)
         except (NoServiceManagerDetectedError, ServiceNotFoundError):
             return False
-    
+
     def is_service_enabled(self, service_name: str) -> bool:
         """Check if a service is enabled at boot.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is enabled
         """
@@ -152,24 +163,24 @@ class ServiceProbe:
             return manager.is_enabled(service_name)
         except (NoServiceManagerDetectedError, ServiceNotFoundError):
             return False
-    
+
     def probe_service(self, service_name: str) -> dict:
         """Probe a service and return detailed results.
-        
+
         This is an alias for check_service_status() for consistency
         with other probe methods.
-        
+
         Args:
             service_name: Name of the service to probe
-        
+
         Returns:
             Dictionary with probe results
         """
         return self.check_service_status(service_name)
-    
-    def get_detected_manager_type(self) -> Optional[ServiceManagerType]:
+
+    def get_detected_manager_type(self) -> ServiceManagerType | None:
         """Get the detected service manager type.
-        
+
         Returns:
             ServiceManagerType if detected, None otherwise
         """
@@ -178,10 +189,10 @@ class ServiceProbe:
 
 def probe_service(service_name: str) -> dict:
     """Convenience function to probe a service.
-    
+
     Args:
         service_name: Name of the service to probe
-    
+
     Returns:
         Dictionary with probe results
     """
@@ -191,10 +202,10 @@ def probe_service(service_name: str) -> dict:
 
 def is_service_active(service_name: str) -> bool:
     """Check if a service is currently active.
-    
+
     Args:
         service_name: Name of the service to check
-    
+
     Returns:
         True if the service is active
     """
@@ -238,4 +249,4 @@ def is_service_active(service_name: str) -> bool:
 # - infrastructure/probe/scanner.py l'utilisera pour tester fail2ban, nftables, etc.
 # - infrastructure/probe/capability_mapper.py transformera les résultats en Capability
 # - Les tests mockeront ServiceManager pour simuler différents états de service
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

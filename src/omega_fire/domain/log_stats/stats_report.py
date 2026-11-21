@@ -10,6 +10,7 @@ Pur domaine : calcule depuis des LogEntry deja lus. Aucune valeur inventee : le 
 vaut None si le log ne donne pas de taille, les statuts et les chemins restent vides hors log HTTP. Taux
 d'erreur = meme definition que le viewer Simple (4xx+5xx parmi les lignes HTTP, sinon lignes de niveau
 erreur)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -53,7 +54,9 @@ class StatsReport:
     top_not_found: list[RankedItem] = field(default_factory=list)
 
 
-def build_stats_report(entries: list[LogEntry], *, top_size: int = TOP_SIZE) -> StatsReport:
+def build_stats_report(
+    entries: list[LogEntry], *, top_size: int = TOP_SIZE
+) -> StatsReport:
     """Rapport d'une liste de lignes deja lues - calcule par l'accumulateur en flux (stats_accumulator.py),
     seul endroit ou ce calcul est ecrit."""
     from omega_fire.domain.log_stats.stats_accumulator import accumulate

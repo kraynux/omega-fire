@@ -26,14 +26,17 @@ adapter call) and which was never wired into the real application flow
 project-wide decision to use this simpler direct-call pattern instead,
 already applied to menus 5.4/5.5/5.6, 3.1, 3.2, 3.4.
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class BanIpRequest:
     """Input for the ban IP use case."""
+
     backend: str
     ips: list[str]
     comment: str = ""
@@ -42,6 +45,7 @@ class BanIpRequest:
 @dataclass
 class BanIpResult:
     """Output of the ban IP use case."""
+
     backend: str
     banned: list[str] = field(default_factory=list)
     already_banned: list[str] = field(default_factory=list)
@@ -52,13 +56,17 @@ class BanIpResult:
         """True if at least one IP was newly banned, or nothing needed
         banning (already fully up to date) — False only if every
         attempted IP failed."""
-        return len(self.errors) == 0 or len(self.banned) > 0 or len(self.already_banned) > 0
+        return (
+            len(self.errors) == 0
+            or len(self.banned) > 0
+            or len(self.already_banned) > 0
+        )
 
 
 class BanIpCommand:
     """Use case: ban a set of IPs on one backend, skipping duplicates."""
 
-    def __init__(self, firewall_adapter: Optional[Any], ban_repository: Optional[Any] = None):
+    def __init__(self, firewall_adapter: Any | None, ban_repository: Any | None = None):
         """Initialize the command.
 
         Args:
@@ -83,7 +91,14 @@ class BanIpCommand:
 
         if self._adapter is None:
             for ip in request.ips:
-                result.errors.append((ip, _("Backend '{backend}' indisponible.").format(backend=request.backend)))
+                result.errors.append(
+                    (
+                        ip,
+                        _("Backend '{backend}' indisponible.").format(
+                            backend=request.backend
+                        ),
+                    )
+                )
             return result
 
         current_ips = self._list_current_ips()
@@ -100,7 +115,9 @@ class BanIpCommand:
                     current_ips.add(ip)
                     self._persist_ban(ip, request.backend, request.comment)
                 else:
-                    result.errors.append((ip, _("Le backend a refusé le bannissement.")))
+                    result.errors.append(
+                        (ip, _("Le backend a refusé le bannissement."))
+                    )
             except Exception as e:
                 error_text = str(e)
                 if "File exists" in error_text or "already exists" in error_text:
@@ -115,12 +132,15 @@ class BanIpCommand:
             return
         try:
             from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource
-            self._ban_repository.save(BanEntry(
-                ip=ip,
-                backend=backend,
-                comment=comment,
-                source=BanSource.MANUAL,
-            ))
+
+            self._ban_repository.save(
+                BanEntry(
+                    ip=ip,
+                    backend=backend,
+                    comment=comment,
+                    source=BanSource.MANUAL,
+                )
+            )
         except Exception:
             pass
 
@@ -136,7 +156,11 @@ class BanIpCommand:
                 raw_bans = self._adapter.list_banned_ips()
 
             for item in raw_bans:
-                ip = item.get("ip") if isinstance(item, dict) else getattr(item, "ip", None)
+                ip = (
+                    item.get("ip")
+                    if isinstance(item, dict)
+                    else getattr(item, "ip", None)
+                )
                 if ip:
                     current.add(str(ip).split("/")[0].strip())
         except Exception:
@@ -189,4 +213,4 @@ class BanIpCommand:
 # interfaces/cli/actions.py : action_2_1_ban_ip / action_2_2_ban_list
 # application/commands/ban_ip_all_backends.py : BanIpToAllBackendsCommand
 #   ↓ pour chaque backend ciblé : BanIpCommand(...).execute()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

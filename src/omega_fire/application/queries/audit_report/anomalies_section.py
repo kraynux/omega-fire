@@ -6,12 +6,13 @@ Each check is independent and defensively wrapped — a failure in one
 check (e.g. an adapter unavailable) never prevents the others from
 running or crashes the whole report.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.queries.audit_report.models import Anomaly
+from omega_fire.core.enums import CapabilityStatus
 from omega_fire.shared.i18n import _
 
 # Sous-ensemble de infrastructure/probe/known_services.py::KNOWN_SERVICES
@@ -32,17 +33,23 @@ def _check_rules_enabled_without_ref(rule_repository: Any) -> list[Anomaly]:
 
     for rule in rules:
         if getattr(rule, "enabled", False) and not getattr(rule, "external_ref", None):
-            anomalies.append(Anomaly(
-                category=_("Règles"),
-                description=(
-                    _("Règle #{value} marquée active mais jamais appliquée au noyau (external_ref manquant).").format(value=getattr(rule, 'id', '?'))
-                ),
-                severity="warning",
-            ))
+            anomalies.append(
+                Anomaly(
+                    category=_("Règles"),
+                    description=(
+                        _(
+                            "Règle #{value} marquée active mais jamais appliquée au noyau (external_ref manquant)."
+                        ).format(value=getattr(rule, "id", "?"))
+                    ),
+                    severity="warning",
+                )
+            )
     return anomalies
 
 
-def _check_rules_missing_from_live(rule_repository: Any, adapters: dict[str, Any]) -> list[Anomaly]:
+def _check_rules_missing_from_live(
+    rule_repository: Any, adapters: dict[str, Any]
+) -> list[Anomaly]:
     """Check 2: rule with external_ref set, but no longer present in the
     live backend state (removed outside the app, e.g. manually)."""
     anomalies: list[Anomaly] = []
@@ -58,7 +65,8 @@ def _check_rules_missing_from_live(rule_repository: Any, adapters: dict[str, Any
         try:
             live_rules = adapter.list_rules()
             live_refs_by_backend[backend] = {
-                str(getattr(r, "external_ref", "")) for r in live_rules
+                str(getattr(r, "external_ref", ""))
+                for r in live_rules
                 if getattr(r, "external_ref", None)
             }
         except Exception:
@@ -70,13 +78,17 @@ def _check_rules_missing_from_live(rule_repository: Any, adapters: dict[str, Any
         if not ref or backend not in live_refs_by_backend:
             continue
         if str(ref) not in live_refs_by_backend[backend]:
-            anomalies.append(Anomaly(
-                category=_("Règles"),
-                description=(
-                    _("Règle #{value} ({backend}) référencée en base mais absente du noyau — retirée manuellement ?").format(value=getattr(rule, 'id', '?'), backend=backend)
-                ),
-                severity="critical",
-            ))
+            anomalies.append(
+                Anomaly(
+                    category=_("Règles"),
+                    description=(
+                        _(
+                            "Règle #{value} ({backend}) référencée en base mais absente du noyau — retirée manuellement ?"
+                        ).format(value=getattr(rule, "id", "?"), backend=backend)
+                    ),
+                    severity="critical",
+                )
+            )
     return anomalies
 
 
@@ -90,21 +102,29 @@ def _check_fail2ban_consistency(registry: Any) -> list[Anomaly]:
     service = registry.get("fail2ban_service")
 
     if (
-        client and client.status == CapabilityStatus.AVAILABLE
-        and service and service.status != CapabilityStatus.AVAILABLE
+        client
+        and client.status == CapabilityStatus.AVAILABLE
+        and service
+        and service.status != CapabilityStatus.AVAILABLE
     ):
-        anomalies.append(Anomaly(
-            category=_("Fail2ban"),
-            description=(
-                _("fail2ban-client est installé, mais le service fail2ban "
-                "n'est pas actif — les jails configurées ne sont pas appliquées.")
-            ),
-            severity="critical",
-        ))
+        anomalies.append(
+            Anomaly(
+                category=_("Fail2ban"),
+                description=(
+                    _(
+                        "fail2ban-client est installé, mais le service fail2ban "
+                        "n'est pas actif — les jails configurées ne sont pas appliquées."
+                    )
+                ),
+                severity="critical",
+            )
+        )
     return anomalies
 
 
-def _check_bans_missing_from_live(ban_repository: Any, adapters: dict[str, Any]) -> list[Anomaly]:
+def _check_bans_missing_from_live(
+    ban_repository: Any, adapters: dict[str, Any]
+) -> list[Anomaly]:
     """Check 4: ban marked active in the database, but not found in the
     live backend (removed outside the app)."""
     anomalies: list[Anomaly] = []
@@ -126,7 +146,11 @@ def _check_bans_missing_from_live(ban_repository: Any, adapters: dict[str, Any])
                 continue
             ips = set()
             for item in live_bans:
-                ip = item.get("ip") if isinstance(item, dict) else getattr(item, "ip", None)
+                ip = (
+                    item.get("ip")
+                    if isinstance(item, dict)
+                    else getattr(item, "ip", None)
+                )
                 if ip:
                     ips.add(str(ip).split("/")[0].strip())
             live_ips_by_backend[backend] = ips
@@ -139,17 +163,23 @@ def _check_bans_missing_from_live(ban_repository: Any, adapters: dict[str, Any])
         if not ip or backend not in live_ips_by_backend:
             continue
         if ip not in live_ips_by_backend[backend]:
-            anomalies.append(Anomaly(
-                category=_("Bans"),
-                description=(
-                    _("IP {ip} marquée bannie en base ({backend}) mais absente du live — levée manuellement ?").format(ip=ip, backend=backend)
-                ),
-                severity="warning",
-            ))
+            anomalies.append(
+                Anomaly(
+                    category=_("Bans"),
+                    description=(
+                        _(
+                            "IP {ip} marquée bannie en base ({backend}) mais absente du live — levée manuellement ?"
+                        ).format(ip=ip, backend=backend)
+                    ),
+                    severity="warning",
+                )
+            )
     return anomalies
 
 
-def _check_unused_backends(registry: Any, rule_repository: Any, ban_repository: Any) -> list[Anomaly]:
+def _check_unused_backends(
+    registry: Any, rule_repository: Any, ban_repository: Any
+) -> list[Anomaly]:
     """Check 5: a backend is AVAILABLE but has no rule and no ban
     referencing it — detected but never actually used."""
     anomalies: list[Anomaly] = []
@@ -165,18 +195,28 @@ def _check_unused_backends(registry: Any, rule_repository: Any, ban_repository: 
     except Exception:
         bans = []
 
-    used_backends = {getattr(r, "backend", None) for r in rules} | {getattr(b, "backend", None) for b in bans}
+    used_backends = {getattr(r, "backend", None) for r in rules} | {
+        getattr(b, "backend", None) for b in bans
+    }
 
     for backend_id in ("nftables", "iptables", "ip6tables"):
         cap = registry.get(backend_id)
-        if cap and cap.status == CapabilityStatus.AVAILABLE and backend_id not in used_backends:
-            anomalies.append(Anomaly(
-                category=_("Backends"),
-                description=(
-                    _("Backend '{backend_id}' détecté disponible mais jamais utilisé (aucune règle, aucun ban).").format(backend_id=backend_id)
-                ),
-                severity="warning",
-            ))
+        if (
+            cap
+            and cap.status == CapabilityStatus.AVAILABLE
+            and backend_id not in used_backends
+        ):
+            anomalies.append(
+                Anomaly(
+                    category=_("Backends"),
+                    description=(
+                        _(
+                            "Backend '{backend_id}' détecté disponible mais jamais utilisé (aucune règle, aucun ban)."
+                        ).format(backend_id=backend_id)
+                    ),
+                    severity="warning",
+                )
+            )
     return anomalies
 
 
@@ -196,20 +236,26 @@ def _check_conflicting_firewall_tools(registry: Any) -> list[Anomaly]:
 
     if active_tools:
         tools_str = ", ".join(active_tools)
-        anomalies.append(Anomaly(
-            category=_("Sécurité réseau"),
-            description=(
-                _("Outil(s) de gestion de pare-feu détecté(s) en parallèle d'Omega-Fire : {tools_str}. Risque de conflit ou d'écrasement de règles — envisager de n'en garder qu'un seul.").format(tools_str=tools_str)
-            ),
-            severity="warning",
-        ))
+        anomalies.append(
+            Anomaly(
+                category=_("Sécurité réseau"),
+                description=(
+                    _(
+                        "Outil(s) de gestion de pare-feu détecté(s) en parallèle d'Omega-Fire : {tools_str}. Risque de conflit ou d'écrasement de règles — envisager de n'en garder qu'un seul."
+                    ).format(tools_str=tools_str)
+                ),
+                severity="warning",
+            )
+        )
     return anomalies
+
 
 def _aggregate_anomalies(anomalies: list[Anomaly]) -> list[Anomaly]:
     """Group anomalies with identical (category, description-pattern)
     into a single entry with a count, to avoid dozens of near-duplicate
     lines for systemic issues (e.g. many rules with the same problem)."""
     import re
+
     grouped: dict[tuple[str, str], Anomaly] = {}
 
     for a in anomalies:
@@ -226,6 +272,7 @@ def _aggregate_anomalies(anomalies: list[Anomaly]) -> list[Anomaly]:
             )
 
     return list(grouped.values())
+
 
 def collect_anomalies(
     rule_repository: Any,
@@ -284,4 +331,4 @@ def collect_anomalies(
 # Comment il sera utilisé :
 # - report_builder.py (application/queries/audit_report/report_builder.py)
 #   appelle collect_anomalies() pour peupler AuditReportData.anomalies.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

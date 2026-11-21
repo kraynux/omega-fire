@@ -3,6 +3,7 @@
 chargement d'une liste d'IPs en 5.5. Parcourt le dossier d'exports (Reglages -> Exports,
 var/exports/ par defaut) et, dans var/blocklist/, les seuls exports de 6.1
 (export-blacklist*) — jamais les blocklists de travail elles-memes."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -30,7 +31,7 @@ VIEWABLE_SUFFIXES = (".json", ".txt", ".html", ".htm", ".csv", ".log")
 @dataclass(frozen=True)
 class ExportFile:
     path: Path
-    kind: str          # cle de _KINDS, "other" sinon
+    kind: str  # cle de _KINDS, "other" sinon
     size: int
     mtime: float
 
@@ -61,11 +62,15 @@ def _scan(directory: Path, only_prefix: str | None = None) -> list[ExportFile]:
             stat = entry.stat()
         except OSError:
             continue
-        found.append(ExportFile(entry, export_kind(entry.name), stat.st_size, stat.st_mtime))
+        found.append(
+            ExportFile(entry, export_kind(entry.name), stat.st_size, stat.st_mtime)
+        )
     return found
 
 
-def list_exports(exports_dir: Path, blocklist_dir: Path | None = None) -> list[ExportFile]:
+def list_exports(
+    exports_dir: Path, blocklist_dir: Path | None = None
+) -> list[ExportFile]:
     """Plus recents d'abord."""
     files = _scan(exports_dir)
     if blocklist_dir is not None and blocklist_dir.resolve() != exports_dir.resolve():
@@ -73,10 +78,15 @@ def list_exports(exports_dir: Path, blocklist_dir: Path | None = None) -> list[E
     return sorted(files, key=lambda f: f.mtime, reverse=True)
 
 
-def ip_list_exports(exports_dir: Path, blocklist_dir: Path | None = None) -> list[ExportFile]:
+def ip_list_exports(
+    exports_dir: Path, blocklist_dir: Path | None = None
+) -> list[ExportFile]:
     """Exports qui contiennent une liste d'IPs (5.5) : Top N d'abord, puis blacklist et
     jails ; les plus recents d'abord dans chaque groupe."""
     order = {"top_ips": 0, "blacklist": 1, "jail": 2}
-    files = [f for f in list_exports(exports_dir, blocklist_dir)
-             if f.kind in order and f.path.suffix.lower() in (".json", ".txt", ".html")]
+    files = [
+        f
+        for f in list_exports(exports_dir, blocklist_dir)
+        if f.kind in order and f.path.suffix.lower() in (".json", ".txt", ".html")
+    ]
     return sorted(files, key=lambda f: (order[f.kind], -f.mtime))

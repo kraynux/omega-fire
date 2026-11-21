@@ -32,4 +32,4 @@
 # - Les éléments du pipeline seront importés depuis ce package
 # - Les modules application/pipeline/* seront consommés sans exposition forcée ici
 # - Les tests vérifieront que le package est importable sans effet de bord
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

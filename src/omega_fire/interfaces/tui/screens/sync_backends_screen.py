@@ -2,6 +2,7 @@
 """Ecran 2.6 — Synchroniser les backends NFt-IPt. Patron #2 (formulaire
 court, un seul champ). Logique identique a
 interfaces/cli/actions.py::action_2_6_sync_backends."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -74,20 +75,42 @@ class SyncBackendsScreen(OmegaScreen):
             except Exception:
                 adapters[name] = None
 
-        result = SyncBackendsCommand(adapters=adapters).execute(target_backends=target_backends)
+        result = SyncBackendsCommand(adapters=adapters).execute(
+            target_backends=target_backends
+        )
 
         for outcome in result.outcomes:
             for err in outcome.errors:
-                self.app.notify(_("Échec pour {err}").format(err=err), title=outcome.backend, severity="error")
+                self.app.notify(
+                    _("Échec pour {err}").format(err=err),
+                    title=outcome.backend,
+                    severity="error",
+                )
             if outcome.added_count > 0:
-                self.app.notify(_("{added_count} IP(s) manquante(s) ajoutée(s).").format(added_count=outcome.added_count), title=outcome.backend, severity="information")
+                self.app.notify(
+                    _("{added_count} IP(s) manquante(s) ajoutée(s).").format(
+                        added_count=outcome.added_count
+                    ),
+                    title=outcome.backend,
+                    severity="information",
+                )
             elif not outcome.errors:
-                self.app.notify(_("Déjà à jour (0 IP à ajouter)."), title=outcome.backend, severity="information")
+                self.app.notify(
+                    _("Déjà à jour (0 IP à ajouter)."),
+                    title=outcome.backend,
+                    severity="information",
+                )
 
         if result.total_added == 0:
-            self.app.notify(_("Tous les backends cibles étaient déjà parfaitement synchronisés."))
+            self.app.notify(
+                _("Tous les backends cibles étaient déjà parfaitement synchronisés.")
+            )
         else:
-            self.app.notify(_("Synchronisation terminée : {total_added} IP(s) au total realignees.").format(total_added=result.total_added))
+            self.app.notify(
+                _(
+                    "Synchronisation terminée : {total_added} IP(s) au total realignees."
+                ).format(total_added=result.total_added)
+            )
 
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

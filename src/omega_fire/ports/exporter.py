@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -12,6 +12,7 @@ from typing import Any, Protocol
 
 class ExportFormat(str, Enum):
     """Format d'export supporté."""
+
     JSON = "json"
     TXT = "txt"
     HTML = "html"
@@ -27,6 +28,7 @@ class ExportResult:
         size_bytes: taille du fichier en octets.
         record_count: nombre d'enregistrements exportés.
     """
+
     path: Path
     format: ExportFormat
     size_bytes: int
@@ -86,6 +88,7 @@ class ExporterPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour les exporteurs de rapports.
@@ -118,4 +121,4 @@ class ExporterPort(Protocol):
 # - infrastructure/exporters/txt_exporter.py implémentera ExporterPort
 # - infrastructure/exporters/html_exporter.py implémentera ExporterPort
 # - interfaces/cli/actions.py proposera les formats via list_supported_formats()
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

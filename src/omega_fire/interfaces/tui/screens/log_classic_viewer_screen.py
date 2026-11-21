@@ -3,6 +3,7 @@
 log, puis suivi en direct a la demande. Repris d'omega-serv (`LogViewerScreen`, refonte du
 2026-10-15) ; lecture depuis la fin du fichier (infrastructure/logs/tail_reader.py) au lieu
 du fichier entier."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -49,7 +50,10 @@ class LogClassicViewerScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static(_("LECTEUR CLASSIQUE — {path}").format(path=self._path), classes="omega-title")
+            yield Static(
+                _("LECTEUR CLASSIQUE — {path}").format(path=self._path),
+                classes="omega-title",
+            )
             yield Static("", id="viewer-error", classes="omega-hint")
             yield RichLog(id="log-content", wrap=False, highlight=False, markup=False)
         with Horizontal(classes="omega-actions", id="viewer-actions"):
@@ -80,22 +84,32 @@ class LogClassicViewerScreen(OmegaScreen):
             error_widget.update(_("Fichier introuvable : {path}").format(path=path))
             return
         except OSError as exc:
-            error_widget.update(_("Impossible de lire {path} : {exc}").format(path=path, exc=exc))
+            error_widget.update(
+                _("Impossible de lire {path} : {exc}").format(path=path, exc=exc)
+            )
             return
-        error_widget.update(_("Fichier vide.") if not lines else _("{count} dernière(s) ligne(s).").format(count=len(lines)))
+        error_widget.update(
+            _("Fichier vide.")
+            if not lines
+            else _("{count} dernière(s) ligne(s).").format(count=len(lines))
+        )
         for line in lines:
             log_widget.write(line)
 
     def _toggle_follow(self) -> None:
         if self._tail_reader is None:
-            self.query_one("#viewer-error", Static).update(_("Aucun fichier valide à suivre."))
+            self.query_one("#viewer-error", Static).update(
+                _("Aucun fichier valide à suivre.")
+            )
             return
         if self._following:
             self._stop_following()
         else:
             self._following = True
             self.query_one("#follow", Button).label = _("Arrêter le suivi")
-            self._timer = self.set_interval(_TAIL_INTERVAL_SECONDS, self._poll_new_lines)
+            self._timer = self.set_interval(
+                _TAIL_INTERVAL_SECONDS, self._poll_new_lines
+            )
 
     def _stop_following(self) -> None:
         self._following = False
@@ -115,7 +129,9 @@ class LogClassicViewerScreen(OmegaScreen):
         try:
             new_lines = self._tail_reader.read_new_lines()
         except OSError as exc:
-            self.query_one("#log-content", RichLog).write(_("(suivi interrompu : {exc})").format(exc=exc))
+            self.query_one("#log-content", RichLog).write(
+                _("(suivi interrompu : {exc})").format(exc=exc)
+            )
             self._stop_following()
             return
         log_widget = self.query_one("#log-content", RichLog)

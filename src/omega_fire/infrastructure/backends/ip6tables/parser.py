@@ -4,8 +4,8 @@
 Parses the output of ip6tables commands (ip6tables -L, ip6tables -S, etc.)
 into structured data. Handles both the verbose (-L -n -v) and save (-S) formats.
 """
+
 import re
-from typing import Optional
 
 
 class Ip6tParser:
@@ -29,7 +29,7 @@ class Ip6tParser:
                     rules.append(rule)
         return rules
 
-    def _parse_save_line(self, line: str) -> Optional[dict]:
+    def _parse_save_line(self, line: str) -> dict | None:
         """Parse a single ip6tables-save rule line."""
         rule = {"raw": line}
 
@@ -121,7 +121,7 @@ class Ip6tParser:
             return int(float(raw[:-1]) * multipliers[raw[-1]])
         return int(raw)
 
-    def _parse_verbose_line(self, line: str, chain: str) -> Optional[dict]:
+    def _parse_verbose_line(self, line: str, chain: str) -> dict | None:
         """Parse a single verbose ip6tables rule line."""
         parts = line.split()
         if len(parts) < 4:
@@ -205,4 +205,4 @@ class Ip6tParser:
 # Comment il est utilisé :
 # - infrastructure/backends/ip6tables/adapter.py l'appelle après chaque commande
 # - infrastructure/backends/ip6tables/mapper.py transforme les dicts en objets métier
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

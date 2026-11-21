@@ -3,6 +3,7 @@
 temps reel avec etat : le Live Tail de 8.5), CLASSIC (lecture + suivi), LNAV (fusion de
 plusieurs logs : 8.6). Garde-fou : 1 log -> les 3 ; 2 logs ou plus -> lnav seul, le seul
 capable de fusionner (refus explicite, jamais une troncature)."""
+
 from __future__ import annotations
 
 from enum import Enum

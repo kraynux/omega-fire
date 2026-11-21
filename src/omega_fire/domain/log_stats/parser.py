@@ -38,21 +38,22 @@ causes identifiees et corrigees ici :
 construit `datetime(...)` directement a partir des groupes numeriques
 captures par les memes regex precompiles — strictement equivalent pour
 les 3 formats geres ici (tous a largeur fixe), nettement plus rapide."""
+
 import ipaddress
 import re
 from datetime import datetime
 
 from omega_fire.domain.log_stats.models import LogEntry, LogLevel, LogSource
 
-IPV4_PATTERN = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
-IPV6_PATTERN = r'\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b'
-IP_PATTERN = rf'(?:{IPV4_PATTERN}|{IPV6_PATTERN})'
+IPV4_PATTERN = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+IPV6_PATTERN = r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b"
+IP_PATTERN = rf"(?:{IPV4_PATTERN}|{IPV6_PATTERN})"
 _IP_RE = re.compile(IP_PATTERN)
 _IPV4_RE = re.compile(IPV4_PATTERN)
 
-SYSLOG_TIMESTAMP = r'(\w{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})'
-ISO_TIMESTAMP = r'(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})'
-APACHE_TIMESTAMP = r'\[(\d{2})/(\w{3})/(\d{4}):(\d{2}):(\d{2}):(\d{2})'
+SYSLOG_TIMESTAMP = r"(\w{3})\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})"
+ISO_TIMESTAMP = r"(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})"
+APACHE_TIMESTAMP = r"\[(\d{2})/(\w{3})/(\d{4}):(\d{2}):(\d{2}):(\d{2})"
 """Format Combined/Common Apache/Nginx (ex. [10/Oct/2026:10:00:00 +0200]) —
 AJOUTE ici (absent de la version source omega-fire, verifie par un test
 reel en Phase 7 : une ligne access log classique tombait silencieusement
@@ -68,12 +69,22 @@ _ISO_TIMESTAMP_RE = re.compile(ISO_TIMESTAMP)
 _APACHE_TIMESTAMP_RE = re.compile(APACHE_TIMESTAMP)
 
 _MONTH_ABBR = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 COMBINED_LOG_PATTERN = re.compile(
-    r'(?<!\S)(?P<ip>\S+)\s+\S+\s+\S+\s+\[(?P<time>[^\]]+)\]\s+'
+    r"(?<!\S)(?P<ip>\S+)\s+\S+\s+\S+\s+\[(?P<time>[^\]]+)\]\s+"
     r'"(?P<method>\S+)\s+(?P<path>\S+)[^"]*"\s+(?P<status>\d+)\s+(?P<size>\d+|-)'
 )
 """Format Combined/Common (IP - - [date] "METHODE CHEMIN HTTP/x.x" STATUT
@@ -87,23 +98,23 @@ omega-fire/interfaces/cli/renderers/live_tail_screen.py::_LogProvider
 (deja valide empiriquement), jamais re-derive."""
 
 LOG_LEVELS = {
-    'debug': LogLevel.DEBUG,
-    'info': LogLevel.INFO,
-    'information': LogLevel.INFO,
-    'notice': LogLevel.INFO,
-    'warning': LogLevel.WARNING,
-    'warn': LogLevel.WARNING,
-    'error': LogLevel.ERROR,
-    'err': LogLevel.ERROR,
-    'critical': LogLevel.CRITICAL,
-    'crit': LogLevel.CRITICAL,
-    'fatal': LogLevel.CRITICAL,
-    'alert': LogLevel.CRITICAL,
-    'emergency': LogLevel.CRITICAL,
-    'emerg': LogLevel.CRITICAL,
+    "debug": LogLevel.DEBUG,
+    "info": LogLevel.INFO,
+    "information": LogLevel.INFO,
+    "notice": LogLevel.INFO,
+    "warning": LogLevel.WARNING,
+    "warn": LogLevel.WARNING,
+    "error": LogLevel.ERROR,
+    "err": LogLevel.ERROR,
+    "critical": LogLevel.CRITICAL,
+    "crit": LogLevel.CRITICAL,
+    "fatal": LogLevel.CRITICAL,
+    "alert": LogLevel.CRITICAL,
+    "emergency": LogLevel.CRITICAL,
+    "emerg": LogLevel.CRITICAL,
 }
 
-_LOG_LEVEL_RE = re.compile(r'\b(' + '|'.join(LOG_LEVELS) + r')\b')
+_LOG_LEVEL_RE = re.compile(r"\b(" + "|".join(LOG_LEVELS) + r")\b")
 """UN SEUL motif (alternance) pour reperer TOUS les mots de niveau
 presents dans la ligne en une seule passe — voir note de performance en
 tete de fichier. `extract_log_level()` retrouve ensuite le niveau a
@@ -113,24 +124,27 @@ priorite que la version precedente (boucle + regex separee par cle) —
 jamais le premier mot rencontre dans le texte, qui aurait un sens
 different (position dans la ligne plutot que priorite du niveau)."""
 
-_SERVICE_RE = re.compile(r'(?<!\w)\w+\s+([a-zA-Z0-9_-]+)(?:\[\d+\])?:')
-"""`(?<!\\w)` (2026-11-06, performance) : la recherche ne repart que d'un debut de mot - meme resultat
-(la correspondance la plus a gauche commence toujours a un debut de mot), ~3 fois plus rapide."""
+SERVICE_TAG_PATTERN = re.compile(r"(?:^|\s)[\w.-]+\s+([A-Za-z][\w./-]*)(?:\[\d+\])?:(?=\s|$)")
+"""Etiquette syslog `machine service[pid]:` (porte d'omega-serv le 2026-11-21 ; retour utilisateur 2026-11-20 :
+l'ancien motif prenait les heures d'une date, `Nov 20 10:00:00` -> service « 10 »). Le service commence par une
+lettre et les deux-points sont suivis d'un blanc : ni une heure, ni une URL `http://...`."""
 
 _USER_PATTERNS = [
-    re.compile(r'user\s+([a-zA-Z0-9_-]+)', re.IGNORECASE),
-    re.compile(r'for\s+([a-zA-Z0-9_-]+)', re.IGNORECASE),
-    re.compile(r'Accepted\s+\w+\s+for\s+([a-zA-Z0-9_-]+)', re.IGNORECASE),
-    re.compile(r'Failed\s+\w+\s+for\s+([a-zA-Z0-9_-]+)', re.IGNORECASE),
+    re.compile(r"user\s+([a-zA-Z0-9_-]+)", re.IGNORECASE),
+    re.compile(r"for\s+([a-zA-Z0-9_-]+)", re.IGNORECASE),
+    re.compile(r"Accepted\s+\w+\s+for\s+([a-zA-Z0-9_-]+)", re.IGNORECASE),
+    re.compile(r"Failed\s+\w+\s+for\s+([a-zA-Z0-9_-]+)", re.IGNORECASE),
 ]
 
 _PORT_PATTERNS = [
-    re.compile(r'port\s+(\d+)'),
-    re.compile(r':(\d+)\b'),
+    re.compile(r"port\s+(\d+)"),
+    re.compile(r":(\d+)\b"),
 ]
 
 
-_IPV6_CANDIDATE_RE = re.compile(r"(?<![0-9A-Fa-f:.])(?=[0-9A-Fa-f]{0,4}:)[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}(?:\.\d{1,3}){0,3}(?![0-9A-Fa-f:])")
+_IPV6_CANDIDATE_RE = re.compile(
+    r"(?<![0-9A-Fa-f:.])(?=[0-9A-Fa-f]{0,4}:)[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}(?:\.\d{1,3}){0,3}(?![0-9A-Fa-f:])"
+)
 """Candidat IPv6, forme compressee comprise (2a02:8440:a501:9913::be86:aa87, ::1) - toujours valide
 ensuite par `ipaddress` : une heure (07:52:31) n'est jamais une adresse (porte depuis omega-serv)."""
 
@@ -159,8 +173,37 @@ def extract_all_ips(line: str) -> list[str]:
     return [ip for _, ip in sorted(found)]
 
 
+# Scan de securite 2026-11-21 (F7) : dans « Invalid user 192.168.1.10 from 203.0.113.9 port 4242 », le nom
+# d'utilisateur choisi par l'attaquant precede la vraie source. Les champs ancres (sshd, PAM, fail2ban) passent
+# avant la premiere adresse de la ligne.
+_SSH_FROM_RE = re.compile(r"\bfrom\s+(\S+?)\s+port\s+\d+")
+_ANCHORED_IP_RES = (re.compile(r"\brhost=(\S+)"), re.compile(r"\b(?:Ban|Unban|Found)\s+(\S+)"))
+
+
+def _valid_ip(candidate: str | None) -> str | None:
+    if not candidate:
+        return None
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        return None
+    return candidate
+
+
 def extract_ip(line: str) -> str | None:
-    """Premiere adresse IP de la ligne (IPv4 ou IPv6)."""
+    """Adresse source de la ligne : 1er champ d'une ligne Combined, sinon champ ancre (sshd « from <ip> port »,
+    le dernier car le nom d'utilisateur le precede ; PAM « rhost= » ; fail2ban « Ban <ip> »), sinon la premiere
+    adresse IP de la ligne (IPv4 ou IPv6)."""
+    combined = COMBINED_LOG_PATTERN.match(line.lstrip())
+    if combined is not None and _valid_ip(combined.group("ip")):
+        return combined.group("ip")
+    ssh = [match.group(1) for match in _SSH_FROM_RE.finditer(line)]
+    if ssh and _valid_ip(ssh[-1]):
+        return ssh[-1]
+    for regex in _ANCHORED_IP_RES:
+        match = regex.search(line)
+        if match is not None and _valid_ip(match.group(1)):
+            return match.group(1)
     ips = extract_all_ips(line)
     return ips[0] if ips else None
 
@@ -175,7 +218,9 @@ def extract_timestamp(line: str) -> datetime | None:
     iso_match = _ISO_TIMESTAMP_RE.search(line)
     if iso_match:
         try:
-            year, month, day, hour, minute, second = (int(g) for g in iso_match.groups())
+            year, month, day, hour, minute, second = (
+                int(g) for g in iso_match.groups()
+            )
             return datetime(year, month, day, hour, minute, second)
         except ValueError:
             pass
@@ -186,7 +231,14 @@ def extract_timestamp(line: str) -> datetime | None:
         month = _MONTH_ABBR.get(month_s.lower())
         if month is not None:
             try:
-                return datetime(int(year_s), month, int(day_s), int(hour_s), int(minute_s), int(second_s))
+                return datetime(
+                    int(year_s),
+                    month,
+                    int(day_s),
+                    int(hour_s),
+                    int(minute_s),
+                    int(second_s),
+                )
             except ValueError:
                 pass
 
@@ -196,7 +248,14 @@ def extract_timestamp(line: str) -> datetime | None:
         month = _MONTH_ABBR.get(month_s.lower())
         if month is not None:
             try:
-                return datetime(datetime.now().year, month, int(day_s), int(hour_s), int(minute_s), int(second_s))
+                return datetime(
+                    datetime.now().year,
+                    month,
+                    int(day_s),
+                    int(hour_s),
+                    int(minute_s),
+                    int(second_s),
+                )
             except ValueError:
                 pass
 
@@ -220,7 +279,7 @@ def extract_log_level(line: str) -> LogLevel:
 
 def extract_service(line: str) -> str | None:
     """Extract service name from a syslog-style log line."""
-    match = _SERVICE_RE.search(line)
+    match = SERVICE_TAG_PATTERN.search(line)
     return match.group(1) if match else None
 
 
@@ -249,7 +308,9 @@ def extract_port(line: str) -> int | None:
     return None
 
 
-def extract_http_fields(line: str) -> tuple[str | None, str | None, int | None, int | None]:
+def extract_http_fields(
+    line: str,
+) -> tuple[str | None, str | None, int | None, int | None]:
     """Extrait (methode, chemin, code HTTP, latence_ms) d'une ligne
     access log Combined/Common — None partout si le format ne matche
     pas (jamais un log auth/syslog/fail2ban/etc., ces champs n'ont pas
@@ -265,13 +326,14 @@ def extract_http_fields(line: str) -> tuple[str | None, str | None, int | None, 
 
 
 def _http_fields(
-    line: str, match: re.Match[str] | None,
+    line: str,
+    match: re.Match[str] | None,
 ) -> tuple[str | None, str | None, int | None, int | None]:
     if not match:
         return None, None, None, None
 
     status = int(match.group("status"))
-    tail = line[match.end():].strip().split()
+    tail = line[match.end() :].strip().split()
     latency_ms: int | None = None
     for token in reversed(tail):
         clean_token = token.strip('"').replace(".", "")
@@ -298,23 +360,33 @@ def detect_log_source(line: str) -> LogSource:
     """Detect the log source from a log line."""
     line_lower = line.lower()
 
-    if any(indicator in line_lower for indicator in [
-        'sshd', 'sudo', 'authentication', 'login', 'accepted password',
-        'failed password', 'invalid user'
-    ]):
+    if any(
+        indicator in line_lower
+        for indicator in [
+            "sshd",
+            "sudo",
+            "authentication",
+            "login",
+            "accepted password",
+            "failed password",
+            "invalid user",
+        ]
+    ):
         return LogSource.AUTH
 
-    if 'fail2ban' in line_lower:
+    if "fail2ban" in line_lower:
         return LogSource.FAIL2BAN
 
-    if any(indicator in line_lower for indicator in [
-        'get /', 'post /', 'http/', '404', '500', 'apache', 'nginx'
-    ]):
+    if any(
+        indicator in line_lower
+        for indicator in ["get /", "post /", "http/", "404", "500", "apache", "nginx"]
+    ):
         return LogSource.ACCESS
 
-    if any(indicator in line_lower for indicator in [
-        'kernel:', 'iptables', 'nftables', 'netfilter'
-    ]):
+    if any(
+        indicator in line_lower
+        for indicator in ["kernel:", "iptables", "nftables", "netfilter"]
+    ):
         return LogSource.KERN
 
     return LogSource.SYSLOG
@@ -385,3 +457,20 @@ def parse_log_lines(
             entries.append(entry)
 
     return entries
+
+
+_QUOTED_RE = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+
+def extract_user_agent(line: str) -> str | None:
+    """User-Agent d'une ligne Combined (2e chaine entre guillemets apres la taille : "referent" "agent") ;
+    None pour un autre format - colonne Type du viewer Simple (Bot / CLI / Web), jamais un agent suppose
+    (2026-11-21 : l'ancien lecteur mettait « Mozilla/5.0 » a toute ligne Combined, Type toujours « Web »)."""
+    match = COMBINED_LOG_PATTERN.search(line)
+    if match is None:
+        return None
+    quoted = _QUOTED_RE.findall(line, match.end())
+    if len(quoted) < 2:
+        return None
+    agent = quoted[1][1:-1]
+    return agent if agent and agent != "-" else None

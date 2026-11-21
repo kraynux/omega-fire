@@ -3,6 +3,7 @@
 en incident uniquement) — meme donnee source (capability_registry.list_all()),
 un seul ecran parametre plutot que deux quasi-identiques, meme raison que
 _render_stats_report_screen() cote CLI pour 8.3/8.4."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -19,25 +20,38 @@ from omega_fire.shared.i18n import _
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
-_ISSUE_STATUSES = (CapabilityStatus.MISSING, CapabilityStatus.DEGRADED, CapabilityStatus.DISQUALIFIED)
+_ISSUE_STATUSES = (
+    CapabilityStatus.MISSING,
+    CapabilityStatus.DEGRADED,
+    CapabilityStatus.DISQUALIFIED,
+)
 
 
 class CapabilitiesScreen(OmegaScreen):
     """Registre des capacites (1.1) ou diagnostics recents (1.4, issues
     uniquement) selon `only_issues`."""
 
-    def __init__(self, *, container: DependencyContainer, only_issues: bool = False) -> None:
+    def __init__(
+        self, *, container: DependencyContainer, only_issues: bool = False
+    ) -> None:
         super().__init__()
         self._container = container
         self._only_issues = only_issues
 
     def compose(self) -> ComposeResult:
-        title = _("DIAGNOSTICS RÉCENTS") if self._only_issues else _("REGISTRE DES CAPACITÉS")
+        title = (
+            _("DIAGNOSTICS RÉCENTS")
+            if self._only_issues
+            else _("REGISTRE DES CAPACITÉS")
+        )
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(title, classes="omega-title")
             yield CapabilitiesTable(id="capabilities-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -51,7 +65,9 @@ class CapabilitiesScreen(OmegaScreen):
             self.query_one("#capabilities-table", CapabilitiesTable).display = False
             self.mount(
                 Static(
-                    _("Aucun incident ni diagnostic d'erreur. Tout le système est opérationnel."),
+                    _(
+                        "Aucun incident ni diagnostic d'erreur. Tout le système est opérationnel."
+                    ),
                     classes="omega-hint",
                 ),
                 after=self.query_one(".omega-title"),

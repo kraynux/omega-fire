@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Aide -> Contact et support (ecrans partages d'omega-lib, D-016, 2026-11-09). Jamais de vrai envoi
 ni de vrai navigateur : faux expediteur, fausse source, faux ouvreur."""
+
 from __future__ import annotations
 
 import asyncio
@@ -47,8 +48,12 @@ class ContactSupportTest(unittest.TestCase):
         self.store_path = Path(self._tmp.name) / "declaration.json"
         self.sender = _Sender()
         self.services = ContactSupportServices(
-            software="omega-fire", version="3.5", store=JsonDeclarationStore(self.store_path),
-            sender=self.sender, release_source=_Source(), open_url=lambda url: False,
+            software="omega-fire",
+            version="3.5",
+            store=JsonDeclarationStore(self.store_path),
+            sender=self.sender,
+            release_source=_Source(),
+            open_url=lambda url: False,
         )
 
     def tearDown(self) -> None:
@@ -71,7 +76,9 @@ class ContactSupportTest(unittest.TestCase):
 
     def test_declare_once_sends_three_part_version(self) -> None:
         async def scenario() -> None:
-            app = HostApp(HelpScreen(container=SimpleNamespace(contact_support=self.services)))
+            app = HostApp(
+                HelpScreen(container=SimpleNamespace(contact_support=self.services))
+            )
             async with app.run_test(size=(120, 50)) as pilot:
                 await pilot.pause()
                 app.screen.query_one("#contact-support", Button).press()
@@ -80,7 +87,9 @@ class ContactSupportTest(unittest.TestCase):
                 self.assertEqual(type(contact).__name__, "ContactSupportScreen")
                 contact.query_one("#check-update", Button).press()
                 await _settle(pilot)
-                self.assertIn("3.5", str(contact.query_one("#update-state", Static).render()))
+                self.assertIn(
+                    "3.5", str(contact.query_one("#update-state", Static).render())
+                )
                 contact.query_one("#declare", Button).press()
                 await pilot.pause()
                 app.screen.query_one("#declaration-continent", Select).value = "EU"
@@ -92,8 +101,15 @@ class ContactSupportTest(unittest.TestCase):
         asyncio.run(scenario())
         self.assertEqual(len(self.sender.sent), 1)
         payload = self.sender.sent[0]
-        self.assertEqual((payload["logiciel"], payload["version"], payload["envoi"], payload["continent"]),
-                         ("omega-fire", "3.5.0", "unique", "EU"))
+        self.assertEqual(
+            (
+                payload["logiciel"],
+                payload["version"],
+                payload["envoi"],
+                payload["continent"],
+            ),
+            ("omega-fire", "3.5.0", "unique", "EU"),
+        )
         self.assertTrue(self.store_path.exists())
 
 

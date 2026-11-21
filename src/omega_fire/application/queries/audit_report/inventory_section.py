@@ -5,13 +5,14 @@ including cross-backend duplicate detection (sections 3 & 6).
 Pure collection functions: reads from RuleRepository and BanRepository,
 returns DTOs. Reflects the CURRENT state, not a period.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 from omega_fire.application.queries.audit_report.models import (
-    RulesInventory,
     IpInventoryByBackend,
+    RulesInventory,
 )
 
 
@@ -39,7 +40,9 @@ def collect_rules_inventory(rule_repository: Any) -> RulesInventory:
     )
 
 
-def collect_ip_inventory(adapters: dict[str, Any]) -> tuple[list[IpInventoryByBackend], int, int]:
+def collect_ip_inventory(
+    adapters: dict[str, Any],
+) -> tuple[list[IpInventoryByBackend], int, int]:
     """Collect the current count of banned IPs per backend by reading
     the live adapters directly (section 6).
 
@@ -63,7 +66,9 @@ def collect_ip_inventory(adapters: dict[str, Any]) -> tuple[list[IpInventoryByBa
           sync, not necessarily an anomaly).
     """
     counts: dict[str, int] = {}
-    ip_occurrences_per_backend: dict[tuple[str, str], int] = {}  # (backend, ip) -> count
+    ip_occurrences_per_backend: dict[
+        tuple[str, str], int
+    ] = {}  # (backend, ip) -> count
     backends_by_ip: dict[str, set[str]] = {}
 
     for backend, adapter in adapters.items():
@@ -131,4 +136,4 @@ def collect_ip_inventory(adapters: dict[str, Any]) -> tuple[list[IpInventoryByBa
 #
 # Comment il sera utilisé :
 # - report_builder.py appelle ces deux fonctions.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

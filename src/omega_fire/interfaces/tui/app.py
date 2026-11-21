@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Point d'entree Textual de l'application, cable par le composition root
 (app/bootstrap.py). Adapte du patron app.py d'omega-check (D-008)."""
+
 from __future__ import annotations
 
 import logging
@@ -29,9 +30,10 @@ from omega_fire.interfaces.tui.controllers.startup_controller import (
 )
 from omega_fire.interfaces.tui.pending_interface_restart import PendingInterfaceRestart
 from omega_fire.interfaces.tui.rendering.stylesheet_loader import load_paths_for
-from omega_fire.interfaces.tui.rendering.textual_theme_builder import build_all_textual_themes
+from omega_fire.interfaces.tui.rendering.textual_theme_builder import (
+    build_all_textual_themes,
+)
 from omega_fire.interfaces.tui.screens.help_screen import HelpScreen
-from omega_fire.interfaces.tui.screens.settings_screen import SettingsScreen
 from omega_fire.interfaces.tui.screens.home import HomeScreen
 from omega_fire.interfaces.tui.screens.language_changed_splash_screen import (
     LANGUAGE_LABEL,
@@ -39,6 +41,7 @@ from omega_fire.interfaces.tui.screens.language_changed_splash_screen import (
 )
 from omega_fire.interfaces.tui.screens.quit_confirm import QuitConfirmScreen
 from omega_fire.interfaces.tui.screens.scanning import ScanningScreen
+from omega_fire.interfaces.tui.screens.settings_screen import SettingsScreen
 from omega_fire.interfaces.tui.screens.splash import SplashScreen
 from omega_fire.interfaces.tui.screens.terminal_warning import TerminalWarningScreen
 from omega_fire.shared.i18n import STATE, _
@@ -52,22 +55,38 @@ def install_action_title_translator(container: DependencyContainer) -> None:
         MENU_6_BEFORE_3_6,
         SECTIONS,
     )
-    from omega_fire.interfaces.tui.support.action_titles import ActionTitleTranslator, menu_labels_by_action
+    from omega_fire.interfaces.tui.support.action_titles import (
+        ActionTitleTranslator,
+        menu_labels_by_action,
+    )
     from omega_fire.shared.i18n import set_action_title_translator
 
     catalog = container.language_catalog
-    set_action_title_translator(ActionTitleTranslator(
-        menu_labels_by_action(SECTIONS), lambda: catalog.available().keys(), catalog.translated_phrases,
-        renumbered={**MENU_5_BEFORE_3_5, **MENU_6_BEFORE_3_6}, aliases=AUDIT_TITLE_ALIASES))
+    set_action_title_translator(
+        ActionTitleTranslator(
+            menu_labels_by_action(SECTIONS),
+            lambda: catalog.available().keys(),
+            catalog.translated_phrases,
+            renumbered={**MENU_5_BEFORE_3_5, **MENU_6_BEFORE_3_6},
+            aliases=AUDIT_TITLE_ALIASES,
+        )
+    )
+
 
 from omega_fire.core.constants import OMEGA_FIRE_VERSION
 
 if TYPE_CHECKING:
+    from textual import events
+    from textual.dom import DOMNode
     from textual.screen import Screen
 
     from omega_fire.app.dependency_container import DependencyContainer
 
-TITLE = _("\U0001f6e1️ OMEGA-FIRE") + " " + _("version {version}").format(version=OMEGA_FIRE_VERSION)
+TITLE = (
+    _("\U0001f6e1️ OMEGA-FIRE")
+    + " "
+    + _("version {version}").format(version=OMEGA_FIRE_VERSION)
+)
 """Icone bouclier incluse DANS la chaine de titre (memes raisons que le
 reste de la suite : HeaderIcon/HeaderTitle sont deux widgets Textual
 distincts, les fondre dans une seule chaine les fait apparaitre comme une
@@ -96,7 +115,8 @@ class OmegaFireApp(App[None]):
             settings_store=container.settings_store,
         )
         css_path = cast(
-            "list[str | PurePath]", load_paths_for(self._startup_state.theme.render_profile)
+            "list[str | PurePath]",
+            load_paths_for(self._startup_state.theme.render_profile),
         )
         super().__init__(css_path=css_path)
         for theme in build_all_textual_themes():
@@ -105,6 +125,13 @@ class OmegaFireApp(App[None]):
         self.pending_restart: PendingInterfaceRestart | None = None
         """Deposee par l'ecran Reglages apres un changement de langue, lue par
         app/bootstrap.py::bootstrap_tui() apres App.run() (os.execv)."""
+
+    async def _broker_event(self, event_name: str, event: events.Event, default_namespace: DOMNode) -> bool:
+        """Scan de securite 2026-11-21 (F3, F4) : aucune action declenchee par du balisage (« [@click=...] »).
+        L'interface n'en utilise aucune, et un nom de fichier ou un champ de log piege pourrait sinon faire
+        executer une action en root (app.screenshot ecrit un fichier ou l'on veut). Le clic suit son cours
+        normal (selection d'une ligne...) ; seule l'action cachee dans le texte est ignoree."""
+        return False
 
     def notify(
         self,
@@ -133,36 +160,52 @@ class OmegaFireApp(App[None]):
         existantes, seulement un filet de securite. Un appelant qui aurait
         reellement besoin de markup peut toujours passer `markup=True`
         explicitement."""
-        super().notify(message, title=title, severity=severity, timeout=timeout, markup=markup)
+        super().notify(
+            message, title=title, severity=severity, timeout=timeout, markup=markup
+        )
 
     def on_mount(self) -> None:
         if os.environ.pop(LANGUAGE_CHANGED_ENV_VAR, None) is not None:
-            self.push_screen(LanguageChangedSplashScreen(native_name=STATE.language.native_name), self._after_splash)
+            self.push_screen(
+                LanguageChangedSplashScreen(native_name=STATE.language.native_name),
+                self._after_splash,
+            )
         else:
             self.push_screen(SplashScreen(), self._after_splash)
 
     def _notify_language_fallbacks(self) -> None:
         if STATE.fell_back_from is not None:
             self.notify(
-                _("Langue « {code} » indisponible : interface en français.").format(code=STATE.fell_back_from),
-                title=LANGUAGE_LABEL, severity="warning", timeout=10,
+                _("Langue « {code} » indisponible : interface en français.").format(
+                    code=STATE.fell_back_from
+                ),
+                title=LANGUAGE_LABEL,
+                severity="warning",
+                timeout=10,
             )
         fallback_code = console_fallback_from()
         if fallback_code is not None:
             self.notify(
-                _("Ce terminal (console texte) ne peut pas afficher la langue « {name} » : interface en anglais pour cette session. Le réglage est conservé - la langue revient dans un terminal graphique.").format(name=language_for(fallback_code).native_name),
-                title=LANGUAGE_LABEL, severity="warning", timeout=15,
+                _(
+                    "Ce terminal (console texte) ne peut pas afficher la langue « {name} » : interface en anglais pour cette session. Le réglage est conservé - la langue revient dans un terminal graphique."
+                ).format(name=language_for(fallback_code).native_name),
+                title=LANGUAGE_LABEL,
+                severity="warning",
+                timeout=15,
             )
 
     def _after_splash(self, _result: None) -> None:
         self._notify_language_fallbacks()
         terminal = self._startup_state.terminal
-        too_small = (
-            terminal.signals.columns < 80 or terminal.signals.rows < 24
-        )
+        too_small = terminal.signals.columns < 80 or terminal.signals.rows < 24
         if terminal.render_profile == RenderProfile.MONO or too_small:
-            message = (
-                _("Terminal détecté : {family} ({columns}x{rows}). Rendu appliqué : {value}.").format(family=terminal.signals.family, columns=terminal.signals.columns, rows=terminal.signals.rows, value=terminal.render_profile.value)
+            message = _(
+                "Terminal détecté : {family} ({columns}x{rows}). Rendu appliqué : {value}."
+            ).format(
+                family=terminal.signals.family,
+                columns=terminal.signals.columns,
+                rows=terminal.signals.rows,
+                value=terminal.render_profile.value,
             )
             self.push_screen(TerminalWarningScreen(message=message), self._run_scan)
         else:
@@ -176,7 +219,11 @@ class OmegaFireApp(App[None]):
 
     def watch_theme(self, _theme_name: str) -> None:
         terminal = self._startup_state.terminal
-        self.sub_title = _("{theme} | {columns}x{rows}").format(theme=self.theme, columns=terminal.signals.columns, rows=terminal.signals.rows)
+        self.sub_title = _("{theme} | {columns}x{rows}").format(
+            theme=self.theme,
+            columns=terminal.signals.columns,
+            rows=terminal.signals.rows,
+        )
 
     async def action_quit(self) -> None:
         """Surcharge : demande confirmation avant de fermer."""
@@ -193,7 +240,9 @@ class OmegaFireApp(App[None]):
         current_index = names.index(self.theme) if self.theme in names else 0
         next_name = names[(current_index + 1) % len(names)]
         try:
-            select_theme(settings_store=self._container.settings_store, theme_name=next_name)
+            select_theme(
+                settings_store=self._container.settings_store, theme_name=next_name
+            )
         except UnknownThemeError as exc:
             self.notify(str(exc), severity="error")
             return
@@ -209,17 +258,30 @@ class OmegaFireApp(App[None]):
             # meme visuellement (self.theme = next_name plus bas) : seule
             # la PERSISTANCE du choix echoue, pas la fonctionnalite
             # immediate.
-            self.notify(_("Thème appliqué mais non enregistré : {exc}").format(exc=exc), severity="warning")
+            self.notify(
+                _("Thème appliqué mais non enregistré : {exc}").format(exc=exc),
+                severity="warning",
+            )
         self.theme = next_name
 
     def action_refresh_terminal(self) -> None:
         """Touche `r` : redetecte taille/famille du terminal et met a
         jour le sous-titre du Header."""
         terminal = detect_terminal(terminal_detector=self._container.terminal_detector)
-        self._startup_state = StartupState(terminal=terminal, theme=self._startup_state.theme)
-        self.sub_title = _("{theme} | {columns}x{rows}").format(theme=self.theme, columns=terminal.signals.columns, rows=terminal.signals.rows)
+        self._startup_state = StartupState(
+            terminal=terminal, theme=self._startup_state.theme
+        )
+        self.sub_title = _("{theme} | {columns}x{rows}").format(
+            theme=self.theme,
+            columns=terminal.signals.columns,
+            rows=terminal.signals.rows,
+        )
         self.notify(
-            _("{family} ({columns}x{rows})").format(family=terminal.signals.family, columns=terminal.signals.columns, rows=terminal.signals.rows),
+            _("{family} ({columns}x{rows})").format(
+                family=terminal.signals.family,
+                columns=terminal.signals.columns,
+                rows=terminal.signals.rows,
+            ),
             title=_("Terminal rafraîchi"),
         )
 
@@ -231,6 +293,7 @@ class OmegaFireApp(App[None]):
     def action_open_guide(self) -> None:
         """Guide d'aide centralise (menu 10 AIDE), aussi propose depuis l'aide generique."""
         from omega_fire.interfaces.tui.screens.guide_screens import GuideMenuScreen
+
         self.push_screen(GuideMenuScreen(container=self._container))
 
     def action_open_settings(self) -> None:
@@ -239,9 +302,13 @@ class OmegaFireApp(App[None]):
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         """Remplace la liste par defaut de Textual plutot que d'appeler
         `super()` (meme raisonnement que le reste de la suite)."""
-        yield SystemCommand(_("Thème"), _("Changer le thème actif"), self.action_change_theme)
         yield SystemCommand(
-            _("Quitter"), _("Quitter l'application (avec confirmation)"), self.action_quit
+            _("Thème"), _("Changer le thème actif"), self.action_change_theme
+        )
+        yield SystemCommand(
+            _("Quitter"),
+            _("Quitter l'application (avec confirmation)"),
+            self.action_quit,
         )
         yield SystemCommand(
             _("Capture d'écran"),

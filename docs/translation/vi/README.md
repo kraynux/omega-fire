@@ -126,6 +126,7 @@ Blacklist thống nhất cho phép làm việc với nftables và iptables từ 
 ### 3. Quản lý quy tắc và chính sách
 
 - Trình hướng dẫn từng bước để tạo một quy tắc nâng cao.
+- Mở một cổng theo yêu cầu của omega-serv (`port ouvrir`): một cổng TCP chỉ mở cho các mạng được chỉ định, trên mọi tường lửa được phát hiện (kể cả ufw và firewalld), được ghi lại như một quy tắc của menu 3.1.
 - Danh sách quy tắc hệ thống và quy tắc do Omega-Fire tạo.
 - Xóa một quy tắc bằng cách chọn.
 - Tự động dọn các quy tắc không hoạt động trong cơ sở tham chiếu.
@@ -495,6 +496,10 @@ Trình khởi chạy:
 ### Liên hệ và hỗ trợ
 
 Phần trợ giúp (phím `a`) có màn hình **Liên hệ và hỗ trợ**: *Mời một ly cà phê* (trang PayPal của nhà phát triển), *Liên hệ hỗ trợ* (địa chỉ email và biểu mẫu liên hệ của trang web, hiển thị rõ ràng), *Khai báo là người dùng (ẩn danh)* và *Kiểm tra cập nhật*. Việc khai báo là tự nguyện, tắt theo mặc định và chỉ gửi một lần: nó chỉ dùng để đếm số người dùng và, nếu bạn muốn, châu lục hoặc quốc gia của họ (danh sách đóng, không bao giờ là văn bản tự do). Nó gửi một khóa được tạo ngẫu nhiên, tên phần mềm (`omega-fire`) và phiên bản của nó; không bao giờ gửi tên, tên máy, thiết lập, mục tiêu hay kết quả. Địa chỉ IP không được lưu trong các khai báo, nhưng, như mọi lượt truy cập, nó đi qua các kiểm tra bảo mật và nhật ký của máy chủ nhận. Có thể rút lại bất cứ lúc nào từ cùng màn hình (*Không khai báo tôi nữa*). Việc kiểm tra cập nhật chỉ đọc danh sách các phiên bản đã phát hành trên trang web, và không bao giờ khi chưa nhấp.
+
+### Liên kết với các công cụ omega khác
+
+Omega-Fire trả lời một vài lệnh không có giao diện, do các công cụ khác trong bộ gọi. `./omega-fire.sh synchro jeton` và `./omega-fire.sh synchro fiche --format json` mô tả bản cài đặt và các khả năng của nó (tường lửa, Fail2Ban, Thư viện nhật ký), không cần sudo. `./omega-fire.sh port ouvrir` mở một cổng TCP cho các mạng xác định để phục vụ trang quản trị web của omega-serv: mỗi mạng và mỗi tường lửa được phát hiện có một quy tắc, cũng được thêm vào ufw hoặc firewalld nếu chúng đang hoạt động, được ghi lại như một quy tắc của menu 3.1 và ghi vào nhật ký kiểm tra. Giao diện loopback không bao giờ được mở và một quy tắc đã có sẽ không được thêm lần thứ hai. omega-serv chỉ gọi lệnh này khi cả hai công cụ được đăng ký trong cùng một vùng omega-connect; sudo được yêu cầu như với giao diện. Khi vùng omega-connect tồn tại, mọi lệnh cấm hoặc gỡ cấm do chính omega-fire đặt trong tường lửa (nftables, iptables, ip6tables) được công bố trong nhật ký cấm của vùng, được các công cụ omega khác đọc; `./omega-fire.sh synchro bans` đưa nhật ký khớp lại với tường lửa (yêu cầu sudo). Lệnh cấm từ các jail của Fail2Ban được action do omega-jail cài đặt ghi vào đó.
 
 ### Luồng chung
 

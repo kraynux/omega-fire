@@ -5,7 +5,13 @@ Orchestrates business operations on firewall rules.
 This service coordinates the domain modules (models, policies, presets)
 and enforces business rules by raising domain exceptions.
 """
-from typing import Optional
+
+from omega_fire.domain.rules.exceptions import (
+    ConflictingRuleError,
+    InvalidPolicyError,
+    InvalidRuleError,
+    RuleNotFoundError,
+)
 from omega_fire.domain.rules.models import (
     FirewallRule,
     RuleAction,
@@ -13,13 +19,6 @@ from omega_fire.domain.rules.models import (
     RuleFamily,
     RuleProtocol,
     RuleSet,
-)
-from omega_fire.domain.rules.exceptions import (
-    InvalidRuleError,
-    ConflictingRuleError,
-    RuleNotFoundError,
-    InvalidPolicyError,
-    ChainError,
 )
 from omega_fire.domain.rules.policies import (
     FirewallPolicy,
@@ -36,20 +35,20 @@ from omega_fire.shared.i18n import _
 
 class RulesService:
     """Domain service for firewall rules operations.
-    
+
     This service orchestrates business logic for creating, deleting,
     listing, and applying rules/policies/presets. It enforces business
     rules and raises domain exceptions when rules are violated.
     """
-    
-    def __init__(self, ruleset: Optional[RuleSet] = None):
+
+    def __init__(self, ruleset: RuleSet | None = None):
         """Initialize the service with an optional ruleset.
-        
+
         Args:
             ruleset: Existing ruleset. If None, creates an empty one.
         """
         self.ruleset = ruleset or RuleSet()
-    
+
     def create_rule(
         self,
         backend: str,
@@ -57,21 +56,21 @@ class RulesService:
         table_name: str,
         chain: RuleChain,
         action: RuleAction,
-        protocol: Optional[RuleProtocol] = None,
-        port_start: Optional[int] = None,
-        port_end: Optional[int] = None,
-        source_cidr: Optional[str] = None,
-        dest_cidr: Optional[str] = None,
+        protocol: RuleProtocol | None = None,
+        port_start: int | None = None,
+        port_end: int | None = None,
+        source_cidr: str | None = None,
+        dest_cidr: str | None = None,
         priority: int = 0,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> FirewallRule:
         """Create a new firewall rule.
-        
+
         Business rules:
         - Port range must be valid (start <= end)
         - Port requires a protocol (TCP or UDP)
         - Rule must not conflict with existing rules
-        
+
         Args:
             backend: Backend label ('nftables' or 'iptables')
             family: Address family (INET, IP, IP6)
@@ -85,10 +84,10 @@ class RulesService:
             dest_cidr: Optional destination CIDR
             priority: Rule priority (default: 0)
             comment: Optional comment
-        
+
         Returns:
             The created FirewallRule
-        
+
         Raises:
             InvalidRuleError: If the rule is structurally invalid
             ConflictingRuleError: If the rule conflicts with an existing one
@@ -97,24 +96,27 @@ class RulesService:
         if port_start is not None and port_end is not None:
             if port_start > port_end:
                 raise InvalidRuleError(
-                    _("port {port_start}-{port_end}").format(port_start=port_start, port_end=port_end),
-                    _("Plage de ports invalide (début > fin)")
+                    _("port {port_start}-{port_end}").format(
+                        port_start=port_start, port_end=port_end
+                    ),
+                    _("Plage de ports invalide (début > fin)"),
                 )
-        
+
         # Validate port requires protocol
         if port_start is not None and protocol is None:
             raise InvalidRuleError(
                 _("port {port_start}").format(port_start=port_start),
-                _("Indiquer un port nécessite un protocole (TCP ou UDP)")
+                _("Indiquer un port nécessite un protocole (TCP ou UDP)"),
             )
-        
+
         # Validate port range for ICMP
-        if protocol == RuleProtocol.ICMP and (port_start is not None or port_end is not None):
+        if protocol == RuleProtocol.ICMP and (
+            port_start is not None or port_end is not None
+        ):
             raise InvalidRuleError(
-                _("ICMP avec ports"),
-                _("Le protocole ICMP n'utilise pas de ports")
+                _("ICMP avec ports"), _("Le protocole ICMP n'utilise pas de ports")
             )
-        
+
         # Create the rule
         rule = FirewallRule(
             backend=backend,
@@ -130,23 +132,23 @@ class RulesService:
             priority=priority,
             comment=comment,
         )
-        
+
         # Check for conflicts
         self._check_conflicts(rule)
-        
+
         # Add to ruleset
         self.ruleset.add(rule)
         return rule
-    
+
     def delete_rule(self, rule_id: int) -> FirewallRule:
         """Delete a rule by ID.
-        
+
         Args:
             rule_id: ID of the rule to delete
-        
+
         Returns:
             The deleted FirewallRule
-        
+
         Raises:
             RuleNotFoundError: If the rule does not exist
         """
@@ -154,13 +156,13 @@ class RulesService:
         if removed is None:
             raise RuleNotFoundError(rule_id)
         return removed
-    
-    def get_rule(self, rule_id: int) -> Optional[FirewallRule]:
+
+    def get_rule(self, rule_id: int) -> FirewallRule | None:
         """Get a rule by ID.
-        
+
         Args:
             rule_id: ID of the rule
-        
+
         Returns:
             FirewallRule if found, None otherwise
         """
@@ -168,52 +170,52 @@ class RulesService:
             if rule.rule_id == rule_id:
                 return rule
         return None
-    
+
     def list_rules(
         self,
-        backend: Optional[str] = None,
-        chain: Optional[RuleChain] = None,
+        backend: str | None = None,
+        chain: RuleChain | None = None,
         enabled_only: bool = False,
     ) -> list[FirewallRule]:
         """List rules with optional filters.
-        
+
         Args:
             backend: Filter by backend
             chain: Filter by chain
             enabled_only: If True, only return enabled rules
-        
+
         Returns:
             List of FirewallRule matching the filters
         """
         rules = self.ruleset.rules
-        
+
         if backend:
             rules = [r for r in rules if r.backend == backend]
         if chain:
             rules = [r for r in rules if r.chain == chain]
         if enabled_only:
             rules = [r for r in rules if r.enabled]
-        
+
         return rules
-    
+
     def apply_policy(
         self,
         policy_type: PolicyType,
         backend: str = "nftables",
     ) -> FirewallPolicy:
         """Apply a predefined policy.
-        
+
         Business rules:
         - Policy must be a known type
         - Policy rules are added to the ruleset
-        
+
         Args:
             policy_type: Type of policy to apply
             backend: Target backend
-        
+
         Returns:
             The applied FirewallPolicy
-        
+
         Raises:
             InvalidPolicyError: If the policy type is unknown
         """
@@ -221,71 +223,68 @@ class RulesService:
             policy = get_policy(policy_type, backend=backend)
         except ValueError as e:
             raise InvalidPolicyError(policy_type.value, str(e)) from e
-        
+
         # Add all policy rules to the ruleset
         for rule in policy.rules:
             self.ruleset.add(rule)
-        
+
         return policy
-    
+
     def apply_preset(
-        self,
-        preset_name: str,
-        backend: str = "nftables",
-        **kwargs
+        self, preset_name: str, backend: str = "nftables", **kwargs
     ) -> list[FirewallRule]:
         """Apply a predefined preset.
-        
+
         Args:
             preset_name: Name of the preset
             backend: Target backend
             **kwargs: Additional arguments for the preset
-        
+
         Returns:
             List of applied FirewallRule
-        
+
         Raises:
             ValueError: If the preset name is unknown
         """
         result = get_preset(preset_name, backend=backend, **kwargs)
-        
+
         # Handle single rule or list of rules
         if isinstance(result, FirewallRule):
             rules = [result]
         else:
             rules = result
-        
+
         # Add all preset rules to the ruleset
         for rule in rules:
             self.ruleset.add(rule)
-        
+
         return rules
-    
+
     def list_available_policies(self) -> list[PolicyType]:
         """Return the list of all available policy types."""
         return list_available_policies()
-    
+
     def list_available_presets(self) -> list[str]:
         """Return the list of all available preset names."""
         return list_available_presets()
-    
+
     def count_rules(self) -> int:
         """Count total rules in the ruleset."""
         return len(self.ruleset.rules)
-    
+
     def count_by_backend(self, backend: str) -> int:
         """Count rules for a specific backend."""
         return len(self.ruleset.get_by_backend(backend))
-    
+
     def _check_conflicts(self, new_rule: FirewallRule) -> None:
         """Check if a new rule conflicts with existing rules.
-        
+
         Business rules:
         - No exact duplicate rules (same backend, chain, protocol, ports, action)
-        
+
         Args:
             new_rule: The rule to check
-        
+
         Raises:
             ConflictingRuleError: If a conflict is detected
         """
@@ -294,9 +293,9 @@ class RulesService:
                 raise ConflictingRuleError(
                     self._rule_description(new_rule),
                     self._rule_description(existing),
-                    _("Règle en double détectée")
+                    _("Règle en double détectée"),
                 )
-    
+
     def _rules_conflict(self, rule1: FirewallRule, rule2: FirewallRule) -> bool:
         """Check if two rules are exact duplicates."""
         return (
@@ -311,7 +310,7 @@ class RulesService:
             and rule1.dest_cidr == rule2.dest_cidr
             and rule1.action == rule2.action
         )
-    
+
     def _rule_description(self, rule: FirewallRule) -> str:
         """Build a human-readable description of a rule."""
         parts = [
@@ -328,6 +327,7 @@ class RulesService:
             parts.append(f"dest={rule.dest_cidr}")
         parts.append(f"action={rule.action.value}")
         return ", ".join(parts)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -354,4 +354,4 @@ class RulesService:
 # - application/commands/apply_policy.py appellera apply_policy() avec le type de politique
 # - application/queries/list_rules.py appellera list_rules() avec les filtres
 # - interfaces/cli/actions.py proposera les presets et politiques via list_available_presets() et list_available_policies()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

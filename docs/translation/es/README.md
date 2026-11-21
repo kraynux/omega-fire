@@ -127,6 +127,7 @@ La lista negra unificada permite trabajar con nftables e iptables desde una mism
 ### 3. Gestión de reglas y políticas
 
 - Asistente paso a paso para crear una regla avanzada.
+- Apertura de un puerto a petición de omega-serv (`port ouvrir`): un puerto TCP abierto solo desde las redes indicadas, en cada cortafuegos detectado (ufw y firewalld incluidos), registrado como una regla del menú 3.1.
 - Lista de las reglas del sistema y de las reglas creadas por Omega-Fire.
 - Eliminación de una regla por selección.
 - Limpieza automática de las reglas inactivas en la base de referencia.
@@ -496,6 +497,10 @@ Para lanzar la antigua interfaz Rich (introducción secuencial de números) en s
 ### Contacto y soporte
 
 La ayuda (tecla `a`) ofrece una pantalla **Contacto y soporte**: *Invitar a un café* (página PayPal del desarrollador), *Contactar con el soporte* (dirección de correo y formulario de contacto del sitio, mostrados en claro), *Declararme usuario (anónimo)* y *Buscar actualizaciones*. La declaración es voluntaria, está desactivada por defecto y se envía una sola vez: solo sirve para contar a los usuarios y, si se desea, su continente o su país (listas cerradas, nunca texto libre). Envía una clave elegida al azar, el nombre del programa (`omega-fire`) y su versión; nunca un nombre, un nombre de máquina, un ajuste, un objetivo ni un resultado. La dirección IP no se registra en las declaraciones, pero, como en cualquier visita, pasa por los controles de seguridad y el registro del servidor de recepción. Retirada en cualquier momento desde la misma pantalla (*Dejar de declararme*). La búsqueda de actualizaciones solo lee la lista de versiones publicadas en el sitio, y nunca sin un clic.
+
+### Vínculos con las demás herramientas omega
+
+Omega-Fire responde a algunas órdenes sin interfaz, llamadas por las demás herramientas de la suite. `./omega-fire.sh synchro jeton` y `./omega-fire.sh synchro fiche --format json` describen la instalación y sus capacidades (cortafuegos, Fail2Ban, Biblioteca de logs), sin sudo. `./omega-fire.sh port ouvrir` abre un puerto TCP desde redes concretas para la administración web de omega-serv: una regla por red y por cortafuegos detectado, añadida también a ufw o firewalld si están activos, registrada como una regla del menú 3.1 y anotada en el registro de auditoría. El bucle local nunca se abre y una regla ya presente no se añade dos veces. omega-serv solo la llama si las dos herramientas están inscritas en la misma zona omega-connect; sudo se solicita como para la interfaz. Cuando existe la zona de omega-connect, cada bloqueo o desbloqueo que omega-fire aplica él mismo en el cortafuegos (nftables, iptables, ip6tables) se publica en el diario de bloqueos de la zona, leído por las demás herramientas omega; `./omega-fire.sh synchro bans` lo vuelve a poner de acuerdo con el cortafuegos (se pide sudo). Los bloqueos de los jails de Fail2Ban los escribe allí la acción instalada por omega-jail.
 
 ### Recorrido general
 

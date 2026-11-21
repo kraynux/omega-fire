@@ -3,6 +3,7 @@
 etc. — reutilisee par toutes les actions destructives de la Phase 3).
 Portee depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from typing import ClassVar
@@ -12,6 +13,7 @@ from textual.binding import Binding, BindingType
 from textual.containers import Center, Container, Horizontal, Middle, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
+
 from omega_fire.shared.i18n import _
 
 
@@ -19,9 +21,13 @@ class ConfirmScreen(ModalScreen[bool]):
     """Retourne True si confirme, False/None sinon. N'herite pas de
     OmegaScreen : `echap` doit annuler, pas dismiss(None) sans valeur."""
 
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "back", _("Annuler"), show=True)]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "back", _("Annuler"), show=True)
+    ]
 
-    def __init__(self, *, title: str, message: str, help_node: str | None = None) -> None:
+    def __init__(
+        self, *, title: str, message: str, help_node: str | None = None
+    ) -> None:
         super().__init__()
         self._title = title
         self._message = message
@@ -38,7 +44,9 @@ class ConfirmScreen(ModalScreen[bool]):
         entry = get_help_entry(self._help_node)
         if entry is None:
             return None
-        return _("Action {node_id}").format(node_id=self._help_node), format_help_entry(entry)
+        return _("Action {node_id}").format(node_id=self._help_node), format_help_entry(
+            entry
+        )
 
     def compose(self) -> ComposeResult:
         with Middle(), Center(), Vertical(classes="omega-confirm-box"):

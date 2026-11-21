@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -23,6 +23,7 @@ class BanEntry:
         expires_at: date d'expiration (None = ban permanent).
         jail: nom du jail fail2ban (None si non applicable).
     """
+
     ip: IPAddress
     backend: str
     reason: str = ""
@@ -134,6 +135,7 @@ class BlacklistPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour la gestion de la blacklist unifiée.
@@ -169,4 +171,4 @@ class BlacklistPort(Protocol):
 # - infrastructure/backends/iptables/adapter.py implémentera BlacklistPort
 # - infrastructure/backends/fail2ban/adapter.py implémentera BlacklistPort
 # - interfaces/cli/actions.py appellera blacklist_port.list_banned() pour menu 2.5
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

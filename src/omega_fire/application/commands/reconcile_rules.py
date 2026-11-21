@@ -23,6 +23,7 @@ Backend dont la lecture echoue (droits, erreur) : ses lignes ne sont JAMAIS
 touchees — seule une lecture reussie fait foi. Backend absent de la machine
 (binaire introuvable, adapter None) : ses lignes sont retirees.
 """
+
 from __future__ import annotations
 
 from collections import Counter
@@ -53,6 +54,7 @@ def rule_identity(rule: Any) -> tuple | None:
 @dataclass
 class ReconcilePlan:
     """Apercu du nettoyage (rien n'est encore modifie)."""
+
     keep: list = field(default_factory=list)
     duplicates: list = field(default_factory=list)
     stale: list = field(default_factory=list)
@@ -144,7 +146,9 @@ class ReconcileRulesCommand:
 
     def apply(self, plan: ReconcilePlan) -> ReconcileResult:
         if not plan.has_changes:
-            return ReconcileResult(success=True, message=_("La base est déjà propre : rien à changer."))
+            return ReconcileResult(
+                success=True, message=_("La base est déjà propre : rien à changer.")
+            )
         try:
             self._backup_dir.mkdir(parents=True, exist_ok=True)
             backup_path = self._backup_dir / f"omega_{datetime.now():%Y%m%d_%H%M%S}.db"
@@ -152,7 +156,9 @@ class ReconcileRulesCommand:
         except Exception as e:
             return ReconcileResult(
                 success=False,
-                message=_("Sauvegarde de la base impossible, rien n'a été modifié : {e}").format(e=e),
+                message=_(
+                    "Sauvegarde de la base impossible, rien n'a été modifié : {e}"
+                ).format(e=e),
             )
 
         removed = imported = enabled = 0
@@ -170,16 +176,29 @@ class ReconcileRulesCommand:
                     enabled += 1
         except RepositoryError as e:
             return ReconcileResult(
-                success=False, removed=removed, imported=imported, enabled=enabled,
+                success=False,
+                removed=removed,
+                imported=imported,
+                enabled=enabled,
                 backup_path=backup_path,
-                message=_("Erreur technique pendant le nettoyage : {e}. Sauvegarde : {path}").format(e=e, path=backup_path),
+                message=_(
+                    "Erreur technique pendant le nettoyage : {e}. Sauvegarde : {path}"
+                ).format(e=e, path=backup_path),
             )
 
         return ReconcileResult(
-            success=True, removed=removed, imported=imported, enabled=enabled,
+            success=True,
+            removed=removed,
+            imported=imported,
+            enabled=enabled,
             backup_path=backup_path,
-            message=_("Base nettoyée : {removed} ligne(s) retirée(s), {imported} règle(s) importée(s), {enabled} réactivée(s). Pare-feu non modifié. Sauvegarde : {path}").format(
-                removed=removed, imported=imported, enabled=enabled, path=backup_path,
+            message=_(
+                "Base nettoyée : {removed} ligne(s) retirée(s), {imported} règle(s) importée(s), {enabled} réactivée(s). Pare-feu non modifié. Sauvegarde : {path}"
+            ).format(
+                removed=removed,
+                imported=imported,
+                enabled=enabled,
+                path=backup_path,
             ),
         )
 
@@ -197,4 +216,4 @@ class ReconcileRulesCommand:
 # - Lecture en échec = backend illisible, ses lignes ne sont pas touchées.
 # - Sauvegarde de omega.db (API backup SQLite) avant toute écriture.
 # - Jamais de flush : seule la base change.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

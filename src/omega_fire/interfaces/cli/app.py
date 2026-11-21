@@ -10,46 +10,52 @@ Conforms to Omega-Fire architecture charter:
 - Actions executed via ActionRegistry with ActionContext
 - Graying handled by tree_builder.py based on capability registry
 """
+
 from __future__ import annotations
 
 import signal
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.text import Text
-from rich.align import Align
-from rich.live import Live
-from rich.layout import Layout
-from rich.table import Table
 from rich import box
+from rich.align import Align
+from rich.console import Console, Group
+from rich.layout import Layout
+from rich.live import Live
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from omega_fire.core.capability_registry import CapabilityRegistry
-from omega_fire.interfaces.cli.themes.registry import theme_registry
-from omega_fire.interfaces.cli.renderers.styles import get_terminal_width, get_terminal_height
-from omega_fire.interfaces.cli.renderers.icons import menu_icon
-from omega_fire.interfaces.cli.menu_builder import build_main_menu
-from omega_fire.interfaces.cli.tree_builder import build_menu_tree
+from omega_fire.interfaces.cli import keybindings as kb
 from omega_fire.interfaces.cli.actions import (
-    ActionRegistry,
     ActionContext,
-    action_quit,
+    ActionRegistry,
     action_5_1_live_tail,
     action_8_1_live_dashboard,
     action_8_6_lnav_analysis,
+    action_quit,
 )
-from omega_fire.interfaces.cli import keybindings as kb
-from omega_fire.interfaces.cli.renderers.frame import render_frame, FrameMode
-from omega_fire.interfaces.cli.renderers.pager import paginated
 from omega_fire.interfaces.cli.help_text import get_help_entry
+from omega_fire.interfaces.cli.menu_builder import build_main_menu
+from omega_fire.interfaces.cli.renderers.icons import menu_icon
+from omega_fire.interfaces.cli.renderers.pager import paginated
+from omega_fire.interfaces.cli.renderers.styles import (
+    get_terminal_height,
+    get_terminal_width,
+)
+from omega_fire.interfaces.cli.themes.registry import theme_registry
+from omega_fire.interfaces.cli.tree_builder import build_menu_tree
 
 MAIN_MENU_LOGO_LINES = [
     "┌╦═══╦┐ ┌╦═╦═╦┐ ┌╦═══╦┐ ┌╦═══╦┐ ┌╦═══╦┐   ┌╦═══╦┐ ┌═╤╦╤═┐ ┌╦═══╦┐ ┌╦═══╦┐",
     "│║   ║│ │║ ║ ║│ ├╬══    │║  ═╦┐ ├╬═══╬┤ ═ ├╬══      │║│   │╠══╦╩┘ ├╬══   ",
     "└╩═══╩┘ └╩   ╩┘ └╩═══╩┘ └╩═══╩┘ └╩   ╩┘   └╩      └═╧╩╧═┘ └╩  ╚═┘ └╩═══╩┘",
 ]
-MAIN_MENU_LOGO_SPLIT = 42  # colonne de coupure entre OMEGA et FIRE, verifiee sur les 3 lignes
+MAIN_MENU_LOGO_SPLIT = (
+    42  # colonne de coupure entre OMEGA et FIRE, verifiee sur les 3 lignes
+)
+
 
 # ----------------------------------------------------------------------
 # Navigation state
@@ -57,6 +63,7 @@ MAIN_MENU_LOGO_SPLIT = 42  # colonne de coupure entre OMEGA et FIRE, verifiee su
 @dataclass
 class NavigationState:
     """State of the navigation through the menu tree."""
+
     current_node: Any
     selected_index: int
     breadcrumb: list[str]
@@ -130,7 +137,7 @@ def _get_available_themes() -> list[str]:
 # ----------------------------------------------------------------------
 # Menu id shortcut (type "2.1" + Enter to jump there)
 # ----------------------------------------------------------------------
-def _resolve_menu_shortcut(menu_root: Any, typed: str) -> Optional[list]:
+def _resolve_menu_shortcut(menu_root: Any, typed: str) -> list | None:
     """Resolve a typed id like "2.1" or "4" to the chain of nodes from
     the top-level section down to the target.
 
@@ -163,7 +170,7 @@ def _resolve_menu_shortcut(menu_root: Any, typed: str) -> Optional[list]:
     return [section, leaf]
 
 
-def _jump_to_menu_path(state: "NavigationState", path: list) -> None:
+def _jump_to_menu_path(state: NavigationState, path: list) -> None:
     """Move the cursor to the given path, always resolved from the
     menu root — an absolute jump regardless of where the cursor
     currently was (works the same whether triggered from the main
@@ -195,7 +202,7 @@ def _jump_to_menu_path(state: "NavigationState", path: list) -> None:
 # ----------------------------------------------------------------------
 # Overlay builders
 # ----------------------------------------------------------------------
-def _get_contextual_help_node(state: "NavigationState") -> Any:
+def _get_contextual_help_node(state: NavigationState) -> Any:
     """Node the help overlay should describe: the currently highlighted
     child if browsing a list (a section or an action about to be
     entered/executed), otherwise the current node itself (e.g. a leaf
@@ -210,7 +217,7 @@ def _get_contextual_help_node(state: "NavigationState") -> Any:
     return state.current_node
 
 
-def _build_help_body(state: "NavigationState") -> Group:
+def _build_help_body(state: NavigationState) -> Group:
     """Build the contextual help overlay content using Rich visual style.
 
     Shows a detailed guide (interfaces/cli/help_text.py) for the node
@@ -260,7 +267,10 @@ def _build_help_body(state: "NavigationState") -> Group:
             content.append(Text(f"  {entry.mechanism}", style=muted_s))
             content.append(Text(""))
     else:
-        fallback = node.description or "Aucune aide détaillée pour cette section pour l'instant."
+        fallback = (
+            node.description
+            or "Aucune aide détaillée pour cette section pour l'instant."
+        )
         content.append(Text(fallback, style=label_s))
         content.append(Text(""))
 
@@ -279,22 +289,35 @@ def _build_help_body(state: "NavigationState") -> Group:
         ("0-9 . Enter", "Aller directement à un numéro de menu (ex: 2.1 puis Entrée)"),
         ("a", "Fermer cette aide"),
         ("t", "Ouvrir le sélecteur de thème"),
-        ("r", "Rafraîchir l'affichage (recentrage après redimensionnement du terminal)"),
+        (
+            "r",
+            "Rafraîchir l'affichage (recentrage après redimensionnement du terminal)",
+        ),
         ("q", "Quitter l'application"),
         ("Ctrl+C", "Quitter immédiatement"),
-        ("◀ / ▶", "Pagination : page précédente / suivante (quand un affichage dépasse la hauteur du terminal)"),
+        (
+            "◀ / ▶",
+            "Pagination : page précédente / suivante (quand un affichage dépasse la hauteur du terminal)",
+        ),
         ("d", "Pagination : aller à la première page"),
         ("f", "Pagination : aller à la dernière page"),
-        ("q", "Pagination : fermer l'affichage en cours (même touche que quitter l'application, sens selon le contexte)"),
+        (
+            "q",
+            "Pagination : fermer l'affichage en cours (même touche que quitter l'application, sens selon le contexte)",
+        ),
     ]
     for key, action in shortcuts:
         table.add_row(key, action)
     content.append(table)
     content.append(Text(""))
-    content.append(Align.center(Text(
-        "Appuyez sur Esc ou Enter pour fermer cette aide",
-        style=muted_s,
-    )))
+    content.append(
+        Align.center(
+            Text(
+                "Appuyez sur Esc ou Enter pour fermer cette aide",
+                style=muted_s,
+            )
+        )
+    )
     return Group(*content)
 
 
@@ -310,8 +333,8 @@ def _build_theme_select_body(selected_index: int) -> Group:
     content.append(Align.center(Text("SÉLECTIONNEZ UN THÈME", style=heading_s)))
     content.append(Text(""))
     for i, theme_name in enumerate(available_themes):
-        is_current = (theme_name == current_name)
-        is_selected = (i == selected_index)
+        is_current = theme_name == current_name
+        is_selected = i == selected_index
         line = Text()
         marker = "★" if is_current else " "
         if is_selected:
@@ -324,10 +347,14 @@ def _build_theme_select_body(selected_index: int) -> Group:
                 line.append("  (actif)", style=muted_s)
         content.append(line)
         content.append(Text(""))
-    content.append(Align.center(Text(
-        "↑↓ Naviguer │ Enter Valider │ Esc Annuler",
-        style=muted_s,
-    )))
+    content.append(
+        Align.center(
+            Text(
+                "↑↓ Naviguer │ Enter Valider │ Esc Annuler",
+                style=muted_s,
+            )
+        )
+    )
     return Group(*content)
 
 
@@ -345,19 +372,27 @@ def _build_layout(state: NavigationState) -> Layout:
         Layout(name="body", ratio=1),
         Layout(name="footer", size=3),
     )
-    
+
     # === HEADER ===
     term_w = get_terminal_width()
     term_h = get_terminal_height()
     header_text = Text()
-    header_text.append("🛡 OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title"))
-    theme_name = theme_registry.get_active().display_name
-    header_text.append(f"  │  {theme_name}  │  {term_w}x{term_h}",
-                       style=theme_registry.get_style("text.muted"))
-    root["header"].update(
-        Panel(header_text, border_style=theme_registry.get_style("border.default"), padding=(0, 2))
+    header_text.append(
+        "🛡 OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title")
     )
-    
+    theme_name = theme_registry.get_active().display_name
+    header_text.append(
+        f"  │  {theme_name}  │  {term_w}x{term_h}",
+        style=theme_registry.get_style("text.muted"),
+    )
+    root["header"].update(
+        Panel(
+            header_text,
+            border_style=theme_registry.get_style("border.default"),
+            padding=(0, 2),
+        )
+    )
+
     # === BODY ===
     if state.overlay_mode == "help":
         root["body"].update(
@@ -370,7 +405,9 @@ def _build_layout(state: NavigationState) -> Layout:
     elif state.overlay_mode == "theme_select":
         root["body"].update(
             Panel(
-                Align.center(_build_theme_select_body(state.overlay_selected), vertical="middle"),
+                Align.center(
+                    _build_theme_select_body(state.overlay_selected), vertical="middle"
+                ),
                 border_style=theme_registry.get_style("border.default"),
                 padding=(1, 2),
             )
@@ -379,14 +416,21 @@ def _build_layout(state: NavigationState) -> Layout:
         body_parts = []
         if len(breadcrumb) > 1:
             breadcrumb_panel = Panel(
-                Text(" ▸ ".join(breadcrumb[-3:]), style=theme_registry.get_style("text.header")),
+                Text(
+                    " ▸ ".join(breadcrumb[-3:]),
+                    style=theme_registry.get_style("text.header"),
+                ),
                 border_style=theme_registry.get_style("border.accent"),
                 box=box.ROUNDED,
                 padding=(0, 1),
             )
             body_parts.append(breadcrumb_panel)
             body_parts.append(Text(""))
-        title = current_node.label.upper() if current_node.id == "root" else current_node.label
+        title = (
+            current_node.label.upper()
+            if current_node.id == "root"
+            else current_node.label
+        )
 
         # Logo ASCII : uniquement sur le menu principal, jamais dans les sous-menus.
         # Meme couleur que l'intitule des entrees de menu (menu.item) - pas
@@ -414,8 +458,12 @@ def _build_layout(state: NavigationState) -> Layout:
         menu_table.add_column("menu", ratio=1)
 
         for i, child in enumerate(children):
-            icon = menu_icon(child.id) if current_node.id == "root" and child.id[0].isdigit() else "▸"
-            is_selected = (i == selected_index)
+            icon = (
+                menu_icon(child.id)
+                if current_node.id == "root" and child.id[0].isdigit()
+                else "▸"
+            )
+            is_selected = i == selected_index
             is_disabled = not child.enabled
             marker = "▸" if is_selected else " "
 
@@ -437,7 +485,10 @@ def _build_layout(state: NavigationState) -> Layout:
                 cell.append(f"{child.id}.", style=id_style)
                 cell.append(f" {icon} {child.label}", style=label_style)
             if child.description and not is_disabled:
-                cell.append(f"\n   {child.description}", style=theme_registry.get_style("text.muted"))
+                cell.append(
+                    f"\n   {child.description}",
+                    style=theme_registry.get_style("text.muted"),
+                )
 
             menu_table.add_row(cell)
 
@@ -462,7 +513,7 @@ def _build_layout(state: NavigationState) -> Layout:
                 padding=(1, 2),
             )
         )
-    
+
     # === FOOTER ===
     root["footer"].update(
         Panel(
@@ -489,10 +540,25 @@ def _confirm_exit(console: Console) -> bool:
     dialog_width = min(get_terminal_width() - 10, 60)
 
     body = Group(
-        Align.center(Text("⚠ Interruption détectée", style=theme_registry.get_style("menu.selected"))),
+        Align.center(
+            Text(
+                "⚠ Interruption détectée",
+                style=theme_registry.get_style("menu.selected"),
+            )
+        ),
         Text(""),
-        Align.center(Text("Historique et configuration conservés", style=theme_registry.get_style("text.header"))),
-        Align.center(Text("Les règles du firewall restent actives", style=theme_registry.get_style("text.header"))),
+        Align.center(
+            Text(
+                "Historique et configuration conservés",
+                style=theme_registry.get_style("text.header"),
+            )
+        ),
+        Align.center(
+            Text(
+                "Les règles du firewall restent actives",
+                style=theme_registry.get_style("text.header"),
+            )
+        ),
     )
     question_panel = Panel(
         body,
@@ -512,14 +578,23 @@ def _confirm_exit(console: Console) -> bool:
     prompt_pad = box_left_margin + max((dialog_width - len(prompt_text)) // 2, 0)
 
     try:
-        response = console.input(" " * prompt_pad + f"[menu.selected]{prompt_text}[/menu.selected]").strip().lower()
+        response = (
+            console.input(
+                " " * prompt_pad + f"[menu.selected]{prompt_text}[/menu.selected]"
+            )
+            .strip()
+            .lower()
+        )
         console.print()
-        ... 
         console.print()
         if response in ["o", "oui", "y", "yes"]:
             result_panel = Panel(
-                Align.center(Text("Session fermée avec succès. À bientôt !",
-                                   style=theme_registry.get_style("border.accent"))),
+                Align.center(
+                    Text(
+                        "Session fermée avec succès. À bientôt !",
+                        style=theme_registry.get_style("border.accent"),
+                    )
+                ),
                 border_style=theme_registry.get_style("border.accent"),
                 box=box.ROUNDED,
                 padding=(1, 3),
@@ -529,7 +604,12 @@ def _confirm_exit(console: Console) -> bool:
             return True
         else:
             result_panel = Panel(
-                Align.center(Text("Reprise de la session...", style=theme_registry.get_style("text.muted"))),
+                Align.center(
+                    Text(
+                        "Reprise de la session...",
+                        style=theme_registry.get_style("text.muted"),
+                    )
+                ),
                 border_style=theme_registry.get_style("border.default"),
                 box=box.ROUNDED,
                 padding=(1, 3),
@@ -542,7 +622,7 @@ def _confirm_exit(console: Console) -> bool:
 
 
 def _handle_quit_key(
-    state: "NavigationState",
+    state: NavigationState,
     live: Live,
     console: Console,
     registry: CapabilityRegistry,
@@ -573,7 +653,7 @@ def _handle_quit_key(
             action_quit(ctx)
         state.running = ctx.state.running
     except Exception as e:
-        state.message = f"Erreur : {str(e)}"
+        state.message = f"Erreur : {e!s}"
     finally:
         if state.running:
             console.show_cursor(False)
@@ -587,21 +667,21 @@ def _handle_quit_key(
 # ----------------------------------------------------------------------
 def run_app(
     registry: CapabilityRegistry,
-    console: Optional[Console] = None,
+    console: Console | None = None,
     container: Any = None,
 ) -> int:
     """Run the interactive CLI application."""
     console = console or Console()
-    
+
     # 1. Create ActionRegistry with the capability registry
     action_registry = ActionRegistry(registry)
-    
+
     # 2. Build the menu tree with actions wired via ActionRegistry._actions
     menu_root = build_main_menu(action_registry=action_registry._actions)
-    
+
     # 3. Apply capability-based graying via tree_builder
     menu_root = build_menu_tree(menu_root, registry)
-    
+
     # 4. Initialize navigation state
     state = NavigationState(
         current_node=menu_root,
@@ -615,14 +695,15 @@ def run_app(
         overlay_mode="",
         overlay_selected=0,
     )
-    
+
     # 5. Handle terminal resize
     def handle_resize(signum, frame):
         state.needs_redraw = True
+
     signal.signal(signal.SIGWINCH, handle_resize)
-    
+
     console.clear()
-    
+
     # 6. Main event loop
     # auto_refresh=False : toutes les mises à jour de cette boucle sont
     # déclenchées explicitement par une touche (state.needs_redraw +
@@ -651,9 +732,9 @@ def run_app(
                         # l'appel a lieu tout de suite.
                         live.update(_build_layout(state), refresh=True)
                         state.needs_redraw = False
-                    
+
                     key = kb._getch()
-                    
+
                     # === OVERLAY MODE: HELP ===
                     if state.overlay_mode == "help":
                         if kb.is_escape(key) or kb.is_enter(key) or kb.is_help(key):
@@ -662,7 +743,7 @@ def run_app(
                         elif kb.is_quit(key):
                             _handle_quit_key(state, live, console, registry, container)
                         continue
-                    
+
                     # === OVERLAY MODE: THEME SELECT ===
                     if state.overlay_mode == "theme_select":
                         available_themes = _get_available_themes()
@@ -670,10 +751,14 @@ def run_app(
                             state.overlay_mode = ""
                             state.needs_redraw = True
                         elif kb.is_arrow_up(key):
-                            state.overlay_selected = (state.overlay_selected - 1) % len(available_themes)
+                            state.overlay_selected = (state.overlay_selected - 1) % len(
+                                available_themes
+                            )
                             state.needs_redraw = True
                         elif kb.is_arrow_down(key):
-                            state.overlay_selected = (state.overlay_selected + 1) % len(available_themes)
+                            state.overlay_selected = (state.overlay_selected + 1) % len(
+                                available_themes
+                            )
                             state.needs_redraw = True
                         elif kb.is_enter(key) or kb.is_arrow_right(key):
                             selected_theme = available_themes[state.overlay_selected]
@@ -703,7 +788,9 @@ def run_app(
                         state.needs_redraw = True
                         continue
                     elif state.jump_buffer and kb.is_enter(key):
-                        path = _resolve_menu_shortcut(state.menu_root, state.jump_buffer)
+                        path = _resolve_menu_shortcut(
+                            state.menu_root, state.jump_buffer
+                        )
                         state.jump_buffer = ""
                         if path is None:
                             state.message = "Raccourci invalide."
@@ -733,7 +820,9 @@ def run_app(
                     elif kb.is_theme(key):
                         available_themes = _get_available_themes()
                         try:
-                            current_idx = available_themes.index(theme_registry.get_active().name)
+                            current_idx = available_themes.index(
+                                theme_registry.get_active().name
+                            )
                         except ValueError:
                             current_idx = 0
                         state.overlay_mode = "theme_select"
@@ -743,18 +832,24 @@ def run_app(
                         state.message = ""
                         children = state.current_node.children
                         if children:
-                            state.selected_index = (state.selected_index - 1) % len(children)
+                            state.selected_index = (state.selected_index - 1) % len(
+                                children
+                            )
                             state.needs_redraw = True
                     elif kb.is_arrow_down(key):
                         state.message = ""
                         children = state.current_node.children
                         if children:
-                            state.selected_index = (state.selected_index + 1) % len(children)
+                            state.selected_index = (state.selected_index + 1) % len(
+                                children
+                            )
                             state.needs_redraw = True
                     elif kb.is_arrow_left(key):
                         state.message = ""
                         if state.nav_stack:
-                            state.current_node, state.selected_index = state.nav_stack.pop()
+                            state.current_node, state.selected_index = (
+                                state.nav_stack.pop()
+                            )
                             state.breadcrumb.pop()
                             state.needs_redraw = True
                     elif kb.is_arrow_right(key) or kb.is_enter(key):
@@ -767,7 +862,7 @@ def run_app(
                             state.message = "Cette section est indisponible"
                             state.needs_redraw = True
                             continue
-                        
+
                         # Special case: Quit
                         if child.id == "0":
                             if child.action:
@@ -785,7 +880,7 @@ def run_app(
                                     # Synchronisation explicite de l'arrêt
                                     state.running = ctx.state.running
                                 except Exception as e:
-                                    state.message = f"Erreur : {str(e)}"
+                                    state.message = f"Erreur : {e!s}"
                                 finally:
                                     if state.running:
                                         try:
@@ -796,15 +891,17 @@ def run_app(
                                             pass
                                         state.needs_redraw = True
                             continue
-                        
+
                         # Submenu: enter it
                         if child.children:
-                            state.nav_stack.append((state.current_node, state.selected_index))
+                            state.nav_stack.append(
+                                (state.current_node, state.selected_index)
+                            )
                             state.current_node = child
                             state.selected_index = 0
                             state.breadcrumb.append(child.label)
                             state.needs_redraw = True
-                        
+
                         # Leaf node with action: execute it
                         elif child.is_leaf() and child.is_actionable():
                             try:
@@ -819,7 +916,11 @@ def run_app(
                                     state=state,
                                 )
 
-                                if child.action in (action_5_1_live_tail, action_8_1_live_dashboard, action_8_6_lnav_analysis):
+                                if child.action in (
+                                    action_5_1_live_tail,
+                                    action_8_1_live_dashboard,
+                                    action_8_6_lnav_analysis,
+                                ):
                                     # Écrans à rafraîchissement continu ou à
                                     # prise de contrôle complète du terminal
                                     # (Live Tail, Tableau de bord temps réel,
@@ -839,7 +940,7 @@ def run_app(
                                         child.action(ctx)
 
                             except Exception as e:
-                                state.message = f"Erreur : {str(e)}"
+                                state.message = f"Erreur : {e!s}"
                             finally:
                                 try:
                                     console.show_cursor(False)
@@ -848,11 +949,13 @@ def run_app(
                                 except Exception:
                                     pass
                                 state.needs_redraw = True
-                                
+
                     elif kb.is_escape(key):
                         state.message = ""
                         if state.nav_stack:
-                            state.current_node, state.selected_index = state.nav_stack.pop()
+                            state.current_node, state.selected_index = (
+                                state.nav_stack.pop()
+                            )
                             state.breadcrumb.pop()
                             state.needs_redraw = True
                         else:
@@ -889,6 +992,8 @@ def run_app(
                     state.running = False
 
     return 0
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Boucle principale de l'application CLI interactive.
@@ -921,4 +1026,4 @@ def run_app(
 #   et live.start() / console.show_cursor(False) dans le bloc finally.
 # - Gère SIGWINCH pour redimensionnement terminal.
 # - Footer standardisé via keybindings constants.
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -5,21 +5,23 @@ Defines the Capability dataclass, which represents a single system capability
 with its status, reason, and metadata. This is the fundamental unit of the
 capability registry.
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
-from omega_fire.shared.i18n import retranslate
+from typing import Any
+
 from omega_fire.core.enums import CapabilityStatus
+from omega_fire.shared.i18n import retranslate
 
 
 @dataclass
 class Capability:
     """A single system capability.
-    
+
     Represents a capability with its current status, reason for that status,
     and metadata about when it was last checked. This is the fundamental unit
     stored in the capability registry.
-    
+
     Attributes:
         id: Unique identifier for the capability (e.g., "nftables", "fail2ban")
         status: Current status (AVAILABLE, DEGRADED, MISSING, DISQUALIFIED)
@@ -29,52 +31,53 @@ class Capability:
         category: Optional category for grouping (e.g., "backend", "service")
         metadata: Optional dictionary for arbitrary additional data
     """
+
     id: str
     status: CapabilityStatus
     reason: str = ""
-    detail: Optional[dict[str, Any]] = None
+    detail: dict[str, Any] | None = None
     last_checked: datetime = field(default_factory=datetime.now)
-    category: Optional[str] = None
+    category: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-    
+
     def is_available(self) -> bool:
         """Check if the capability is fully available.
-        
+
         Returns:
             True if status is AVAILABLE
         """
         return self.status == CapabilityStatus.AVAILABLE
-    
+
     def is_degraded(self) -> bool:
         """Check if the capability is in degraded state.
-        
+
         Returns:
             True if status is DEGRADED
         """
         return self.status == CapabilityStatus.DEGRADED
-    
+
     def is_missing(self) -> bool:
         """Check if the capability is missing.
-        
+
         Returns:
             True if status is MISSING
         """
         return self.status == CapabilityStatus.MISSING
-    
+
     def is_disqualified(self) -> bool:
         """Check if the capability is disqualified.
-        
+
         Returns:
             True if status is DISQUALIFIED
         """
         return self.status == CapabilityStatus.DISQUALIFIED
-    
+
     def is_usable(self, allow_degraded: bool = False) -> bool:
         """Check if the capability can be used.
-        
+
         Args:
             allow_degraded: If True, consider DEGRADED as usable
-        
+
         Returns:
             True if the capability is AVAILABLE, or DEGRADED with allow_degraded=True
         """
@@ -83,15 +86,15 @@ class Capability:
         if allow_degraded and self.status == CapabilityStatus.DEGRADED:
             return True
         return False
-    
+
     def update_status(
         self,
         status: CapabilityStatus,
         reason: str = "",
-        detail: Optional[dict[str, Any]] = None,
+        detail: dict[str, Any] | None = None,
     ) -> None:
         """Update the capability status.
-        
+
         Args:
             status: New status
             reason: New reason for the status
@@ -102,47 +105,49 @@ class Capability:
         if detail is not None:
             self.detail = detail
         self.last_checked = datetime.now()
-    
+
     def mark_available(self, reason: str = "") -> None:
         """Mark the capability as available.
-        
+
         Args:
             reason: Optional reason message
         """
         self.update_status(CapabilityStatus.AVAILABLE, reason)
-    
-    def mark_degraded(self, reason: str, detail: Optional[dict[str, Any]] = None) -> None:
+
+    def mark_degraded(self, reason: str, detail: dict[str, Any] | None = None) -> None:
         """Mark the capability as degraded.
-        
+
         Args:
             reason: Reason for degradation
             detail: Optional technical details
         """
         self.update_status(CapabilityStatus.DEGRADED, reason, detail)
-    
+
     def mark_missing(self, reason: str = "") -> None:
         """Mark the capability as missing.
-        
+
         Args:
             reason: Optional reason message
         """
         self.update_status(CapabilityStatus.MISSING, reason)
-    
-    def mark_disqualified(self, reason: str, detail: Optional[dict[str, Any]] = None) -> None:
+
+    def mark_disqualified(
+        self, reason: str, detail: dict[str, Any] | None = None
+    ) -> None:
         """Mark the capability as disqualified.
-        
+
         Args:
             reason: Reason for disqualification
             detail: Optional technical details
         """
         self.update_status(CapabilityStatus.DISQUALIFIED, reason, detail)
-    
-    def age_seconds(self, now: Optional[datetime] = None) -> float:
+
+    def age_seconds(self, now: datetime | None = None) -> float:
         """Calculate the age since last check in seconds.
-        
+
         Args:
             now: Current time (default: datetime.now())
-        
+
         Returns:
             Age in seconds
         """
@@ -150,21 +155,21 @@ class Capability:
             now = datetime.now()
         delta = now - self.last_checked
         return delta.total_seconds()
-    
+
     def is_stale(self, max_age_seconds: int = 300) -> bool:
         """Check if the capability status is stale (too old).
-        
+
         Args:
             max_age_seconds: Maximum age in seconds (default: 5 minutes)
-        
+
         Returns:
             True if the status is older than max_age_seconds
         """
         return self.age_seconds() > max_age_seconds
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the capability to a dictionary.
-        
+
         Returns:
             Dictionary representation of the capability
         """
@@ -178,10 +183,10 @@ class Capability:
             "category": self.category,
             "metadata": self.metadata,
         }
-    
+
     def __str__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String like "nftables: AVAILABLE (reason)"
         """
@@ -195,18 +200,18 @@ def create_capability(
     capability_id: str,
     status: CapabilityStatus = CapabilityStatus.AVAILABLE,
     reason: str = "",
-    detail: Optional[dict[str, Any]] = None,
-    category: Optional[str] = None,
+    detail: dict[str, Any] | None = None,
+    category: str | None = None,
 ) -> Capability:
     """Factory function to create a Capability.
-    
+
     Args:
         capability_id: Unique identifier
         status: Initial status (default: AVAILABLE)
         reason: Initial reason
         detail: Optional detail dictionary
         category: Optional category
-    
+
     Returns:
         Capability instance
     """
@@ -221,52 +226,56 @@ def create_capability(
 
 def create_available_capability(
     capability_id: str,
-    category: Optional[str] = None,
+    category: str | None = None,
 ) -> Capability:
     """Factory function to create an available capability.
-    
+
     Args:
         capability_id: Unique identifier
         category: Optional category
-    
+
     Returns:
         Capability with AVAILABLE status
     """
-    return create_capability(capability_id, CapabilityStatus.AVAILABLE, category=category)
+    return create_capability(
+        capability_id, CapabilityStatus.AVAILABLE, category=category
+    )
 
 
 def create_missing_capability(
     capability_id: str,
     reason: str = "",
-    category: Optional[str] = None,
+    category: str | None = None,
 ) -> Capability:
     """Factory function to create a missing capability.
-    
+
     Args:
         capability_id: Unique identifier
         reason: Reason for being missing
         category: Optional category
-    
+
     Returns:
         Capability with MISSING status
     """
-    return create_capability(capability_id, CapabilityStatus.MISSING, reason, category=category)
+    return create_capability(
+        capability_id, CapabilityStatus.MISSING, reason, category=category
+    )
 
 
 def create_degraded_capability(
     capability_id: str,
     reason: str,
-    detail: Optional[dict[str, Any]] = None,
-    category: Optional[str] = None,
+    detail: dict[str, Any] | None = None,
+    category: str | None = None,
 ) -> Capability:
     """Factory function to create a degraded capability.
-    
+
     Args:
         capability_id: Unique identifier
         reason: Reason for degradation
         detail: Optional technical details
         category: Optional category
-    
+
     Returns:
         Capability with DEGRADED status
     """
@@ -282,17 +291,17 @@ def create_degraded_capability(
 def create_disqualified_capability(
     capability_id: str,
     reason: str,
-    detail: Optional[dict[str, Any]] = None,
-    category: Optional[str] = None,
+    detail: dict[str, Any] | None = None,
+    category: str | None = None,
 ) -> Capability:
     """Factory function to create a disqualified capability.
-    
+
     Args:
         capability_id: Unique identifier
         reason: Reason for disqualification
         detail: Optional technical details
         category: Optional category
-    
+
     Returns:
         Capability with DISQUALIFIED status
     """
@@ -303,6 +312,7 @@ def create_disqualified_capability(
         detail,
         category,
     )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -330,4 +340,4 @@ def create_disqualified_capability(
 # - infrastructure/probe/capability_mapper.py créera des Capability à partir des résultats de probes
 # - application/pipeline/guards/capability_guard.py vérifiera le statut via is_usable()
 # - interfaces/cli/tree_builder.py utilisera is_available() pour griser les menus
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

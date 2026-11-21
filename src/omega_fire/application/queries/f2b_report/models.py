@@ -5,24 +5,26 @@ Pure DTOs — no I/O, no business logic. Complement the minimal fail2ban
 summary already present in the audit report (menu 6.3) with full
 per-jail detail.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
 class SystemStatus:
     """Fail2ban system-level status: installed, running, enabled at boot."""
+
     installed: bool = False
     service_running: bool = False
-    enabled_at_boot: Optional[bool] = None  # None = impossible à déterminer
+    enabled_at_boot: bool | None = None  # None = impossible à déterminer
 
 
 @dataclass
 class RecentBan:
     """A single ban entry from fail2ban's own history (bips table)."""
+
     ip: str
     timeofban: datetime
     bantime: int
@@ -32,14 +34,15 @@ class RecentBan:
 @dataclass
 class JailDetail:
     """Full detail for a single jail."""
+
     name: str
     currently_failed: int = 0
     total_failed: int = 0
     currently_banned: int = 0
     total_banned: int = 0
-    maxretry: Optional[str] = None
-    bantime: Optional[str] = None
-    findtime: Optional[str] = None
+    maxretry: str | None = None
+    bantime: str | None = None
+    findtime: str | None = None
     banned_ips: list[str] = field(default_factory=list)
     banned_ips_overflow: int = 0  # nombre d'IPs au-delà du plafond d'affichage
     recent_bans: list[RecentBan] = field(default_factory=list)
@@ -49,6 +52,7 @@ class JailDetail:
 @dataclass
 class DuplicateIp:
     """An IP present in more than one jail simultaneously."""
+
     ip: str
     jails: list[str]
 
@@ -60,6 +64,7 @@ class DuplicateIp:
 @dataclass
 class F2bReportData:
     """Complete fail2ban report (menu 6.4)."""
+
     generated_at: datetime
     system: SystemStatus
     total_jails: int
@@ -90,4 +95,4 @@ class F2bReportData:
 # - system_section.py, jails_section.py, duplicates_section.py
 #   peuplent ces DTOs.
 # - report_builder.py les assemble en F2bReportData.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

@@ -6,64 +6,119 @@ ban/unban IPs in jails. Uses subprocess to execute fail2ban-client commands.
 
 This is the only module that directly calls fail2ban-client via subprocess.
 """
+
 import os
 import re
-from datetime import datetime
 import sqlite3
+import stat
 import subprocess
 import time
-from typing import Optional, Any
-from omega_fire.infrastructure.backends.fail2ban.parser import Fail2banParser
-from omega_fire.infrastructure.backends.fail2ban.exceptions import (
-    Fail2banCommandError,
-    JailNotFoundError,
-    Fail2banPermissionError,
+from datetime import datetime
+from typing import Any
+
+from omega_fire.domain.fail2ban.definitions import (
+    ConfigFile,
+    JailDefinition,
+    build_definitions,
+    owned_filter,
 )
-from omega_fire.infrastructure.backends.fail2ban.service_controller import Fail2banServiceController
-from omega_fire.infrastructure.backends.fail2ban.history_reader import DEFAULT_F2B_DB_PATH
-from omega_fire.ports.fail2ban import JailInfo, JailStatus
-from omega_fire.shared.networking import IPAddress
 from omega_fire.domain.fail2ban.exceptions import (
-    JailNotFoundError as DomainJailNotFoundError,
-    JailAlreadyExistsError as DomainJailAlreadyExistsError,
     IPAlreadyBannedError,
     IPNotFoundError,
     JailNotDeletableError,
 )
-from omega_fire.domain.fail2ban.definitions import ConfigFile, JailDefinition, build_definitions, owned_filter
+from omega_fire.domain.fail2ban.exceptions import (
+    JailAlreadyExistsError as DomainJailAlreadyExistsError,
+)
+from omega_fire.domain.fail2ban.exceptions import (
+    JailNotFoundError as DomainJailNotFoundError,
+)
+from omega_fire.infrastructure.backends.fail2ban.exceptions import (
+    Fail2banCommandError,
+    Fail2banPermissionError,
+    JailNotFoundError,
+)
+from omega_fire.infrastructure.backends.fail2ban.history_reader import (
+    DEFAULT_F2B_DB_PATH,
+)
+from omega_fire.infrastructure.backends.fail2ban.parser import Fail2banParser
+from omega_fire.infrastructure.backends.fail2ban.service_controller import (
+    Fail2banServiceController,
+)
+from omega_fire.ports.fail2ban import JailInfo, JailStatus
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
 
+_DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 
 
 def _create_like_parent(path: str) -> None:
     """Cree `path` (et ses dossiers manquants) avec le proprietaire et le groupe du plus proche dossier
-    existant, fichier en 0664, dossiers en 0775 (setgid conserve s'il est herite). Rien si `path` existe."""
-    if not path or os.path.exists(path):
+    existant, fichier en 0664, dossiers en 0775 (setgid conserve s'il est herite). Rien si `path` existe.
+
+    Scan de securite 2026-11-21 (F1) : le dossier appartient souvent a un compte de service (omega-serv,
+    caddy, www-data) qui pourrait y poser un lien vers /etc/ld.so.preload. Aucun lien n'est donc suivi :
+    lien a la place du fichier refuse, lien d'un compte autre que root dans le chemin refuse, dossiers
+    parcourus un par un sans suivre de lien (O_NOFOLLOW), fichier cree en O_EXCL et donne par son descripteur."""
+    if not path:
         return
-    parent = os.path.dirname(os.path.abspath(path))
-    ancestor = parent
-    while not os.path.isdir(ancestor):
-        ancestor = os.path.dirname(ancestor)
-    info = os.stat(ancestor)
-    missing: list[str] = []
-    current = parent
-    while not os.path.isdir(current):
-        missing.append(current)
-        current = os.path.dirname(current)
-    for directory in reversed(missing):
-        os.mkdir(directory, 0o775)
-        _give_to(directory, info.st_uid, info.st_gid)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o664)
+    absolute = os.path.abspath(path)
+    if os.path.lexists(absolute):
+        if os.path.islink(absolute):
+            raise OSError(_("Refusé : {path} est un lien symbolique").format(path=absolute))
+        return
+    _refuse_untrusted_links(os.path.dirname(absolute))
+    parts = [part for part in os.path.realpath(os.path.dirname(absolute)).split(os.sep) if part]
+    fd = os.open(os.sep, _DIR_FLAGS)
+    owner: tuple[int, int] | None = None
     try:
-        _give_to(path, info.st_uid, info.st_gid)
-        os.fchmod(fd, 0o664)
+        for name in parts:
+            try:
+                child = os.open(name, _DIR_FLAGS, dir_fd=fd)
+            except FileNotFoundError:
+                if owner is None:
+                    info = os.fstat(fd)
+                    owner = (info.st_uid, info.st_gid)
+                os.mkdir(name, 0o775, dir_fd=fd)
+                child = os.open(name, _DIR_FLAGS, dir_fd=fd)
+                _give_fd(child, *owner)
+            os.close(fd)
+            fd = child
+        if owner is None:
+            info = os.fstat(fd)
+            owner = (info.st_uid, info.st_gid)
+        try:
+            file_fd = os.open(os.path.basename(absolute),
+                              os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_APPEND, 0o664, dir_fd=fd)
+        except FileExistsError:
+            if os.path.islink(absolute):
+                raise OSError(_("Refusé : {path} est un lien symbolique").format(path=absolute)) from None
+            return
+        try:
+            _give_fd(file_fd, *owner)
+            os.fchmod(file_fd, 0o664)
+        finally:
+            os.close(file_fd)
     finally:
         os.close(fd)
 
 
-def _give_to(path: str, uid: int, gid: int) -> None:
+def _refuse_untrusted_links(directory: str) -> None:
+    """Un lien dans le chemin n'est accepte que s'il appartient a root (/var/run -> /run...)."""
+    current = os.sep
+    for part in [part for part in directory.split(os.sep) if part]:
+        current = os.path.join(current, part)
+        try:
+            info = os.lstat(current)
+        except FileNotFoundError:
+            return
+        if stat.S_ISLNK(info.st_mode) and info.st_uid != 0:
+            raise OSError(_("Refusé : {path} est un lien symbolique d'un compte autre que root").format(path=current))
+
+
+def _give_fd(fd: int, uid: int, gid: int) -> None:
     try:
-        os.chown(path, uid, gid)
+        os.fchown(fd, uid, gid)
     except PermissionError:
         pass  # sans root : le fichier reste a l'appelant, qui est alors deja le bon proprietaire
 
@@ -74,10 +129,10 @@ _BAN_WITH_TIME = re.compile(
 )
 
 
-def parse_ban_remaining_seconds(output: str, now: datetime) -> dict[str, Optional[int]]:
+def parse_ban_remaining_seconds(output: str, now: datetime) -> dict[str, int | None]:
     """Sortie de `banip --with-time` -> {ip: secondes restantes, ou None si permanent}. Les bans deja
     expires (fin passee) donnent 0 ; les lignes illisibles sont ignorees."""
-    remaining: dict[str, Optional[int]] = {}
+    remaining: dict[str, int | None] = {}
     for line in output.splitlines():
         match = _BAN_WITH_TIME.match(line.replace("`-", " ").replace("|-", " "))
         if not match:
@@ -92,6 +147,7 @@ def parse_ban_remaining_seconds(output: str, now: datetime) -> dict[str, Optiona
         remaining[match.group("ip")] = max(0, int((end - now).total_seconds()))
     return remaining
 
+
 class Fail2banAdapter:
     """Concrete adapter for fail2ban operations.
 
@@ -102,8 +158,8 @@ class Fail2banAdapter:
     def __init__(
         self,
         timeout: float = 10.0,
-        service_manager: Optional[Any] = None,
-        service_controller: Optional[Fail2banServiceController] = None,
+        service_manager: Any | None = None,
+        service_controller: Fail2banServiceController | None = None,
     ):
         """Initialize the fail2ban adapter.
         Args:
@@ -273,16 +329,34 @@ class Fail2banAdapter:
 
     _DURATION_MULTIPLIERS = {
         "": 1,
-        "s": 1, "sec": 1, "secs": 1, "second": 1, "seconds": 1,
-        "m": 60, "min": 60, "mins": 60, "minute": 60, "minutes": 60,
-        "h": 3600, "hour": 3600, "hours": 3600,
-        "d": 86400, "day": 86400, "days": 86400,
-        "w": 604800, "week": 604800, "weeks": 604800,
-        "mo": 2592000, "month": 2592000, "months": 2592000,
-        "y": 31536000, "year": 31536000, "years": 31536000,
+        "s": 1,
+        "sec": 1,
+        "secs": 1,
+        "second": 1,
+        "seconds": 1,
+        "m": 60,
+        "min": 60,
+        "mins": 60,
+        "minute": 60,
+        "minutes": 60,
+        "h": 3600,
+        "hour": 3600,
+        "hours": 3600,
+        "d": 86400,
+        "day": 86400,
+        "days": 86400,
+        "w": 604800,
+        "week": 604800,
+        "weeks": 604800,
+        "mo": 2592000,
+        "month": 2592000,
+        "months": 2592000,
+        "y": 31536000,
+        "year": 31536000,
+        "years": 31536000,
     }
 
-    def _parse_duration_to_seconds(self, value: str) -> Optional[str]:
+    def _parse_duration_to_seconds(self, value: str) -> str | None:
         """Convert a fail2ban human-readable duration ("24h", "1h",
         "15m", "1w", or a combination like "1h30m") to seconds, as a
         string — matching the form `fail2ban-client get <jail> bantime`
@@ -329,7 +403,7 @@ class Fail2banAdapter:
             total += int(number) * multiplier
         return str(total)
 
-    def _extract_section_block(self, content: str, name: str) -> Optional[str]:
+    def _extract_section_block(self, content: str, name: str) -> str | None:
         """Return the raw text of the `[name]` section within a
         fail2ban-style ini file — from its `[name]` header to the next
         `[...]` header (any section, including `[DEFAULT]`) or EOF.
@@ -351,12 +425,12 @@ class Fail2banAdapter:
             The section's body text (excluding the `[name]` header
             line itself), or None if this file has no `[name]` section.
         """
-        section_re = re.compile(rf'^\[{re.escape(name)}\][ \t]*$', re.MULTILINE)
+        section_re = re.compile(rf"^\[{re.escape(name)}\][ \t]*$", re.MULTILINE)
         match = section_re.search(content)
         if not match:
             return None
         start = match.end()
-        next_section = re.search(r'^\[.+?\][ \t]*$', content[start:], re.MULTILINE)
+        next_section = re.search(r"^\[.+?\][ \t]*$", content[start:], re.MULTILINE)
         end = start + next_section.start() if next_section else len(content)
         return content[start:end]
 
@@ -375,7 +449,7 @@ class Fail2banAdapter:
         """
         result: dict[str, str] = {}
         for param in ("logpath", "maxretry", "bantime", "findtime"):
-            match = re.search(rf'^\s*{param}\s*=\s*(.+)$', block, re.MULTILINE)
+            match = re.search(rf"^\s*{param}\s*=\s*(.+)$", block, re.MULTILINE)
             if not match:
                 continue
             raw_value = match.group(1).strip()
@@ -392,8 +466,8 @@ class Fail2banAdapter:
         self,
         name: str,
         jail_d_dir: str = "/etc/fail2ban/jail.d",
-        jail_conf_path: Optional[str] = None,
-        jail_local_path: Optional[str] = None,
+        jail_conf_path: str | None = None,
+        jail_local_path: str | None = None,
     ) -> dict:
         """Read logpath/maxretry/bantime/findtime for a jail directly
         from disk, instead of up to 4 `fail2ban-client get` subprocess
@@ -477,7 +551,7 @@ class Fail2banAdapter:
 
     def _get_current_bans_from_db(
         self, db_path: Any = DEFAULT_F2B_DB_PATH
-    ) -> Optional[dict[str, list[str]]]:
+    ) -> dict[str, list[str]] | None:
         """Bulk-read currently-banned IPs for ALL jails in one SQLite query.
 
         Replaces N x `fail2ban-client status <jail>` (~400ms each,
@@ -630,19 +704,23 @@ class Fail2banAdapter:
             ban_time).
         """
         log_path = (
-            disk_config["logpath"] if "logpath" in disk_config
+            disk_config["logpath"]
+            if "logpath" in disk_config
             else self._get_config_best_effort(name, "logpath", default="")
         )
         max_retry_raw = (
-            disk_config["maxretry"] if "maxretry" in disk_config
+            disk_config["maxretry"]
+            if "maxretry" in disk_config
             else self._get_config_best_effort(name, "maxretry", default="0")
         )
         ban_time_raw = (
-            disk_config["bantime"] if "bantime" in disk_config
+            disk_config["bantime"]
+            if "bantime" in disk_config
             else self._get_config_best_effort(name, "bantime", default="0")
         )
         find_time_raw = (
-            disk_config["findtime"] if "findtime" in disk_config
+            disk_config["findtime"]
+            if "findtime" in disk_config
             else self._get_config_best_effort(name, "findtime", default="0")
         )
 
@@ -696,7 +774,9 @@ class Fail2banAdapter:
 
         return [
             self._build_jail_info_fast(
-                name, bans_by_jail.get(name, []), self._get_static_config_from_disk(name)
+                name,
+                bans_by_jail.get(name, []),
+                self._get_static_config_from_disk(name),
             )
             for name in names
         ]
@@ -797,7 +877,9 @@ class Fail2banAdapter:
             IPAlreadyBannedError: If the IP is already banned in the jail
         """
         try:
-            output = self._run_command(["fail2ban-client", "set", jail_name, "banip", str(ip)])
+            output = self._run_command(
+                ["fail2ban-client", "set", jail_name, "banip", str(ip)]
+            )
         except Fail2banCommandError as e:
             self._translate_not_found(jail_name, e)
             raise
@@ -819,20 +901,24 @@ class Fail2banAdapter:
             IPNotFoundError: If the IP is not currently banned in the jail
         """
         try:
-            output = self._run_command(["fail2ban-client", "set", jail_name, "unbanip", str(ip)])
+            output = self._run_command(
+                ["fail2ban-client", "set", jail_name, "unbanip", str(ip)]
+            )
         except Fail2banCommandError as e:
             self._translate_not_found(jail_name, e)
             raise
         if self._parser.parse_set_ip_result(output) == 0:
             raise IPNotFoundError(str(ip), jail_name)
 
-    def get_ban_remaining_seconds(self, jail_name: str) -> dict[str, Optional[int]]:
+    def get_ban_remaining_seconds(self, jail_name: str) -> dict[str, int | None]:
         """Temps restant de chaque ban du jail, en secondes (None = ban permanent), lu par
         `fail2ban-client get <jail> banip --with-time` (correctif 2026-11-10 : le transfert vers
         nftables garde la duree au lieu de rendre le ban permanent). Ligne de fail2ban (1.x) :
         `IP \tAAAA-MM-JJ HH:MM:SS + DUREE = AAAA-MM-JJ HH:MM:SS` (heure locale ; DUREE < 0 = permanent).
         Dictionnaire vide si la commande echoue : l'appelant retombe alors sur la duree du jail."""
-        result = self._run_raw(["fail2ban-client", "get", jail_name, "banip", "--with-time"])
+        result = self._run_raw(
+            ["fail2ban-client", "get", jail_name, "banip", "--with-time"]
+        )
         if result.returncode != 0:
             return {}
         return parse_ban_remaining_seconds(result.stdout, datetime.now())
@@ -902,7 +988,9 @@ class Fail2banAdapter:
             raise
         if not banned_ips:
             return 0
-        output = self._run_command(["fail2ban-client", "set", jail_name, "unbanip", *banned_ips])
+        output = self._run_command(
+            ["fail2ban-client", "set", jail_name, "unbanip", *banned_ips]
+        )
         result = self._parser.parse_set_ip_result(output)
         return result if result >= 0 else len(banned_ips)
 
@@ -918,7 +1006,11 @@ class Fail2banAdapter:
         for name in self.list_jails():
             try:
                 total += self.flush_jail(name)
-            except (Fail2banCommandError, DomainJailNotFoundError, Fail2banPermissionError):
+            except (
+                Fail2banCommandError,
+                DomainJailNotFoundError,
+                Fail2banPermissionError,
+            ):
                 continue
         return total
 
@@ -959,9 +1051,13 @@ class Fail2banAdapter:
             with open(filter_path, "w", encoding="utf-8") as f:
                 f.write(content)
         except PermissionError as e:
-            raise Fail2banPermissionError(operation=f"write_filter:{filter_name}") from e
+            raise Fail2banPermissionError(
+                operation=f"write_filter:{filter_name}"
+            ) from e
         except OSError as e:
-            raise Fail2banCommandError(command=f"write {filter_path}", returncode=-1, stderr=str(e))
+            raise Fail2banCommandError(
+                command=f"write {filter_path}", returncode=-1, stderr=str(e)
+            )
         return True
 
     def create_jail(
@@ -1021,7 +1117,11 @@ class Fail2banAdapter:
         # Section [nom] deja definie sur disque, meme dans un jail non charge (desactive, fail2ban
         # arrete) ou dans un fichier d'un autre nom (omega-jail-<nom>.conf) : sinon fail2ban fusionnait
         # deux sections du meme nom sans le dire (correctif 2026-11-10).
-        if os.path.exists(jail_conf_path) or name in self.list_jails() or name in self._defined_jail_names(jail_d_dir):
+        if (
+            os.path.exists(jail_conf_path)
+            or name in self.list_jails()
+            or name in self._defined_jail_names(jail_d_dir)
+        ):
             raise DomainJailAlreadyExistsError(name)
 
         port_line = f"port = {port}\n" if port else ""
@@ -1047,7 +1147,9 @@ class Fail2banAdapter:
         except PermissionError as e:
             raise Fail2banPermissionError(operation=f"create_jail:{name}") from e
         except OSError as e:
-            raise Fail2banCommandError(command=f"write {jail_conf_path}", returncode=-1, stderr=str(e))
+            raise Fail2banCommandError(
+                command=f"write {jail_conf_path}", returncode=-1, stderr=str(e)
+            )
 
         reload_result = self._run_raw(["fail2ban-client", "reload"])
         if reload_result.returncode != 0:
@@ -1064,8 +1166,8 @@ class Fail2banAdapter:
     def _jail_config_files(
         self,
         jail_d_dir: str = "/etc/fail2ban/jail.d",
-        jail_conf_path: Optional[str] = None,
-        jail_local_path: Optional[str] = None,
+        jail_conf_path: str | None = None,
+        jail_local_path: str | None = None,
     ) -> list[ConfigFile]:
         """Fichiers de configuration fail2ban, dans l'ordre de lecture de fail2ban."""
         base_dir = os.path.dirname(os.path.normpath(jail_d_dir))
@@ -1074,16 +1176,26 @@ class Fail2banAdapter:
         names: list[tuple[str, bool]] = [(jail_conf_path, True)]
         if os.path.isdir(jail_d_dir):
             listing = sorted(os.listdir(jail_d_dir))
-            names += [(os.path.join(jail_d_dir, f), False) for f in listing if f.endswith(".conf")]
+            names += [
+                (os.path.join(jail_d_dir, f), False)
+                for f in listing
+                if f.endswith(".conf")
+            ]
             names.append((jail_local_path, True))
-            names += [(os.path.join(jail_d_dir, f), False) for f in listing if f.endswith(".local")]
+            names += [
+                (os.path.join(jail_d_dir, f), False)
+                for f in listing
+                if f.endswith(".local")
+            ]
         else:
             names.append((jail_local_path, True))
         configs: list[ConfigFile] = []
         for path, main in names:
             try:
                 with open(path, encoding="utf-8", errors="replace") as handle:
-                    configs.append(ConfigFile(path=path, content=handle.read(), main=main))
+                    configs.append(
+                        ConfigFile(path=path, content=handle.read(), main=main)
+                    )
             except OSError:
                 continue
         return configs
@@ -1091,15 +1203,19 @@ class Fail2banAdapter:
     def jail_definitions(
         self,
         jail_d_dir: str = "/etc/fail2ban/jail.d",
-        jail_conf_path: Optional[str] = None,
-        jail_local_path: Optional[str] = None,
+        jail_conf_path: str | None = None,
+        jail_local_path: str | None = None,
     ) -> dict[str, JailDefinition]:
         """Ou est defini chaque jail et par qui (Fail2banPort contract, version 3.5) : par
         section `[nom]`, quel que soit le nom du fichier (omega-jail ecrit
         omega-jail-<nom>.conf)."""
-        return build_definitions(self._jail_config_files(jail_d_dir, jail_conf_path, jail_local_path))
+        return build_definitions(
+            self._jail_config_files(jail_d_dir, jail_conf_path, jail_local_path)
+        )
 
-    def list_configured_jail_files(self, jail_d_dir: str = "/etc/fail2ban/jail.d") -> dict[str, str]:
+    def list_configured_jail_files(
+        self, jail_d_dir: str = "/etc/fail2ban/jail.d"
+    ) -> dict[str, str]:
         """List jail config files present on disk (Fail2banPort contract).
 
         Version 3.5 : cle = nom du JAIL (section `[nom]`), et non plus le nom du fichier —
@@ -1111,7 +1227,11 @@ class Fail2banAdapter:
         """
         jail_files: dict[str, str] = {}
         for name, definition in self.jail_definitions(jail_d_dir).items():
-            own = [path for path in definition.files if os.path.dirname(path) == os.path.normpath(jail_d_dir)]
+            own = [
+                path
+                for path in definition.files
+                if os.path.dirname(path) == os.path.normpath(jail_d_dir)
+            ]
             if own:
                 jail_files[name] = own[-1]
         return jail_files
@@ -1121,8 +1241,8 @@ class Fail2banAdapter:
         jail_name: str,
         jail_d_dir: str = "/etc/fail2ban/jail.d",
         filter_d_dir: str = "/etc/fail2ban/filter.d",
-        jail_conf_path: Optional[str] = None,
-        jail_local_path: Optional[str] = None,
+        jail_conf_path: str | None = None,
+        jail_local_path: str | None = None,
     ) -> None:
         """Delete a fail2ban jail (Fail2banPort contract).
 
@@ -1137,23 +1257,29 @@ class Fail2banAdapter:
             DomainJailNotFoundError: If the jail exists neither on disk nor in the daemon
             JailNotDeletableError: If removing its file would touch other settings
         """
-        definition = self.jail_definitions(jail_d_dir, jail_conf_path, jail_local_path).get(jail_name)
+        definition = self.jail_definitions(
+            jail_d_dir, jail_conf_path, jail_local_path
+        ).get(jail_name)
         exists_in_daemon = jail_name in self.list_jails()
         if definition is None and not exists_in_daemon:
             raise DomainJailNotFoundError(jail_name)
         if definition is not None and not definition.deletable:
-            raise JailNotDeletableError(jail_name, definition.blocked or "", definition.files)
+            raise JailNotDeletableError(
+                jail_name, definition.blocked or "", definition.files
+            )
 
         self._run_raw(["fail2ban-client", "stop", jail_name])  # best-effort
 
-        for path in (definition.files if definition else ()):
+        for path in definition.files if definition else ():
             os.remove(path)
 
         filter_name = owned_filter(definition) if definition else None
         if filter_name:
             filter_conf_path = os.path.join(filter_d_dir, f"{filter_name}.conf")
             try:
-                with open(filter_conf_path, encoding="utf-8", errors="replace") as handle:
+                with open(
+                    filter_conf_path, encoding="utf-8", errors="replace"
+                ) as handle:
                     head = handle.read(300)
             except OSError:
                 head = ""
@@ -1204,7 +1330,11 @@ class Fail2banAdapter:
         raw_output = (result.stderr or result.stdout or "").strip()
         errors = [line.strip() for line in raw_output.splitlines() if line.strip()]
         if not errors:
-            errors = [_("fail2ban-client -t a échoué sans détail (code de retour {returncode})").format(returncode=result.returncode)]
+            errors = [
+                _(
+                    "fail2ban-client -t a échoué sans détail (code de retour {returncode})"
+                ).format(returncode=result.returncode)
+            ]
         return False, errors
 
     def stop_service(self) -> None:
@@ -1308,4 +1438,4 @@ class Fail2banAdapter:
 # - app/bootstrap.py instanciera cet adapter et l'injectera via les ports
 # - application/commands/ utilisera le port (pas cet adapter directement)
 # - Les tests mockeront subprocess.run pour simuler différents états
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

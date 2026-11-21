@@ -8,18 +8,19 @@ to provide a uniform API for service control operations.
 This is a port/contract that infrastructure/ implements. The application
 layer depends on this abstraction, not on concrete implementations.
 """
+
 from abc import ABC, abstractmethod
-from typing import Optional
+
 from omega_fire.core.enums import ServiceManagerType
 
 
 class ServiceStatus:
     """Represents the status of a service.
-    
+
     Contains information about whether a service is active, enabled,
     and its current state.
     """
-    
+
     def __init__(
         self,
         service_name: str,
@@ -30,7 +31,7 @@ class ServiceStatus:
         description: str = "",
     ):
         """Initialize the service status.
-        
+
         Args:
             service_name: Name of the service
             active: Whether the service is currently running
@@ -45,26 +46,26 @@ class ServiceStatus:
         self.state = state
         self.sub_state = sub_state
         self.description = description
-    
+
     def is_running(self) -> bool:
         """Check if the service is running.
-        
+
         Returns:
             True if the service is active and in running state
         """
         return self.active and self.sub_state == "running"
-    
+
     def is_failed(self) -> bool:
         """Check if the service has failed.
-        
+
         Returns:
             True if the service is in failed state
         """
         return self.state == "failed"
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary representation.
-        
+
         Returns:
             Dictionary with status information
         """
@@ -76,10 +77,10 @@ class ServiceStatus:
             "sub_state": self.sub_state,
             "description": self.description,
         }
-    
+
     def __str__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String like "sshd: active (running), enabled"
         """
@@ -90,148 +91,138 @@ class ServiceStatus:
 
 class ServiceManager(ABC):
     """Abstract interface for service managers.
-    
+
     All concrete implementations (systemd, openrc, runit) must implement
     this interface to provide a uniform API for service control operations.
     """
-    
+
     @abstractmethod
     def get_type(self) -> ServiceManagerType:
         """Get the type of service manager.
-        
+
         Returns:
             ServiceManagerType enum value
         """
-        pass
-    
+
     @abstractmethod
     def start(self, service_name: str) -> bool:
         """Start a service.
-        
+
         Args:
             service_name: Name of the service to start
-        
+
         Returns:
             True if the service was started successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the start operation fails
         """
-        pass
-    
+
     @abstractmethod
     def stop(self, service_name: str) -> bool:
         """Stop a service.
-        
+
         Args:
             service_name: Name of the service to stop
-        
+
         Returns:
             True if the service was stopped successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the stop operation fails
         """
-        pass
-    
+
     @abstractmethod
     def restart(self, service_name: str) -> bool:
         """Restart a service.
-        
+
         Args:
             service_name: Name of the service to restart
-        
+
         Returns:
             True if the service was restarted successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the restart operation fails
         """
-        pass
-    
+
     @abstractmethod
     def enable(self, service_name: str) -> bool:
         """Enable a service to start at boot.
-        
+
         Args:
             service_name: Name of the service to enable
-        
+
         Returns:
             True if the service was enabled successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the enable operation fails
         """
-        pass
-    
+
     @abstractmethod
     def disable(self, service_name: str) -> bool:
         """Disable a service from starting at boot.
-        
+
         Args:
             service_name: Name of the service to disable
-        
+
         Returns:
             True if the service was disabled successfully
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceControlError: If the disable operation fails
         """
-        pass
-    
+
     @abstractmethod
     def status(self, service_name: str) -> ServiceStatus:
         """Get the status of a service.
-        
+
         Args:
             service_name: Name of the service to query
-        
+
         Returns:
             ServiceStatus object with current status
-        
+
         Raises:
             ServiceNotFoundError: If the service does not exist
             ServiceStatusError: If the status query fails
         """
-        pass
-    
+
     @abstractmethod
     def is_active(self, service_name: str) -> bool:
         """Check if a service is currently active.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is active
         """
-        pass
-    
+
     @abstractmethod
     def is_enabled(self, service_name: str) -> bool:
         """Check if a service is enabled at boot.
-        
+
         Args:
             service_name: Name of the service to check
-        
+
         Returns:
             True if the service is enabled
         """
-        pass
-    
+
     @abstractmethod
     def is_available(self) -> bool:
         """Check if this service manager is available on the system.
-        
+
         Returns:
             True if the service manager is available and functional
         """
-        pass
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -269,4 +260,4 @@ class ServiceManager(ABC):
 # - infrastructure/backends/service_manager/runit.py implémentera cette interface
 # - infrastructure/probe/service_probe.py utilisera l'implémentation détectée
 # - application/ ne dépendra que de cette interface, pas des implémentations
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

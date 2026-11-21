@@ -5,12 +5,14 @@ Technical exceptions specific to the conntrack backend.
 These express failures in conntrack command execution or parsing.
 They are caught by the application layer and translated into stable error messages.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class ConntrackError(CoreError):
     """Base exception for conntrack operations."""
+
     def __init__(self, message: str, context: dict = None):
         super().__init__(message, context)
 
@@ -23,13 +25,28 @@ class ConntrackCommandError(ConntrackError):
     demande explicitement les DEUX (le detail technique reste utile pour
     diagnostiquer plus tard, ex. rapporter le bug en amont). Vide par
     defaut (aucun changement pour les echecs conntrack "ordinaires")."""
-    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None, note: str = ""):
-        message = _("Échec de la commande conntrack (code {returncode}) : {command}").format(returncode=returncode, command=command)
+
+    def __init__(
+        self,
+        command: str,
+        returncode: int,
+        stderr: str,
+        context: dict = None,
+        note: str = "",
+    ):
+        message = _(
+            "Échec de la commande conntrack (code {returncode}) : {command}"
+        ).format(returncode=returncode, command=command)
         if note:
             message = f"{note} — {message}"
         super().__init__(
             message,
-            {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
+            {
+                **(context or {}),
+                "command": command,
+                "returncode": returncode,
+                "stderr": stderr,
+            },
         )
         self.command = command
         self.returncode = returncode
@@ -38,6 +55,7 @@ class ConntrackCommandError(ConntrackError):
 
 class ConntrackParseError(ConntrackError):
     """Raised when conntrack output cannot be parsed."""
+
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
             _("Sortie de conntrack illisible : {reason}").format(reason=reason),
@@ -56,9 +74,12 @@ class ConntrackPermissionError(ConntrackError):
     l'alternative `setcap` est non-destructive, ne s'applique qu'au seul
     binaire conntrack, et n'est JAMAIS executee automatiquement ici
     (juste suggeree a l'utilisateur, qui reste seul decisionnaire)."""
+
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            _("Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack)).").format(operation=operation),
+            _(
+                "Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack))."
+            ).format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation
@@ -88,4 +109,4 @@ class ConntrackPermissionError(ConntrackError):
 # Comment elles seront utilisées (aperçu) :
 # - infrastructure/backends/conntrack/adapter.py les lèvera lors des opérations
 # - application/pipeline/ les capturera via les ports
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

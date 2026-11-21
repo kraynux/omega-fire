@@ -9,6 +9,7 @@ or parsed from raw text.
 Porte verbatim depuis omega-fire (domain/logs/models.py) — voir
 plan_omega_log.md §2/§6 : module generique, aucune dependance externe,
 deja confirme reutilisable tel quel sans adaptation."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -16,16 +17,18 @@ from enum import Enum
 
 class LogSource(Enum):
     """Type of log source."""
-    AUTH = "auth"           # /var/log/auth.log (SSH, sudo, etc.)
-    ACCESS = "access"       # Apache/Nginx access.log
-    SYSLOG = "syslog"       # /var/log/syslog
-    KERN = "kern"           # Kernel messages
-    FAIL2BAN = "fail2ban"   # Fail2ban log
-    CUSTOM = "custom"       # Custom log source
+
+    AUTH = "auth"  # /var/log/auth.log (SSH, sudo, etc.)
+    ACCESS = "access"  # Apache/Nginx access.log
+    SYSLOG = "syslog"  # /var/log/syslog
+    KERN = "kern"  # Kernel messages
+    FAIL2BAN = "fail2ban"  # Fail2ban log
+    CUSTOM = "custom"  # Custom log source
 
 
 class LogLevel(Enum):
     """Severity level of a log entry."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -40,6 +43,7 @@ class LogEntry:
     Pure domain model. Contains only the structured data extracted
     from a raw log line. Does not know how to read or parse files.
     """
+
     timestamp: datetime
     source: LogSource
     level: LogLevel = LogLevel.INFO
@@ -94,6 +98,7 @@ class LogEntry:
 @dataclass
 class TopIP:
     """An entry in the Top N IP ranking."""
+
     ip: str
     count: int
     first_seen: datetime | None = None
@@ -111,6 +116,7 @@ class TopIP:
 @dataclass
 class HourlyStats:
     """Statistics for a specific hour."""
+
     hour: int  # 0-23
     count: int = 0
     error_count: int = 0
@@ -125,6 +131,7 @@ class HourlyStats:
 @dataclass
 class LogStats:
     """Aggregated statistics for a log file or analysis."""
+
     log_path: str | None = None
     total_lines: int = 0
     parsed_lines: int = 0
@@ -152,7 +159,9 @@ class LogStats:
 
     def error_rate(self) -> float:
         """Calculate the overall error rate."""
-        error_count = self.level_counts.get("error", 0) + self.level_counts.get("critical", 0)
+        error_count = self.level_counts.get("error", 0) + self.level_counts.get(
+            "critical", 0
+        )
         if self.parsed_lines == 0:
             return 0.0
         return (error_count / self.parsed_lines) * 100.0
@@ -183,6 +192,7 @@ class LogStats:
 @dataclass
 class LogAnalysis:
     """Result of a complete log analysis operation."""
+
     entries: list[LogEntry] = field(default_factory=list)
     stats: LogStats | None = None
     top_ips: list[TopIP] = field(default_factory=list)
@@ -213,6 +223,7 @@ class TrafficStats:
     """Barre d'etat du viewer Simple - IDENTIQUE a omega-serv (viewer de reference, 2026-11-02) :
     rendement, bande passante, statuts HTTP, clients, sante - calculee sur le tampon, UNIQUEMENT a partir
     de valeurs reellement lues dans le log (None sinon, jamais 350 octets ou 25 ms supposes)."""
+
     total: int = 0
     http_total: int = 0
     status_2xx: int = 0

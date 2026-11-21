@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -23,6 +23,7 @@ class RuleSpec:
         action: action (accept, drop, reject, log).
         comment: commentaire optionnel.
     """
+
     chain: str
     protocol: str
     port: str | None = None
@@ -42,6 +43,7 @@ class PolicySpec:
         default_action: action par défaut (drop, accept).
         rules: liste de règles à appliquer.
     """
+
     name: str
     description: str
     default_action: str
@@ -133,6 +135,7 @@ class RulesPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour la gestion des règles firewall.
@@ -167,4 +170,4 @@ class RulesPort(Protocol):
 # - infrastructure/backends/nftables/adapter.py implémentera RulesPort
 # - infrastructure/backends/iptables/adapter.py implémentera RulesPort
 # - interfaces/cli/actions.py appellera rules_port.list_policies() pour menu 3.4
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

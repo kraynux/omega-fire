@@ -5,6 +5,7 @@ CHECK (actions independantes), les items pointent vers des SECTIONS de
 menu (1-8), chacune peuplee action par action en Phase 3 de la feuille de
 route. Tant qu'une section n'a pas encore d'ecran (avant sa vague dans la
 Phase 3), le clic notifie plutot que d'echouer silencieusement."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
@@ -98,17 +99,24 @@ class HomeScreen(Screen[None]):
                         # (deja utilisee) de la section 3.
                         icon = _ITEM_ICONS.get(item_id) or menu_icon(item_id)
                         with Container(classes="omega-btn-frame"):
-                            yield Button(_("{item_id}. {icon} {label}").format(item_id=item_id, icon=icon, label=label), id=_widget_id(item_id))
+                            yield Button(
+                                _("{item_id}. {icon} {label}").format(
+                                    item_id=item_id, icon=icon, label=label
+                                ),
+                                id=_widget_id(item_id),
+                            )
                 menu.border_title = _("MENU PRINCIPAL")
         yield Footer()
 
     def help_content(self) -> tuple[str, str]:
         return (
             _("MENU PRINCIPAL"),
-            _("Choisissez une section (1-8), Réglages (9) ou Aide (10). Quitter (`q`) "
-            "est accessible par raccourci global, voir le pied d'écran. "
-            "Appuyez sur `a` à nouveau dans une section pour voir le détail "
-            "des actions qu'elle contient."),
+            _(
+                "Choisissez une section (1-8), Réglages (9) ou Aide (10). Quitter (`q`) "
+                "est accessible par raccourci global, voir le pied d'écran. "
+                "Appuyez sur `a` à nouveau dans une section pour voir le détail "
+                "des actions qu'elle contient."
+            ),
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -118,6 +126,7 @@ class HomeScreen(Screen[None]):
             return
         if section_id == _HELP_ITEM_ID:
             from omega_fire.interfaces.tui.screens.guide_screens import GuideMenuScreen
+
             self.app.push_screen(GuideMenuScreen(container=self._container))
             return
         screen = self._screen_for(section_id)
@@ -125,7 +134,9 @@ class HomeScreen(Screen[None]):
             self.app.push_screen(screen)
         else:
             self.app.notify(
-                _("Cet écran n'est pas encore migré (voir la feuille de route, Phase 3)."),
+                _(
+                    "Cet écran n'est pas encore migré (voir la feuille de route, Phase 3)."
+                ),
                 title=_("Section {section_id}").format(section_id=section_id),
                 severity="information",
             )
@@ -149,4 +160,6 @@ class HomeScreen(Screen[None]):
             return None
         title, items = section
         # Titre source marque (section_registry, N_) : traduit a l'affichage.
-        return SectionScreen(container=self._container, section_id=item_id, title=_(title), items=items)
+        return SectionScreen(
+            container=self._container, section_id=item_id, title=_(title), items=items
+        )

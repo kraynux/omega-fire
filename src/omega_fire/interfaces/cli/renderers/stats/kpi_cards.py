@@ -21,22 +21,42 @@ def render_kpi_cards(summary: LogStatsSummary) -> Layout:
     t1 = Text()
     t1.append(f"{summary.total_events:,}\n", style=style_info)
     t1.append(f"Logs scannés ({summary.data_source})", style=style_muted)
-    p1 = Panel(t1, title="Événements", title_align="left", border_style=border_style, expand=True)
+    p1 = Panel(
+        t1,
+        title="Événements",
+        title_align="left",
+        border_style=border_style,
+        expand=True,
+    )
 
     t2 = Text()
     t2.append(f"{summary.total_bans:,}\n", style=style_danger)
     t2.append("Adresses IP bloquées", style=style_muted)
-    p2 = Panel(t2, title="Total Bans", title_align="left", border_style=border_style, expand=True)
+    p2 = Panel(
+        t2,
+        title="Total Bans",
+        title_align="left",
+        border_style=border_style,
+        expand=True,
+    )
 
     t3 = Text()
     t3.append(f"{summary.top_jail_name}\n", style=style_warning)
     t3.append("Service le plus ciblé", style=style_muted)
-    p3 = Panel(t3, title="Top Jail", title_align="left", border_style=border_style, expand=True)
+    p3 = Panel(
+        t3, title="Top Jail", title_align="left", border_style=border_style, expand=True
+    )
 
     t4 = Text()
     t4.append(f"{summary.peak_hour}\n", style=style_main)
     t4.append(f"Pic ({summary.peak_count} évts)", style=style_muted)
-    p4 = Panel(t4, title="Heure de Pointe", title_align="left", border_style=border_style, expand=True)
+    p4 = Panel(
+        t4,
+        title="Heure de Pointe",
+        title_align="left",
+        border_style=border_style,
+        expand=True,
+    )
 
     layout.split_row(
         Layout(p1, name="kpi_events"),

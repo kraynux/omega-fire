@@ -19,11 +19,12 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from dataclasses import dataclass, field
 from typing import Any
 
-from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
 
 
@@ -37,12 +38,14 @@ class SyncRulesRequest:
             expose a list_rules() method returning list[FirewallRule]
             with external_ref populated (see infrastructure/backends/*/mapper.py).
     """
+
     backends: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SyncRulesResult:
     """Output of the sync rules use case."""
+
     success: bool
     added: int
     disabled: int
@@ -117,7 +120,9 @@ class SyncRulesFromBackendsCommand:
                 added=added,
                 disabled=disabled,
                 unchanged=unchanged,
-                message=_("Erreur technique lors de la synchronisation : {e}").format(e=e),
+                message=_("Erreur technique lors de la synchronisation : {e}").format(
+                    e=e
+                ),
             )
 
         return SyncRulesResult(
@@ -126,7 +131,9 @@ class SyncRulesFromBackendsCommand:
             disabled=disabled,
             unchanged=unchanged,
             message=(
-                _("{added} règle(s) importée(s), {disabled} désactivée(s), {unchanged} déjà à jour.").format(added=added, disabled=disabled, unchanged=unchanged)
+                _(
+                    "{added} règle(s) importée(s), {disabled} désactivée(s), {unchanged} déjà à jour."
+                ).format(added=added, disabled=disabled, unchanged=unchanged)
             ),
         )
 
@@ -167,4 +174,4 @@ class SyncRulesFromBackendsCommand:
 # application/commands/sync_rules_from_backends.py : SyncRulesFromBackendsCommand.execute()
 #   ↓ adapter.list_rules() (infrastructure/backends/*/adapter.py)
 #   ↓ RuleRepository.find_by_external_ref() / save() / update_enabled()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

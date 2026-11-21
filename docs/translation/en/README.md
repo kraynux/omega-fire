@@ -126,6 +126,7 @@ The unified blacklist lets you work with nftables and iptables from a single scr
 ### 3. Rules and policy management
 
 - Step-by-step wizard to create an advanced rule.
+- Opening a port at omega-serv's request (`port ouvrir`): a TCP port opened only from the given networks, on every detected firewall (ufw and firewalld included), recorded like a menu 3.1 rule.
 - List of system rules and rules created by Omega-Fire.
 - Delete a rule by selection.
 - Automatic cleanup of inactive rules in the reference database.
@@ -495,6 +496,10 @@ To launch the former Rich interface (sequential number entry) instead:
 ### Contact and support
 
 Help (`a` key) offers a **Contact and support** screen: *Buy me a coffee* (the developer's PayPal page), *Contact support* (email address and the site's contact form, shown in plain text), *Declare myself as a user (anonymous)* and *Check for updates*. The declaration is voluntary, off by default and sent only once: it is used only to count users and, if you wish, their continent or country (closed lists, never free text). It sends a randomly drawn key, the software name (`omega-fire`) and its version; never a name, a machine name, a setting, a target or a result. The IP address is not stored in the declarations, but, like any visit, it goes through the security checks and the log of the receiving server. You can withdraw at any time from the same screen (*Stop declaring me*). The update check only reads the list of versions published on the site, and never without a click.
+
+### Links with the other omega tools
+
+Omega-Fire answers a few commands without an interface, called by the other tools of the suite. `./omega-fire.sh synchro jeton` and `./omega-fire.sh synchro fiche --format json` describe the installation and its capabilities (firewall, Fail2Ban, Log library), without sudo. `./omega-fire.sh port ouvrir` opens a TCP port from specific networks for omega-serv's web administration: one rule per network and per detected firewall, also added to ufw or firewalld when they are active, recorded like a menu 3.1 rule and written to the audit log. The loopback is never opened and a rule already present is not added twice. omega-serv only calls it when both tools are enrolled in the same omega-connect zone; sudo is requested as for the interface. When the omega-connect zone exists, every ban or unban that omega-fire itself applies to the firewall (nftables, iptables, ip6tables) is published in the zone's ban journal, read by the other omega tools; `./omega-fire.sh synchro bans` brings it back in line with the firewall (sudo is requested). Bans from Fail2Ban jails are written there by the action installed by omega-jail.
 
 ### General flow
 

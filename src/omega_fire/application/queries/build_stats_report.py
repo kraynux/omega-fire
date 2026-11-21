@@ -22,14 +22,15 @@ Conforms to Omega-Fire architecture charter:
 - Delegates report construction to domain/reports/service.py — never
   builds the Report object's sections itself
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.domain.reports.service import ReportsService
 from omega_fire.domain.reports.builders import Report
+from omega_fire.domain.reports.service import ReportsService
 from omega_fire.infrastructure.logging.stats.log_aggregator import LogAggregator
 from omega_fire.shared.i18n import _, action_title
 
@@ -37,6 +38,7 @@ from omega_fire.shared.i18n import _, action_title
 @dataclass
 class BuildStatsReportRequest:
     """Input for the build-stats-report use case."""
+
     period_code: str  # "7d" or "30d"
     period_label: str  # "7 jours" or "30 jours"
 
@@ -51,8 +53,9 @@ class BuildStatsReportResult:
     avoiding an unnecessary round-trip through Report's generic
     dict-based sections just to redisplay what was just assembled).
     """
+
     success: bool
-    report: Optional[Report] = None
+    report: Report | None = None
     kpi: dict = field(default_factory=dict)
     hourly_series: list = field(default_factory=list)
     daily_trend: list = field(default_factory=list)
@@ -69,9 +72,9 @@ class BuildStatsReportQuery:
 
     def __init__(
         self,
-        audit_port: Optional[Any],
-        persistence_port: Optional[Any],
-        log_aggregator: Optional[LogAggregator] = None,
+        audit_port: Any | None,
+        persistence_port: Any | None,
+        log_aggregator: LogAggregator | None = None,
     ):
         """Initialize the query.
 
@@ -95,7 +98,9 @@ class BuildStatsReportQuery:
     def execute(self, request: BuildStatsReportRequest) -> BuildStatsReportResult:
         try:
             summary = self._aggregator.get_summary(period_code=request.period_code)
-            daily_trend = self._aggregator.get_daily_trend(period_code=request.period_code)
+            daily_trend = self._aggregator.get_daily_trend(
+                period_code=request.period_code
+            )
         except Exception as e:
             return BuildStatsReportResult(
                 success=False,
@@ -116,11 +121,18 @@ class BuildStatsReportQuery:
             for s in summary.top_ips
         ]
         top_jails = [
-            {"name": j.name, "total_bans": j.total_bans, "is_active": j.is_active, "percentage": j.percentage}
+            {
+                "name": j.name,
+                "total_bans": j.total_bans,
+                "is_active": j.is_active,
+                "percentage": j.percentage,
+            }
             for j in summary.top_jails
         ]
 
-        period_delta = self._aggregator.PERIOD_MAP.get(request.period_code, timedelta(days=7))
+        period_delta = self._aggregator.PERIOD_MAP.get(
+            request.period_code, timedelta(days=7)
+        )
         since = datetime.now() - period_delta
 
         management = self._build_management_section(since)
@@ -136,12 +148,16 @@ class BuildStatsReportQuery:
                 top_jails=top_jails,
                 management=management,
                 rules_evolution=rules_evolution,
-                title=_("Rapport Statistique — {period_label}").format(period_label=request.period_label),
+                title=_("Rapport Statistique — {period_label}").format(
+                    period_label=request.period_label
+                ),
             )
         except Exception as e:
             return BuildStatsReportResult(
                 success=False,
-                message=_("Erreur lors de la construction du rapport : {e}").format(e=e),
+                message=_("Erreur lors de la construction du rapport : {e}").format(
+                    e=e
+                ),
             )
 
         return BuildStatsReportResult(
@@ -180,14 +196,17 @@ class BuildStatsReportQuery:
             return empty
 
         rule_changes = sum(
-            1 for e in entries
+            1
+            for e in entries
             if e.action.startswith("rule_") or e.action.startswith("apply_preset")
         )
         backups = sum(1 for e in entries if e.action.startswith("backup"))
         restores = sum(1 for e in entries if e.action.startswith("restore"))
         total_actions = len(entries)
         success_count = sum(1 for e in entries if e.success)
-        success_rate = (success_count / total_actions * 100.0) if total_actions > 0 else 0.0
+        success_rate = (
+            (success_count / total_actions * 100.0) if total_actions > 0 else 0.0
+        )
 
         recent_sorted = sorted(entries, key=lambda e: e.timestamp, reverse=True)[:8]
         recent_entries = [
@@ -272,4 +291,4 @@ class BuildStatsReportQuery:
 #   ↓ audit_port.get_all_since() (infrastructure/logging/audit_logger.py)
 #   ↓ persistence_port.list_snapshots() (infrastructure/storage/files/persistence_adapter.py)
 #   ↓ ReportsService.build_stats_report() (domain/reports/service.py)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

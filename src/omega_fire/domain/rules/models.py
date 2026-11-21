@@ -5,14 +5,15 @@ Pure domain logic for firewall rules. No external dependencies.
 This module defines what a firewall rule IS, not how it is applied
 by nftables or iptables.
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class RuleAction(Enum):
     """Action to take when a rule matches."""
+
     ACCEPT = "accept"
     DROP = "drop"
     REJECT = "reject"
@@ -21,6 +22,7 @@ class RuleAction(Enum):
 
 class RuleChain(Enum):
     """Netfilter chain where the rule applies."""
+
     INPUT = "input"
     OUTPUT = "output"
     FORWARD = "forward"
@@ -28,6 +30,7 @@ class RuleChain(Enum):
 
 class RuleProtocol(Enum):
     """Network protocol for the rule."""
+
     TCP = "tcp"
     UDP = "udp"
     ICMP = "icmp"
@@ -35,44 +38,49 @@ class RuleProtocol(Enum):
 
 class RuleFamily(Enum):
     """Address family for the rule."""
+
     INET = "inet"  # IPv4 + IPv6
-    IP = "ip"      # IPv4 only
-    IP6 = "ip6"    # IPv6 only
+    IP = "ip"  # IPv4 only
+    IP6 = "ip6"  # IPv6 only
 
 
 @dataclass
 class FirewallRule:
     """A single firewall rule.
-    
+
     Pure domain model. The 'backend' field is a label only
     ('nftables', 'iptables'), not a dependency.
     """
+
     backend: str  # label: 'nftables' | 'iptables'
     family: RuleFamily
     table_name: str
     chain: RuleChain
-    protocol: Optional[RuleProtocol] = None
-    port_start: Optional[int] = None
-    port_end: Optional[int] = None
-    source_cidr: Optional[str] = None
-    dest_cidr: Optional[str] = None
+    protocol: RuleProtocol | None = None
+    port_start: int | None = None
+    port_end: int | None = None
+    source_cidr: str | None = None
+    dest_cidr: str | None = None
     action: RuleAction = RuleAction.ACCEPT
     priority: int = 0
-    comment: Optional[str] = None
+    comment: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     enabled: bool = True
-    rule_id: Optional[int] = None  # Set by infrastructure when persisted
-    external_ref: Optional[str] = None  # Technical backend identifier (nft handle, iptables line number) — NOT the DB id
+    rule_id: int | None = None  # Set by infrastructure when persisted
+    external_ref: str | None = (
+        None  # Technical backend identifier (nft handle, iptables line number) — NOT the DB id
+    )
     origin: str = "imported"  # "managed" (created by Omega-Fire) or "imported" (detected via backend sync)
-    interface: Optional[str] = None  # Network interface name (e.g. "eth0"); None = ANY
+    interface: str | None = None  # Network interface name (e.g. "eth0"); None = ANY
     # Lus dans le noyau, jamais en base : vrai nom de chaine (ufw-before-input...)
     # et regle recreable a l'identique par 7.2 (infrastructure/backends/rule_fidelity.py).
-    chain_name: Optional[str] = None
+    chain_name: str | None = None
     restorable: bool = False
+
     def is_port_range(self) -> bool:
         """Check if this rule specifies a port range."""
         return self.port_start is not None and self.port_end is not None
-    
+
     def is_single_port(self) -> bool:
         """Check if this rule specifies a single port."""
         return (
@@ -80,7 +88,7 @@ class FirewallRule:
             and self.port_end is not None
             and self.port_start == self.port_end
         )
-    
+
     def get_port_display(self) -> str:
         """Get a human-readable port representation."""
         if self.is_single_port():
@@ -88,70 +96,68 @@ class FirewallRule:
         elif self.is_port_range():
             return f"{self.port_start}-{self.port_end}"
         return "*"
-    
+
     def matches_traffic(
-        self,
-        protocol: str,
-        port: int,
-        source: str,
-        destination: str
+        self, protocol: str, port: int, source: str, destination: str
     ) -> bool:
         """Check if this rule matches the given traffic parameters.
-        
+
         This is a simplified match logic for domain-level filtering.
         Real matching is done by nftables/iptables kernels.
         """
         # Protocol match
         if self.protocol and self.protocol.value != protocol:
             return False
-        
+
         # Port match
         if self.port_start is not None and self.port_end is not None:
             if not (self.port_start <= port <= self.port_end):
                 return False
-        
+
         # Source match (simplified — real CIDR matching is in infrastructure)
         if self.source_cidr and self.source_cidr != source:
             return False
-        
+
         # Destination match
         if self.dest_cidr and self.dest_cidr != destination:
             return False
-        
+
         return True
 
 
 @dataclass
 class RuleSet:
     """Collection of firewall rules with query helpers."""
+
     rules: list[FirewallRule] = field(default_factory=list)
-    
+
     def add(self, rule: FirewallRule) -> None:
         """Add a rule to the set."""
         self.rules.append(rule)
-    
-    def remove(self, rule_id: int) -> Optional[FirewallRule]:
+
+    def remove(self, rule_id: int) -> FirewallRule | None:
         """Remove a rule by ID. Returns the removed rule or None."""
         for i, rule in enumerate(self.rules):
             if rule.rule_id == rule_id:
                 return self.rules.pop(i)
         return None
-    
+
     def get_by_backend(self, backend: str) -> list[FirewallRule]:
         """Get rules filtered by backend."""
         return [r for r in self.rules if r.backend == backend]
-    
+
     def get_by_chain(self, chain: RuleChain) -> list[FirewallRule]:
         """Get rules filtered by chain."""
         return [r for r in self.rules if r.chain == chain]
-    
+
     def get_enabled(self) -> list[FirewallRule]:
         """Get only enabled rules."""
         return [r for r in self.rules if r.enabled]
-    
+
     def get_by_priority(self) -> list[FirewallRule]:
         """Get rules sorted by priority (ascending)."""
         return sorted(self.rules, key=lambda r: r.priority)
+
 
 # <-- INFO DEV ----------------------------------------------------------
 # Rôle :
@@ -181,4 +187,4 @@ class RuleSet:
 # - domain/rules/service.py utilisera ces modèles pour orchestrer les opérations sur les règles
 # - application/commands/create_rule.py construira un FirewallRule et le passera au service
 # - infrastructure/backends/nftables/adapter.py transformera un FirewallRule en commande nft (via un mapper)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

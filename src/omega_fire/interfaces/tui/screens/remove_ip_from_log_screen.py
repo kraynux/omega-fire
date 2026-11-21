@@ -4,6 +4,7 @@ Meme selection de source que 5.2 (epingle/chemin manuel, gestion des
 epingles via PinnedPathsScreen), puis saisie d'IP + confirmation
 destructive (patron #1). Logique identique a
 interfaces/cli/actions.py::action_5_3_remove_ip_logs."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -15,18 +16,25 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
-from omega_fire.domain.logs.ip_lines import split_lines_by_ips  # noqa: F401 (reexporte)
-from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
-from omega_fire.infrastructure.config.paths import BLOCKLIST_DIR, DEFAULT_PINNED_FILES, RUNTIME_DIR, _PROJECT_ROOT
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
+from omega_fire.domain.logs.ip_lines import split_lines_by_ips
+from omega_fire.infrastructure.config.paths import (
+    _PROJECT_ROOT,
+    BLOCKLIST_DIR,
+    DEFAULT_PINNED_FILES,
+    RUNTIME_DIR,
+)
 from omega_fire.infrastructure.exporters.export_catalog import ip_list_exports
 from omega_fire.infrastructure.exporters.top_ips_exporter import read_exported_ips
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
+from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens._log_sources import log_source_options
 from omega_fire.interfaces.tui.screens.checklist import CheckListScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
 from omega_fire.interfaces.tui.screens.export_picker import ExportPickerScreen
-from omega_fire.interfaces.tui.screens._log_sources import log_source_options
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.shared.i18n import _
@@ -79,15 +87,26 @@ class RemoveIpFromLogScreen(OmegaScreen):
             yield Static(_("SUPPRIMER UNE IP DES LOGS"), classes="omega-title")
 
             yield Static(_("Fichier source"), classes="omega-subtitle")
-            yield Select(self._source_options(), id="source-select", prompt=_("Sélectionner"))
+            yield Select(
+                self._source_options(), id="source-select", prompt=_("Sélectionner")
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static(_("Chemin manuel"), id="manual-label", classes="omega-subtitle omega-hidden")
-            yield Input(value="var/log/access.log", id="manual-input", classes="omega-hidden")
+            yield Static(
+                _("Chemin manuel"),
+                id="manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Input(
+                value="var/log/access.log", id="manual-input", classes="omega-hidden"
+            )
 
-            yield Static(_("Adresse(s) IP à retirer (séparées par des virgules)"), classes="omega-subtitle")
+            yield Static(
+                _("Adresse(s) IP à retirer (séparées par des virgules)"),
+                classes="omega-subtitle",
+            )
             yield Input(id="ip-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
@@ -95,7 +114,9 @@ class RemoveIpFromLogScreen(OmegaScreen):
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Rechercher et supprimer"), id="launch", variant="error")
+                    yield Button(
+                        _("Rechercher et supprimer"), id="launch", variant="error"
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
@@ -117,7 +138,10 @@ class RemoveIpFromLogScreen(OmegaScreen):
             self.dismiss()
             return
         if event.button.id == "manage-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_source_select)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container),
+                self._refresh_source_select,
+            )
             return
         if event.button.id == "load-export":
             self._pick_export()
@@ -135,7 +159,8 @@ class RemoveIpFromLogScreen(OmegaScreen):
             return raw_path
         target_path = (
             _PROJECT_ROOT / raw_path.relative_to(raw_path.anchor)
-            if raw_path.is_absolute() else _PROJECT_ROOT / raw_path
+            if raw_path.is_absolute()
+            else _PROJECT_ROOT / raw_path
         )
         return target_path if target_path.exists() else None
 
@@ -151,13 +176,22 @@ class RemoveIpFromLogScreen(OmegaScreen):
 
         target_path = self._resolve_target_path(selected_file)
         if target_path is None:
-            self.app.notify(_("Fichier introuvable : {selected_file}").format(selected_file=selected_file), severity="error")
+            self.app.notify(
+                _("Fichier introuvable : {selected_file}").format(
+                    selected_file=selected_file
+                ),
+                severity="error",
+            )
             return
 
         target_ips, invalid = parse_ip_list(self.query_one("#ip-input", Input).value)
         if invalid:
-            self.app.notify(_("Format d'adresse IP invalide : {values}").format(values=", ".join(invalid)),
-                            severity="warning")
+            self.app.notify(
+                _("Format d'adresse IP invalide : {values}").format(
+                    values=", ".join(invalid)
+                ),
+                severity="warning",
+            )
             return
         if not target_ips:
             self.app.notify(_("Saisissez une adresse IP."), severity="warning")
@@ -167,32 +201,58 @@ class RemoveIpFromLogScreen(OmegaScreen):
             with open(target_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
         except Exception as e:
-            self.app.notify(_("Impossible de lire le fichier : {e}").format(e=e), severity="error")
+            self.app.notify(
+                _("Impossible de lire le fichier : {e}").format(e=e), severity="error"
+            )
             return
 
         counts, cleaned_lines = split_lines_by_ips(lines, target_ips)
         occurrences = sum(counts.values())
         if occurrences == 0:
-            self.app.notify(_("Aucune de ces IPs n'a été trouvée dans '{name}'.").format(name=target_path.name),
-                            severity="warning")
+            self.app.notify(
+                _("Aucune de ces IPs n'a été trouvée dans '{name}'.").format(
+                    name=target_path.name
+                ),
+                severity="warning",
+            )
             return
 
         found = [ip for ip in target_ips if counts[ip]]
         missing = [ip for ip in target_ips if not counts[ip]]
-        details = "\n".join(_("  {ip} : {count} ligne(s)").format(ip=ip, count=counts[ip]) for ip in found)
+        details = "\n".join(
+            _("  {ip} : {count} ligne(s)").format(ip=ip, count=counts[ip])
+            for ip in found
+        )
         if missing:
-            details += "\n" + _("Absentes du fichier : {values}").format(values=", ".join(missing))
+            details += "\n" + _("Absentes du fichier : {values}").format(
+                values=", ".join(missing)
+            )
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LA SUPPRESSION"),
-                message=_("Fichier : {name}\n{details}\n{occurrences} ligne(s) retirée(s), {count} ligne(s) "
-                          "restante(s) après purge.").format(
-                    name=target_path.name, details=details, occurrences=occurrences, count=len(cleaned_lines)),
+                message=_(
+                    "Fichier : {name}\n{details}\n{occurrences} ligne(s) retirée(s), {count} ligne(s) "
+                    "restante(s) après purge."
+                ).format(
+                    name=target_path.name,
+                    details=details,
+                    occurrences=occurrences,
+                    count=len(cleaned_lines),
+                ),
             ),
-            lambda confirmed: self._delete_if_confirmed(confirmed, target_path, found, occurrences, cleaned_lines),
+            lambda confirmed: self._delete_if_confirmed(
+                confirmed, target_path, found, occurrences, cleaned_lines
+            ),
         )
 
-    def _delete_if_confirmed(self, confirmed: bool | None, target_path: Path, target_ips: list[str], occurrences: int, cleaned_lines: list[str]) -> None:
+    def _delete_if_confirmed(
+        self,
+        confirmed: bool | None,
+        target_path: Path,
+        target_ips: list[str],
+        occurrences: int,
+        cleaned_lines: list[str],
+    ) -> None:
         if not confirmed:
             return
         try:
@@ -200,12 +260,20 @@ class RemoveIpFromLogScreen(OmegaScreen):
             # arrivee entre-temps perdue, proprietaire et droits du log inchanges.
             occurrences = sum(remove_ips_in_place(target_path, target_ips).values())
         except Exception as e:
-            self.app.notify(_("Erreur lors de l'écriture dans le fichier : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de l'écriture dans le fichier : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s)).").format(
-            occurrences=occurrences, name=target_path.name, count=len(target_ips)))
+        self.app.notify(
+            _("{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s)).").format(
+                occurrences=occurrences, name=target_path.name, count=len(target_ips)
+            )
+        )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()
 
@@ -214,12 +282,17 @@ class RemoveIpFromLogScreen(OmegaScreen):
         les recopier a la main."""
         files = ip_list_exports(self._container.exports_dir, BLOCKLIST_DIR)
         if not files:
-            self.app.notify(_("Aucun export d'IPs trouvé : exportez d'abord un résultat en 5.4."),
-                            severity="warning")
+            self.app.notify(
+                _("Aucun export d'IPs trouvé : exportez d'abord un résultat en 5.4."),
+                severity="warning",
+            )
             return
         self.app.push_screen(
-            ExportPickerScreen(title=_("CHARGER UNE LISTE D'IPs"),
-                               message=_("Exports contenant des IPs, Top N (5.4) en premier."), files=files),
+            ExportPickerScreen(
+                title=_("CHARGER UNE LISTE D'IPs"),
+                message=_("Exports contenant des IPs, Top N (5.4) en premier."),
+                files=files,
+            ),
             self._pick_ips,
         )
 
@@ -229,16 +302,22 @@ class RemoveIpFromLogScreen(OmegaScreen):
         try:
             ips = read_exported_ips(path)
         except OSError as e:
-            self.app.notify(_("Impossible de lire le fichier : {e}").format(e=e), severity="error")
+            self.app.notify(
+                _("Impossible de lire le fichier : {e}").format(e=e), severity="error"
+            )
             return
         if not ips:
-            self.app.notify(_("Aucune IP dans '{name}'.").format(name=path.name), severity="warning")
+            self.app.notify(
+                _("Aucune IP dans '{name}'.").format(name=path.name), severity="warning"
+            )
             return
         current, _invalid = parse_ip_list(self.query_one("#ip-input", Input).value)
         self.app.push_screen(
             CheckListScreen(
                 title=_("IPs À RETIRER DES LOGS"),
-                message=_("{name} — cochez les IPs à retirer du fichier source.").format(name=path.name),
+                message=_(
+                    "{name} — cochez les IPs à retirer du fichier source."
+                ).format(name=path.name),
                 items=[(ip, ip) for ip in ips],
                 checked=set(current),
             ),

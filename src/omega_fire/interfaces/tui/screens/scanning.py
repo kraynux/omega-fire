@@ -5,6 +5,7 @@ container & capability registry (scan system) cote CLI — absent du
 demarrage Textual jusqu'ici (retour utilisateur reel : plus aucun scan
 automatique au lancement). Execute en arriere-plan (thread, jamais sur
 le thread UI) pendant que l'indicateur de chargement tourne."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,6 +14,7 @@ from textual.app import ComposeResult
 from textual.containers import Center, Middle
 from textual.screen import Screen
 from textual.widgets import LoadingIndicator, Static
+
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
@@ -33,7 +35,9 @@ class ScanningScreen(Screen[None]):
         with Middle(), Center():
             yield LoadingIndicator()
         with Middle(), Center():
-            yield Static(_("Analyse du système en cours..."), classes="omega-splash-prompt")
+            yield Static(
+                _("Analyse du système en cours..."), classes="omega-splash-prompt"
+            )
 
     def on_mount(self) -> None:
         def _work() -> None:

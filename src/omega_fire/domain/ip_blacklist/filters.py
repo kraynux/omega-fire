@@ -6,18 +6,19 @@ Pure functions for filtering ban entries by various criteria.
 These functions do not modify the original entries — they return
 new filtered lists.
 """
+
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, IPList
+
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus
 
 
 def filter_by_status(entries: list[BanEntry], status: BanStatus) -> list[BanEntry]:
     """Filter entries by their lifecycle status.
-    
+
     Args:
         entries: List of ban entries to filter
         status: Target status (ACTIVE, EXPIRED, REMOVED)
-    
+
     Returns:
         New list containing only entries with the specified status
     """
@@ -26,11 +27,11 @@ def filter_by_status(entries: list[BanEntry], status: BanStatus) -> list[BanEntr
 
 def filter_by_backend(entries: list[BanEntry], backend: str) -> list[BanEntry]:
     """Filter entries by backend label.
-    
+
     Args:
         entries: List of ban entries to filter
         backend: Backend name ('nftables', 'iptables', 'fail2ban')
-    
+
     Returns:
         New list containing only entries from the specified backend
     """
@@ -39,16 +40,16 @@ def filter_by_backend(entries: list[BanEntry], backend: str) -> list[BanEntry]:
 
 def filter_by_date_range(
     entries: list[BanEntry],
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
 ) -> list[BanEntry]:
     """Filter entries by ban date range.
-    
+
     Args:
         entries: List of ban entries to filter
         start_date: Minimum ban date (inclusive). None = no lower bound
         end_date: Maximum ban date (inclusive). None = no upper bound
-    
+
     Returns:
         New list containing only entries banned within the date range
     """
@@ -62,12 +63,12 @@ def filter_by_date_range(
 
 def filter_active_only(entries: list[BanEntry]) -> list[BanEntry]:
     """Filter to keep only currently active bans.
-    
+
     A ban is active if its status is ACTIVE and it has not expired.
-    
+
     Args:
         entries: List of ban entries to filter
-    
+
     Returns:
         New list containing only active bans
     """
@@ -76,11 +77,11 @@ def filter_active_only(entries: list[BanEntry]) -> list[BanEntry]:
 
 def filter_by_ip(entries: list[BanEntry], ip: str) -> list[BanEntry]:
     """Filter entries by IP address.
-    
+
     Args:
         entries: List of ban entries to filter
         ip: Target IP address
-    
+
     Returns:
         New list containing only entries for the specified IP
     """
@@ -89,11 +90,11 @@ def filter_by_ip(entries: list[BanEntry], ip: str) -> list[BanEntry]:
 
 def filter_by_jail(entries: list[BanEntry], jail_name: str) -> list[BanEntry]:
     """Filter entries by fail2ban jail name.
-    
+
     Args:
         entries: List of ban entries to filter
         jail_name: Target jail name
-    
+
     Returns:
         New list containing only entries from the specified jail
     """
@@ -102,15 +103,16 @@ def filter_by_jail(entries: list[BanEntry], jail_name: str) -> list[BanEntry]:
 
 def filter_by_source(entries: list[BanEntry], source: str) -> list[BanEntry]:
     """Filter entries by ban source.
-    
+
     Args:
         entries: List of ban entries to filter
         source: Source type ('manual', 'sync', 'import', 'fail2ban_transfer')
-    
+
     Returns:
         New list containing only entries from the specified source
     """
     from omega_fire.domain.ip_blacklist.models import BanSource
+
     try:
         source_enum = BanSource(source)
         return [e for e in entries if e.source == source_enum]
@@ -120,19 +122,19 @@ def filter_by_source(entries: list[BanEntry], source: str) -> list[BanEntry]:
 
 def combine_filters(
     entries: list[BanEntry],
-    status: Optional[BanStatus] = None,
-    backend: Optional[str] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    ip: Optional[str] = None,
-    jail_name: Optional[str] = None,
-    source: Optional[str] = None
+    status: BanStatus | None = None,
+    backend: str | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    ip: str | None = None,
+    jail_name: str | None = None,
+    source: str | None = None,
 ) -> list[BanEntry]:
     """Apply multiple filters in sequence.
-    
+
     This is a convenience function that chains multiple filter criteria.
     All specified filters are applied (AND logic).
-    
+
     Args:
         entries: List of ban entries to filter
         status: Filter by status (optional)
@@ -142,12 +144,12 @@ def combine_filters(
         ip: Filter by IP address (optional)
         jail_name: Filter by jail name (optional)
         source: Filter by source (optional)
-    
+
     Returns:
         New list containing only entries matching all specified criteria
     """
     result = entries
-    
+
     if status is not None:
         result = filter_by_status(result, status)
     if backend is not None:
@@ -160,13 +162,14 @@ def combine_filters(
         result = filter_by_jail(result, jail_name)
     if source is not None:
         result = filter_by_source(result, source)
-    
+
     return result
-    
+
+
 # <-- INFO DEV ---------------------------------------------------------
-# Rôle : 
+# Rôle :
 # - Fonctions de filtrage pur sur les collections de BanEntry. Ces fonctions appliquent des critères métier (statut, backend, date, IP) sans modifier les données originales — elles retournent de nouvelles listes.
-# Pourquoi dans domain/ : 
+# Pourquoi dans domain/ :
 # - C'est de la logique métier : comment filtrer une blacklist selon des critères fonctionnels
 # - Aucune dépendance externe (opère sur les modèles du domaine)
 # - Fonctions pures : pas d'effet de bord, testable en mémoire
@@ -181,8 +184,8 @@ def combine_filters(
 # - Typage strict : tous les paramètres et retours sont typés pour la vérification statique
 # - Aucune dépendance externe : opère uniquement sur les modèles du domaine
 # - Testable en mémoire : peut être testé avec des BanEntry construits manuellement
-# Comment il sera utilisé (aperçu) : 
+# Comment il sera utilisé (aperçu) :
 # - application/queries/list_banned_ips.py utilisera ces filtres pour construire les réponses
 # - interfaces/cli/actions.py passera les critères utilisateur à combine_filters()
 # - domain/ip_blacklist/service.py pourra utiliser ces filtres pour des opérations métier
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

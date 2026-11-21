@@ -2,6 +2,7 @@
 """Guide d'aide centralise (version 3.5, « comme omega-serv ») : toutes les fiches deja
 redigees (help_text.py) dans l'ordre des menus, liens « Voir aussi », export HTML ; le
 bouton « 10. AIDE » de l'accueil ouvre le guide."""
+
 from __future__ import annotations
 
 import asyncio
@@ -14,15 +15,25 @@ from textual.widgets import Button
 
 from omega_fire.infrastructure.exporters.html_exporter import HtmlExporter
 from omega_fire.interfaces.cli.help_text import HELP_ENTRIES
-from omega_fire.interfaces.tui.section_registry import SECTIONS
 from omega_fire.interfaces.tui.screens import guide_screens
-from omega_fire.interfaces.tui.screens.guide_screens import GuideMenuScreen, guide_html_context
+from omega_fire.interfaces.tui.screens.guide_screens import (
+    GuideMenuScreen,
+    guide_html_context,
+)
 from omega_fire.interfaces.tui.screens.home import HomeScreen
+from omega_fire.interfaces.tui.section_registry import SECTIONS
 from omega_fire.interfaces.tui.support.guide import guide_pages
 
 from .i18n_helpers import FakeContainer, HostApp, MemorySettings
 
-TEMPLATES = Path(__file__).resolve().parents[2] / "src" / "omega_fire" / "domain" / "reports" / "templates"
+TEMPLATES = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "omega_fire"
+    / "domain"
+    / "reports"
+    / "templates"
+)
 
 
 class GuideContentTest(unittest.TestCase):
@@ -39,18 +50,20 @@ class GuideContentTest(unittest.TestCase):
     def test_liens_voir_aussi_valides(self) -> None:
         ids = {page.page_id for page in guide_pages()}
         for page in guide_pages():
-            for ref in (page.entry.see_also if page.entry else []):
+            for ref in page.entry.see_also if page.entry else []:
                 self.assertIn(ref, ids, f"{page.page_id} -> {ref}")
 
     def test_export_html(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "guide.html"
             HtmlExporter(TEMPLATES).export_data(
-                guide_html_context(guide_pages(), "omega-base", "2026-10-28 12:00:00"), path,
-                template_name="guide.html.j2")
+                guide_html_context(guide_pages(), "omega-base", "2026-10-28 12:00:00"),
+                path,
+                template_name="guide.html.j2",
+            )
             html = path.read_text(encoding="utf-8")
         self.assertIn('id="p-5-1"', html)
-        self.assertIn('href="#p-5-2"', html)       # « Voir aussi » de 5.1
+        self.assertIn('href="#p-5-2"', html)  # « Voir aussi » de 5.1
         self.assertIn("Raccourcis clavier", html)
         self.assertEqual(html.count('<section class="guide-page"'), len(guide_pages()))
 
@@ -60,14 +73,27 @@ class GuideContentTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             exporter = HtmlExporter(TEMPLATES)
             full, faq_only = Path(tmp) / "g.html", Path(tmp) / "f.html"
-            exporter.export_data(guide_html_context(guide_pages(), "omega-base", "t", faq=faq_entries()),
-                                 full, template_name="guide.html.j2")
-            exporter.export_data(guide_html_context([], "omega-base", "t", faq=faq_entries(), faq_only=True),
-                                 faq_only, template_name="guide.html.j2")
-            full_html, faq_html = full.read_text(encoding="utf-8"), faq_only.read_text(encoding="utf-8")
+            exporter.export_data(
+                guide_html_context(guide_pages(), "omega-base", "t", faq=faq_entries()),
+                full,
+                template_name="guide.html.j2",
+            )
+            exporter.export_data(
+                guide_html_context(
+                    [], "omega-base", "t", faq=faq_entries(), faq_only=True
+                ),
+                faq_only,
+                template_name="guide.html.j2",
+            )
+            full_html, faq_html = (
+                full.read_text(encoding="utf-8"),
+                faq_only.read_text(encoding="utf-8"),
+            )
         count = len(faq_entries())
         self.assertGreaterEqual(count, 15)
-        self.assertEqual(full_html.count('<section class="guide-page"'), len(guide_pages()) + count)
+        self.assertEqual(
+            full_html.count('<section class="guide-page"'), len(guide_pages()) + count
+        )
         self.assertEqual(faq_html.count('<section class="guide-page"'), count)
         self.assertIn(f'id="faq-{count}"', faq_html)
 
@@ -90,8 +116,10 @@ class GuideNavigationTest(unittest.TestCase):
                 await pilot.pause()
                 self.assertEqual(type(app.screen).__name__, "GuideDetailScreen")
 
-        with tempfile.TemporaryDirectory() as tmp, \
-                mock.patch.object(guide_screens, "log_action_result", lambda *a, **k: None):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch.object(guide_screens, "log_action_result", lambda *a, **k: None),
+        ):
             asyncio.run(run(Path(tmp)))
 
 
@@ -107,7 +135,9 @@ class GuideExportLanguageTest(unittest.TestCase):
             self.skipTest("catalogues compiles absents")
 
         async def run(tmp: Path) -> Path:
-            container = FakeContainer(MemorySettings({EXPORT_LANGUAGE_KEY: "de"}), tmp, locale=locale)
+            container = FakeContainer(
+                MemorySettings({EXPORT_LANGUAGE_KEY: "de"}), tmp, locale=locale
+            )
             app = HostApp(GuideMenuScreen(container=container))
             async with app.run_test(size=(110, 34)) as pilot:
                 await pilot.pause()
@@ -119,13 +149,15 @@ class GuideExportLanguageTest(unittest.TestCase):
                         return found[0]
             self.fail("export absent")
 
-        with tempfile.TemporaryDirectory() as tmp, \
-                mock.patch.object(guide_screens, "log_action_result", lambda *a, **k: None):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch.object(guide_screens, "log_action_result", lambda *a, **k: None),
+        ):
             html = asyncio.run(run(Path(tmp))).read_text(encoding="utf-8")
-        self.assertIn("Inhalt", html)                                  # Sommaire
-        self.assertIn("Fähigkeitsregister anzeigen", html)             # fiche 1.1 (help_text)
-        self.assertIn("FÄHIGKEITEN &amp; DIAGNOSEN", html)             # titre de section
-        self.assertIn("Wie entferne ich", html)                        # FAQ
+        self.assertIn("Inhalt", html)  # Sommaire
+        self.assertIn("Fähigkeitsregister anzeigen", html)  # fiche 1.1 (help_text)
+        self.assertIn("FÄHIGKEITEN &amp; DIAGNOSEN", html)  # titre de section
+        self.assertIn("Wie entferne ich", html)  # FAQ
         self.assertNotIn("Comment l'utiliser", html)
 
 

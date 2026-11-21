@@ -10,6 +10,7 @@ Trois origines (`access`) :
 
 Pures donnees, aucune I/O : l'etat reel (existe, taille, date) est recalcule a chaque
 affichage par application/commands/manage_log_library.py, jamais fige a l'ajout."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ ACCESS_SSH = "ssh"
 class LibraryRecord:
     """Entree persistee : identite seule. `source` = instance omega-serv ou label de la
     source distante (None pour un chemin epingle a la main)."""
+
     path: str
     access: str = ACCESS_FILE
     source: str | None = None
@@ -32,6 +34,7 @@ class LibraryRecord:
 @dataclass(frozen=True, slots=True)
 class LogFile:
     """Entree de la Bibliotheque avec son etat au moment de l'affichage."""
+
     path: str
     access: str = ACCESS_FILE
     source: str | None = None

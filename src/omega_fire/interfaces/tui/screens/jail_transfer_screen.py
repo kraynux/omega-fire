@@ -16,21 +16,23 @@ degrade). Notify()/query_one() en lecture restent utilisables depuis ce
 thread (verifie empiriquement), inutile de faire remonter chaque valeur
 saisie via des parametres explicites comme pour d'autres ecrans plus
 courts de ce lot."""
+
 from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
-from omega_fire.domain.ip_blacklist.protected import split_protected
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
 from omega_fire.application.queries.jail_status import get_jail_status
 from omega_fire.domain.ip_blacklist.exceptions import IPAlreadyBannedError
+from omega_fire.domain.ip_blacklist.protected import split_protected
 from omega_fire.infrastructure.config.paths import (
-    DEFAULT_BLOCKLIST_FILE,
     DEFAULT_F2B_BLOCKLIST_FILE,
     DEFAULT_PINNED_FILES,
     RUNTIME_DIR,
@@ -40,8 +42,8 @@ from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.ban_ip_list_screen import _extract_valid_ips
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
-from omega_fire.shared.networking import IPAddress
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
@@ -103,12 +105,17 @@ class JailTransferScreen(OmegaScreen):
         return [(p, p) for p in self._pinned_command.list_paths()]
 
     def _jail_options(self) -> list[tuple[str, str]]:
-        return [(_("{name} ({count} IP(s))").format(name=name, count=len(ips)), name) for name, ips in self._jails_info.items()]
+        return [
+            (_("{name} ({count} IP(s))").format(name=name, count=len(ips)), name)
+            for name, ips in self._jails_info.items()
+        ]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
-            yield Static(_("TRANSFERT / INTEROPÉRABILITÉ DES IPs"), classes="omega-title")
+            yield Static(
+                _("TRANSFERT / INTEROPÉRABILITÉ DES IPs"), classes="omega-title"
+            )
 
             # --- SOURCE ---
             yield Static(_("Source de collecte"), classes="omega-subtitle")
@@ -125,15 +132,34 @@ class JailTransferScreen(OmegaScreen):
                 value=_SRC_JAIL,
                 id="source-select",
             )
-            yield Static(_("Jail source"), id="source-jail-label", classes="omega-subtitle")
-            yield Select(self._jail_options(), id="source-jail-select", prompt=_("Sélectionner"))
-            yield Static(_("Chemin du fichier"), id="source-manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Jail source"), id="source-jail-label", classes="omega-subtitle"
+            )
+            yield Select(
+                self._jail_options(), id="source-jail-select", prompt=_("Sélectionner")
+            )
+            yield Static(
+                _("Chemin du fichier"),
+                id="source-manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(id="source-manual-input", classes="omega-hidden")
-            yield Static(_("Fichier épinglé"), id="source-pinned-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._pinned_options(), id="source-pinned-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Fichier épinglé"),
+                id="source-pinned-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Select(
+                self._pinned_options(),
+                id="source-pinned-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
             with Horizontal(classes="omega-actions", id="source-pins-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Gérer les épingles (source)"), id="manage-source-pins")
+                    yield Button(
+                        _("Gérer les épingles (source)"), id="manage-source-pins"
+                    )
 
             # --- DESTINATION ---
             yield Static(_("Destination"), classes="omega-subtitle")
@@ -143,33 +169,72 @@ class JailTransferScreen(OmegaScreen):
                     (_("Pare-feu nftables (set blackhole)"), _DST_NFTABLES),
                     (_("Pare-feu iptables (chaîne INPUT)"), _DST_IPTABLES),
                     (_("Pare-feu ip6tables (chaîne INPUT)"), _DST_IP6TABLES),
-                    (_("Fichier texte par défaut ({name})").format(name=DEFAULT_F2B_BLOCKLIST_FILE.name), _DST_DEFAULT_FILE),
+                    (
+                        _("Fichier texte par défaut ({name})").format(
+                            name=DEFAULT_F2B_BLOCKLIST_FILE.name
+                        ),
+                        _DST_DEFAULT_FILE,
+                    ),
                     (_("Chemin manuel personnalisé"), _DST_MANUAL),
                     (_("Fichier épinglé"), _DST_PINNED),
                 ],
                 value=_DST_JAIL,
                 id="dest-select",
             )
-            yield Static(_("Jail destination"), id="dest-jail-label", classes="omega-subtitle")
-            yield Select(self._jail_options(), id="dest-jail-select", prompt=_("Sélectionner"))
-            yield Static(_("Chemin du fichier"), id="dest-manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Jail destination"), id="dest-jail-label", classes="omega-subtitle"
+            )
+            yield Select(
+                self._jail_options(), id="dest-jail-select", prompt=_("Sélectionner")
+            )
+            yield Static(
+                _("Chemin du fichier"),
+                id="dest-manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(id="dest-manual-input", classes="omega-hidden")
-            yield Static(_("Fichier épinglé"), id="dest-pinned-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._pinned_options(), id="dest-pinned-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Fichier épinglé"),
+                id="dest-pinned-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Select(
+                self._pinned_options(),
+                id="dest-pinned-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
             with Horizontal(classes="omega-actions", id="dest-pins-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Gérer les épingles (destination)"), id="manage-dest-pins")
+                    yield Button(
+                        _("Gérer les épingles (destination)"), id="manage-dest-pins"
+                    )
 
-            yield Static(_("Mode d'écriture (fichier)"), id="file-mode-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Mode d'écriture (fichier)"),
+                id="file-mode-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Select(
-                [(_("Écraser"), "overwrite"), (_("Rajouter (brut)"), "append"), (_("Incrementer (nouvelles IP uniquement)"), "increment")],
+                [
+                    (_("Écraser"), "overwrite"),
+                    (_("Rajouter (brut)"), "append"),
+                    (_("Incrementer (nouvelles IP uniquement)"), "increment"),
+                ],
                 value="increment",
                 id="file-mode-select",
                 classes="omega-hidden",
             )
-            yield Static(_("Mode d'injection (iptables/ip6tables)"), id="ipt-mode-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Mode d'injection (iptables/ip6tables)"),
+                id="ipt-mode-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Select(
-                [(_("Réinitialiser / écraser la chaîne"), "flush"), (_("Incrementer (nouvelles IP uniquement)"), "increment")],
+                [
+                    (_("Réinitialiser / écraser la chaîne"), "flush"),
+                    (_("Incrementer (nouvelles IP uniquement)"), "increment"),
+                ],
                 value="increment",
                 id="ipt-mode-select",
                 classes="omega-hidden",
@@ -177,7 +242,9 @@ class JailTransferScreen(OmegaScreen):
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Transférer"), id="launch", variant="primary", disabled=True)
+                    yield Button(
+                        _("Transférer"), id="launch", variant="primary", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
@@ -192,9 +259,15 @@ class JailTransferScreen(OmegaScreen):
 
         def _fetch_jails() -> dict[str, list[str]]:
             status = get_jail_status(fail2ban_port=self._fail2ban_port)
-            return {j.name: sorted({str(ip) for ip in j.banned_ips}) for j in status.jails}
+            return {
+                j.name: sorted({str(ip) for ip in j.banned_ips}) for j in status.jails
+            }
 
-        self.run_blocking(_fetch_jails, self._on_jails_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            _fetch_jails,
+            self._on_jails_loaded,
+            busy_message=_("Chargement des jails..."),
+        )
 
     def _on_jails_loaded(self, jails_info: dict[str, list[str]]) -> None:
         self._jails_info = jails_info
@@ -216,13 +289,27 @@ class JailTransferScreen(OmegaScreen):
         is_jail = source == _SRC_JAIL
         is_manual = source == _SRC_MANUAL
         is_pinned = source == _SRC_PINNED
-        self.query_one("#source-jail-label", Static).set_class(not is_jail, "omega-hidden")
-        self.query_one("#source-jail-select", Select).set_class(not is_jail, "omega-hidden")
-        self.query_one("#source-manual-label", Static).set_class(not is_manual, "omega-hidden")
-        self.query_one("#source-manual-input", Input).set_class(not is_manual, "omega-hidden")
-        self.query_one("#source-pinned-label", Static).set_class(not is_pinned, "omega-hidden")
-        self.query_one("#source-pinned-select", Select).set_class(not is_pinned, "omega-hidden")
-        self.query_one("#source-pins-actions", Horizontal).set_class(not is_pinned, "omega-hidden")
+        self.query_one("#source-jail-label", Static).set_class(
+            not is_jail, "omega-hidden"
+        )
+        self.query_one("#source-jail-select", Select).set_class(
+            not is_jail, "omega-hidden"
+        )
+        self.query_one("#source-manual-label", Static).set_class(
+            not is_manual, "omega-hidden"
+        )
+        self.query_one("#source-manual-input", Input).set_class(
+            not is_manual, "omega-hidden"
+        )
+        self.query_one("#source-pinned-label", Static).set_class(
+            not is_pinned, "omega-hidden"
+        )
+        self.query_one("#source-pinned-select", Select).set_class(
+            not is_pinned, "omega-hidden"
+        )
+        self.query_one("#source-pins-actions", Horizontal).set_class(
+            not is_pinned, "omega-hidden"
+        )
 
     def _apply_dest(self, dest: str) -> None:
         is_jail = dest == _DST_JAIL
@@ -231,15 +318,33 @@ class JailTransferScreen(OmegaScreen):
         is_file = dest in (_DST_DEFAULT_FILE, _DST_MANUAL, _DST_PINNED)
         is_ipt = dest in (_DST_IPTABLES, _DST_IP6TABLES)
 
-        self.query_one("#dest-jail-label", Static).set_class(not is_jail, "omega-hidden")
-        self.query_one("#dest-jail-select", Select).set_class(not is_jail, "omega-hidden")
-        self.query_one("#dest-manual-label", Static).set_class(not is_manual, "omega-hidden")
-        self.query_one("#dest-manual-input", Input).set_class(not is_manual, "omega-hidden")
-        self.query_one("#dest-pinned-label", Static).set_class(not is_pinned, "omega-hidden")
-        self.query_one("#dest-pinned-select", Select).set_class(not is_pinned, "omega-hidden")
-        self.query_one("#dest-pins-actions", Horizontal).set_class(not is_pinned, "omega-hidden")
-        self.query_one("#file-mode-label", Static).set_class(not is_file, "omega-hidden")
-        self.query_one("#file-mode-select", Select).set_class(not is_file, "omega-hidden")
+        self.query_one("#dest-jail-label", Static).set_class(
+            not is_jail, "omega-hidden"
+        )
+        self.query_one("#dest-jail-select", Select).set_class(
+            not is_jail, "omega-hidden"
+        )
+        self.query_one("#dest-manual-label", Static).set_class(
+            not is_manual, "omega-hidden"
+        )
+        self.query_one("#dest-manual-input", Input).set_class(
+            not is_manual, "omega-hidden"
+        )
+        self.query_one("#dest-pinned-label", Static).set_class(
+            not is_pinned, "omega-hidden"
+        )
+        self.query_one("#dest-pinned-select", Select).set_class(
+            not is_pinned, "omega-hidden"
+        )
+        self.query_one("#dest-pins-actions", Horizontal).set_class(
+            not is_pinned, "omega-hidden"
+        )
+        self.query_one("#file-mode-label", Static).set_class(
+            not is_file, "omega-hidden"
+        )
+        self.query_one("#file-mode-select", Select).set_class(
+            not is_file, "omega-hidden"
+        )
         self.query_one("#ipt-mode-label", Static).set_class(not is_ipt, "omega-hidden")
         self.query_one("#ipt-mode-select", Select).set_class(not is_ipt, "omega-hidden")
 
@@ -248,20 +353,29 @@ class JailTransferScreen(OmegaScreen):
             self.dismiss()
             return
         if event.button.id == "manage-source-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_source_pinned)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container),
+                self._refresh_source_pinned,
+            )
             return
         if event.button.id == "manage-dest-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_dest_pinned)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container), self._refresh_dest_pinned
+            )
             return
         if event.button.id != "launch":
             return
         self._launch()
 
     def _refresh_source_pinned(self, _result: None) -> None:
-        self.query_one("#source-pinned-select", Select).set_options(self._pinned_options())
+        self.query_one("#source-pinned-select", Select).set_options(
+            self._pinned_options()
+        )
 
     def _refresh_dest_pinned(self, _result: None) -> None:
-        self.query_one("#dest-pinned-select", Select).set_options(self._pinned_options())
+        self.query_one("#dest-pinned-select", Select).set_options(
+            self._pinned_options()
+        )
 
     # ------------------------------------------------------------------
     # Collecte depuis la source
@@ -272,44 +386,70 @@ class JailTransferScreen(OmegaScreen):
         if source == _SRC_JAIL:
             jail_name = self.query_one("#source-jail-select", Select).value
             if jail_name is None or jail_name == Select.BLANK:
-                self.app.notify(_("Aucun jail disponible ou sélectionné."), severity="warning")
+                self.app.notify(
+                    _("Aucun jail disponible ou sélectionné."), severity="warning"
+                )
                 return None
             self._ban_remaining = self._remaining_for([str(jail_name)])
-            return set(self._jails_info.get(str(jail_name), [])), _("Jail '{jail_name}'").format(jail_name=jail_name)
+            return set(self._jails_info.get(str(jail_name), [])), _(
+                "Jail '{jail_name}'"
+            ).format(jail_name=jail_name)
 
         if source == _SRC_NFTABLES:
             if self._nftables_port is None:
                 self.app.notify(_("Port nftables indisponible."), severity="error")
                 return None
-            return {b.ip for b in self._nftables_port.list_bans()}, _("Pare-feu nftables (blackhole)")
+            return {b.ip for b in self._nftables_port.list_bans()}, _(
+                "Pare-feu nftables (blackhole)"
+            )
 
         if source == _SRC_IPTABLES:
             if self._iptables_port is None:
                 self.app.notify(_("Port iptables indisponible."), severity="error")
                 return None
-            return {b.ip.split("/")[0] for b in self._iptables_port.list_bans()}, _("Pare-feu iptables (INPUT)")
+            return {b.ip.split("/")[0] for b in self._iptables_port.list_bans()}, _(
+                "Pare-feu iptables (INPUT)"
+            )
 
         if source == _SRC_IP6TABLES:
             if self._ip6tables_port is None:
                 self.app.notify(_("Port ip6tables indisponible."), severity="error")
                 return None
-            return {b.ip.split("/")[0] for b in self._ip6tables_port.list_bans()}, _("Pare-feu ip6tables (INPUT)")
+            return {b.ip.split("/")[0] for b in self._ip6tables_port.list_bans()}, _(
+                "Pare-feu ip6tables (INPUT)"
+            )
 
         if source == _SRC_MANUAL:
             src_file = self.query_one("#source-manual-input", Input).value.strip()
             if not src_file or not os.path.exists(src_file):
-                self.app.notify(_("Fichier source '{src_file}' introuvable.").format(src_file=src_file), severity="error")
+                self.app.notify(
+                    _("Fichier source '{src_file}' introuvable.").format(
+                        src_file=src_file
+                    ),
+                    severity="error",
+                )
                 return None
             with open(src_file, "r", encoding="utf-8") as f:
-                return _extract_valid_ips(f.read()), _("Fichier '{src_file}'").format(src_file=src_file)
+                return _extract_valid_ips(f.read()), _("Fichier '{src_file}'").format(
+                    src_file=src_file
+                )
 
         if source == _SRC_PINNED:
             src_file = self.query_one("#source-pinned-select", Select).value
-            if src_file is None or src_file == Select.BLANK or not os.path.exists(str(src_file)):
-                self.app.notify(_("Fichier épinglé introuvable ou non sélectionné."), severity="error")
+            if (
+                src_file is None
+                or src_file == Select.BLANK
+                or not os.path.exists(str(src_file))
+            ):
+                self.app.notify(
+                    _("Fichier épinglé introuvable ou non sélectionné."),
+                    severity="error",
+                )
                 return None
             with open(str(src_file), "r", encoding="utf-8") as f:
-                return _extract_valid_ips(f.read()), _("Épinglé '{src_file}'").format(src_file=src_file)
+                return _extract_valid_ips(f.read()), _("Épinglé '{src_file}'").format(
+                    src_file=src_file
+                )
 
         if source == _SRC_ALL:
             collected: set[str] = set()
@@ -323,12 +463,16 @@ class JailTransferScreen(OmegaScreen):
                     pass
             if self._iptables_port is not None:
                 try:
-                    collected.update(b.ip.split("/")[0] for b in self._iptables_port.list_bans())
+                    collected.update(
+                        b.ip.split("/")[0] for b in self._iptables_port.list_bans()
+                    )
                 except Exception:
                     pass
             if self._ip6tables_port is not None:
                 try:
-                    collected.update(b.ip.split("/")[0] for b in self._ip6tables_port.list_bans())
+                    collected.update(
+                        b.ip.split("/")[0] for b in self._ip6tables_port.list_bans()
+                    )
                 except Exception:
                     pass
             return collected, _("Tous les backends réunis")
@@ -344,9 +488,11 @@ class JailTransferScreen(OmegaScreen):
         for name in jail_names:
             try:
                 for ip, seconds in reader(name).items():
-                    if ip not in merged:
-                        merged[ip] = seconds
-                    elif merged[ip] is not None and (seconds is None or seconds > merged[ip]):
+                    if (
+                        ip not in merged
+                        or merged[ip] is not None
+                        and (seconds is None or seconds > merged[ip])
+                    ):
                         merged[ip] = seconds
             except Exception:
                 continue
@@ -367,27 +513,41 @@ class JailTransferScreen(OmegaScreen):
             collected_ips, source_label = collected
             banned_ips = sorted(collected_ips)
             if not banned_ips:
-                self.app.notify(_("La source {source_label} ne contient aucune IP bannie à transférer.").format(source_label=source_label), severity="warning")
+                self.app.notify(
+                    _(
+                        "La source {source_label} ne contient aucune IP bannie à transférer."
+                    ).format(source_label=source_label),
+                    severity="warning",
+                )
                 return
 
             dest = str(self.query_one("#dest-select", Select).value)
             self._execute_transfer(dest, banned_ips, source_label)
 
-        self.run_blocking(_work, lambda _r: None, busy_message=_("Transfert en cours..."))
+        self.run_blocking(
+            _work, lambda _r: None, busy_message=_("Transfert en cours...")
+        )
 
     # ------------------------------------------------------------------
     # Execution vers la destination
     # ------------------------------------------------------------------
-    def _execute_transfer(self, dest: str, banned_ips: list[str], source_label: str) -> None:
+    def _execute_transfer(
+        self, dest: str, banned_ips: list[str], source_label: str
+    ) -> None:
         if dest not in (_DST_DEFAULT_FILE, _DST_MANUAL, _DST_PINNED):
             # Jamais de ban en masse sur l'hote local, Tailscale ou le reseau local (2026-11-10). Un
             # fichier n'est qu'une liste : il garde toutes les adresses.
             banned_ips, protected = split_protected(banned_ips)
             if protected:
                 self.app.notify(
-                    _("{count} adresse(s) protégée(s) écartée(s) (hôte local, Tailscale, réseau local) : "
-                      "{values}").format(count=len(protected), values=", ".join(protected[:5])
-                                         + (" …" if len(protected) > 5 else "")),
+                    _(
+                        "{count} adresse(s) protégée(s) écartée(s) (hôte local, Tailscale, réseau local) : "
+                        "{values}"
+                    ).format(
+                        count=len(protected),
+                        values=", ".join(protected[:5])
+                        + (" …" if len(protected) > 5 else ""),
+                    ),
                     severity="warning",
                 )
             if not banned_ips:
@@ -395,7 +555,9 @@ class JailTransferScreen(OmegaScreen):
         if dest == _DST_JAIL:
             jail_name = self.query_one("#dest-jail-select", Select).value
             if jail_name is None or jail_name == Select.BLANK:
-                self.app.notify(_("Aucun jail disponible ou sélectionné."), severity="warning")
+                self.app.notify(
+                    _("Aucun jail disponible ou sélectionné."), severity="warning"
+                )
                 return
             self._transfer_to_jail(str(jail_name), banned_ips, source_label)
             return
@@ -407,25 +569,35 @@ class JailTransferScreen(OmegaScreen):
                 target_path = self.query_one("#dest-manual-input", Input).value.strip()
             else:
                 selected = self.query_one("#dest-pinned-select", Select).value
-                target_path = str(selected) if selected not in (None, Select.BLANK) else ""
+                target_path = (
+                    str(selected) if selected not in (None, Select.BLANK) else ""
+                )
             if not target_path:
-                self.app.notify(_("Chemin de destination manquant."), severity="warning")
+                self.app.notify(
+                    _("Chemin de destination manquant."), severity="warning"
+                )
                 return
             write_mode = str(self.query_one("#file-mode-select", Select).value)
             self._transfer_to_file(target_path, write_mode, banned_ips, source_label)
             return
 
         if dest == _DST_NFTABLES:
-            self._transfer_to_firewall("nftables", self._nftables_port, banned_ips, source_label, mode=None)
+            self._transfer_to_firewall(
+                "nftables", self._nftables_port, banned_ips, source_label, mode=None
+            )
             return
 
         if dest in (_DST_IPTABLES, _DST_IP6TABLES):
-            port = self._iptables_port if dest == _DST_IPTABLES else self._ip6tables_port
+            port = (
+                self._iptables_port if dest == _DST_IPTABLES else self._ip6tables_port
+            )
             mode = str(self.query_one("#ipt-mode-select", Select).value)
             self._transfer_to_firewall(dest, port, banned_ips, source_label, mode=mode)
             return
 
-    def _transfer_to_jail(self, jail_name: str, banned_ips: list[str], source_label: str) -> None:
+    def _transfer_to_jail(
+        self, jail_name: str, banned_ips: list[str], source_label: str
+    ) -> None:
         if self._fail2ban_port is None:
             self.app.notify(_("Port Fail2ban indisponible."), severity="error")
             return
@@ -434,14 +606,19 @@ class JailTransferScreen(OmegaScreen):
         already_present = 0
         failed_count = 0
 
-        from omega_fire.application.commands.jail_ban import JailBanCommand, JailBanRequest
+        from omega_fire.application.commands.jail_ban import (
+            JailBanCommand,
+            JailBanRequest,
+        )
 
         for ip in banned_ips:
             if ip in current_jail_banned:
                 already_present += 1
                 continue
             try:
-                res = JailBanCommand(self._fail2ban_port).execute(JailBanRequest(jail_name=jail_name, ip=ip))
+                res = JailBanCommand(self._fail2ban_port).execute(
+                    JailBanRequest(jail_name=jail_name, ip=ip)
+                )
                 if getattr(res, "success", False):
                     added_count += 1
                 else:
@@ -450,13 +627,30 @@ class JailTransferScreen(OmegaScreen):
                 failed_count += 1
 
         self.app.notify(
-            _("Source : {source_label} | {added_count} bannie(s), {already_present} ignorée(s), {failed_count} échec(s).").format(source_label=source_label, added_count=added_count, already_present=already_present, failed_count=failed_count),
+            _(
+                "Source : {source_label} | {added_count} bannie(s), {already_present} ignorée(s), {failed_count} échec(s)."
+            ).format(
+                source_label=source_label,
+                added_count=added_count,
+                already_present=already_present,
+                failed_count=failed_count,
+            ),
             title=_("Jail '{jail_name}'").format(jail_name=jail_name),
         )
-        log_action_result(self._container, _ACTION_TITLE, status="success" if not failed_count else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if not failed_count else "failure",
+        )
         self.app.call_from_thread(self.dismiss)
 
-    def _transfer_to_file(self, target_path: str, write_mode: str, banned_ips: list[str], source_label: str) -> None:
+    def _transfer_to_file(
+        self,
+        target_path: str,
+        write_mode: str,
+        banned_ips: list[str],
+        source_label: str,
+    ) -> None:
         try:
             folder_path = os.path.dirname(target_path)
             if folder_path and not os.path.exists(folder_path):
@@ -480,30 +674,55 @@ class JailTransferScreen(OmegaScreen):
                 new_added = len(new_ips_set)
                 already_present = len(banned_ips) - new_added
 
-            with open(target_path, "w" if write_mode == "overwrite" else "a", encoding="utf-8") as f:
+            with open(
+                target_path, "w" if write_mode == "overwrite" else "a", encoding="utf-8"
+            ) as f:
                 if write_mode == "overwrite":
                     f.write(f"# Omega-Fire Blocklist - Source: {source_label}\n")
-                    for ip in final_ips:
-                        f.write(f"{ip}\n")
+                    f.writelines(f"{ip}\n" for ip in final_ips)
                 else:
                     f.write(f"\n# Omega-Fire Append/Inc - Source: {source_label}\n")
-                    ips_to_append = banned_ips if write_mode == "append" else sorted(source_ips_set - existing_ips)
-                    for ip in ips_to_append:
-                        f.write(f"{ip}\n")
+                    ips_to_append = (
+                        banned_ips
+                        if write_mode == "append"
+                        else sorted(source_ips_set - existing_ips)
+                    )
+                    f.writelines(f"{ip}\n" for ip in ips_to_append)
         except Exception as e:
-            self.app.notify(_("Erreur d'écriture dans le fichier : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur d'écriture dans le fichier : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
         self.app.notify(
-            _("Source : {source_label} | {new_added} nouvelle(s) IP(s), {already_present} déjà présente(s), dans '{target_path}'.").format(source_label=source_label, new_added=new_added, already_present=already_present, target_path=target_path),
+            _(
+                "Source : {source_label} | {new_added} nouvelle(s) IP(s), {already_present} déjà présente(s), dans '{target_path}'."
+            ).format(
+                source_label=source_label,
+                new_added=new_added,
+                already_present=already_present,
+                target_path=target_path,
+            ),
         )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.app.call_from_thread(self.dismiss)
 
-    def _transfer_to_firewall(self, name: str, port, banned_ips: list[str], source_label: str, mode: str | None) -> None:
+    def _transfer_to_firewall(
+        self,
+        name: str,
+        port,
+        banned_ips: list[str],
+        source_label: str,
+        mode: str | None,
+    ) -> None:
         if port is None:
-            self.app.notify(_("Port {name} indisponible.").format(name=name), severity="error")
+            self.app.notify(
+                _("Port {name} indisponible.").format(name=name), severity="error"
+            )
             return
 
         flush_first = mode == "flush"
@@ -512,7 +731,10 @@ class JailTransferScreen(OmegaScreen):
             existing_ips: set[str] = set()
         else:
             try:
-                existing_ips = {b.ip.split("/")[0] if "/" in b.ip else b.ip for b in port.list_bans()}
+                existing_ips = {
+                    b.ip.split("/")[0] if "/" in b.ip else b.ip
+                    for b in port.list_bans()
+                }
             except Exception:
                 existing_ips = set()
 
@@ -528,9 +750,15 @@ class JailTransferScreen(OmegaScreen):
                 if name == "nftables" and self._ban_remaining.get(ip) is not None:
                     # Duree fail2ban conservee (2026-11-10) : avant, le ban devenait permanent.
                     if self._ban_remaining[ip] == 0:
-                        already_present += 1  # deja expire cote fail2ban : rien a transferer
+                        already_present += (
+                            1  # deja expire cote fail2ban : rien a transferer
+                        )
                         continue
-                    port.ban_single_ip(IPAddress(ip), reason=source_label, timeout_seconds=self._ban_remaining[ip])
+                    port.ban_single_ip(
+                        IPAddress(ip),
+                        reason=source_label,
+                        timeout_seconds=self._ban_remaining[ip],
+                    )
                     timed += 1
                 else:
                     port.ban_single_ip(IPAddress(ip), reason=source_label)
@@ -541,12 +769,27 @@ class JailTransferScreen(OmegaScreen):
                 failed_count += 1
 
         self.app.notify(
-            _("Source : {source_label} | {added_count} injectée(s), {already_present} ignorée(s), {failed_count} échec(s).").format(source_label=source_label, added_count=added_count, already_present=already_present, failed_count=failed_count),
+            _(
+                "Source : {source_label} | {added_count} injectée(s), {already_present} ignorée(s), {failed_count} échec(s)."
+            ).format(
+                source_label=source_label,
+                added_count=added_count,
+                already_present=already_present,
+                failed_count=failed_count,
+            ),
             title=name,
             severity="warning" if failed_count else "information",
         )
         if timed:
-            self.app.notify(_("{count} ban(s) gardent le temps qui leur restait dans fail2ban.").format(count=timed),
-                            title=name)
-        log_action_result(self._container, _ACTION_TITLE, status="success" if not failed_count else "failure")
+            self.app.notify(
+                _(
+                    "{count} ban(s) gardent le temps qui leur restait dans fail2ban."
+                ).format(count=timed),
+                title=name,
+            )
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if not failed_count else "failure",
+        )
         self.app.call_from_thread(self.dismiss)

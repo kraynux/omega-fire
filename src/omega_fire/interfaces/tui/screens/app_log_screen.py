@@ -19,6 +19,7 @@ texte), hors perimetre de cette vue.
 
 La lecture du fichier journal (potentiellement volumineux) s'execute en
 arriere-plan (run_blocking, voir _base.py)."""
+
 from __future__ import annotations
 
 import re
@@ -53,8 +54,15 @@ class AppLogScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(_("JOURNAL APPLICATIF"), classes="omega-title")
-            yield Input(placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"), id="filter-input")
-            yield Input(value=str(_DEFAULT_MAX_LINES), placeholder=_("Nombre de lignes"), id="lines-input")
+            yield Input(
+                placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"),
+                id="filter-input",
+            )
+            yield Input(
+                value=str(_DEFAULT_MAX_LINES),
+                placeholder=_("Nombre de lignes"),
+                id="lines-input",
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Filtrer"), id="filter", variant="primary")
@@ -68,7 +76,9 @@ class AppLogScreen(OmegaScreen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#log-table", DataTable).add_columns(_("Entrée du journal applicatif"))
+        self.query_one("#log-table", DataTable).add_columns(
+            _("Entrée du journal applicatif")
+        )
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -80,7 +90,9 @@ class AppLogScreen(OmegaScreen):
             self._refresh()
             return
         if button_id == "manage":
-            self.app.push_screen(PurgeAppLogScreen(container=self._container), self._on_purge_closed)
+            self.app.push_screen(
+                PurgeAppLogScreen(container=self._container), self._on_purge_closed
+            )
 
     def _on_purge_closed(self, _result: None) -> None:
         self._refresh()
@@ -92,21 +104,28 @@ class AppLogScreen(OmegaScreen):
     def _refresh(self) -> None:
         keyword = self.query_one("#filter-input", Input).value.strip()
         raw_lines = self.query_one("#lines-input", Input).value.strip()
-        max_lines = int(raw_lines) if raw_lines.isdigit() and int(raw_lines) > 0 else _DEFAULT_MAX_LINES
+        max_lines = (
+            int(raw_lines)
+            if raw_lines.isdigit() and int(raw_lines) > 0
+            else _DEFAULT_MAX_LINES
+        )
 
         def _fetch() -> list[str]:
             if not APP_LOG_PATH.exists():
                 return []
             with open(APP_LOG_PATH, "r", encoding="utf-8") as f:
                 lines = [
-                    line.strip() for line in f.readlines()
+                    line.strip()
+                    for line in f
                     if line.strip() and _ENTRY_PATTERN.match(line)
                 ]
             if keyword:
                 lines = [l for l in lines if keyword.lower() in l.lower()]
             return lines[-max_lines:]
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Lecture du journal..."))
+        self.run_blocking(
+            _fetch, self._on_loaded, busy_message=_("Lecture du journal...")
+        )
 
     def _on_loaded(self, recent_lines: list[str]) -> None:
         colors = self._colors()
@@ -114,13 +133,21 @@ class AppLogScreen(OmegaScreen):
         table.clear()
 
         if not APP_LOG_PATH.exists():
-            self.query_one("#log-hint", Static).update(_("Le fichier journal '{APP_LOG_PATH}' n'existe pas encore.").format(APP_LOG_PATH=APP_LOG_PATH))
+            self.query_one("#log-hint", Static).update(
+                _("Le fichier journal '{APP_LOG_PATH}' n'existe pas encore.").format(
+                    APP_LOG_PATH=APP_LOG_PATH
+                )
+            )
             return
         if not recent_lines:
-            self.query_one("#log-hint", Static).update(_("Aucune entrée ne correspond aux critères."))
+            self.query_one("#log-hint", Static).update(
+                _("Aucune entrée ne correspond aux critères.")
+            )
             return
 
-        self.query_one("#log-hint", Static).update(_("{count} entrée(s) affichée(s).").format(count=len(recent_lines)))
+        self.query_one("#log-hint", Static).update(
+            _("{count} entrée(s) affichée(s).").format(count=len(recent_lines))
+        )
         for line in recent_lines:
             if "[ERROR]" in line or "[CRITICAL]" in line:
                 text = Text(line, style=colors["danger"])

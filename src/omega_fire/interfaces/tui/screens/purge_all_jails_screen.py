@@ -8,6 +8,7 @@ get_jail_status()/flush_all_jails() (fail2ban-client, jusqu'a 10s de
 timeout chacun) s'executent en arriere-plan (run_blocking, voir
 _base.py) — synchrones dans __init__/le handler de confirmation, elles
 gelaient TOUTE l'app (retour utilisateur reel, mode degrade)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -42,17 +43,23 @@ class PurgeAllJailsScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(_("PURGE GÉNÉRALE DES JAILS FAIL2BAN"), classes="omega-title")
-            yield Static(_("Chargement des jails..."), id="status-hint", classes="omega-hint")
+            yield Static(
+                _("Chargement des jails..."), id="status-hint", classes="omega-hint"
+            )
             yield DataTable(id="inventory-table", classes="omega-hidden")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Purger tout"), id="launch", variant="error", disabled=True)
+                    yield Button(
+                        _("Purger tout"), id="launch", variant="error", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#inventory-table", DataTable).add_columns(_("Nom du Jail"), _("IPs Bannies"), _("Statut"))
+        self.query_one("#inventory-table", DataTable).add_columns(
+            _("Nom du Jail"), _("IPs Bannies"), _("Statut")
+        )
 
         def _fetch():
             try:
@@ -60,9 +67,15 @@ class PurgeAllJailsScreen(OmegaScreen):
             except Exception:
                 fail2ban_port = None
             status = get_jail_status(fail2ban_port=fail2ban_port)
-            return fail2ban_port, [(j.name, j.banned_count) for j in status.jails], status.total_banned_ips
+            return (
+                fail2ban_port,
+                [(j.name, j.banned_count) for j in status.jails],
+                status.total_banned_ips,
+            )
 
-        self.run_blocking(_fetch, self._on_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            _fetch, self._on_loaded, busy_message=_("Chargement des jails...")
+        )
 
     def _on_loaded(self, result) -> None:
         fail2ban_port, jails, total_banned = result
@@ -71,14 +84,18 @@ class PurgeAllJailsScreen(OmegaScreen):
         self._total_banned = total_banned
 
         if not jails:
-            self.query_one("#status-hint", Static).update(_("Impossible de communiquer avec le service Fail2ban."))
+            self.query_one("#status-hint", Static).update(
+                _("Impossible de communiquer avec le service Fail2ban.")
+            )
             return
 
         self.query_one("#status-hint", Static).set_class(True, "omega-hidden")
         table = self.query_one("#inventory-table", DataTable)
         table.set_class(False, "omega-hidden")
         for name, count in jails:
-            table.add_row(name, str(count), _("Nettoyage requis") if count > 0 else _("Déjà vide"))
+            table.add_row(
+                name, str(count), _("Nettoyage requis") if count > 0 else _("Déjà vide")
+            )
         self.query_one("#launch", Button).disabled = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -88,13 +105,17 @@ class PurgeAllJailsScreen(OmegaScreen):
         if event.button.id != "launch" or not self._jails:
             return
         if self._total_banned == 0:
-            self.app.notify(_("Tous les jails sont déjà vides."), severity="information")
+            self.app.notify(
+                _("Tous les jails sont déjà vides."), severity="information"
+            )
             return
 
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LA PURGE GÉNÉRALE"),
-                message=_("Débannir {total_banned} IP(s) sur {count} jail(s) ?").format(total_banned=self._total_banned, count=len(self._jails)),
+                message=_("Débannir {total_banned} IP(s) sur {count} jail(s) ?").format(
+                    total_banned=self._total_banned, count=len(self._jails)
+                ),
             ),
             self._purge_if_confirmed,
         )
@@ -104,15 +125,26 @@ class PurgeAllJailsScreen(OmegaScreen):
             return
 
         def _on_done(purged_count: int) -> None:
-            self.app.notify(_("Purge générale terminée : {purged_count} IP(s) débannie(s).").format(purged_count=purged_count))
+            self.app.notify(
+                _("Purge générale terminée : {purged_count} IP(s) débannie(s).").format(
+                    purged_count=purged_count
+                )
+            )
             log_action_result(self._container, _ACTION_TITLE, status="success")
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(_("Erreur lors de la purge globale : {error}").format(error=error), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
+            self.app.notify(
+                _("Erreur lors de la purge globale : {error}").format(error=error),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(error)
+            )
 
         self.run_blocking(
-            self._fail2ban_port.flush_all_jails, _on_done,
-            busy_message=_("Purge générale en cours..."), on_error=_on_error,
+            self._fail2ban_port.flush_all_jails,
+            _on_done,
+            busy_message=_("Purge générale en cours..."),
+            on_error=_on_error,
         )

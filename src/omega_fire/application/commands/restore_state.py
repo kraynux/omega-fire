@@ -25,10 +25,11 @@ Orchestrates the restoration of a full-state snapshot (menu 7.2):
 - Fail2ban jails: reported for information only, never restored
   automatically (would require the full jail creation wizard, menu 4.4).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.application.commands.apply_preset import state_file_for
 from omega_fire.shared.i18n import _
@@ -37,12 +38,14 @@ from omega_fire.shared.i18n import _
 @dataclass
 class RestoreStateRequest:
     """Input for the restore state use case."""
+
     snapshot_id: str
 
 
 @dataclass
 class RestoreStateResult:
     """Output of the restore state use case."""
+
     success: bool
     message: str
     rules_removed: int = 0
@@ -83,12 +86,16 @@ class RestoreStateCommand:
         if domain_snapshot is None:
             return RestoreStateResult(
                 success=False,
-                message=_("Snapshot introuvable : {snapshot_id}").format(snapshot_id=request.snapshot_id),
+                message=_("Snapshot introuvable : {snapshot_id}").format(
+                    snapshot_id=request.snapshot_id
+                ),
             )
 
         errors: list[str] = []
 
-        snapshot_rules = domain_snapshot.content.rules.rules if domain_snapshot.content.rules else []
+        snapshot_rules = (
+            domain_snapshot.content.rules.rules if domain_snapshot.content.rules else []
+        )
         restorable = [r for r in snapshot_rules if r.get("restorable") is True]
         rules_skipped = len(snapshot_rules) - len(restorable)
         # Snapshot sans aucune regle recreable a l'identique (format d'avant
@@ -97,7 +104,9 @@ class RestoreStateCommand:
         replace_rules = bool(restorable) or not snapshot_rules
         # Profils actifs AVANT restauration : seuls backends dont Omega-Fire a
         # pu changer la politique par defaut.
-        preset_backends = {b for b in ("nftables", "iptables", "ip6tables") if self._preset_active(b)}
+        preset_backends = {
+            b for b in ("nftables", "iptables", "ip6tables") if self._preset_active(b)
+        }
 
         # Capture des règles trackées AVANT toute modification. Fige
         # l'état "ancien" à retirer une fois les nouvelles règles en
@@ -107,12 +116,18 @@ class RestoreStateCommand:
         # verrait aussi les règles tout juste appliquées et les
         # retirerait par erreur.
         try:
-            rules_to_remove = self._rule_repository.find_all() if self._rule_repository and replace_rules else []
+            rules_to_remove = (
+                self._rule_repository.find_all()
+                if self._rule_repository and replace_rules
+                else []
+            )
         except Exception as e:
             errors.append(_("Impossible de lire les règles trackées : {e}").format(e=e))
             rules_to_remove = []
         # Jamais les regles importees d'autres outils (UFW, Tailscale...).
-        rules_to_remove = [r for r in rules_to_remove if getattr(r, "origin", "imported") == "managed"]
+        rules_to_remove = [
+            r for r in rules_to_remove if getattr(r, "origin", "imported") == "managed"
+        ]
 
         # Ordre volontaire : APPLIQUER les nouvelles règles avant de
         # RETIRER les anciennes. Ça garantit qu'il n'existe jamais un
@@ -123,13 +138,18 @@ class RestoreStateCommand:
         # nftables tolère les doublons), puis les anciennes — et
         # seulement les anciennes, capturées ci-dessus — sont retirées
         # une fois les nouvelles en place.
-        rules_applied = self._apply_snapshot_rules(restorable, errors) if replace_rules else 0
+        rules_applied = (
+            self._apply_snapshot_rules(restorable, errors) if replace_rules else 0
+        )
         rules_removed = self._remove_tracked_rules(rules_to_remove, errors)
         self._reset_chain_policies(errors, preset_backends)
         ips_added, ips_present = self._restore_ips_add_only(domain_snapshot, errors)
-        
 
-        jails_count = domain_snapshot.content.fail2ban.count if domain_snapshot.content.fail2ban else 0
+        jails_count = (
+            domain_snapshot.content.fail2ban.count
+            if domain_snapshot.content.fail2ban
+            else 0
+        )
 
         # Une restauration d'état complet invalide sémantiquement toute
         # notion de "profil actif" (3.4) : les règles ont été remplacées
@@ -140,11 +160,17 @@ class RestoreStateCommand:
         self._clear_preset_markers()
 
         if not replace_rules:
-            message = _("Restauration terminée : aucune règle de ce snapshot ne peut être recréée à l'identique ({count}), les règles du pare-feu n'ont pas été touchées ; IPs ajoutées (jamais retirées).").format(count=rules_skipped)
+            message = _(
+                "Restauration terminée : aucune règle de ce snapshot ne peut être recréée à l'identique ({count}), les règles du pare-feu n'ont pas été touchées ; IPs ajoutées (jamais retirées)."
+            ).format(count=rules_skipped)
         elif rules_skipped:
-            message = _("Restauration terminée : règles Omega-Fire remplacées, {count} règle(s) d'autres outils ou incomplète(s) laissée(s) telles quelles ; IPs ajoutées (jamais retirées).").format(count=rules_skipped)
+            message = _(
+                "Restauration terminée : règles Omega-Fire remplacées, {count} règle(s) d'autres outils ou incomplète(s) laissée(s) telles quelles ; IPs ajoutées (jamais retirées)."
+            ).format(count=rules_skipped)
         else:
-            message = _("Restauration terminée : règles remplacées, IPs ajoutées (jamais retirées).")
+            message = _(
+                "Restauration terminée : règles remplacées, IPs ajoutées (jamais retirées)."
+            )
         return RestoreStateResult(
             success=True,
             message=message,
@@ -183,7 +209,8 @@ class RestoreStateCommand:
             try:
                 live_rules = adapter.list_rules()
                 live_refs_by_backend[backend] = {
-                    str(getattr(r, "external_ref", "")) for r in live_rules
+                    str(getattr(r, "external_ref", ""))
+                    for r in live_rules
                     if getattr(r, "external_ref", None)
                 }
             except Exception:
@@ -201,7 +228,10 @@ class RestoreStateCommand:
                 continue
 
             # Handle déjà absent du live : nettoyage silencieux, pas une erreur.
-            if backend in live_refs_by_backend and str(ref) not in live_refs_by_backend[backend]:
+            if (
+                backend in live_refs_by_backend
+                and str(ref) not in live_refs_by_backend[backend]
+            ):
                 try:
                     self._rule_repository.delete(getattr(rule, "rule_id", None))
                 except Exception:
@@ -212,7 +242,9 @@ class RestoreStateCommand:
                 if backend == "nftables":
                     handle = int(ref)
                     ok = adapter.delete_rule(
-                        family=rule.family.value if hasattr(rule.family, "value") else "inet",
+                        family=rule.family.value
+                        if hasattr(rule.family, "value")
+                        else "inet",
                         table=rule.table_name or "filter",
                         chain=rule.chain.value,
                         handle=handle,
@@ -233,13 +265,20 @@ class RestoreStateCommand:
                 # directory) atteint déjà l'objectif visé — nettoyage
                 # silencieux de la ligne en base, pas une vraie erreur.
                 error_text = str(e).lower()
-                if "no such file or directory" in error_text or "could not process rule" in error_text:
+                if (
+                    "no such file or directory" in error_text
+                    or "could not process rule" in error_text
+                ):
                     try:
                         self._rule_repository.delete(getattr(rule, "rule_id", None))
                     except Exception:
                         pass
                 else:
-                    errors.append(_("Erreur suppression règle ({backend}) : {e}").format(backend=backend, e=e))
+                    errors.append(
+                        _("Erreur suppression règle ({backend}) : {e}").format(
+                            backend=backend, e=e
+                        )
+                    )
 
         return removed
 
@@ -249,7 +288,9 @@ class RestoreStateCommand:
         except Exception:
             return False
 
-    def _apply_snapshot_rules(self, snapshot_rules: list[dict], errors: list[str]) -> int:
+    def _apply_snapshot_rules(
+        self, snapshot_rules: list[dict], errors: list[str]
+    ) -> int:
         """Apply every rule stored in the snapshot to the live backends,
         and persist each successfully applied rule to RuleRepository so
         the database stays in sync with the kernel — mirroring what
@@ -312,13 +353,23 @@ class RestoreStateCommand:
                     applied += 1
                     self._persist_applied_rule(backend, rule_data, adapter)
                 else:
-                    errors.append(_("Règle non appliquée ({backend}) : {value}").format(backend=backend, value=rule_data.get('comment', '?')))
+                    errors.append(
+                        _("Règle non appliquée ({backend}) : {value}").format(
+                            backend=backend, value=rule_data.get("comment", "?")
+                        )
+                    )
             except Exception as e:
-                errors.append(_("Erreur application règle ({backend}) : {e}").format(backend=backend, e=e))
+                errors.append(
+                    _("Erreur application règle ({backend}) : {e}").format(
+                        backend=backend, e=e
+                    )
+                )
 
         return applied
 
-    def _persist_applied_rule(self, backend: str, rule_data: dict, adapter: Any) -> None:
+    def _persist_applied_rule(
+        self, backend: str, rule_data: dict, adapter: Any
+    ) -> None:
         """Persist a successfully applied rule to RuleRepository,
         finding its external_ref by re-reading the live state — same
         approach as CreateRuleCommand._find_applied_external_ref()."""
@@ -327,15 +378,35 @@ class RestoreStateCommand:
 
         try:
             from omega_fire.domain.rules.models import (
-                FirewallRule, RuleAction, RuleChain, RuleFamily, RuleProtocol,
+                FirewallRule,
+                RuleAction,
+                RuleChain,
+                RuleFamily,
+                RuleProtocol,
             )
 
-            action_map = {"drop": RuleAction.DROP, "reject": RuleAction.REJECT, "accept": RuleAction.ACCEPT}
-            chain_map = {"input": RuleChain.INPUT, "forward": RuleChain.FORWARD, "output": RuleChain.OUTPUT}
-            protocol_map = {"tcp": RuleProtocol.TCP, "udp": RuleProtocol.UDP, "icmp": RuleProtocol.ICMP}
+            action_map = {
+                "drop": RuleAction.DROP,
+                "reject": RuleAction.REJECT,
+                "accept": RuleAction.ACCEPT,
+            }
+            chain_map = {
+                "input": RuleChain.INPUT,
+                "forward": RuleChain.FORWARD,
+                "output": RuleChain.OUTPUT,
+            }
+            protocol_map = {
+                "tcp": RuleProtocol.TCP,
+                "udp": RuleProtocol.UDP,
+                "icmp": RuleProtocol.ICMP,
+            }
 
-            rule_action = action_map.get(str(rule_data.get("action", "")).lower(), RuleAction.DROP)
-            rule_chain = chain_map.get(str(rule_data.get("chain", "")).lower(), RuleChain.INPUT)
+            rule_action = action_map.get(
+                str(rule_data.get("action", "")).lower(), RuleAction.DROP
+            )
+            rule_chain = chain_map.get(
+                str(rule_data.get("chain", "")).lower(), RuleChain.INPUT
+            )
             rule_protocol = protocol_map.get(str(rule_data.get("protocol", "")).lower())
 
             port_raw = rule_data.get("port")
@@ -372,28 +443,36 @@ class RestoreStateCommand:
             try:
                 live_rules = adapter.list_rules()
                 matches = [
-                    lr for lr in live_rules
+                    lr
+                    for lr in live_rules
                     if lr.chain == rule_chain
                     and lr.action.value == rule_action.value.lower()
                     and lr.protocol == rule_protocol
                     and lr.port_start == port_val
-                    and (getattr(lr, "source_cidr", None) or None) == (rule_data.get("source") or None)
+                    and (getattr(lr, "source_cidr", None) or None)
+                    == (rule_data.get("source") or None)
                 ]
                 if matches:
+
                     def _ref_as_int(m):
                         try:
                             return int(m.external_ref)
                         except (TypeError, ValueError):
                             return -1
+
                     best_match = max(matches, key=_ref_as_int)
-                    self._rule_repository.update_external_ref(new_id, best_match.external_ref)
+                    self._rule_repository.update_external_ref(
+                        new_id, best_match.external_ref
+                    )
             except Exception:
                 pass
 
         except Exception:
             pass
 
-    def _restore_ips_add_only(self, domain_snapshot, errors: list[str]) -> tuple[int, int]:
+    def _restore_ips_add_only(
+        self, domain_snapshot, errors: list[str]
+    ) -> tuple[int, int]:
         """Add banned IPs from the snapshot that are missing from the
         live state. Never removes any existing ban."""
         if not domain_snapshot.content.blacklist:
@@ -418,7 +497,11 @@ class RestoreStateCommand:
 
             ips = set()
             for item in raw:
-                ip = item.get("ip") if isinstance(item, dict) else getattr(item, "ip", None)
+                ip = (
+                    item.get("ip")
+                    if isinstance(item, dict)
+                    else getattr(item, "ip", None)
+                )
                 if ip:
                     ips.add(str(ip).split("/")[0].strip())
             live_ips_by_backend[backend] = ips
@@ -450,9 +533,17 @@ class RestoreStateCommand:
                     added += 1
                     live_ips_by_backend[backend].add(ip)
                 else:
-                    errors.append(_("IP non restaurée ({backend}) : {ip}").format(backend=backend, ip=ip))
+                    errors.append(
+                        _("IP non restaurée ({backend}) : {ip}").format(
+                            backend=backend, ip=ip
+                        )
+                    )
             except Exception as e:
-                errors.append(_("Erreur IP {ip} ({backend}) : {e}").format(ip=ip, backend=backend, e=e))
+                errors.append(
+                    _("Erreur IP {ip} ({backend}) : {e}").format(
+                        ip=ip, backend=backend, e=e
+                    )
+                )
 
         return added, already_present
 
@@ -479,7 +570,11 @@ class RestoreStateCommand:
                 try:
                     nft_adapter.set_chain_policy(chain_name, policy="accept")
                 except Exception as e:
-                    errors.append(_("Politique non réinitialisée (nftables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
+                    errors.append(
+                        _(
+                            "Politique non réinitialisée (nftables/{chain_name}) : {e}"
+                        ).format(chain_name=chain_name, e=e)
+                    )
 
         ipt_adapter = self._adapters.get("iptables") if "iptables" in backends else None
         if ipt_adapter is not None:
@@ -487,15 +582,25 @@ class RestoreStateCommand:
                 try:
                     ipt_adapter.set_chain_policy(chain_name, policy="ACCEPT")
                 except Exception as e:
-                    errors.append(_("Politique non réinitialisée (iptables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
+                    errors.append(
+                        _(
+                            "Politique non réinitialisée (iptables/{chain_name}) : {e}"
+                        ).format(chain_name=chain_name, e=e)
+                    )
 
-        ip6t_adapter = self._adapters.get("ip6tables") if "ip6tables" in backends else None
+        ip6t_adapter = (
+            self._adapters.get("ip6tables") if "ip6tables" in backends else None
+        )
         if ip6t_adapter is not None:
             for chain_name in chain_names:
                 try:
                     ip6t_adapter.set_chain_policy(chain_name, policy="ACCEPT")
                 except Exception as e:
-                    errors.append(_("Politique non réinitialisée (ip6tables/{chain_name}) : {e}").format(chain_name=chain_name, e=e))
+                    errors.append(
+                        _(
+                            "Politique non réinitialisée (ip6tables/{chain_name}) : {e}"
+                        ).format(chain_name=chain_name, e=e)
+                    )
 
     def _clear_preset_markers(self) -> None:
         """Supprime les marqueurs 'profil actif' (3.4) des deux backends,
@@ -512,6 +617,7 @@ class RestoreStateCommand:
                     marker_file.unlink()
             except Exception:
                 pass
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -539,4 +645,4 @@ class RestoreStateCommand:
 #   ↓ liste les snapshots, résout adapters + rule_repository
 # application/commands/restore_state.py : RestoreStateCommand.execute()
 #   ↓ _remove_tracked_rules() → _apply_snapshot_rules() → _restore_ips_add_only()
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

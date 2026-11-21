@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Protocol
 
 from omega_fire.shared.networking import IPAddress
@@ -26,6 +25,7 @@ class JailInfo:
         ban_time: durée du ban en secondes.
         find_time: fenêtre de détection en secondes.
     """
+
     name: str
     active: bool
     banned_count: int
@@ -48,6 +48,7 @@ class JailStatus:
         failed_ips: liste des IPs ayant échoué.
         banned_ips: liste des IPs bannies.
     """
+
     name: str
     currently_failed: int
     total_failed: int
@@ -195,7 +196,9 @@ class Fail2banPort(Protocol):
         return {}
 
     @abstractmethod
-    def list_configured_jail_files(self, jail_d_dir: str = "/etc/fail2ban/jail.d") -> dict[str, str]:
+    def list_configured_jail_files(
+        self, jail_d_dir: str = "/etc/fail2ban/jail.d"
+    ) -> dict[str, str]:
         """Liste les jails configurés sur disque (jail_d_dir), indépendamment
         de l'accessibilité du démon fail2ban.
 
@@ -304,6 +307,7 @@ class Fail2banPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour l'interaction avec Fail2ban.
@@ -340,4 +344,4 @@ class Fail2banPort(Protocol):
 # - application/commands/jail_unban.py appellera fail2ban_port.unban_ip()
 # - infrastructure/backends/fail2ban/adapter.py implémentera Fail2banPort
 # - interfaces/cli/actions.py appellera fail2ban_port.list_jails() pour menu 4.1
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

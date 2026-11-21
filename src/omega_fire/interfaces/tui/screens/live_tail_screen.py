@@ -1,28 +1,24 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
-"""Ecran 5.1 (alias 8.5) — Visualiser les logs en direct (Live Tail).
-Meme logique que interfaces/cli/actions.py::action_5_1_live_tail : selection
-d'une source (epingles/historique/saisie manuelle) via ManageLiveTailPinsCommand,
-puis lancement d'un tableau de bord temps reel consommant la meme classe
-LogProvider (parsing generique JSON/Combined/heuristique, portee ligne a
-ligne) et le meme LogBuffer (interfaces/cli/renderers/logs_live.py — classe
-publique pure, sans dependance Rich/theme, reutilisee telle quelle). Le
-rafraichissement est un Screen.set_interval(2s) natif Textual, remplacant le
-thread+Live bricole a la main de logs_live.py::render_logs_live (Phase 4).
+"""Ecran 5.1 (alias 8.5) — Visualiser les logs en direct (Live Tail), viewer Simple.
+Selection d'une source (Bibliotheque, epingles, historique, saisie manuelle) via ManageLiveTailPinsCommand,
+puis suivi temps reel (Screen.set_interval de 2 s).
+
+Depuis le 2026-11-21 (A_FAIRE §9), le suivi est ALIGNE sur le viewer Simple d'omega-serv (reference) :
+lignes analysees par domain/log_stats/parser.py, cadre de stats par domain/log_stats/analytics.py::
+compute_traffic_stats (valeurs reellement lues, debits rapportes a la periode des horodatages), memes
+colonnes (ligne entiere coloree par information, Service, Duree). Propre a omega-fire : lecture d'une URL
+http(s) et colonne Type (Bot / CLI / Web, d'apres le vrai User-Agent).
 
 Deux etats bascules via `.omega-hidden` (meme patron que les champs
 conditionnels des formulaires) : selection de la source, puis suivi live."""
+
 from __future__ import annotations
 
-from collections import Counter
-
-from pathlib import Path
-
-import json
 import os
-import re
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from rich.cells import cell_len, set_cell_size
@@ -32,13 +28,22 @@ from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.timer import Timer
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
-from omega_fire.application.commands.manage_live_tail_pins import ManageLiveTailPinsCommand
+from omega_fire.application.commands.manage_live_tail_pins import (
+    ManageLiveTailPinsCommand,
+)
+from omega_fire.domain.log_stats.analytics import compute_traffic_stats
+from omega_fire.domain.log_stats.models import LogEntry, TrafficStats
+from omega_fire.domain.log_stats.parser import extract_user_agent, parse_log_line
 from omega_fire.infrastructure.config.paths import RUNTIME_DIR
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
-from omega_fire.interfaces.cli.renderers.logs_live import LogBuffer
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
-from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.interfaces.tui.screens._log_sources import library_paths
+from omega_fire.interfaces.tui.screens.log_line_highlight import (
+    LinePalette,
+    highlight_log_line,
+    palette_from_theme,
+)
+from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
@@ -49,166 +54,79 @@ _REFRESH_SECONDS = 2.0
 _BUFFER_SIZE = 500
 
 
-class _LogProvider:
-    """Portee verbatim depuis action_5_1_live_tail::LogProvider (parsing
-    JSON/Combined/heuristique, lecture incrementale tail -f avec detection
-    de rotation) — aucune logique metier modifiee, seulement extraite de
-    la fonction imbriquee pour etre instanciable depuis cet ecran."""
+class _LogReader:
+    """Lecture d'une source (fichier suivi comme `tail -f`, rotation detectee, ou URL http(s)) - repris de
+    l'ancien _LogProvider, SANS son parseur (2026-11-21, viewer Simple aligne sur omega-serv) : les lignes
+    sont analysees par domain/log_stats/parser.py, qui ne suppose jamais une taille, une duree ou un
+    User-Agent absents du log (l'ancien mettait 350 octets, 25 ms et « Mozilla/5.0 »)."""
 
     def __init__(self, source: str):
         self.source = source
         self._offset = 0
         self._primed = False
-
-    def _parse_generic_line(self, line: str) -> dict | None:
-        line_str = line.strip()
-        if not line_str:
-            return None
-
-        if line_str.startswith("{") and line_str.endswith("}"):
-            try:
-                data = json.loads(line_str)
-                size = (
-                    data.get("size")
-                    or data.get("bytes_sent")
-                    or data.get("response_size")
-                    or data.get("body_bytes_sent")
-                    or data.get("res", {}).get("size", 0)
-                    or 0
-                )
-                status = data.get("status") or data.get("status_code") or data.get("res", {}).get("status", 200)
-                latency = data.get("duration") or data.get("latency") or data.get("response_time", 0)
-                if isinstance(latency, float) and latency < 10:
-                    latency = int(latency * 1000)
-
-                return {
-                    "timestamp": str(data.get("ts") or data.get("time") or data.get("timestamp") or "")[:19],
-                    "source_ip": str(data.get("client_ip") or data.get("remote_ip") or data.get("ip") or "127.0.0.1"),
-                    "method": str(data.get("method") or data.get("req", {}).get("method") or "GET"),
-                    "path": str(data.get("uri") or data.get("path") or data.get("req", {}).get("uri") or "/"),
-                    "status_code": int(status),
-                    "bytes_sent": int(size) if str(size).isdigit() else 0,
-                    "user_agent": str(data.get("user_agent") or "Web"),
-                    "response_time_ms": int(latency) if str(latency).isdigit() else 25,
-                }
-            except Exception:
-                pass
-
-        combined_match = re.search(
-            r'(?P<ip>\S+)\s+\S+\s+\S+\s+\[(?P<time>[^\]]+)\]\s+"(?P<method>\S+)\s+(?P<path>\S+)[^"]*"\s+(?P<status>\d+)\s+(?P<size>\d+|-)',
-            line_str,
-        )
-        if combined_match:
-            raw_size = combined_match.group("size")
-            bytes_sent = int(raw_size) if raw_size and raw_size.isdigit() else 0
-            tail = line_str[combined_match.end():].strip().split()
-            latency = 35
-            for token in reversed(tail):
-                clean_token = token.strip('"').replace(".", "")
-                if clean_token.isdigit() and len(clean_token) <= 6:
-                    latency = int(clean_token)
-                    break
-
-            return {
-                "timestamp": combined_match.group("time"),
-                "source_ip": combined_match.group("ip"),
-                "method": combined_match.group("method"),
-                "path": combined_match.group("path"),
-                "status_code": int(combined_match.group("status")),
-                "bytes_sent": bytes_sent,
-                "user_agent": "Mozilla/5.0",
-                "response_time_ms": latency,
-            }
-
-        ip_match = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", line_str)
-        status_match = re.search(r'\b(200|201|204|301|302|304|400|401|403|404|500|502|503)\b', line_str)
-        method_match = re.search(r'\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b', line_str)
-
-        all_numbers = re.findall(r'\b\d+\b', line_str)
-        extracted_bytes = 0
-        for num in all_numbers:
-            val = int(num)
-            if val > 0 and val not in (80, 443, 8080, 8443) and val < 100000000 and val != int(status_match.group(0) if status_match else 0):
-                extracted_bytes = val
-                break
-
-        return {
-            "timestamp": "",
-            "source_ip": ip_match.group(0) if ip_match else "N/A",
-            "method": method_match.group(0) if method_match else "LOG",
-            "path": line_str[:60],
-            "status_code": int(status_match.group(0)) if status_match else 200,
-            "bytes_sent": extracted_bytes if extracted_bytes > 0 else len(line_str),
-            "user_agent": "System",
-            "response_time_ms": 15,
-        }
+        self._previous_url_lines: list[str] = []
 
     def _read_last_lines(self, path: str, limit: int, chunk_size: int = 65536) -> list[str]:
         with open(path, "rb") as f:
             f.seek(0, os.SEEK_END)
-            file_size = f.tell()
-            pos = file_size
+            pos = f.tell()
             data = b""
             while pos > 0 and data.count(b"\n") <= limit:
                 read_size = min(chunk_size, pos)
                 pos -= read_size
                 f.seek(pos)
                 data = f.read(read_size) + data
-        text = data.decode("utf-8", errors="ignore")
-        lines = text.splitlines()
+        lines = data.decode("utf-8", errors="ignore").splitlines()
         if pos > 0 and lines:
             lines = lines[1:]
         return lines[-limit:]
 
-    def get_recent_logs(self, limit: int = 50) -> list[dict]:
-        try:
-            if self.source.startswith("http://") or self.source.startswith("https://"):
-                separator = "&" if "?" in self.source else "?"
-                fresh_url = f"{self.source}{separator}_cb={int(time.time() * 1000)}"
-                with urllib.request.urlopen(fresh_url, timeout=5) as response:
-                    content = response.read().decode("utf-8", errors="ignore")
-                    lines = content.splitlines()[-limit:]
-            else:
-                if not self._primed:
-                    lines = self._read_last_lines(self.source, limit)
-                    with open(self.source, "rb") as f:
-                        f.seek(0, os.SEEK_END)
-                        self._offset = f.tell()
-                    self._primed = True
-                else:
-                    with open(self.source, "rb") as f:
-                        f.seek(0, os.SEEK_END)
-                        current_size = f.tell()
-                        if current_size < self._offset:
-                            self._offset = 0
-                        f.seek(self._offset)
-                        new_bytes = f.read()
-                        self._offset = f.tell()
-                    lines = new_bytes.decode("utf-8", errors="ignore").splitlines()
+    def read_new_lines(self, limit: int) -> list[str]:
+        """Lignes apparues depuis l'appel precedent (au premier : les `limit` dernieres). OSError ou
+        urllib.error.URLError si la source est illisible."""
+        if self.source.startswith(("http://", "https://")):
+            return self._read_url(limit)
+        if not self._primed:
+            lines = self._read_last_lines(self.source, limit)
+            with open(self.source, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                self._offset = f.tell()
+            self._primed = True
+            return lines
+        with open(self.source, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            if f.tell() < self._offset:  # fichier tronque ou remplace (rotation)
+                self._offset = 0
+            f.seek(self._offset)
+            new_bytes = f.read()
+            self._offset = f.tell()
+        return new_bytes.decode("utf-8", errors="ignore").splitlines()
 
-            parsed_logs = []
-            for line in lines:
-                parsed = self._parse_generic_line(line)
-                if parsed:
-                    parsed_logs.append(parsed)
-            return parsed_logs
-        except Exception as e:
-            return [{
-                "timestamp": "",
-                "source_ip": "ERR",
-                "method": "ERR",
-                "path": _("Erreur de lecture ({source}) : {e}").format(source=self.source, e=e),
-                "status_code": 500,
-                "bytes_sent": 0,
-                "user_agent": "Système/Erreur",
-                "response_time_ms": 0,
-            }]
+    def _read_url(self, limit: int) -> list[str]:
+        separator = "&" if "?" in self.source else "?"
+        fresh_url = f"{self.source}{separator}_cb={int(time.time() * 1000)}"
+        with urllib.request.urlopen(fresh_url, timeout=5) as response:
+            lines = response.read().decode("utf-8", errors="ignore").splitlines()[-limit:]
+        # Une URL se relit en entier : seules les lignes au-dela de celles deja vues sont nouvelles (avant
+        # 2026-11-21, toute la fin du fichier etait rajoutee au tampon toutes les 2 s).
+        new = _lines_after_overlap(self._previous_url_lines, lines)
+        self._previous_url_lines = lines
+        return new
 
 
-_TOP_SIZE = 5
-"""Tops du cadre de stats (IP, chemins), comme omega-log (TRAFFIC_TOP_SIZE)."""
+def _lines_after_overlap(previous: list[str], current: list[str]) -> list[str]:
+    """Lignes de `current` qui suivent la plus longue fin de `previous` retrouvee en tete de `current`."""
+    for size in range(min(len(previous), len(current)), 0, -1):
+        if current[:size] == previous[-size:]:
+            return current[size:]
+    return current
+
+
 _TOP_WIDTH = 32
 """Largeur du cadre avant le premier rendu (34 colonnes moins la bordure)."""
+_MESSAGE_MAX = 4000
+"""Ligne entiere dans « Message », comme omega-serv (retour utilisateur 2026-11-20 : coupee, l'ascenseur
+horizontal s'arretait avant le User-Agent) ; borne seulement contre une ligne demesuree."""
 
 
 def _format_bytes(size: float) -> str:
@@ -222,7 +140,9 @@ def _format_bytes(size: float) -> str:
 class LiveTailScreen(OmegaScreen):
     """5.1/8.5 — selection de source puis suivi live (tableau + stats)."""
 
-    def __init__(self, *, container: DependencyContainer, source: str | None = None) -> None:
+    def __init__(
+        self, *, container: DependencyContainer, source: str | None = None
+    ) -> None:
         """source : ouverture directe sur ce log (lecteur Simple de 5.2 Favoris / 5.3 Voir
         les logs) — sans passer par la selection, sans toucher a l'historique de 8.5 ;
         « Arreter / Retour » revient alors a l'ecran appelant."""
@@ -231,18 +151,29 @@ class LiveTailScreen(OmegaScreen):
         self._direct_source = source
         self._command = ManageLiveTailPinsCommand(JsonStore(RUNTIME_DIR))
         self._display_items: dict[str, dict] = {}
-        self._provider: _LogProvider | None = None
-        self._buffer: LogBuffer | None = None
+        self._reader: _LogReader | None = None
+        self._buffer: list[LogEntry] = []
+        self._line_number = 0
+        self._read_error: str | None = None
+        self._first_render = True
         self._timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(id="setup-panel", classes="omega-panel"):
-            yield Static(_("VISUALISER LES LOGS EN DIRECT (LIVE TAIL)"), classes="omega-title")
+            yield Static(
+                _("VISUALISER LES LOGS EN DIRECT (LIVE TAIL)"), classes="omega-title"
+            )
             yield Static("", id="setup-hint", classes="omega-hint")
             yield DataTable(id="sources-table")
-            yield Input(placeholder=_("Nom de l'épingle (uniquement pour 'Épingler')"), id="pin-name-input")
-            yield Input(placeholder=_("Chemin du fichier ou URL http(s)://..."), id="source-input")
+            yield Input(
+                placeholder=_("Nom de l'épingle (uniquement pour 'Épingler')"),
+                id="pin-name-input",
+            )
+            yield Input(
+                placeholder=_("Chemin du fichier ou URL http(s)://..."),
+                id="source-input",
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Lancer"), id="launch", variant="primary")
@@ -263,7 +194,10 @@ class LiveTailScreen(OmegaScreen):
                 with VerticalScroll(id="stats-frame", classes="omega-dash-box"):
                     yield Static(id="stats-box")
                 yield DataTable(id="logs-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Arrêter / Retour"), id="stop")
         yield Footer()
 
@@ -275,9 +209,12 @@ class LiveTailScreen(OmegaScreen):
         # peuple jamais (retour utilisateur reel : "bloque sur la premiere
         # ligne, rien a selectionner").
         self.query_one("#sources-table", DataTable).cursor_type = "row"
-        self.query_one("#sources-table", DataTable).add_columns(_("Type"), _("Nom"), _("Chemin"))
+        self.query_one("#sources-table", DataTable).add_columns(
+            _("Type"), _("Nom"), _("Chemin")
+        )
         self.query_one("#logs-table", DataTable).add_columns(
-            _("Heure"), _("IP Source"), _("Type"), _("Méthode"), _("Chemin"), _("Statut"), _("Taille"), _("Latence")
+            _("Heure"), _("Niveau"), _("Source"), _("IP"), _("Type"), _("Service"), _("Code"), _("Durée"),
+            _("Message"),
         )
         self._refresh_sources_table()
         if self._direct_source:
@@ -304,25 +241,35 @@ class LiveTailScreen(OmegaScreen):
             if lib_path in pinned_paths:
                 continue
             key = str(idx)
-            self._display_items[key] = {"type": "library", "name": _("Bibliothèque"), "path": lib_path}
-            table.add_row(_("Bibliothèque"), Path(lib_path).name, lib_path, key=key)
+            self._display_items[key] = {
+                "type": "library",
+                "name": _("Bibliothèque"),
+                "path": lib_path,
+            }
+            table.add_row(_("Bibliothèque"), Text(Path(lib_path).name), Text(lib_path), key=key)
             idx += 1
 
         for name, path in self._command.list_active_pinned().items():
             key = str(idx)
             self._display_items[key] = {"type": "pinned", "name": name, "path": path}
-            table.add_row(_("Épingle"), name, path, key=key)
+            table.add_row(_("Épingle"), Text(name), Text(path), key=key)
             idx += 1
 
         for h_path in self._command.list_history()[:5]:
             key = str(idx)
-            self._display_items[key] = {"type": "history", "name": _("Historique récent"), "path": h_path}
-            table.add_row(_("Historique"), _("Historique récent"), h_path, key=key)
+            self._display_items[key] = {
+                "type": "history",
+                "name": _("Historique récent"),
+                "path": h_path,
+            }
+            table.add_row(_("Historique"), _("Historique récent"), Text(h_path), key=key)
             idx += 1
 
         hint = self.query_one("#setup-hint", Static)
         if self._display_items:
-            hint.update(_("Sélectionnez une ligne, ou saisissez un chemin/URL manuellement."))
+            hint.update(
+                _("Sélectionnez une ligne, ou saisissez un chemin/URL manuellement.")
+            )
             # Le curseur du tableau demarre automatiquement sur la 1ere
             # ligne (deja "en surbrillance") : cliquer PRECISEMENT cette
             # ligne ne declenche aucun RowHighlighted (la coordonnee ne
@@ -333,11 +280,15 @@ class LiveTailScreen(OmegaScreen):
             first_key = next(iter(self._display_items))
             self._apply_selected_item(self._display_items[first_key])
         else:
-            hint.update(_("Aucune source épinglée. Saisissez un chemin/URL manuellement."))
+            hint.update(
+                _("Aucune source épinglée. Saisissez un chemin/URL manuellement.")
+            )
 
     def _apply_selected_item(self, item: dict) -> None:
         self.query_one("#source-input", Input).value = item["path"]
-        self.query_one("#pin-name-input", Input).value = item["name"] if item["type"] == "pinned" else ""
+        self.query_one("#pin-name-input", Input).value = (
+            item["name"] if item["type"] == "pinned" else ""
+        )
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         # Ouverture directe (5.2 / 5.3) : la surbrillance automatique de la 1re epingle
@@ -371,7 +322,9 @@ class LiveTailScreen(OmegaScreen):
         name = self.query_one("#pin-name-input", Input).value.strip()
         path = self.query_one("#source-input", Input).value.strip()
         if not name or not path:
-            self.app.notify(_("Nom et chemin requis pour épingler."), severity="warning")
+            self.app.notify(
+                _("Nom et chemin requis pour épingler."), severity="warning"
+            )
             return
         result = self._command.add_pinned(name, path)
         if result.success:
@@ -391,7 +344,12 @@ class LiveTailScreen(OmegaScreen):
             self.app.notify(_("Aucune ligne sélectionnée."), severity="warning")
             return
         if item["type"] == "library":
-            self.app.notify(_("Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."), severity="warning")
+            self.app.notify(
+                _(
+                    "Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."
+                ),
+                severity="warning",
+            )
             return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])
@@ -412,20 +370,32 @@ class LiveTailScreen(OmegaScreen):
     # Panneau live
     # ------------------------------------------------------------------
     def _launch(self) -> None:
-        source = self._direct_source or self.query_one("#source-input", Input).value.strip()
+        source = (
+            self._direct_source or self.query_one("#source-input", Input).value.strip()
+        )
         if not source:
-            self.app.notify(_("Source invalide. Saisissez un chemin ou une URL."), severity="warning")
+            self.app.notify(
+                _("Source invalide. Saisissez un chemin ou une URL."),
+                severity="warning",
+            )
             return
 
-        if not self._direct_source and source not in self._command.list_all_known_paths():
+        if (
+            not self._direct_source
+            and source not in self._command.list_all_known_paths()
+        ):
             self._command.record_history(source)
 
         if self._timer is not None:
             self._timer.stop()
 
-        self._provider = _LogProvider(source)
-        self._buffer = LogBuffer(max_size=_BUFFER_SIZE)
-        self.query_one("#live-title", Static).update(_("LIVE TAIL — {source}").format(source=source))
+        self._reader = _LogReader(source)
+        self._buffer = []
+        self._line_number = 0
+        self._read_error = None
+        self.query_one("#live-title", Static).update(
+            _("LIVE TAIL — {source}").format(source=source)
+        )
 
         self.query_one("#setup-panel").set_class(True, "omega-hidden")
         self.query_one("#live-panel").set_class(False, "omega-hidden")
@@ -442,95 +412,111 @@ class LiveTailScreen(OmegaScreen):
         self.query_one("#setup-panel").set_class(False, "omega-hidden")
 
     def _poll(self) -> None:
-        if self._provider is None or self._buffer is None:
+        if self._reader is None:
             return
-        for entry in self._provider.get_recent_logs(limit=_BUFFER_SIZE):
-            self._buffer.add(entry)
+        try:
+            lines = self._reader.read_new_lines(_BUFFER_SIZE)
+        except (OSError, urllib.error.URLError, ValueError) as exc:
+            message = _("Erreur de lecture ({source}) : {e}").format(source=self._reader.source, e=exc)
+            if message != self._read_error:  # une fois par erreur, pas toutes les 2 s
+                self._read_error = message
+                self.app.notify(message, severity="error")
+            lines = []
+        else:
+            self._read_error = None
+        added = False
+        for line in lines:
+            self._line_number += 1
+            entry = parse_log_line(line, line_number=self._line_number, log_path=self._reader.source)
+            if entry is not None:
+                self._buffer.append(entry)
+                added = True
+        if len(self._buffer) > _BUFFER_SIZE:
+            self._buffer = self._buffer[-_BUFFER_SIZE:]
 
-        variables = self.app.get_css_variables()
-        colors = {
-            "main": variables.get("foreground", ""),
-            "muted": "dim",
-            "danger": variables.get("error", ""),
-            "warning": variables.get("warning", ""),
-            "info": variables.get("secondary", ""),
-            "heading": f"bold {variables.get('secondary', '')}".strip(),
-            "available": variables.get("status-available", ""),
-        }
-
-        self.query_one("#stats-box", Static).update(
-            self._render_stats(colors, self._buffer.get_stats(), self._buffer.get_all()))
+        self.query_one("#stats-box", Static).update(self._render_stats(compute_traffic_stats(self._buffer)))
         # Tout le tampon, du plus ancien au plus recent, comme le viewer Simple d'omega-serv (reference,
         # retour utilisateur 2026-11-02) : avant, seules les 30 plus recentes en tete, sans ascenseur.
-        self._render_logs_table(colors, list(reversed(self._buffer.get_all())))
+        if added or self._first_render:
+            self._first_render = False
+            self._render_logs_table()
 
-    def _render_stats(self, colors: dict, stats: dict, entries: list[dict]) -> Text:
-        """Cadre de stats IDENTIQUE au viewer Simple d'omega-log / omega-serv (2026-11-09, demande
-        utilisateur : « il manque des infos comme omega-log dans le dashboard du viewer Simple ») :
-        refus 403 / 429, Top 5 IP, chemins demandes, chemins en 404. Memes phrases qu'omega-log.
-        Compteurs globaux : depuis l'ouverture ; tops : sur le tampon (lignes visibles)."""
-        heading, good, warn, bad, info = (colors["heading"], colors["available"], colors["warning"],
-                                          colors["danger"], colors["info"])
+    def _render_stats(self, stats: TrafficStats) -> Text:
+        """Cadre de stats IDENTIQUE au viewer Simple d'omega-serv (reference) : debits rapportes a la periode
+        couverte par les horodatages du tampon, « - » pour une valeur absente du log (2026-11-21 : plus de
+        350 octets / 25 ms supposes, ni de debit rapporte au temps passe devant l'ecran)."""
+        variables = self.app.get_css_variables()
+        heading = f"bold {variables.get('secondary', '')}".strip()
+        good = variables.get("status-available", "") or variables.get("success", "green") or "green"
+        warn = variables.get("warning", "yellow") or "yellow"
+        bad = variables.get("error", "red") or "red"
+        info = variables.get("secondary", "cyan") or "cyan"
         none = "-"
-        total = stats["total"]
-        lines = [e for e in entries if e.get("source_ip") != "ERR"]
-        status_403 = sum(1 for e in lines if e.get("status_code") == 403)
-        status_429 = sum(1 for e in lines if e.get("status_code") == 429)
-        top_ips = Counter(str(e.get("source_ip")) for e in lines if e.get("source_ip")).most_common(_TOP_SIZE)
-        top_paths = Counter(str(e.get("path")) for e in lines if e.get("path")).most_common(_TOP_SIZE)
-        top_not_found = Counter(str(e.get("path")) for e in lines
-                                if e.get("status_code") == 404 and e.get("path")).most_common(_TOP_SIZE)
 
         content = Text()
         content.append(_("── RENDEMENT ──────────────\n"), style=heading)
-        rps = none if not total else _("{requests_per_second:.1f} req/s").format(requests_per_second=stats["rps"])
+        rps = (
+            none
+            if stats.requests_per_second is None
+            else _("{requests_per_second:.1f} req/s").format(
+                requests_per_second=stats.requests_per_second
+            )
+        )
         content.append(_(" ⚡ Débit        : {rps}\n").format(rps=rps), style=info)
-        if not total:
+        if stats.avg_latency_ms is None:
             content.append(_(" ⏱ Latence moy. : {none}\n\n").format(none=none))
         else:
-            latency = stats["avg_latency"]
+            latency = stats.avg_latency_ms
             style = good if latency < 200 else (warn if latency < 500 else bad)
-            content.append(_(" ⏱ Latence moy. : {latency:.0f} ms\n\n").format(latency=latency), style=style)
+            content.append(
+                _(" ⏱ Latence moy. : {latency:.0f} ms\n\n").format(latency=latency),
+                style=style,
+            )
 
         content.append(_("── BANDE PASSANTE ─────────\n"), style=heading)
-        bps = none if not total else f"{_format_bytes(stats['bps'])}/s"
-        volume = none if not total else _format_bytes(stats["bytes_total"])
-        average = none if not total else _format_bytes(stats["avg_size"])
+        bps = none if stats.bytes_per_second is None else f"{_format_bytes(stats.bytes_per_second)}/s"
+        volume = none if stats.bytes_total is None else _format_bytes(stats.bytes_total)
+        average = none if stats.avg_size is None else _format_bytes(stats.avg_size)
         content.append(_(" 🌐 Débit réseau : {bps}\n").format(bps=bps))
         content.append(_(" 📦 Volume total : {total}\n").format(total=volume))
         content.append(_(" 🗜 Taille moy.  : {average}\n\n").format(average=average))
 
         content.append(_("── STATUTS HTTP ───────────\n"), style=heading)
-        content.append(_(" 📊 Requêtes     : {http_total}\n").format(http_total=total))
-        content.append(_(" √  Succès 2xx   : {status_2xx}\n").format(status_2xx=stats["success_2xx"]), style=good)
-        content.append(_(" ↔  Redir. 3xx   : {status_3xx}\n").format(status_3xx=stats["redirect_3xx"]), style=info)
-        content.append(_(" ⚠  Erreurs 4xx  : {status_4xx}\n").format(status_4xx=stats["errors_4xx"]), style=warn)
-        content.append(_(" ❌ Erreurs 5xx  : {status_5xx}\n").format(status_5xx=stats["errors_5xx"]), style=bad)
-        content.append(_(" ⛔ Refus 403    : {status_403}\n").format(status_403=status_403), style=warn)
-        content.append(_(" ⏳ Refus 429    : {status_429}\n\n").format(status_429=status_429), style=warn)
+        content.append(_(" 📊 Requêtes     : {http_total}\n").format(http_total=stats.http_total))
+        content.append(_(" √  Succès 2xx   : {status_2xx}\n").format(status_2xx=stats.status_2xx), style=good)
+        content.append(_(" ↔  Redir. 3xx   : {status_3xx}\n").format(status_3xx=stats.status_3xx), style=info)
+        content.append(_(" ⚠  Erreurs 4xx  : {status_4xx}\n").format(status_4xx=stats.status_4xx), style=warn)
+        content.append(_(" ❌ Erreurs 5xx  : {status_5xx}\n").format(status_5xx=stats.status_5xx), style=bad)
+        content.append(_(" ⛔ Refus 403    : {status_403}\n").format(status_403=stats.status_403), style=warn)
+        content.append(_(" ⏳ Refus 429    : {status_429}\n\n").format(status_429=stats.status_429), style=warn)
 
         content.append(_("── CLIENTS & RÉSEAU ───────\n"), style=heading)
-        content.append(_(" 💻 IPs uniques  : {unique_ips}\n").format(unique_ips=stats["unique_ips"]))
+        content.append(_(" 💻 IPs uniques  : {unique_ips}\n").format(unique_ips=stats.unique_ips))
         # Adresse sur sa propre ligne : une IPv4 longue ou une IPv6 deborderait du cadre (34 colonnes).
         content.append(_(" 🖧 Top 5 IP     :\n"), style=info)
-        self._append_top(content, top_ips, info)
-        if top_paths:
+        self._append_top(content, stats.top_ips, info)
+        if stats.top_paths:
             content.append(_("── CHEMINS DEMANDÉS ───────\n"), style=heading)
-            self._append_top(content, top_paths, "")
+            self._append_top(content, stats.top_paths, "")
             content.append(_("── CHEMINS EN 404 ─────────\n"), style=heading)
-            self._append_top(content, top_not_found, warn)
+            self._append_top(content, stats.top_not_found, warn)
 
         content.append(_("── SANTÉ & TAMPON ─────────\n"), style=heading)
-        rate = stats["error_rate"]
+        rate = stats.error_rate
         health_style = good if rate < 5 else (warn if rate < 15 else bad)
         health = "EXCELLENT" if rate < 2 else ("CORRECT" if rate < 10 else _("DÉGRADÉ"))
         content.append(_(" 🌡 Santé        : {health}\n").format(health=health), style=health_style)
         content.append(_(" ⚠  Taux d'erreur: {rate:.1f}%\n").format(rate=rate), style=health_style)
-        content.append(_(" 📥 Tampon       : {count}/{BUFFER_SIZE}").format(count=stats["buffer_size"],
-                                                                        BUFFER_SIZE=_BUFFER_SIZE))
+        content.append(
+            _(" 📥 Tampon       : {count}/{BUFFER_SIZE}").format(
+                count=len(self._buffer), BUFFER_SIZE=_BUFFER_SIZE
+            )
+        )
         return content
 
-    def _append_top(self, content: Text, items: list[tuple[str, int]], style: str) -> None:
+    def _append_top(
+        self, content: Text, items: list[tuple[str, int]], style: str
+    ) -> None:
         """Repris d'omega-log : valeur depuis le bord gauche, compte aligne a droite une colonne avant le bord."""
         if not items:
             content.append("    " + _("(aucun)") + "\n\n", style="dim")
@@ -539,63 +525,63 @@ class LiveTailScreen(OmegaScreen):
         count_width = max(len(str(count)) for _value, count in items)
         room = max(8, width - 3 - count_width)
         for value, count in items:
-            shown = value if cell_len(value) <= room else set_cell_size(value, room - 1) + "…"
-            content.append(" " + shown + " " * (room - cell_len(shown)) + " ", style=style)
+            shown = (
+                value
+                if cell_len(value) <= room
+                else set_cell_size(value, room - 1) + "…"
+            )
+            content.append(
+                " " + shown + " " * (room - cell_len(shown)) + " ", style=style
+            )
             content.append(f"{count:>{count_width}}\n", style="bold")
         content.append("\n")
 
-    def _render_logs_table(self, colors: dict, entries: list[dict]) -> None:
+    def _client_type(self, entry: LogEntry, palette: LinePalette) -> Text | str:
+        """Propre a omega-fire : robot, outil en ligne de commande ou navigateur, d'apres le VRAI User-Agent
+        (« - » quand le log n'en donne pas)."""
+        agent = extract_user_agent(entry.raw_line)
+        if agent is None:
+            return "-"
+        lowered = agent.lower()
+        if "bot" in lowered or "crawler" in lowered or "spider" in lowered:
+            return Text(_("🤖 Bot"), style=palette.warn)
+        if any(tool in lowered for tool in ("curl", "wget", "python", "scanner", "go-http")):
+            return Text(_("⚠ CLI"), style=palette.bad)
+        return Text(_("🖧 Web"), style="dim")
+
+    def _render_logs_table(self) -> None:
+        """Memes colonnes que le viewer Simple d'omega-serv (reference, 2026-11-20 : ligne entiere, couleurs
+        du theme par information, colonne Service, Duree), plus Type, propre a omega-fire."""
         table = self.query_one("#logs-table", DataTable)
         # Suivi automatique seulement si on etait deja en bas : jamais arrache d'une lecture plus haut.
         follow = table.scroll_y >= table.max_scroll_y - 1
         table.clear()
-        for entry in entries:
-            status = entry.get("status_code", 0) or 0
-            if 200 <= status < 300:
-                status_style = colors["available"]
-            elif 400 <= status < 500:
-                status_style = colors["warning"]
-            elif 500 <= status < 600:
-                status_style = colors["danger"]
+        palette = palette_from_theme(self.app.get_css_variables())
+        for entry in self._buffer:
+            level_style = {"error": palette.bad, "critical": f"bold {palette.bad}",
+                           "warning": palette.warn}.get(entry.level.value, "")
+            if entry.http_status is None:
+                code_cell: Text | str = "-"
             else:
-                status_style = "dim"
-
-            latency = entry.get("response_time_ms", entry.get("latency", 0)) or 0
-            if latency < 200:
-                lat_style = colors["available"]
-            elif latency < 500:
-                lat_style = colors["warning"]
+                code_cell = Text(str(entry.http_status), style=palette.status(entry.http_status))
+            if entry.latency_ms is None:
+                duration_cell: Text | str = "-"
             else:
-                lat_style = colors["danger"]
-            lat_text = f"{latency}ms" if latency > 0 else "-"
-
-            bytes_sent = entry.get("bytes_sent", entry.get("size", 0)) or 0
-            if bytes_sent > 1024 * 1024:
-                size_str = f"{bytes_sent / (1024 * 1024):.1f}MB"
-            elif bytes_sent > 1024:
-                size_str = f"{bytes_sent / 1024:.1f}KB"
-            elif bytes_sent > 0:
-                size_str = f"{bytes_sent}B"
-            else:
-                size_str = "-"
-
-            user_agent = str(entry.get("user_agent", "")).lower()
-            if "bot" in user_agent or "crawler" in user_agent:
-                client_type = Text(_("🤖 Bot"), style=colors["warning"])
-            elif "curl" in user_agent or "python" in user_agent or "scanner" in user_agent:
-                client_type = Text(_("⚠ CLI"), style=colors["danger"])
-            else:
-                client_type = Text(_("🖧 Web"), style="dim")
-
+                latency = entry.latency_ms
+                latency_style = palette.good if latency < 200 else (palette.warn if latency < 500 else palette.bad)
+                duration_cell = Text(f"{latency}ms", style=latency_style)
+            level = entry.level.value.upper()
             table.add_row(
-                str(entry.get("timestamp") or "").strip()[:19],
-                str(entry.get("source_ip") or "N/A").strip()[:15],
-                client_type,
-                str(entry.get("method") or "-").strip()[:6],
-                str(entry.get("path") or "-").strip(),
-                Text(str(status), style=status_style),
-                size_str,
-                Text(lat_text, style=lat_style),
+                entry.timestamp.strftime("%H:%M:%S"),
+                Text(level, style=level_style) if level_style else level,
+                entry.source.value,
+                # Texte venu du client (ligne de requete) : jamais lu comme balisage Rich.
+                Text(entry.ip or "-"),
+                self._client_type(entry, palette),
+                Text(entry.service or "-"),
+                code_cell,
+                duration_cell,
+                highlight_log_line(entry.raw_line.strip()[:_MESSAGE_MAX], palette),
             )
         if follow:
             table.call_after_refresh(table.scroll_end, animate=False)

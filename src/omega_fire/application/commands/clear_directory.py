@@ -8,6 +8,7 @@ viderait le systeme. Le dossier lui-meme est conserve, seul son CONTENU est supp
 emplacements systeme ou contenant le projet sont refuses. Un lien symbolique place dans le
 dossier est supprime sans suivre sa cible. Aucune elevation de droits (pas de sudo) : omega-fire
 est deja root, et une demande de mot de passe dans la TUI la figerait."""
+
 from __future__ import annotations
 
 import shutil
@@ -17,11 +18,35 @@ from pathlib import Path
 from omega_fire.application.exceptions import UnsafeDirectoryError
 from omega_fire.shared.i18n import _
 
-_SYSTEM_DIRS = frozenset(Path(p) for p in (
-    "/", "/bin", "/boot", "/dev", "/etc", "/home", "/lib", "/lib32", "/lib64", "/media", "/mnt",
-    "/opt", "/proc", "/root", "/run", "/sbin", "/srv", "/sys", "/tmp", "/usr", "/var",
-    "/var/lib", "/var/log", "/usr/local",
-))
+_SYSTEM_DIRS = frozenset(
+    Path(p)
+    for p in (
+        "/",
+        "/bin",
+        "/boot",
+        "/dev",
+        "/etc",
+        "/home",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/media",
+        "/mnt",
+        "/opt",
+        "/proc",
+        "/root",
+        "/run",
+        "/sbin",
+        "/srv",
+        "/sys",
+        "/tmp",
+        "/usr",
+        "/var",
+        "/var/lib",
+        "/var/log",
+        "/usr/local",
+    )
+)
 
 
 def check_clearable(directory: Path, project_root: Path) -> Path:
@@ -31,7 +56,9 @@ def check_clearable(directory: Path, project_root: Path) -> Path:
     if target in _SYSTEM_DIRS or target.parent == Path("/home"):
         raise UnsafeDirectoryError(str(target), _("dossier système ou personnel"))
     if target == project or target in project.parents:
-        raise UnsafeDirectoryError(str(target), _("contient l'installation d'omega-fire"))
+        raise UnsafeDirectoryError(
+            str(target), _("contient l'installation d'omega-fire")
+        )
     if target.exists() and not target.is_dir():
         raise UnsafeDirectoryError(str(target), _("ce n'est pas un dossier"))
     return target

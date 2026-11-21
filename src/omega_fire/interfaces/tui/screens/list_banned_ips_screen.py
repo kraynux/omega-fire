@@ -2,6 +2,7 @@
 """Ecran 2.5 — Lister les IPs bannies, filtrable par backend. Logique
 identique a interfaces/cli/actions.py::action_2_5_list_banned. Colonne
 Backend coloree via la palette d'extension omega-fire (Phase 0)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -56,7 +57,10 @@ class ListBannedIpsScreen(OmegaScreen):
                     yield Button(_("Filtrer"), id="filter", variant="primary")
             yield Static("", id="result-hint", classes="omega-hint")
             yield DataTable(id="bans-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -92,13 +96,26 @@ class ListBannedIpsScreen(OmegaScreen):
 
                 for item in bans:
                     if isinstance(item, dict):
-                        all_bans.append({"ip": item.get("ip", "Inconnu"), "backend": b_name,
-                                          "comment": item.get("comment", "-") or item.get("source", "-")})
+                        all_bans.append(
+                            {
+                                "ip": item.get("ip", "Inconnu"),
+                                "backend": b_name,
+                                "comment": item.get("comment", "-")
+                                or item.get("source", "-"),
+                            }
+                        )
                     elif hasattr(item, "ip"):
-                        all_bans.append({"ip": item.ip, "backend": b_name,
-                                          "comment": getattr(item, "comment", "-") or "-"})
+                        all_bans.append(
+                            {
+                                "ip": item.ip,
+                                "backend": b_name,
+                                "comment": getattr(item, "comment", "-") or "-",
+                            }
+                        )
                     else:
-                        all_bans.append({"ip": str(item), "backend": b_name, "comment": "-"})
+                        all_bans.append(
+                            {"ip": str(item), "backend": b_name, "comment": "-"}
+                        )
             except Exception:
                 continue
 
@@ -113,5 +130,7 @@ class ListBannedIpsScreen(OmegaScreen):
         variables = self.app.get_css_variables()
         for entry in all_bans:
             color = variables.get(_BACKEND_VARIABLE.get(entry["backend"], ""), "")
-            backend_cell = Text(entry["backend"], style=f"bold {color}" if color else "bold")
+            backend_cell = Text(
+                entry["backend"], style=f"bold {color}" if color else "bold"
+            )
             table.add_row(entry["ip"], backend_cell, entry["comment"])

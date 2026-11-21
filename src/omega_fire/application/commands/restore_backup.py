@@ -7,13 +7,14 @@ then merges or overwrites the target file according to the requested
 mode. If overwriting, a safety backup of the current target is created
 first via the same port.
 """
+
 from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.infrastructure.exceptions import StorageError
 from omega_fire.ports.persistence import BackupInfo
@@ -23,6 +24,7 @@ from omega_fire.shared.i18n import _
 @dataclass
 class RestoreBackupRequest:
     """Input for the restore backup use case."""
+
     backup_path: str
     target_dir: str
     mode: str = "append"  # "append" | "overwrite"
@@ -30,9 +32,15 @@ class RestoreBackupRequest:
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.backup_path:
-            errors.append(_("Le chemin de la sauvegarde (backup_path) ne doit pas être vide"))
+            errors.append(
+                _("Le chemin de la sauvegarde (backup_path) ne doit pas être vide")
+            )
         elif not Path(self.backup_path).exists():
-            errors.append(_("Fichier de sauvegarde introuvable : {backup_path}").format(backup_path=self.backup_path))
+            errors.append(
+                _("Fichier de sauvegarde introuvable : {backup_path}").format(
+                    backup_path=self.backup_path
+                )
+            )
         if self.mode not in ("append", "overwrite"):
             errors.append(_("Mode invalide : {mode}").format(mode=self.mode))
         return errors
@@ -44,16 +52,19 @@ class RestoreBackupRequest:
 @dataclass
 class RestoreBackupResult:
     """Output of the restore backup use case."""
+
     success: bool
     message: str
-    target_file: Optional[Path] = None
-    safety_backup_path: Optional[Path] = None
+    target_file: Path | None = None
+    safety_backup_path: Path | None = None
 
 
 class RestoreBackupCommand:
     """Use case: restore a compressed backup to its target file."""
 
-    def __init__(self, persistence_port: Any, temp_dir: Path = Path("var/backups/_temp_restore")):
+    def __init__(
+        self, persistence_port: Any, temp_dir: Path = Path("var/backups/_temp_restore")
+    ):
         self._port = persistence_port
         self._temp_dir = temp_dir
 
@@ -77,12 +88,16 @@ class RestoreBackupCommand:
         try:
             self._port.restore_backup(backup, dest_dir=self._temp_dir)
         except StorageError as e:
-            return RestoreBackupResult(success=False, message=_("Échec de l'extraction : {e}").format(e=e))
+            return RestoreBackupResult(
+                success=False, message=_("Échec de l'extraction : {e}").format(e=e)
+            )
 
         extracted_files = list(self._temp_dir.glob("*"))
         if not extracted_files:
             shutil.rmtree(self._temp_dir, ignore_errors=True)
-            return RestoreBackupResult(success=False, message=_("L'archive extraite est vide."))
+            return RestoreBackupResult(
+                success=False, message=_("L'archive extraite est vide.")
+            )
 
         extracted_file = extracted_files[0]
         target_file = target_dir / extracted_file.name
@@ -97,7 +112,9 @@ class RestoreBackupCommand:
                         backup_dir=Path("var/backups"),
                         source_paths=[target_file],
                         components=["safety_auto"],
-                        metadata={"reason": "Sauvegarde automatique avant écrasement (restauration d'un backup)"},
+                        metadata={
+                            "reason": "Sauvegarde automatique avant écrasement (restauration d'un backup)"
+                        },
                     )
                     safety_backup_path = safety_info.path
                 shutil.copy2(extracted_file, target_file)
@@ -105,7 +122,9 @@ class RestoreBackupCommand:
             else:
                 if target_file.exists():
                     if target_dir_name == "logs":
-                        with open(extracted_file, "r", encoding="utf-8", errors="ignore") as src:
+                        with open(
+                            extracted_file, "r", encoding="utf-8", errors="ignore"
+                        ) as src:
                             content = src.read()
                         separator = (
                             f"\n\n# ─── Restauration ajoutée le "
@@ -117,15 +136,21 @@ class RestoreBackupCommand:
                         summary = _("Fusion incrémentale (ajout, logs)")
                     else:
                         # Blocklist/exports : fusion sans doublon.
-                        with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
+                        with open(
+                            target_file, "r", encoding="utf-8", errors="ignore"
+                        ) as f:
                             existing_ips = {
-                                line.split()[0] for line in f
+                                line.split()[0]
+                                for line in f
                                 if line.strip() and not line.strip().startswith("#")
                             }
 
-                        with open(extracted_file, "r", encoding="utf-8", errors="ignore") as f:
+                        with open(
+                            extracted_file, "r", encoding="utf-8", errors="ignore"
+                        ) as f:
                             new_lines = [
-                                line.rstrip("\n") for line in f
+                                line.rstrip("\n")
+                                for line in f
                                 if line.strip() and not line.strip().startswith("#")
                             ]
 
@@ -143,19 +168,26 @@ class RestoreBackupCommand:
                             with open(target_file, "a", encoding="utf-8") as dst:
                                 dst.write("\n" + "\n".join(lines_to_add) + "\n")
 
-                        diag = (
-                            _(" ({count} nouvelle(s) entrée(s) ajoutée(s), {value} déjà présente(s) ignorée(s))").format(count=len(lines_to_add), value=len(new_lines) - len(lines_to_add))
+                        diag = _(
+                            " ({count} nouvelle(s) entrée(s) ajoutée(s), {value} déjà présente(s) ignorée(s))"
+                        ).format(
+                            count=len(lines_to_add),
+                            value=len(new_lines) - len(lines_to_add),
                         )
                         summary = _("Fusion incrémentale (ajout, sans doublon)")
                 else:
                     shutil.copy2(extracted_file, target_file)
-                    summary = _("Fusion incrémentale (fichier cible créé, aucun doublon possible)")
+                    summary = _(
+                        "Fusion incrémentale (fichier cible créé, aucun doublon possible)"
+                    )
         finally:
             shutil.rmtree(self._temp_dir, ignore_errors=True)
 
         return RestoreBackupResult(
             success=True,
-            message=_("Restauration effectuée avec succès : {summary}.{diag}").format(summary=summary, diag=diag),
+            message=_("Restauration effectuée avec succès : {summary}.{diag}").format(
+                summary=summary, diag=diag
+            ),
             target_file=target_file,
             safety_backup_path=safety_backup_path,
         )
@@ -171,4 +203,4 @@ class RestoreBackupCommand:
 #   mode append hors logs, afin de vérifier concrètement combien de
 #   lignes sont lues/ajoutées/rejetées à chaque restauration. À retirer
 #   une fois le comportement confirmé correct.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

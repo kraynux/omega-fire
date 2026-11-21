@@ -14,6 +14,7 @@ Causes d'un DROP, par ordre de priorite :
 - preset  : un profil Omega-Fire (3.4) est actif sur ce backend ;
 - orphan  : ni profil ni autre outil, aucune regle -> tout est bloque (alerte) ;
 - rules   : ni profil ni autre outil, mais des regles -> seul ce qu'elles autorisent passe."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -30,12 +31,12 @@ _BLOCKING = {"drop", "reject"}
 class ChainDivergence:
     chain: str
     policies: dict[str, str]  # backend -> politique (minuscules), ordre des backends
-    effective: str            # politique qui s'applique en pratique
+    effective: str  # politique qui s'applique en pratique
 
 
 @dataclass
 class DropCause:
-    kind: str                 # tool | preset | orphan | rules
+    kind: str  # tool | preset | orphan | rules
     backends: list[str]
     tools: list[str] = field(default_factory=list)
     rule_count: int = 0
@@ -74,8 +75,12 @@ def analyze_policies(
                 seen[entry.backend] = policy.lower()
         if len(set(seen.values())) <= 1:
             continue
-        effective = next((p for p in seen.values() if p in _BLOCKING), next(iter(seen.values())))
-        analysis.chains.append(ChainDivergence(chain=chain, policies=seen, effective=effective))
+        effective = next(
+            (p for p in seen.values() if p in _BLOCKING), next(iter(seen.values()))
+        )
+        analysis.chains.append(
+            ChainDivergence(chain=chain, policies=seen, effective=effective)
+        )
         for entry in usable:
             if seen.get(entry.backend) in _BLOCKING:
                 dropping[entry.backend] = entry
@@ -93,7 +98,9 @@ def analyze_policies(
             key = ("rules", backend)
         cause = grouped.get(key)
         if cause is None:
-            cause = grouped[key] = DropCause(kind=key[0], backends=[], tools=list(tools))
+            cause = grouped[key] = DropCause(
+                kind=key[0], backends=[], tools=list(tools)
+            )
         cause.backends.append(backend)
         cause.rule_count += entry.rule_count
     analysis.causes = list(grouped.values())
@@ -104,24 +111,40 @@ def describe_policies(analysis: PolicyAnalysis) -> list[str]:
     """Lignes affichees par 3.5 (TUI et --legacy-cli) ; [] sans divergence."""
     if not analysis.chains:
         return []
-    lines = [_("Politiques différentes selon les backends — un paquet doit être accepté par chaque backend, le plus strict l'emporte :")]
+    lines = [
+        _(
+            "Politiques différentes selon les backends — un paquet doit être accepté par chaque backend, le plus strict l'emporte :"
+        )
+    ]
     for d in analysis.chains:
-        policies = " · ".join(f"{backend} {policy.upper()}" for backend, policy in d.policies.items())
-        lines.append("  " + _("{chain} : {policies} → en pratique {effective}").format(
-            chain=d.chain.upper(), policies=policies, effective=d.effective.upper()))
+        policies = " · ".join(
+            f"{backend} {policy.upper()}" for backend, policy in d.policies.items()
+        )
+        lines.append(
+            "  "
+            + _("{chain} : {policies} → en pratique {effective}").format(
+                chain=d.chain.upper(), policies=policies, effective=d.effective.upper()
+            )
+        )
     for cause in analysis.causes:
         backends = ", ".join(cause.backends)
         if cause.kind == "tool":
             tools = ", ".join(cause.tools)
-            text = _("{backends} : politique posée par {tools} — normal, c'est {tools} qui filtre. Rien à faire.").format(
-                backends=backends, tools=tools)
+            text = _(
+                "{backends} : politique posée par {tools} — normal, c'est {tools} qui filtre. Rien à faire."
+            ).format(backends=backends, tools=tools)
         elif cause.kind == "preset":
-            text = _("{backends} : profil Omega-Fire actif (3.4). Rien à faire, ou changer de profil.").format(backends=backends)
+            text = _(
+                "{backends} : profil Omega-Fire actif (3.4). Rien à faire, ou changer de profil."
+            ).format(backends=backends)
         elif cause.kind == "orphan":
-            text = _("{backends} : politique DROP orpheline (ancien profil) et aucune règle — tout ce qui passe par cette chaîne est bloqué. Remède : « Remettre les politiques à ACCEPT » sur {backends} (ci-dessous), ou appliquer un profil (3.4).").format(backends=backends)
+            text = _(
+                "{backends} : politique DROP orpheline (ancien profil) et aucune règle — tout ce qui passe par cette chaîne est bloqué. Remède : « Remettre les politiques à ACCEPT » sur {backends} (ci-dessous), ou appliquer un profil (3.4)."
+            ).format(backends=backends)
         else:
-            text = _("{backends} : politique DROP sans profil actif, avec {count} règle(s) — seul ce qu'elles autorisent passe. Vérifier en 3.3 ; si ce n'est pas voulu : « Remettre les politiques à ACCEPT » sur {backends}.").format(
-                backends=backends, count=cause.rule_count)
+            text = _(
+                "{backends} : politique DROP sans profil actif, avec {count} règle(s) — seul ce qu'elles autorisent passe. Vérifier en 3.3 ; si ce n'est pas voulu : « Remettre les politiques à ACCEPT » sur {backends}."
+            ).format(backends=backends, count=cause.rule_count)
         lines.append("  • " + text)
     return lines
 
@@ -133,4 +156,4 @@ def describe_policies(analysis: PolicyAnalysis) -> list[str]:
 #   remède. Seul le cas « orphan » est une alerte.
 # - Lecture seule : reçoit l'état déjà lu (GetTablesStatusQuery,
 #   foreign_rules_by_backend, marqueurs de profil).
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

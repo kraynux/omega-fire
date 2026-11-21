@@ -12,33 +12,47 @@ waf-alerts.log du WAF natif d'omega-serv, active-defense-enriched.jsonl). Ceux d
 (script Lua execute par l'extra `magnet`) sont aux chemins de `options.waf.magnet.paths` de
 la config de l'instance — par defaut aussi sous var/log/, mais deplacables (point 7,
 version 3.5 ; meme lecture qu'omega-jail, detect.py)."""
+
 from __future__ import annotations
 
 import json
 import os
 import pwd
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
-SYSTEMD_DIRS = (Path("/etc/systemd/system"), Path("/lib/systemd/system"), Path("/usr/lib/systemd/system"))
+SYSTEMD_DIRS = (
+    Path("/etc/systemd/system"),
+    Path("/lib/systemd/system"),
+    Path("/usr/lib/systemd/system"),
+)
 _LOG_PATTERNS = ("*.log", "*.jsonl")
+# Scan de securite 2026-11-21 (F3) : le compte de service d'omega-serv choisit les noms de var/log/, importes
+# sans confirmation dans la bibliotheque ; un nom hors de ces caracteres (« [ », « ] », controles...) est ignore.
+_SAFE_LOG_NAME = re.compile(r"^[\w.@+-]+$")
 
 
 CONFIG_REL_PATH = Path("config") / "omega-serve.json"
-_MAGNET_DEFAULT_LOGS = {"alerts_log": "var/log/waf-magnet-alerts.log",
-                        "blocklist_log": "var/log/waf-magnet-blocklist.log"}
+_MAGNET_DEFAULT_LOGS = {
+    "alerts_log": "var/log/waf-magnet-alerts.log",
+    "blocklist_log": "var/log/waf-magnet-blocklist.log",
+}
 
 
 @dataclass(frozen=True, slots=True)
 class OmegaServInstance:
     name: str
     root: Path
-    systemd_unit: str = ""     # "omega-serv.service" si l'instance vient d'une unite systemd
+    systemd_unit: str = (
+        ""  # "omega-serv.service" si l'instance vient d'une unite systemd
+    )
 
 
 @dataclass(frozen=True, slots=True)
 class MagnetInfo:
     """Extra `magnet` d'une instance : omega-waf (script Lua) et ses deux journaux."""
+
     script: Path | None
     logs: tuple[Path, ...]
 
@@ -54,11 +68,16 @@ def _read_config(instance: OmegaServInstance) -> dict:
 def magnet_info(instance: OmegaServInstance) -> MagnetInfo | None:
     """None si l'extra magnet n'est pas active (omega-waf non utilise par cette instance)."""
     options = _read_config(instance).get("options") or {}
-    magnet = ((options.get("waf") or {}) if isinstance(options, dict) else {}).get("magnet") or {}
+    magnet = ((options.get("waf") or {}) if isinstance(options, dict) else {}).get(
+        "magnet"
+    ) or {}
     if not isinstance(magnet, dict) or not magnet.get("enabled", False):
         return None
     paths = magnet.get("paths") or {}
-    logs = tuple(instance.root / str(paths.get(key) or default) for key, default in _MAGNET_DEFAULT_LOGS.items())
+    logs = tuple(
+        instance.root / str(paths.get(key) or default)
+        for key, default in _MAGNET_DEFAULT_LOGS.items()
+    )
     script = magnet.get("script")
     return MagnetInfo(script=instance.root / str(script) if script else None, logs=logs)
 
@@ -78,7 +97,13 @@ def _systemd_instances(dirs: tuple[Path, ...]) -> list[OmegaServInstance]:
             for line in lines:
                 key, _sep, value = line.strip().partition("=")
                 if key == "WorkingDirectory" and value.strip():
-                    found.append(OmegaServInstance(name=unit.stem, root=Path(value.strip()), systemd_unit=unit.name))
+                    found.append(
+                        OmegaServInstance(
+                            name=unit.stem,
+                            root=Path(value.strip()),
+                            systemd_unit=unit.name,
+                        )
+                    )
                     break
     return found
 
@@ -103,7 +128,12 @@ def _registry_instances(paths: list[Path]) -> list[OmegaServInstance]:
             continue
         for entry in entries if isinstance(entries, list) else []:
             if isinstance(entry, dict) and entry.get("path"):
-                found.append(OmegaServInstance(name=str(entry.get("name") or entry["path"]), root=Path(entry["path"])))
+                found.append(
+                    OmegaServInstance(
+                        name=str(entry.get("name") or entry["path"]),
+                        root=Path(entry["path"]),
+                    )
+                )
     return found
 
 
@@ -113,7 +143,8 @@ def detect_omega_serv_instances(
 ) -> list[OmegaServInstance]:
     """Instances dont le dossier existe, sans doublon (meme dossier reel)."""
     candidates = _systemd_instances(systemd_dirs) + _registry_instances(
-        registry_paths if registry_paths is not None else _registry_paths())
+        registry_paths if registry_paths is not None else _registry_paths()
+    )
     unique: dict[Path, OmegaServInstance] = {}
     for instance in candidates:
         try:
@@ -121,7 +152,9 @@ def detect_omega_serv_instances(
         except OSError:
             continue
         if real.is_dir() and real not in unique:
-            unique[real] = OmegaServInstance(name=instance.name, root=real, systemd_unit=instance.systemd_unit)
+            unique[real] = OmegaServInstance(
+                name=instance.name, root=real, systemd_unit=instance.systemd_unit
+            )
     return list(unique.values())
 
 
@@ -130,12 +163,12 @@ def instance_log_files(instance: OmegaServInstance) -> list[Path]:
     files: set[Path] = set()
     for pattern in _LOG_PATTERNS:
         try:
-            files.update(p for p in log_dir.glob(pattern) if p.is_file())
+            files.update(p for p in log_dir.glob(pattern) if _SAFE_LOG_NAME.match(p.name) and p.is_file())
         except OSError:
             continue
     # Journaux d'omega-waf, meme places hors de var/log/ par la config magnet.
     magnet = magnet_info(instance)
-    for path in (magnet.logs if magnet else ()):
+    for path in magnet.logs if magnet else ():
         try:
             if path.is_file():
                 files.add(path)

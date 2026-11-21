@@ -9,20 +9,22 @@ Conforms to Omega-Fire architecture charter:
   adapter, received already resolved by the caller)
 - No import of infrastructure/backends/ concrete classes
 """
+
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.domain.fail2ban.exceptions import (
-    JailNotFoundError,
     IPNotFoundError,
+    JailNotFoundError,
 )
-from omega_fire.shared.networking import IPAddress
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
 
 
 @dataclass
 class JailUnbanRequest:
     """Input for the jail unban use case."""
+
     jail_name: str
     ip: str
 
@@ -30,6 +32,7 @@ class JailUnbanRequest:
 @dataclass
 class JailUnbanResult:
     """Output of the jail unban use case."""
+
     success: bool
     message: str = ""
 
@@ -37,7 +40,7 @@ class JailUnbanResult:
 class JailUnbanCommand:
     """Use case: unban an IP from a specific fail2ban jail."""
 
-    def __init__(self, fail2ban_port: Optional[Any]):
+    def __init__(self, fail2ban_port: Any | None):
         self._port = fail2ban_port
 
     def execute(self, request: JailUnbanRequest) -> JailUnbanResult:
@@ -47,21 +50,35 @@ class JailUnbanCommand:
         try:
             ip = IPAddress(request.ip)
         except ValueError as e:
-            return JailUnbanResult(success=False, message=_("Adresse IP invalide : {e}").format(e=e))
+            return JailUnbanResult(
+                success=False, message=_("Adresse IP invalide : {e}").format(e=e)
+            )
 
         try:
             self._port.unban_ip(request.jail_name, ip)
         except IPNotFoundError:
             return JailUnbanResult(
                 success=False,
-                message=_("IP {ip} absente des bannis de '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name),
+                message=_("IP {ip} absente des bannis de '{jail_name}'.").format(
+                    ip=request.ip, jail_name=request.jail_name
+                ),
             )
         except JailNotFoundError:
-            return JailUnbanResult(success=False, message=_("Jail '{jail_name}' introuvable.").format(jail_name=request.jail_name))
+            return JailUnbanResult(
+                success=False,
+                message=_("Jail '{jail_name}' introuvable.").format(
+                    jail_name=request.jail_name
+                ),
+            )
         except Exception as e:
             return JailUnbanResult(success=False, message=str(e))
 
-        return JailUnbanResult(success=True, message=_("IP {ip} débannie de '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name))
+        return JailUnbanResult(
+            success=True,
+            message=_("IP {ip} débannie de '{jail_name}'.").format(
+                ip=request.ip, jail_name=request.jail_name
+            ),
+        )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -97,4 +114,4 @@ class JailUnbanCommand:
 # interfaces/cli/actions.py : action_4_2_jail_ban_unban(ctx)
 # application/commands/jail_unban.py : JailUnbanCommand.execute()
 #   ↓ fail2ban_port.unban_ip() (infrastructure/backends/fail2ban/adapter.py)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

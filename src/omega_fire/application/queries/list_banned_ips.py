@@ -4,17 +4,17 @@
 This query provides read-only access to the list of banned IPs.
 It retrieves the current state of all banned IPs across all backends.
 """
+
 from omega_fire.core.capability_registry import CapabilityRegistry
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus
 from omega_fire.shared.i18n import _
 
 
 def list_all_banned_ips(registry: CapabilityRegistry) -> str:
     """2.5: List all banned IPs across all backends.
-    
+
     Args:
         registry: The capability registry to check backend availability
-    
+
     Returns:
         Formatted string with all banned IPs
     """
@@ -26,14 +26,16 @@ def list_all_banned_ips(registry: CapabilityRegistry) -> str:
         available_backends.append("iptables")
     if registry.is_available("fail2ban_client"):
         available_backends.append("fail2ban")
-    
+
     if not available_backends:
         return _("⚠️ Aucun backend disponible. Impossible de lister les IPs bannies.")
-    
+
     # In a real implementation, this would call infrastructure adapters
     # For now, return a placeholder message
     lines = [_("═══ IPs BANNIES ═══"), ""]
-    lines.append(_("Backends disponibles : {value}").format(value=', '.join(available_backends)))
+    lines.append(
+        _("Backends disponibles : {value}").format(value=", ".join(available_backends))
+    )
     lines.append("")
     lines.append(_("⚠️ Liste des IPs bannies à implémenter via infrastructure adapters"))
     lines.append("")
@@ -43,38 +45,46 @@ def list_all_banned_ips(registry: CapabilityRegistry) -> str:
     lines.append(_("  3. Appeler infrastructure.backends.fail2ban.adapter.list_bans()"))
     lines.append(_("  4. Fusionner les résultats"))
     lines.append(_("  5. Formater pour l'affichage"))
-    
+
     return "\n".join(lines)
 
 
 def list_banned_ips_by_backend(registry: CapabilityRegistry, backend: str) -> str:
     """List banned IPs for a specific backend.
-    
+
     Args:
         registry: The capability registry to check backend availability
         backend: Backend name ('nftables', 'iptables', or 'fail2ban')
-    
+
     Returns:
         Formatted string with banned IPs for the specified backend
     """
     if not registry.is_available(backend):
         return _("⚠️ Backend '{backend}' non disponible.").format(backend=backend)
-    
+
     lines = [_("═══ IPs BANNIES ({value}) ═══").format(value=backend.upper()), ""]
-    lines.append(_("⚠️ Liste des IPs bannies pour {backend} à implémenter").format(backend=backend))
+    lines.append(
+        _("⚠️ Liste des IPs bannies pour {backend} à implémenter").format(
+            backend=backend
+        )
+    )
     lines.append("")
     lines.append(_("Implémentation prévue :"))
-    lines.append(_("  Appeler infrastructure.backends.{backend}.adapter.list_bans()").format(backend=backend))
-    
+    lines.append(
+        _("  Appeler infrastructure.backends.{backend}.adapter.list_bans()").format(
+            backend=backend
+        )
+    )
+
     return "\n".join(lines)
 
 
 def count_banned_ips(registry: CapabilityRegistry) -> dict[str, int]:
     """Count banned IPs per backend.
-    
+
     Args:
         registry: The capability registry to check backend availability
-    
+
     Returns:
         Dictionary with counts per backend
     """
@@ -84,11 +94,12 @@ def count_banned_ips(registry: CapabilityRegistry) -> dict[str, int]:
         "fail2ban": 0,
         "total": 0,
     }
-    
+
     # In a real implementation, this would call infrastructure adapters
     # For now, return zeros
-    
+
     return counts
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -117,4 +128,4 @@ def count_banned_ips(registry: CapabilityRegistry) -> dict[str, int]:
 # - interfaces/cli/handlers/blacklist_handlers.py wrappera ces queries
 # - Menu 2.5 appellera list_all_banned_ips()
 # - Les tests mockeront les adapters infrastructure
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

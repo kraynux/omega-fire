@@ -6,22 +6,34 @@ These express failures in fail2ban-client command execution, parsing,
 or jail management. They are caught by the application layer
 and translated into stable error messages.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class Fail2banError(CoreError):
     """Base exception for fail2ban operations."""
+
     def __init__(self, message: str, context: dict = None):
         super().__init__(message, context)
 
 
 class Fail2banCommandError(Fail2banError):
     """Raised when a fail2ban-client command fails."""
-    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
+
+    def __init__(
+        self, command: str, returncode: int, stderr: str, context: dict = None
+    ):
         super().__init__(
-            _("Échec de la commande fail2ban-client (code {returncode}) : {command}").format(returncode=returncode, command=command),
-            {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
+            _(
+                "Échec de la commande fail2ban-client (code {returncode}) : {command}"
+            ).format(returncode=returncode, command=command),
+            {
+                **(context or {}),
+                "command": command,
+                "returncode": returncode,
+                "stderr": stderr,
+            },
         )
         self.command = command
         self.returncode = returncode
@@ -30,6 +42,7 @@ class Fail2banCommandError(Fail2banError):
 
 class Fail2banParseError(Fail2banError):
     """Raised when fail2ban-client output cannot be parsed."""
+
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
             _("Sortie de fail2ban-client illisible : {reason}").format(reason=reason),
@@ -41,6 +54,7 @@ class Fail2banParseError(Fail2banError):
 
 class JailNotFoundError(Fail2banError):
     """Raised when a referenced jail does not exist."""
+
     def __init__(self, jail_name: str, context: dict = None):
         super().__init__(
             _("Jail fail2ban « {jail_name} » introuvable").format(jail_name=jail_name),
@@ -51,9 +65,12 @@ class JailNotFoundError(Fail2banError):
 
 class JailAlreadyExistsError(Fail2banError):
     """Raised when attempting to create a jail that already exists."""
+
     def __init__(self, jail_name: str, context: dict = None):
         super().__init__(
-            _("Le jail fail2ban « {jail_name} » existe déjà").format(jail_name=jail_name),
+            _("Le jail fail2ban « {jail_name} » existe déjà").format(
+                jail_name=jail_name
+            ),
             {**(context or {}), "jail_name": jail_name},
         )
         self.jail_name = jail_name
@@ -61,9 +78,12 @@ class JailAlreadyExistsError(Fail2banError):
 
 class Fail2banServiceError(Fail2banError):
     """Raised when fail2ban service control fails."""
+
     def __init__(self, operation: str, reason: str, context: dict = None):
         super().__init__(
-            _("Échec de l'opération {operation} sur le service fail2ban : {reason}").format(operation=operation, reason=reason),
+            _(
+                "Échec de l'opération {operation} sur le service fail2ban : {reason}"
+            ).format(operation=operation, reason=reason),
             {**(context or {}), "operation": operation, "reason": reason},
         )
         self.operation = operation
@@ -72,9 +92,12 @@ class Fail2banServiceError(Fail2banError):
 
 class Fail2banPermissionError(Fail2banError):
     """Raised when fail2ban operations require elevated privileges."""
+
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            _("Permission refusée pour l'opération fail2ban : {operation}. Lancez omega-fire en root.").format(operation=operation),
+            _(
+                "Permission refusée pour l'opération fail2ban : {operation}. Lancez omega-fire en root."
+            ).format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation
@@ -108,4 +131,4 @@ class Fail2banPermissionError(Fail2banError):
 # - infrastructure/backends/fail2ban/adapter.py les lèvera lors des opérations
 # - infrastructure/backends/fail2ban/service_controller.py les lèvera pour le service
 # - application/pipeline/ les capturera via les ports
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -8,6 +8,7 @@ d'authentification sur le VRAI terminal, via run_interactive) des
 operations fichier privilegiees elles-memes (privileged_file_ops.py) qui
 suivent : une fois le cache sudo chaud, elles n'ont plus besoin d'un
 terminal interactif."""
+
 from __future__ import annotations
 
 import os
@@ -37,7 +38,9 @@ class PermissionRequiredError(OSError):
     corrige ici proprement plutot que laisse comme curiosite."""
 
     def __init__(self, path: str) -> None:
-        super().__init__(_("Permission refusée sur {path} (élévation requise).").format(path=path))
+        super().__init__(
+            _("Permission refusée sur {path} (élévation requise).").format(path=path)
+        )
         self.path = path
 
     def __reduce__(self) -> tuple:
@@ -66,6 +69,7 @@ def authenticate_sudo(runner: ProcessRunnerPort) -> ElevationResult:
         return ElevationResult(success=True)
     code = runner.run_interactive(["sudo", "-v"])
     if code != 0:
-        return ElevationResult(success=False, message=_("Authentification sudo échouée ou "
-                                                        "annulée."))
+        return ElevationResult(
+            success=False, message=_("Authentification sudo échouée ou annulée.")
+        )
     return ElevationResult(success=True)

@@ -7,6 +7,7 @@ selection of *which* archives to delete (by age, quota, prefix, or
 manual choice) remains the responsibility of the caller (menu 5.6 in
 interfaces/cli/actions.py) — this command only executes the deletion.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -18,6 +19,7 @@ from omega_fire.ports.persistence import BackupInfo
 @dataclass
 class PurgeBackupsResult:
     """Output of the purge backups use case."""
+
     deleted_count: int = 0
     error_count: int = 0
     errors: list[str] = field(default_factory=list)
@@ -70,4 +72,4 @@ class PurgeBackupsCommand:
 #   ↓ construit une liste de BackupInfo depuis persistence_port.list_backups()
 # application/commands/purge_backups.py : PurgeBackupsCommand.execute()
 #   ↓ persistence_port.delete_backup() pour chaque backup ciblé
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

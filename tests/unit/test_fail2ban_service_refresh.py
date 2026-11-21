@@ -3,6 +3,7 @@
 « inactif » au tableau de bord jusqu'au prochain re-scan (1.3). Demarrer / arreter /
 redemarrer attend maintenant que le serveur reponde (ou plus) puis re-scanne le registre
 des capacites, que lit le tableau de bord."""
+
 from __future__ import annotations
 
 import unittest
@@ -81,8 +82,15 @@ class Fail2banRefreshTest(unittest.TestCase):
     def test_delai_depasse(self) -> None:
         port = _Port(delay=0, up=False)
         now = iter(range(100))
-        self.assertFalse(wait_for_fail2ban(port, expect_up=True, timeout=3, sleep=lambda _s: None,
-                                           clock=lambda: next(now)))
+        self.assertFalse(
+            wait_for_fail2ban(
+                port,
+                expect_up=True,
+                timeout=3,
+                sleep=lambda _s: None,
+                clock=lambda: next(now),
+            )
+        )
 
 
 if __name__ == "__main__":

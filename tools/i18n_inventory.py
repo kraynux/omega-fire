@@ -24,6 +24,7 @@ Priorite : ligne > regle > pre-classement automatique.
 
 Usage : tools/i18n_inventory.py [--csv FICHIER] [--md FICHIER] [--decisions FICHIER]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -41,7 +42,14 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
 SOURCES = (
     ("omega-fire", PROJECT / "src" / "omega_fire"),
-    ("omega-lib", Path(os.environ.get("OMEGA_LIB_SRC", Path.home() / "DEV/LIB/omega-lib/src/omega_lib"))),
+    (
+        "omega-lib",
+        Path(
+            os.environ.get(
+                "OMEGA_LIB_SRC", Path.home() / "DEV/LIB/omega-lib/src/omega_lib"
+            )
+        ),
+    ),
 )
 
 TRADUIRE = "TRADUIRE"
@@ -52,13 +60,19 @@ CATEGORIES = (TRADUIRE, PROBABLE, NE_PAS, A_DECIDER)
 
 # §4.3 : formats lus par une machine (nft, fail2ban, l'application elle-meme) - jamais traduits.
 MACHINE_CONTRACTS = (
-    ("Allow ", "commentaire de regle de pare-feu (politiques par defaut), ecrit dans nft/iptables"),
-    ("Drop all", "commentaire de regle de pare-feu (politiques par defaut), ecrit dans nft/iptables"),
+    (
+        "Allow ",
+        "commentaire de regle de pare-feu (politiques par defaut), ecrit dans nft/iptables",
+    ),
+    (
+        "Drop all",
+        "commentaire de regle de pare-feu (politiques par defaut), ecrit dans nft/iptables",
+    ),
     ("Currently banned", "sortie de fail2ban-client analysee"),
     ("Banned IP list", "sortie de fail2ban-client analysee"),
     ("Jail list", "sortie de fail2ban-client analysee"),
     ("failregex", "filtre fail2ban"),
-    ("Version mismatch", "erreur relue par plan_restore (`\"Version mismatch\" in err`)"),
+    ("Version mismatch", 'erreur relue par plan_restore (`"Version mismatch" in err`)'),
 )
 
 # Q1 (plan omega-fire, ACTE 2026-10-27) : l'ancienne interface Rich (--legacy-cli) reste en
@@ -69,7 +83,11 @@ _CLI_PREFIX = "omega_fire.interfaces.cli"
 def _cli_imports(path: Path) -> set[str]:
     found: set[str] = set()
     for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(_CLI_PREFIX):
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+            and node.module.startswith(_CLI_PREFIX)
+        ):
             found.add(node.module)
             found.update(f"{node.module}.{alias.name}" for alias in node.names)
         elif isinstance(node, ast.Import):
@@ -90,9 +108,13 @@ def tui_used_cli_files(root: Path) -> set[str]:
     """Fichiers de interfaces/cli/ atteints (imports transitifs) depuis tout le code hors
     interfaces/cli/ et hors app/bootstrap.py (qui lance l'ancienne interface) : c'est ce que la
     TUI affiche reellement. Recalcule a chaque passage : un nouvel import entre automatiquement."""
-    todo = [p for p in root.rglob("*.py") if "__pycache__" not in p.parts
-            and not p.relative_to(root).as_posix().startswith("interfaces/cli/")
-            and p.relative_to(root).as_posix() != "app/bootstrap.py"]
+    todo = [
+        p
+        for p in root.rglob("*.py")
+        if "__pycache__" not in p.parts
+        and not p.relative_to(root).as_posix().startswith("interfaces/cli/")
+        and p.relative_to(root).as_posix() != "app/bootstrap.py"
+    ]
     seen: set[Path] = set()
     while todo:
         for module in _cli_imports(todo.pop()):
@@ -125,12 +147,34 @@ DATA_SEED_TARGETS = frozenset({"DEFAULT_JAIL_PRESETS"})
 """Lot 4 a trancher : modeles de jail par defaut, recopies dans var/runtime/jail_presets.json
 puis modifiables par l'utilisateur - donnees, pas texte d'interface."""
 
-COMMAND_BINARIES = frozenset({
-    "nft", "iptables", "ip6tables", "iptables-save", "ip6tables-save", "iptables-restore",
-    "ip6tables-restore", "fail2ban-client", "fail2ban-regex", "systemctl", "rc-service", "rc-update",
-    "sv", "conntrack", "sudo", "lnav", "journalctl", "ss", "ip", "modprobe", "lsmod",
-})
-COMMAND_VARIABLES = frozenset({"cmd", "command", "args", "argv", "cmd_args", "base_cmd", "full_cmd"})
+COMMAND_BINARIES = frozenset(
+    {
+        "nft",
+        "iptables",
+        "ip6tables",
+        "iptables-save",
+        "ip6tables-save",
+        "iptables-restore",
+        "ip6tables-restore",
+        "fail2ban-client",
+        "fail2ban-regex",
+        "systemctl",
+        "rc-service",
+        "rc-update",
+        "sv",
+        "conntrack",
+        "sudo",
+        "lnav",
+        "journalctl",
+        "ss",
+        "ip",
+        "modprobe",
+        "lsmod",
+    }
+)
+COMMAND_VARIABLES = frozenset(
+    {"cmd", "command", "args", "argv", "cmd_args", "base_cmd", "full_cmd"}
+)
 
 _TUI_USED: set[str] = set()
 
@@ -143,12 +187,39 @@ LEGACY_CLI_SCOPES = {"app/bootstrap.py": ("bootstrap", "check_terminal_size")}
 
 
 UI_TEXT_CALLS = {
-    "Button", "Static", "Label", "Checkbox", "RadioButton", "Switch", "Collapsible",
-    "TabPane", "Tab", "Option", "Header", "Markdown", "Link", "ListItem", "notify",
-    "add_column", "add_columns", "Tooltip", "update", "set_status", "ConfirmScreen",
+    "Button",
+    "Static",
+    "Label",
+    "Checkbox",
+    "RadioButton",
+    "Switch",
+    "Collapsible",
+    "TabPane",
+    "Tab",
+    "Option",
+    "Header",
+    "Markdown",
+    "Link",
+    "ListItem",
+    "notify",
+    "add_column",
+    "add_columns",
+    "Tooltip",
+    "update",
+    "set_status",
+    "ConfirmScreen",
 }
 PROTOCOL_TARGETS = {"_REASON_PHRASES", "REASON_PHRASES"}
-SEARCH_TARGETS = {"needle", "marker", "pattern", "prefix", "suffix", "separator", "sep", "token"}
+SEARCH_TARGETS = {
+    "needle",
+    "marker",
+    "pattern",
+    "prefix",
+    "suffix",
+    "separator",
+    "sep",
+    "token",
+}
 """Lot 4 : `needle = f"options.{x} ("` puis `if needle in message` - un fragment CHERCHE dans un
 autre texte ne se traduit jamais (traduits separement, les deux ne correspondraient plus)."""
 MARK_CALLS = {"_", "N_", "ngettext", "P_"}
@@ -156,83 +227,358 @@ MARK_CALLS = {"_", "N_", "ngettext", "P_"}
 GUIDE_CALLS = {"HelpEntry"}
 GUIDE_MACHINE_KW = {"screen_class_name", "screen_class", "target", "screen"}
 UI_TEXT_KW = {
-    "placeholder", "tooltip", "title", "label", "prompt", "description", "help",
-    "epilog", "border_title", "border_subtitle", "message", "subtitle", "sub_title",
-    "question", "answer",
+    "placeholder",
+    "tooltip",
+    "title",
+    "label",
+    "prompt",
+    "description",
+    "help",
+    "epilog",
+    "border_title",
+    "border_subtitle",
+    "message",
+    "subtitle",
+    "sub_title",
+    "question",
+    "answer",
 }
-UI_TEXT_ATTRS = {"border_title", "border_subtitle", "label", "tooltip", "title",
-                 "sub_title", "placeholder", "TITLE", "SUB_TITLE"}
+UI_TEXT_ATTRS = {
+    "border_title",
+    "border_subtitle",
+    "label",
+    "tooltip",
+    "title",
+    "sub_title",
+    "placeholder",
+    "TITLE",
+    "SUB_TITLE",
+}
 MACHINE_KW = {
-    "id", "classes", "name", "variant", "key", "mode", "encoding", "errors", "newline",
-    "severity", "group", "dest", "metavar", "choices", "type", "default", "format",
-    "sep", "end", "suffix", "prefix", "key_display", "action", "value", "markup",
-    "language", "theme", "split", "layout", "dock", "align", "content_type", "cwd",
-    "env", "user", "shell", "executable", "argv", "path", "file", "scope", "pattern",
-    "anchor", "match", "kind", "source", "status", "field", "column", "sort_key", "style",
-    "comment", "jail", "table", "chain", "set_name", "family", "action_name",
+    "id",
+    "classes",
+    "name",
+    "variant",
+    "key",
+    "mode",
+    "encoding",
+    "errors",
+    "newline",
+    "severity",
+    "group",
+    "dest",
+    "metavar",
+    "choices",
+    "type",
+    "default",
+    "format",
+    "sep",
+    "end",
+    "suffix",
+    "prefix",
+    "key_display",
+    "action",
+    "value",
+    "markup",
+    "language",
+    "theme",
+    "split",
+    "layout",
+    "dock",
+    "align",
+    "content_type",
+    "cwd",
+    "env",
+    "user",
+    "shell",
+    "executable",
+    "argv",
+    "path",
+    "file",
+    "scope",
+    "pattern",
+    "anchor",
+    "match",
+    "kind",
+    "source",
+    "status",
+    "field",
+    "column",
+    "sort_key",
+    "style",
+    "comment",
+    "jail",
+    "table",
+    "chain",
+    "set_name",
+    "family",
+    "action_name",
 }
 MACHINE_CALLS = {
-    "query_one", "query", "get", "set", "pop", "setdefault", "startswith", "endswith",
-    "split", "rsplit", "partition", "rpartition", "join", "replace", "strip", "lstrip",
-    "rstrip", "removeprefix", "removesuffix", "compile", "match", "search", "fullmatch",
-    "sub", "subn", "findall", "finditer", "escape", "Path", "PurePath", "open",
-    "getenv", "putenv", "getattr", "hasattr", "setattr", "delattr", "add_class",
-    "remove_class", "has_class", "set_class", "toggle_class", "run_action", "add_parser",
-    "set_defaults", "strftime", "strptime", "fromisoformat", "encode", "decode",
-    "isinstance", "fnmatch", "glob", "rglob", "with_suffix", "with_name", "joinpath",
-    "mkdir", "exists", "which", "run", "Popen", "check_output", "check_call", "call",
-    "int", "float", "bool", "bytes", "bytearray", "datetime", "timedelta", "pack",
-    "unpack", "new", "sha256", "md5", "lower", "upper", "count", "index", "find", "rfind",
-    "ip_network", "ip_address", "ip_interface", "urlsplit", "urlparse", "quote",
-    "unquote", "dumps", "loads", "load", "dump", "getLogger", "header", "headers",
-    "get_header", "add_header", "set_header", "with_header", "remove_header",
-    "has_header", "HttpHeaders", "from_pairs", "LuaRuntime", "execute", "executemany", "eval",
-    "eval_lua", "globals", "require", "lookup", "getpwnam", "getgrnam", "chmod",
-    "chown", "environ", "update_settings", "setting", "option", "options", "Binding",
-    "cast", "TypeVar", "NewType", "import_module",
+    "query_one",
+    "query",
+    "get",
+    "set",
+    "pop",
+    "setdefault",
+    "startswith",
+    "endswith",
+    "split",
+    "rsplit",
+    "partition",
+    "rpartition",
+    "join",
+    "replace",
+    "strip",
+    "lstrip",
+    "rstrip",
+    "removeprefix",
+    "removesuffix",
+    "compile",
+    "match",
+    "search",
+    "fullmatch",
+    "sub",
+    "subn",
+    "findall",
+    "finditer",
+    "escape",
+    "Path",
+    "PurePath",
+    "open",
+    "getenv",
+    "putenv",
+    "getattr",
+    "hasattr",
+    "setattr",
+    "delattr",
+    "add_class",
+    "remove_class",
+    "has_class",
+    "set_class",
+    "toggle_class",
+    "run_action",
+    "add_parser",
+    "set_defaults",
+    "strftime",
+    "strptime",
+    "fromisoformat",
+    "encode",
+    "decode",
+    "isinstance",
+    "fnmatch",
+    "glob",
+    "rglob",
+    "with_suffix",
+    "with_name",
+    "joinpath",
+    "mkdir",
+    "exists",
+    "which",
+    "run",
+    "Popen",
+    "check_output",
+    "check_call",
+    "call",
+    "int",
+    "float",
+    "bool",
+    "bytes",
+    "bytearray",
+    "datetime",
+    "timedelta",
+    "pack",
+    "unpack",
+    "new",
+    "sha256",
+    "md5",
+    "lower",
+    "upper",
+    "count",
+    "index",
+    "find",
+    "rfind",
+    "ip_network",
+    "ip_address",
+    "ip_interface",
+    "urlsplit",
+    "urlparse",
+    "quote",
+    "unquote",
+    "dumps",
+    "loads",
+    "load",
+    "dump",
+    "getLogger",
+    "header",
+    "headers",
+    "get_header",
+    "add_header",
+    "set_header",
+    "with_header",
+    "remove_header",
+    "has_header",
+    "HttpHeaders",
+    "from_pairs",
+    "LuaRuntime",
+    "execute",
+    "executemany",
+    "eval",
+    "eval_lua",
+    "globals",
+    "require",
+    "lookup",
+    "getpwnam",
+    "getgrnam",
+    "chmod",
+    "chown",
+    "environ",
+    "update_settings",
+    "setting",
+    "option",
+    "options",
+    "Binding",
+    "cast",
+    "TypeVar",
+    "NewType",
+    "import_module",
 }
-LOG_CALLS = {"append_line", "write_line", "log_event", "log_ban", "log_unban", "log_rule_change",
-             "log_sync", "log_export", "log_backup", "log_restore", "log_action",
-             "log_line", "debug", "info", "warning", "error", "critical", "exception"}
+LOG_CALLS = {
+    "append_line",
+    "write_line",
+    "log_event",
+    "log_ban",
+    "log_unban",
+    "log_rule_change",
+    "log_sync",
+    "log_export",
+    "log_backup",
+    "log_restore",
+    "log_action",
+    "log_line",
+    "debug",
+    "info",
+    "warning",
+    "error",
+    "critical",
+    "exception",
+}
 CSS_TARGETS = {"DEFAULT_CSS", "CSS"}
 
 _IDENTIFIER = re.compile(r"^[a-z0-9_\-./:#*%@+=?&,;!~|^$\\\[\]{}()<>'\"]*$")
 _CONSTANT = re.compile(r"^[A-Z0-9_\-./:#*%@+=]+$")
-_REGEX_HINT = re.compile(r"(\\[dswbAZSWDnrt.]|\(\?[:=!<P]|^\^|\$$|\[\^?[a-z0-9]\-[a-z0-9]\])")
+_REGEX_HINT = re.compile(
+    r"(\\[dswbAZSWDnrt.]|\(\?[:=!<P]|^\^|\$$|\[\^?[a-z0-9]\-[a-z0-9]\])"
+)
 _DRAWING = re.compile(r"[█▓▒░▀▄▌▐■□▪▫◆◇○●╔╗╚╝║═╠╣╦╩╬┌┐└┘│─├┤┬┴┼]")
 _LETTER = re.compile(r"[^\W\d_]")
 _WORD = re.compile(r"[^\W\d_]{3,}")
 _CAMEL = re.compile(r"^_?[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+$")
 # Lot 3 (2026-10-21) : un schema SQL classe "texte humain" a vu sa colonne `detail` accentuee
 # -> base Active Defense cassee. SQL et valeurs d'en-tete HTTP ne sont JAMAIS du texte affiche.
-_SQL = re.compile(r"\b(CREATE\s+(TABLE|INDEX)|SELECT\s.+\sFROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|PRAGMA\s)", re.IGNORECASE | re.DOTALL)
+_SQL = re.compile(
+    r"\b(CREATE\s+(TABLE|INDEX)|SELECT\s.+\sFROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|PRAGMA\s)",
+    re.IGNORECASE | re.DOTALL,
+)
 HEADER_VALUE_TARGETS = ("CACHE_CONTROL",)
 _ANY_TAG = re.compile(r"<!?/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^<>]*)?/?>")
-_HTML = re.compile(r"<!DOCTYPE|<html|</[a-z]+>|<(?:div|p|span|table|h[1-6]|body|head)\b", re.IGNORECASE)
-_SQL_FRAGMENT = re.compile(r"^\s*(AND|OR|WHERE|ORDER\s+BY|GROUP\s+BY|LIMIT|OFFSET|JOIN|LEFT\s+JOIN|VALUES|SET)\b")
+_HTML = re.compile(
+    r"<!DOCTYPE|<html|</[a-z]+>|<(?:div|p|span|table|h[1-6]|body|head)\b", re.IGNORECASE
+)
+_SQL_FRAGMENT = re.compile(
+    r"^\s*(AND|OR|WHERE|ORDER\s+BY|GROUP\s+BY|LIMIT|OFFSET|JOIN|LEFT\s+JOIN|VALUES|SET)\b"
+)
 _MARKER_TARGET = re.compile(r"(MARKERS?|PATTERNS?|INDICATORS?|NEEDLES?|KEYWORDS?)$")
 _DEBUG_REPR = re.compile(r"^[A-Z]\w*\(")
-_RICH_STYLE = re.compile(r"^(?:(?:not\s+)?(?:bold|dim|italic|reverse|underline|blink|strike|on|default|"
-                         r"(?:bright_)?(?:black|red|green|yellow|blue|magenta|cyan|white)|grey\d*|gray\d*|"
-                         r"#[0-9a-fA-F]{3,6}|color\(\d+\)|rgb\([\d, ]+\))\s*)+$")
+_RICH_STYLE = re.compile(
+    r"^(?:(?:not\s+)?(?:bold|dim|italic|reverse|underline|blink|strike|on|default|"
+    r"(?:bright_)?(?:black|red|green|yellow|blue|magenta|cyan|white)|grey\d*|gray\d*|"
+    r"#[0-9a-fA-F]{3,6}|color\(\d+\)|rgb\([\d, ]+\))\s*)+$"
+)
 _ACCENT = re.compile(r"[àâäçéèêëîïôöûùüÿœæ]", re.IGNORECASE)
 # Mots francais isoles reellement affiches tels quels (releves au 1er passage) : sans eux,
 # la regle "identifiant minuscule sans espace" les classerait a tort en NE-PAS-TRADUIRE.
 FRENCH_WORDS = {
-    "oui", "non", "actif", "actifs", "active", "inactif", "inactive", "permanent", "permanente",
-    "expire", "expiree", "expirees", "toutes", "tous", "tout", "aucun", "aucune", "arrete",
-    "arretee", "enregistre", "erreur", "erreurs", "avertissement", "illimite", "illimitee",
-    "inconnu", "inconnue", "desactive", "desactivee", "disponible", "indisponible", "degrade",
-    "manquant", "manquante", "disqualifie", "absent", "absente", "valide", "invalide",
-    "refuse", "refusee", "accepte", "bloque", "bloquee", "autorise", "termine", "ouvert",
-    "ouverte", "ferme", "fermee", "jamais", "vide", "defaut", "succes", "echec", "chargee",
-    "charge", "masque", "visible", "modifie", "inchange", "present", "presente", "requis",
-    "facultatif", "secondes", "minutes", "heures", "jours", "octets", "entrees", "regles",
+    "oui",
+    "non",
+    "actif",
+    "actifs",
+    "active",
+    "inactif",
+    "inactive",
+    "permanent",
+    "permanente",
+    "expire",
+    "expiree",
+    "expirees",
+    "toutes",
+    "tous",
+    "tout",
+    "aucun",
+    "aucune",
+    "arrete",
+    "arretee",
+    "enregistre",
+    "erreur",
+    "erreurs",
+    "avertissement",
+    "illimite",
+    "illimitee",
+    "inconnu",
+    "inconnue",
+    "desactive",
+    "desactivee",
+    "disponible",
+    "indisponible",
+    "degrade",
+    "manquant",
+    "manquante",
+    "disqualifie",
+    "absent",
+    "absente",
+    "valide",
+    "invalide",
+    "refuse",
+    "refusee",
+    "accepte",
+    "bloque",
+    "bloquee",
+    "autorise",
+    "termine",
+    "ouvert",
+    "ouverte",
+    "ferme",
+    "fermee",
+    "jamais",
+    "vide",
+    "defaut",
+    "succes",
+    "echec",
+    "chargee",
+    "charge",
+    "masque",
+    "visible",
+    "modifie",
+    "inchange",
+    "present",
+    "presente",
+    "requis",
+    "facultatif",
+    "secondes",
+    "minutes",
+    "heures",
+    "jours",
+    "octets",
+    "entrees",
+    "regles",
 }
 # Q7/D18 : journaux (app.log, audit.log relus par l'application) et journalctl
 # reste en francais, quelle que soit la langue de l'interface.
 SERVER_PROCESS_SCOPES: tuple[str, ...] = ()  # omega-fire n'a pas de processus serveur
-SERVER_PROCESS_FILES: tuple[str, ...] = ("infrastructure/logging/app_logger.py", "infrastructure/logging/audit_logger.py")
+SERVER_PROCESS_FILES: tuple[str, ...] = (
+    "infrastructure/logging/app_logger.py",
+    "infrastructure/logging/audit_logger.py",
+)
 BUILD_TOOL_FILES: tuple[str, ...] = ()
 # Formats d'echange normalises (STIX 2.1, MISP) : contenu en anglais et en valeurs du standard,
 # jamais traduit (aucun dans omega-fire pour l'instant).
@@ -241,15 +587,41 @@ EXCHANGE_FORMAT_FILES: tuple[str, ...] = ()
 # Contrats d'interconnexion (omega-lib D-017, 2026-11-10) : JSON lu par omega-connect et raisons techniques
 # en anglais ASCII, jamais traduits (code d'omega-lib et module d'omega-fire qui produit jeton et fiche).
 SYNCHRO_CONTRACT_PREFIXES: tuple[str, ...] = ("synchro/", "infrastructure/synchro/")
-SYNCHRO_CONTRACT_FILES: tuple[str, ...] = ("app/synchro_runner.py", "application/queries/synchro_contracts.py")
+SYNCHRO_CONTRACT_FILES: tuple[str, ...] = (
+    "app/synchro_runner.py",
+    "application/queries/synchro_contracts.py",
+    # `omega-fire.sh port ouvrir` (omega-serv, 2026-11-17) : JSON et etats lus par l'outil appelant
+    "app/port_runner.py",
+    "application/commands/open_port.py",
+    "ports/host_firewall.py",
+    "infrastructure/backends/host_firewall/adapter.py",
+)
 # Plan i18n §5.3 : libelle bilingue du selecteur et noms de langues (chacune dans SA langue),
 # jamais traduits - c'est ce qui permet de revenir au francais depuis n'importe quelle langue.
-NEVER_TRANSLATED_TEXTS = frozenset({
-    "Langue / Language", "{LANGUAGE_LABEL} : {self._native_name}", "Français", "English", "Español",
-    "Русский", "简体中文", "हिन्दी", "العربية", "Português (Brasil)", "Italiano", "Deutsch",
-    "Nederlands", "Polski", "Tiếng Việt", "ไทย", "Bahasa Indonesia", "日本語", "한국어",
-    "Test ⟦…⟧ (développement)",
-})
+NEVER_TRANSLATED_TEXTS = frozenset(
+    {
+        "Langue / Language",
+        "{LANGUAGE_LABEL} : {self._native_name}",
+        "Français",
+        "English",
+        "Español",
+        "Русский",
+        "简体中文",
+        "हिन्दी",
+        "العربية",
+        "Português (Brasil)",
+        "Italiano",
+        "Deutsch",
+        "Nederlands",
+        "Polski",
+        "Tiếng Việt",
+        "ไทย",
+        "Bahasa Indonesia",
+        "日本語",
+        "한국어",
+        "Test ⟦…⟧ (développement)",
+    }
+)
 SEVERITY_WORDS = {"CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"}
 
 
@@ -304,7 +676,9 @@ def call_name(call: ast.Call) -> str:
 def is_stderr_print(call: ast.Call) -> bool:
     if call_name(call) != "print":
         return False
-    return any(kw.arg == "file" and "stderr" in ast.unparse(kw.value) for kw in call.keywords)
+    return any(
+        kw.arg == "file" and "stderr" in ast.unparse(kw.value) for kw in call.keywords
+    )
 
 
 def render_fstring(node: ast.JoinedStr) -> str:
@@ -347,7 +721,9 @@ class FileScanner:
                 # docstring de module/classe/fonction ET chaines "commentaire" isolees
                 # (documentation d'attribut apres un champ) : jamais affichees
                 value = stmt.value if isinstance(stmt, ast.Expr) else None
-                if isinstance(value, ast.JoinedStr) or (isinstance(value, ast.Constant) and isinstance(value.value, str)):
+                if isinstance(value, ast.JoinedStr) or (
+                    isinstance(value, ast.Constant) and isinstance(value.value, str)
+                ):
                     found.add(id(value))
         return found
 
@@ -358,7 +734,9 @@ class FileScanner:
         names: list[str] = []
         current = self.parent(node)
         while current is not None:
-            if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(
+                current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ):
                 names.append(current.name)
             current = self.parent(current)
         return ".".join(reversed(names))
@@ -382,8 +760,19 @@ class FileScanner:
                 self.skipped_no_letter += 1
                 continue
             context, category, reason = self.classify(node, text)
-            result.append(Entry(self.source, self.zone, self.rel, node.lineno,
-                                self.scope_of(node), context, category, reason, text))
+            result.append(
+                Entry(
+                    self.source,
+                    self.zone,
+                    self.rel,
+                    node.lineno,
+                    self.scope_of(node),
+                    context,
+                    category,
+                    reason,
+                    text,
+                )
+            )
         return result
 
     def _inside_fstring(self, node: ast.AST) -> bool:
@@ -421,7 +810,9 @@ class FileScanner:
                 return info
             if isinstance(current, (ast.Tuple, ast.List, ast.Set)):
                 if info["tuple_index"] is None:
-                    info["tuple_index"] = current.elts.index(child) if child in current.elts else None
+                    info["tuple_index"] = (
+                        current.elts.index(child) if child in current.elts else None
+                    )
                     info["tuple_len"] = len(current.elts)
             elif isinstance(current, ast.Dict):
                 if child in current.keys:
@@ -442,7 +833,11 @@ class FileScanner:
             elif isinstance(current, (ast.BinOp,)):
                 info["concat"] = True
             elif isinstance(current, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-                targets = current.targets if isinstance(current, ast.Assign) else [current.target]
+                targets = (
+                    current.targets
+                    if isinstance(current, ast.Assign)
+                    else [current.target]
+                )
                 for target in targets:
                     if isinstance(target, ast.Name):
                         info["assign"] = target.id
@@ -475,9 +870,17 @@ class FileScanner:
         if info.get("tuple_index") is not None:
             parts.append(f"tuple[{info['tuple_index']}/{info['tuple_len']}]")
         if "dict" in info:
-            parts.append("dict:cle" if info["dict"] == "cle" else f"dict[{info.get('dict_key', '?')}]")
-        for flag, label in (("compare", "comparaison"), ("subscript", "index"),
-                            ("return", "return"), ("raise", "raise")):
+            parts.append(
+                "dict:cle"
+                if info["dict"] == "cle"
+                else f"dict[{info.get('dict_key', '?')}]"
+            )
+        for flag, label in (
+            ("compare", "comparaison"),
+            ("subscript", "index"),
+            ("return", "return"),
+            ("raise", "raise"),
+        ):
             if info.get(flag):
                 parts.append(label)
         if "assign" in info:
@@ -503,12 +906,19 @@ class FileScanner:
             holder = self.parent(container)
         else:
             holder = container
-        if isinstance(holder, ast.Call) and isinstance(holder.func, ast.Attribute) \
-                and holder.func.attr in {"extend", "append", "insert"} \
-                and isinstance(holder.func.value, ast.Name) and holder.func.value.id in COMMAND_VARIABLES:
+        if (
+            isinstance(holder, ast.Call)
+            and isinstance(holder.func, ast.Attribute)
+            and holder.func.attr in {"extend", "append", "insert"}
+            and isinstance(holder.func.value, ast.Name)
+            and holder.func.value.id in COMMAND_VARIABLES
+        ):
             return True
-        if isinstance(holder, ast.AugAssign) and isinstance(holder.target, ast.Name) \
-                and holder.target.id in COMMAND_VARIABLES:
+        if (
+            isinstance(holder, ast.AugAssign)
+            and isinstance(holder.target, ast.Name)
+            and holder.target.id in COMMAND_VARIABLES
+        ):
             return True
         return False
 
@@ -524,20 +934,29 @@ class FileScanner:
 
     def _in_annotation(self, node: ast.AST) -> bool:
         child, current = node, self.parents.get(id(node))
-        while current is not None and not isinstance(current, ast.stmt) or isinstance(current, ast.AnnAssign):
+        while (
+            current is not None
+            and not isinstance(current, ast.stmt)
+            or isinstance(current, ast.AnnAssign)
+        ):
             if isinstance(current, ast.arg) and child is current.annotation:
                 return True
             if isinstance(current, ast.AnnAssign):
                 return child is current.annotation
             child, current = current, self.parents.get(id(current))
-        return isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef)) and child is current.returns
+        return (
+            isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and child is current.returns
+        )
 
     @staticmethod
     def _fixed_parts(node: ast.AST, text: str) -> str:
         """Texte d'une f-string avec chaque champ ramene a {x} (seules les parties fixes comptent)."""
         if not isinstance(node, ast.JoinedStr):
             return text
-        return "".join(v.value if isinstance(v, ast.Constant) else "{x}" for v in node.values)
+        return "".join(
+            v.value if isinstance(v, ast.Constant) else "{x}" for v in node.values
+        )
 
     def _data_field_value(self, node: ast.AST) -> bool:
         """Texte place (meme imbrique : `str(x or "Web")`) sous une cle de DATA_FIELD_KEYS."""
@@ -555,7 +974,10 @@ class FileScanner:
         if not isinstance(parent, ast.IfExp) or not isinstance(node, ast.Constant):
             return False
         test = ast.unparse(parent.test)
-        return bool(re.search(r"emoji|ascii|unicode", test, re.I)) and str(node.value).isascii()
+        return (
+            bool(re.search(r"emoji|ascii|unicode", test, re.IGNORECASE))
+            and str(node.value).isascii()
+        )
 
     def classify(self, node: ast.AST, text: str) -> tuple[str, str, str]:
         info = self.context_chain(node)
@@ -566,67 +988,163 @@ class FileScanner:
         stripped = text.strip()
 
         if _LOGO_TARGET.search(info.get("assign") or ""):
-            return context, NE_PAS, "ligne du logo ASCII (jamais traduit, comme omega-serv)"
+            return (
+                context,
+                NE_PAS,
+                "ligne du logo ASCII (jamais traduit, comme omega-serv)",
+            )
         if info.get("assign") in DATA_SEED_TARGETS:
-            return context, NE_PAS, "donnees par defaut enregistrees dans un fichier de l'utilisateur (var/runtime/jail_presets.json) : texte source garde, N_() + traduit a l'affichage (comme les profils omega-serv)"
-        if text.startswith("Auto — avant application du profil") or text == "Sauvegarde manuelle (menu 5.4)":
-            return context, NE_PAS, "description du snapshot automatique, enregistree avec le snapshot"
+            return (
+                context,
+                NE_PAS,
+                "donnees par defaut enregistrees dans un fichier de l'utilisateur (var/runtime/jail_presets.json) : texte source garde, N_() + traduit a l'affichage (comme les profils omega-serv)",
+            )
+        if (
+            text.startswith("Auto — avant application du profil")
+            or text == "Sauvegarde manuelle (menu 5.4)"
+        ):
+            return (
+                context,
+                NE_PAS,
+                "description du snapshot automatique, enregistree avec le snapshot",
+            )
         if "%(" in text and ")s" in text:
             return context, NE_PAS, "format de journal Python (`%(asctime)s ...`)"
         if text in LOG_LEVEL_NAMES:
             return context, NE_PAS, "nom de niveau de journal passe a logging"
         if text.startswith("{{") or ' comment "' in text:
-            return context, NE_PAS, "syntaxe nft (element `{ ip comment \"...\" }`)"
+            return context, NE_PAS, 'syntaxe nft (element `{ ip comment "..." }`)'
         if _CONFIG_LINE.match(text):
-            return context, NE_PAS, "ligne de fichier de configuration ecrite (`port = ...`)"
+            return (
+                context,
+                NE_PAS,
+                "ligne de fichier de configuration ecrite (`port = ...`)",
+            )
         if keyword == "command":
             return context, NE_PAS, "commande (champ technique d'une erreur)"
         if "comment" in (info.get("assign") or "").lower():
-            return context, NE_PAS, "commentaire ecrit dans le backend (ban / regle) : donnee relue"
+            return (
+                context,
+                NE_PAS,
+                "commentaire ecrit dans le backend (ban / regle) : donnee relue",
+            )
         if self._in_annotation(node):
-            return context, NE_PAS, "annotation de type (`environ: \"MutableMapping[str, str]\"`)"
+            return (
+                context,
+                NE_PAS,
+                'annotation de type (`environ: "MutableMapping[str, str]"`)',
+            )
         if _TECH_IDENTIFIER.match(self._fixed_parts(node, text)):
-            return context, NE_PAS, "identifiant technique (id de widget, nom de fichier : `action-{x}`)"
+            return (
+                context,
+                NE_PAS,
+                "identifiant technique (id de widget, nom de fichier : `action-{x}`)",
+            )
         if info.get("assign") in AUDIT_TITLE_TARGETS or name == "log_action_result":
-            return context, NE_PAS, "titre / texte ecrit dans l'historique d'audit, relu ensuite (report_builder.py) : texte source"
+            return (
+                context,
+                NE_PAS,
+                "titre / texte ecrit dans l'historique d'audit, relu ensuite (report_builder.py) : texte source",
+            )
         if info.get("assign") in PRODUCT_NAME_TARGETS:
             return context, NE_PAS, "nom du produit (jamais traduit)"
         if self._data_field_value(node):
-            return context, NE_PAS, "valeur de donnee analysee ensuite par le code (cle 'user_agent'...)"
+            return (
+                context,
+                NE_PAS,
+                "valeur de donnee analysee ensuite par le code (cle 'user_agent'...)",
+            )
         if keyword == "stderr":
-            return context, NE_PAS, "faux stderr d'une commande, relu par l'adaptateur (`\"not found\" in stderr`)"
+            return (
+                context,
+                NE_PAS,
+                "faux stderr d'une commande, relu par l'adaptateur (`\"not found\" in stderr`)",
+            )
         if self._ascii_fallback(node):
-            return context, NE_PAS, "variante ASCII pour terminal sans Unicode (`... if not use_emoji else ...`)"
+            return (
+                context,
+                NE_PAS,
+                "variante ASCII pour terminal sans Unicode (`... if not use_emoji else ...`)",
+            )
         if self._command_argument(node):
-            return context, NE_PAS, "argument d'une commande systeme (nft, iptables, fail2ban-client...)"
+            return (
+                context,
+                NE_PAS,
+                "argument d'une commande systeme (nft, iptables, fail2ban-client...)",
+            )
         if text.lstrip("\n").startswith("#"):
-            return context, NE_PAS, "contenu d'un fichier ecrit (en-tete de blocklist, configuration de jail fail2ban)"
+            return (
+                context,
+                NE_PAS,
+                "contenu d'un fichier ecrit (en-tete de blocklist, configuration de jail fail2ban)",
+            )
         if _SQL_FRAGMENT.match(text):
-            return context, NE_PAS, "morceau de requete SQL (`query += \" AND x = ?\"`)"
+            return context, NE_PAS, 'morceau de requete SQL (`query += " AND x = ?"`)'
         if _MARKER_TARGET.search(info.get("assign") or ""):
-            return context, NE_PAS, "motif cherche dans une sortie / une erreur (constante *_MARKERS, *_PATTERNS...)"
-        if self.scope_of(node).split(".")[-1] in {"__repr__", "__str__"} and _DEBUG_REPR.match(text):
+            return (
+                context,
+                NE_PAS,
+                "motif cherche dans une sortie / une erreur (constante *_MARKERS, *_PATTERNS...)",
+            )
+        if self.scope_of(node).split(".")[-1] in {
+            "__repr__",
+            "__str__",
+        } and _DEBUG_REPR.match(text):
             return context, NE_PAS, "representation de debogage (`Classe(champ=...)`)"
         if self._iterated_by_comprehension(node):
-            return context, NE_PAS, "motif d'une liste parcourue pour une recherche (`x in ligne for x in [...]`)"
+            return (
+                context,
+                NE_PAS,
+                "motif d'une liste parcourue pour une recherche (`x in ligne for x in [...]`)",
+            )
         legacy_scopes = LEGACY_CLI_SCOPES.get(self.rel, ())
         if legacy_scopes and self.scope_of(node).split(".")[0] in legacy_scopes:
-            return context, NE_PAS, "ancienne interface --legacy-cli (Q1) : reste en francais"
+            return (
+                context,
+                NE_PAS,
+                "ancienne interface --legacy-cli (Q1) : reste en francais",
+            )
         if name in MARK_CALLS and "method_of_string" not in info:
             for marker, _why in MACHINE_CONTRACTS:
                 if marker in text:
-                    return context, TRADUIRE, f"texte d'aide citant le marqueur '{marker.strip()}' : le garder TEL QUEL dans la traduction"
+                    return (
+                        context,
+                        TRADUIRE,
+                        f"texte d'aide citant le marqueur '{marker.strip()}' : le garder TEL QUEL dans la traduction",
+                    )
             return context, TRADUIRE, "marque pour traduction (_ / N_ / ngettext)"
         if text in NEVER_TRANSLATED_TEXTS:
-            return context, NE_PAS, "selecteur de langue : libelle bilingue / nom de langue, jamais traduit (plan §5.3)"
-        if self.rel in SYNCHRO_CONTRACT_FILES or self.rel.startswith(SYNCHRO_CONTRACT_PREFIXES):
-            return context, NE_PAS, "contrat d'interconnexion (omega-lib D-017) : JSON et raisons techniques, jamais traduits"
+            return (
+                context,
+                NE_PAS,
+                "selecteur de langue : libelle bilingue / nom de langue, jamais traduit (plan §5.3)",
+            )
+        if self.rel in SYNCHRO_CONTRACT_FILES or self.rel.startswith(
+            SYNCHRO_CONTRACT_PREFIXES
+        ):
+            return (
+                context,
+                NE_PAS,
+                "contrat d'interconnexion (omega-lib D-017) : JSON et raisons techniques, jamais traduits",
+            )
         if self.rel in EXCHANGE_FORMAT_FILES:
-            return context, NE_PAS, "format d'echange normalise (STIX 2.1 / MISP), en anglais, jamais traduit"
+            return (
+                context,
+                NE_PAS,
+                "format d'echange normalise (STIX 2.1 / MISP), en anglais, jamais traduit",
+            )
         for marker, why in MACHINE_CONTRACTS:
             if marker in text:
-                if self.zone == "guide" or name in UI_TEXT_CALLS or keyword in UI_TEXT_KW:
-                    return context, TRADUIRE, f"texte d'aide citant le marqueur '{marker.strip()}' : le garder TEL QUEL dans la traduction"
+                if (
+                    self.zone == "guide"
+                    or name in UI_TEXT_CALLS
+                    or keyword in UI_TEXT_KW
+                ):
+                    return (
+                        context,
+                        TRADUIRE,
+                        f"texte d'aide citant le marqueur '{marker.strip()}' : le garder TEL QUEL dans la traduction",
+                    )
                 return context, NE_PAS, f"contrat machine : {why}"
         if _RICH_STYLE.match(stripped):
             return context, NE_PAS, "style Rich (couleurs / attributs)"
@@ -644,28 +1162,52 @@ class FileScanner:
             without_style = re.sub(r"<style>.*?</style>", " ", text, flags=re.DOTALL)
             visible = _ANY_TAG.sub(" ", re.sub(r"\{[^{}]*\}", " ", without_style))
             if not _WORD.search(visible.replace("OMEGA-FIRE", "")):
-                return context, NE_PAS, "gabarit HTML sans texte (textes visiteurs passes par P_)"
+                return (
+                    context,
+                    NE_PAS,
+                    "gabarit HTML sans texte (textes visiteurs passes par P_)",
+                )
             return context, A_DECIDER, "fragment HTML (export / rapport ?)"
         if _CAMEL.match(stripped):
             return context, NE_PAS, "nom de classe / type"
         if info.get("assign") in SEARCH_TARGETS:
-            return context, NE_PAS, "fragment cherche dans un autre texte (needle/marker...)"
+            return (
+                context,
+                NE_PAS,
+                "fragment cherche dans un autre texte (needle/marker...)",
+            )
         if info.get("assign") in PROTOCOL_TARGETS:
             return context, NE_PAS, "phrase de statut HTTP (protocole, RFC 9110)"
-        if info.get("assign") in CSS_TARGETS or (text.count("{") and text.count(";") >= 2 and text.count(":") >= 2):
+        if info.get("assign") in CSS_TARGETS or (
+            text.count("{") and text.count(";") >= 2 and text.count(":") >= 2
+        ):
             return context, NE_PAS, "CSS"
         if "method_of_string" in info and info["method_of_string"] not in {"format"}:
-            return context, NE_PAS, f'chaine utilisee comme valeur ("...".{info["method_of_string"]}())'
+            return (
+                context,
+                NE_PAS,
+                f'chaine utilisee comme valeur ("...".{info["method_of_string"]}())',
+            )
 
         # Contextes d'interface reconnus sans ambiguite
         if name in GUIDE_CALLS:
-            if keyword in GUIDE_MACHINE_KW or (name == "ScreenGuide" and info.get("arg_index") == 0 and keyword is None):
+            if keyword in GUIDE_MACHINE_KW or (
+                name == "ScreenGuide" and info.get("arg_index") == 0 and keyword is None
+            ):
                 return context, NE_PAS, "cle du guide (nom de classe d'ecran)"
             return context, TRADUIRE, f"fiche du guide ({name})"
-        if self.zone == "guide" and human_like(text) and not info.get("compare") and not info.get("subscript") and info.get("dict") != "cle":
+        if (
+            self.zone == "guide"
+            and human_like(text)
+            and not info.get("compare")
+            and not info.get("subscript")
+            and info.get("dict") != "cle"
+        ):
             return context, TRADUIRE, "texte du guide"
         if name == "Binding" or (info.get("assign") == "BINDINGS"):
-            position = info.get("arg_index") if name == "Binding" else info.get("tuple_index")
+            position = (
+                info.get("arg_index") if name == "Binding" else info.get("tuple_index")
+            )
             if keyword == "description" or position == 2:
                 return context, TRADUIRE, "description de raccourci (pied de page)"
             if keyword == "tooltip":
@@ -680,8 +1222,17 @@ class FileScanner:
         if info.get("compare"):
             return context, NE_PAS, "valeur comparee"
         if name in LOG_CALLS:
-            return context, NE_PAS, "ligne de journal (identique quelle que soit la langue)"
-        if name in UI_TEXT_CALLS or keyword in UI_TEXT_KW or info.get("assign_attr") in UI_TEXT_ATTRS or info.get("assign") in UI_TEXT_ATTRS:
+            return (
+                context,
+                NE_PAS,
+                "ligne de journal (identique quelle que soit la langue)",
+            )
+        if (
+            name in UI_TEXT_CALLS
+            or keyword in UI_TEXT_KW
+            or info.get("assign_attr") in UI_TEXT_ATTRS
+            or info.get("assign") in UI_TEXT_ATTRS
+        ):
             if not human_like(text) and _IDENTIFIER.match(stripped):
                 return context, NE_PAS, "identifiant passe a un widget"
             if self.zone == "cli" and keyword in {"help", "description", "epilog"}:
@@ -695,11 +1246,19 @@ class FileScanner:
             return context, NE_PAS, f"argument technique ({name}())"
 
         # Mots francais isoles affiches (oui/non/actif, statuts en majuscules)
-        if " " not in stripped and (stripped.lower() in FRENCH_WORDS or _ACCENT.search(stripped)) \
-                and keyword is None and info.get("dict") != "cle":
+        if (
+            " " not in stripped
+            and (stripped.lower() in FRENCH_WORDS or _ACCENT.search(stripped))
+            and keyword is None
+            and info.get("dict") != "cle"
+        ):
             return context, PROBABLE, "mot francais isole (affiche tel quel ?)"
         if stripped in SEVERITY_WORDS:
-            return context, A_DECIDER, "niveau de gravite affiche tel quel (anglais technique)"
+            return (
+                context,
+                A_DECIDER,
+                "niveau de gravite affiche tel quel (anglais technique)",
+            )
 
         # Formes techniques
         if stripped.startswith("-") and _IDENTIFIER.match(stripped):
@@ -710,28 +1269,62 @@ class FileScanner:
             return context, NE_PAS, "constante technique (MAJUSCULES)"
         if _REGEX_HINT.search(text) and " " not in stripped:
             return context, NE_PAS, "motif / expression reguliere"
-        if re.match(r"^[a-z]+://", stripped) or stripped.startswith(("/", "./", "~/")) and " " not in stripped:
+        if (
+            re.match(r"^[a-z]+://", stripped)
+            or stripped.startswith(("/", "./", "~/"))
+            and " " not in stripped
+        ):
             return context, NE_PAS, "URL / chemin"
 
         # Selecteur d'options (libelle, valeur)
-        if info.get("tuple_len") == 2 and info.get("tuple_index") == 0 and human_like(text):
+        if (
+            info.get("tuple_len") == 2
+            and info.get("tuple_index") == 0
+            and human_like(text)
+        ):
             return context, TRADUIRE, "libelle d'option (couple libelle/valeur)"
-        if self.zone in {"ecrans", "widgets", "tui-autre"} and info.get("tuple_len") in (2, 3, 4) \
-                and info.get("tuple_index") not in (None, 0) and human_like(text) and " " in text.strip():
-            return context, TRADUIRE, "libelle dans un tableau de definition (menu / formulaire)"
+        if (
+            self.zone in {"ecrans", "widgets", "tui-autre"}
+            and info.get("tuple_len") in (2, 3, 4)
+            and info.get("tuple_index") not in (None, 0)
+            and human_like(text)
+            and " " in text.strip()
+        ):
+            return (
+                context,
+                TRADUIRE,
+                "libelle dans un tableau de definition (menu / formulaire)",
+            )
 
         # Messages : stderr, CLI, exceptions
         scope = self.scope_of(node)
-        if (call is not None and (is_stderr_print(call) or name == "print")) or info.get("raise"):
+        if (
+            call is not None and (is_stderr_print(call) or name == "print")
+        ) or info.get("raise"):
             if self.rel in BUILD_TOOL_FILES:
-                return context, NE_PAS, "message de l'outil de construction (build-release.sh), jamais vu dans l'interface"
-            if self.rel in SERVER_PROCESS_FILES or scope.split(".")[0] in SERVER_PROCESS_SCOPES:
-                return context, NE_PAS, "message du journal de l'application (app.log / audit.log) - Q7 : reste en francais"
+                return (
+                    context,
+                    NE_PAS,
+                    "message de l'outil de construction (build-release.sh), jamais vu dans l'interface",
+                )
+            if (
+                self.rel in SERVER_PROCESS_FILES
+                or scope.split(".")[0] in SERVER_PROCESS_SCOPES
+            ):
+                return (
+                    context,
+                    NE_PAS,
+                    "message du journal de l'application (app.log / audit.log) - Q7 : reste en francais",
+                )
         if call is not None and is_stderr_print(call):
             return context, A_DECIDER, "message stderr (terminal)"
         if name == "print":
             if self.zone == "cli":
-                return context, TRADUIRE, "sortie CLI pour l'humain (verifier : jamais lue par un script ?)"
+                return (
+                    context,
+                    TRADUIRE,
+                    "sortie CLI pour l'humain (verifier : jamais lue par un script ?)",
+                )
             return context, A_DECIDER, "print hors CLI"
         if info.get("raise"):
             return context, A_DECIDER, "message d'exception (affiche a l'ecran ?)"
@@ -741,7 +1334,11 @@ class FileScanner:
         if not human_like(text):
             return context, NE_PAS, "mot technique sans espace"
         if self.zone in {"ecrans", "widgets", "tui-autre", "cli-tui"}:
-            return context, PROBABLE, "texte humain dans l'interface, contexte non reconnu"
+            return (
+                context,
+                PROBABLE,
+                "texte humain dans l'interface, contexte non reconnu",
+            )
         if self.zone == "cli":
             return context, PROBABLE, "texte humain dans la CLI, contexte non reconnu"
         return context, A_DECIDER, f"texte humain dans {self.zone}"
@@ -762,24 +1359,64 @@ def scan_templates(source: str, root: Path) -> list[Entry]:
         lines = path.read_text(encoding="utf-8").splitlines()
         for number, line in enumerate(lines, 1):
             masked = _J2_BLOCK.sub(lambda m: " " * len(m.group(0)), line)
-            if "<style" in masked or masked.strip().startswith(("{", "}", ".", "@")) and not _LETTER.search(masked.split("{")[0]):
+            if (
+                "<style" in masked
+                or masked.strip().startswith(("{", "}", ".", "@"))
+                and not _LETTER.search(masked.split("{")[0])
+            ):
                 pass
             for match in _J2_TEXT.finditer(masked):
                 text = match.group(1).strip()
-                if _WORD.search(text.replace("OMEGA-FIRE", "")) and not text.startswith(("{", ".", "#")) and ";" not in text:
-                    entries.append(Entry(source, "exports-html", rel, number, "", "texte de modele HTML",
-                                         TRADUIRE, "texte d'un modele d'export HTML (Jinja2)", text))
+                if (
+                    _WORD.search(text.replace("OMEGA-FIRE", ""))
+                    and not text.startswith(("{", ".", "#"))
+                    and ";" not in text
+                ):
+                    entries.append(
+                        Entry(
+                            source,
+                            "exports-html",
+                            rel,
+                            number,
+                            "",
+                            "texte de modele HTML",
+                            TRADUIRE,
+                            "texte d'un modele d'export HTML (Jinja2)",
+                            text,
+                        )
+                    )
             for attr in _J2_ATTR.finditer(masked):
-                entries.append(Entry(source, "exports-html", rel, number, "", f"attribut {attr.group(1)}=",
-                                     TRADUIRE, "attribut lisible d'un modele d'export HTML", attr.group(2)))
+                entries.append(
+                    Entry(
+                        source,
+                        "exports-html",
+                        rel,
+                        number,
+                        "",
+                        f"attribut {attr.group(1)}=",
+                        TRADUIRE,
+                        "attribut lisible d'un modele d'export HTML",
+                        attr.group(2),
+                    )
+                )
             if 'lang="' in line:
-                entries.append(Entry(source, "exports-html", rel, number, "", "attribut lang=", NE_PAS,
-                                     "langue de la page : a rendre DYNAMIQUE (langue active), pas a traduire",
-                                     line.strip()))
+                entries.append(
+                    Entry(
+                        source,
+                        "exports-html",
+                        rel,
+                        number,
+                        "",
+                        "attribut lang=",
+                        NE_PAS,
+                        "langue de la page : a rendre DYNAMIQUE (langue active), pas a traduire",
+                        line.strip(),
+                    )
+                )
     return entries
 
 
-_J2_TEST = re.compile(r"\{%-?\s*(?:el)?if\s+(.*?)-?%\}", re.S)
+_J2_TEST = re.compile(r"\{%-?\s*(?:el)?if\s+(.*?)-?%\}", re.DOTALL)
 _J2_LITERAL = re.compile(r"""["']([^"']+)["']""")
 
 
@@ -810,7 +1447,9 @@ def scan() -> tuple[list[Entry], int, list[str]]:
         for path in sorted(root.rglob("*.py")):
             if "__pycache__" in path.parts:
                 continue
-            if source == "omega-fire" and is_legacy_cli(path.relative_to(root).as_posix()):
+            if source == "omega-fire" and is_legacy_cli(
+                path.relative_to(root).as_posix()
+            ):
                 legacy.append(path.relative_to(root).as_posix())
                 continue
             scanner = FileScanner(source, root, path)
@@ -822,11 +1461,22 @@ def scan() -> tuple[list[Entry], int, list[str]]:
     # Garde-fou omega-fire : un texte affiche qui sert AUSSI de valeur comparee / de cle ailleurs
     # (ex. "INACTIF" affiche puis teste par `if statut == "INACTIF"`) casserait la logique si on
     # le traduisait sans precaution -> revue ligne par ligne.
-    as_value = {e.text for e in entries if e.reason in {"valeur comparee", "cle de dictionnaire", "index / cle d'acces"}}
+    as_value = {
+        e.text
+        for e in entries
+        if e.reason in {"valeur comparee", "cle de dictionnaire", "index / cle d'acces"}
+    }
     as_value |= template_compared_texts(SOURCES[0][1])
     for e in entries:
-        if e.category in (TRADUIRE, PROBABLE) and e.text in as_value and e.reason != "fiche du guide (HelpEntry)":
-            e.category, e.reason = A_DECIDER, "texte affiche ET utilise ailleurs comme valeur comparee / cle : verifier avant de traduire"
+        if (
+            e.category in (TRADUIRE, PROBABLE)
+            and e.text in as_value
+            and e.reason != "fiche du guide (HelpEntry)"
+        ):
+            e.category, e.reason = (
+                A_DECIDER,
+                "texte affiche ET utilise ailleurs comme valeur comparee / cle : verifier avant de traduire",
+            )
     entries.sort(key=lambda e: (e.source, e.zone, e.file, e.line))
     return entries, skipped, missing
 
@@ -841,7 +1491,7 @@ def normalize_decision(raw: str) -> tuple[str, str]:
     cleaned = raw.strip()
     for category in sorted(CATEGORIES, key=len, reverse=True):
         if cleaned.upper().startswith(category):
-            return category, cleaned[len(category):].strip(" :-")
+            return category, cleaned[len(category) :].strip(" :-")
     return "", cleaned
 
 
@@ -853,9 +1503,14 @@ def read_md_table(path: Path) -> list[list[str]]:
         stripped = line.strip()
         if not stripped.startswith("|") or set(stripped) <= set("|-: "):
             continue
-        cells = [re.sub(r"\\(.)", r"\1", c.strip()) for c in _PIPE_SPLIT.split(stripped.strip("|"))]
+        cells = [
+            re.sub(r"\\(.)", r"\1", c.strip())
+            for c in _PIPE_SPLIT.split(stripped.strip("|"))
+        ]
         rows.append(cells)
-    return rows  # en-tetes compris : load_rule_decisions repere les colonnes par leur nom
+    return (
+        rows  # en-tetes compris : load_rule_decisions repere les colonnes par leur nom
+    )
 
 
 def load_rule_decisions(path: Path) -> dict[tuple[str, str], tuple[str, str]]:
@@ -878,12 +1533,19 @@ def load_rule_decisions(path: Path) -> dict[tuple[str, str], tuple[str, str]]:
                 elif header == "note":
                     columns["note"] = index
             continue
-        if columns is None or not {"decision", "reason", "auto"} <= set(columns) or len(cells) <= max(columns.values()):
+        if (
+            columns is None
+            or not {"decision", "reason", "auto"} <= set(columns)
+            or len(cells) <= max(columns.values())
+        ):
             continue
         auto = cells[columns["auto"]].strip("`")
         decision, rest = normalize_decision(cells[columns["decision"]])
         note = cells[columns["note"]] if "note" in columns else ""
-        decisions[(auto, cells[columns["reason"]])] = (decision, " ".join(x for x in (rest, note) if x))
+        decisions[(auto, cells[columns["reason"]])] = (
+            decision,
+            " ".join(x for x in (rest, note) if x),
+        )
     return decisions
 
 
@@ -915,39 +1577,82 @@ def write_rule_decisions(entries: list[Entry], rules: dict, path: Path) -> None:
     lines = [
         "# Inventaire i18n — décisions par règle",
         "",
-        ("> Fichier **édité par toi**, relu à chaque génération de l'inventaire "
-         "(`omega-fire/tools/i18n_inventory.py`), jamais écrasé : les règles nouvelles sont "
-         "ajoutées, tes décisions restent."),
-        ("> Colonne **Décision** : `TRADUIRE`, `NE-PAS-TRADUIRE`, ou vide (= garder le "
-         "pré-classement d'origine, affiché à droite pour information). Colonne **Note** : libre."),
+        (
+            "> Fichier **édité par toi**, relu à chaque génération de l'inventaire "
+            "(`omega-fire/tools/i18n_inventory.py`), jamais écrasé : les règles nouvelles sont "
+            "ajoutées, tes décisions restent."
+        ),
+        (
+            "> Colonne **Décision** : `TRADUIRE`, `NE-PAS-TRADUIRE`, ou vide (= garder le "
+            "pré-classement d'origine, affiché à droite pour information). Colonne **Note** : libre."
+        ),
         "> Une décision ligne par ligne (colonne `decision_utilisateur` du CSV) passe avant celle-ci.",
         "",
         "| Décision | Raison | Nombre | Pré-classement d'origine | Note |",
         "|---|---|---:|---|---|",
     ]
-    for (auto, reason), count in sorted(groups.items(), key=lambda kv: (CATEGORIES.index(kv[0][0]), -kv[1])):
+    for (auto, reason), count in sorted(
+        groups.items(), key=lambda kv: (CATEGORIES.index(kv[0][0]), -kv[1])
+    ):
         decision, note = rules.get((auto, reason), ("", ""))
-        lines.append(f"| {decision} | {_md_text(reason)} | {count} | `{auto}` | {_md_text(note)} |")
+        lines.append(
+            f"| {decision} | {_md_text(reason)} | {count} | `{auto}` | {_md_text(note)} |"
+        )
     orphans = [key for key in rules if key not in groups and rules[key][0]]
     if orphans:
-        lines += ["", "## Décisions dont la règle n'existe plus (gardées pour mémoire)", "",
-                  "| Décision | Raison | Nombre | Pré-classement d'origine | Note |", "|---|---|---:|---|---|"]
+        lines += [
+            "",
+            "## Décisions dont la règle n'existe plus (gardées pour mémoire)",
+            "",
+            "| Décision | Raison | Nombre | Pré-classement d'origine | Note |",
+            "|---|---|---:|---|---|",
+        ]
         for auto, reason in orphans:
             decision, note = rules[(auto, reason)]
-            lines.append(f"| {decision} | {_md_text(reason)} | 0 | `{auto}` | {_md_text(note)} |")
+            lines.append(
+                f"| {decision} | {_md_text(reason)} | 0 | `{auto}` | {_md_text(note)} |"
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_csv(entries: list[Entry], path: Path) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["id", "zone", "fichier", "ligne", "portee", "contexte", "categorie",
-                         "categorie_auto", "raison", "decision_regle", "texte",
-                         "decision_utilisateur", "note"])
+        writer.writerow(
+            [
+                "id",
+                "zone",
+                "fichier",
+                "ligne",
+                "portee",
+                "contexte",
+                "categorie",
+                "categorie_auto",
+                "raison",
+                "decision_regle",
+                "texte",
+                "decision_utilisateur",
+                "note",
+            ]
+        )
         for e in entries:
-            writer.writerow([e.ident, e.zone, f"{e.source}/{e.file}", e.line, e.scope, e.context,
-                             e.category, e.auto, e.reason, e.rule_decision, e.text,
-                             e.line_decision, e.note])
+            writer.writerow(
+                [
+                    e.ident,
+                    e.zone,
+                    f"{e.source}/{e.file}",
+                    e.line,
+                    e.scope,
+                    e.context,
+                    e.category,
+                    e.auto,
+                    e.reason,
+                    e.rule_decision,
+                    e.text,
+                    e.line_decision,
+                    e.note,
+                ]
+            )
 
 
 def _md_code(text: str, limit: int = 110) -> str:
@@ -972,28 +1677,96 @@ def _md_text(text: str) -> str:
     return escaped
 
 
-ZONE_ORDER = ("ecrans", "widgets", "tui-autre", "guide", "cli", "exports-html", "application", "domaine",
-              "infrastructure", "socle", "omega-lib")
+ZONE_ORDER = (
+    "ecrans",
+    "widgets",
+    "tui-autre",
+    "guide",
+    "cli",
+    "exports-html",
+    "application",
+    "domaine",
+    "infrastructure",
+    "socle",
+    "omega-lib",
+)
 
 TEXTUAL_BUILTINS = (
-    ("`Select` sans libelle d'invite", "\"Select\"", "affiche si une liste deroulante autorise le vide sans `prompt=`", "remplacable : passer `prompt=` traduit"),
-    ("Ctrl+C dans l'application", "\"Press ctrl+q to quit the app\" / \"Do you want to quit?\"", "notification de Textual (`action_help_quit`)", "remplacable : surcharger l'action (a verifier : deja surchargee par le correctif SIGINT ?)"),
-    ("Icone de l'en-tete (`Header`)", "infobulle \"Open the command palette\"", "79 ecrans utilisent `Header`", "remplacable ou retirable (palette neutralisee)"),
-    ("Pied de page (`Footer`)", "libelle \"palette\"", "affiche si la palette de commandes est active", "a verifier : la palette est neutralisee (check_action)"),
-    ("Raccourci Ctrl+Q de Textual", "\"Quit\" / \"Quit the app and return to the command prompt.\"", "`show=False` : visible seulement dans l'aide des touches", "remplacable : redefinir la liaison"),
-    ("Capture d'ecran Textual", "\"Saved screenshot\" / \"Screenshot\"", "notification de `action_screenshot`", "a verifier : utilise par omega-fire ?"),
-    ("Raccourcis Tab / Maj+Tab", "\"Focus Next\" / \"Focus Previous\"", "`show=False`", "invisibles, laisses tels quels"),
+    (
+        "`Select` sans libelle d'invite",
+        '"Select"',
+        "affiche si une liste deroulante autorise le vide sans `prompt=`",
+        "remplacable : passer `prompt=` traduit",
+    ),
+    (
+        "Ctrl+C dans l'application",
+        '"Press ctrl+q to quit the app" / "Do you want to quit?"',
+        "notification de Textual (`action_help_quit`)",
+        "remplacable : surcharger l'action (a verifier : deja surchargee par le correctif SIGINT ?)",
+    ),
+    (
+        "Icone de l'en-tete (`Header`)",
+        'infobulle "Open the command palette"',
+        "79 ecrans utilisent `Header`",
+        "remplacable ou retirable (palette neutralisee)",
+    ),
+    (
+        "Pied de page (`Footer`)",
+        'libelle "palette"',
+        "affiche si la palette de commandes est active",
+        "a verifier : la palette est neutralisee (check_action)",
+    ),
+    (
+        "Raccourci Ctrl+Q de Textual",
+        '"Quit" / "Quit the app and return to the command prompt."',
+        "`show=False` : visible seulement dans l'aide des touches",
+        "remplacable : redefinir la liaison",
+    ),
+    (
+        "Capture d'ecran Textual",
+        '"Saved screenshot" / "Screenshot"',
+        "notification de `action_screenshot`",
+        "a verifier : utilise par omega-fire ?",
+    ),
+    (
+        "Raccourcis Tab / Maj+Tab",
+        '"Focus Next" / "Focus Previous"',
+        "`show=False`",
+        "invisibles, laisses tels quels",
+    ),
 )
 OUTSIDE_TEXTS = (
-    ("Sorties d'outils externes affichees telles quelles", "openssl, certbot, systemctl, journalctl, lnav, fail2ban-client", "jamais traduites (texte de l'outil, souvent deja dans la langue du systeme)"),
-    ("Messages d'exception Python / OSError", "`[Errno 13] Permission denied`…", "affiches tels quels apres notre texte traduit"),
-    ("Contenu des fichiers de l'utilisateur", "listes de chemins, config, journaux affiches dans l'editeur ou lnav", "jamais traduits"),
-    ("Logo ASCII du splash", "art ASCII", "jamais traduit ; la phrase \"Appuyez sur une touche pour continuer...\" l'est"),
+    (
+        "Sorties d'outils externes affichees telles quelles",
+        "openssl, certbot, systemctl, journalctl, lnav, fail2ban-client",
+        "jamais traduites (texte de l'outil, souvent deja dans la langue du systeme)",
+    ),
+    (
+        "Messages d'exception Python / OSError",
+        "`[Errno 13] Permission denied`…",
+        "affiches tels quels apres notre texte traduit",
+    ),
+    (
+        "Contenu des fichiers de l'utilisateur",
+        "listes de chemins, config, journaux affiches dans l'editeur ou lnav",
+        "jamais traduits",
+    ),
+    (
+        "Logo ASCII du splash",
+        "art ASCII",
+        'jamais traduit ; la phrase "Appuyez sur une touche pour continuer..." l\'est',
+    ),
 )
 
 
-def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path, csv_name: str,
-             decisions_name: str) -> None:
+def write_md(
+    entries: list[Entry],
+    skipped: int,
+    missing: list[str],
+    path: Path,
+    csv_name: str,
+    decisions_name: str,
+) -> None:
     by_zone_cat: dict[str, Counter] = defaultdict(Counter)
     chars: dict[str, int] = Counter()
     for e in entries:
@@ -1005,19 +1778,29 @@ def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path,
     w = lines.append
     w("# Inventaire des textes de l'interface — OMEGA-FIRE")
     w("")
-    w(f"> Généré le {datetime.now().astimezone().date().isoformat()} par `omega-fire/tools/i18n_inventory.py` "
-      "(lecture seule sur le code). Plan : `OMEGA-FIRE_PLAN-DETAILLE_I18N.md` §4, lot 1.")
-    w(f"> Ancienne interface `--legacy-cli` exclue (Q1) : {len(legacy)} fichiers non relevés "
-      "(`actions.py`, `app.py`, `menu_builder.py`…), restent en français.")
-    w(f"> Détail ligne par ligne : `{csv_name}` (une ligne par texte, colonnes "
-      "`decision_utilisateur` et `note` à remplir pendant la revue).")
+    w(
+        f"> Généré le {datetime.now().astimezone().date().isoformat()} par `omega-fire/tools/i18n_inventory.py` "
+        "(lecture seule sur le code). Plan : `OMEGA-FIRE_PLAN-DETAILLE_I18N.md` §4, lot 1."
+    )
+    w(
+        f"> Ancienne interface `--legacy-cli` exclue (Q1) : {len(legacy)} fichiers non relevés "
+        "(`actions.py`, `app.py`, `menu_builder.py`…), restent en français."
+    )
+    w(
+        f"> Détail ligne par ligne : `{csv_name}` (une ligne par texte, colonnes "
+        "`decision_utilisateur` et `note` à remplir pendant la revue)."
+    )
     w("")
-    w("> **Ce fichier est régénéré à chaque passage : ne pas l'éditer.** Tes décisions vont dans "
-      f"`{decisions_name}` (par règle) ou dans les colonnes `decision_utilisateur` / `note` du CSV "
-      "(par ligne) ; elles sont relues et appliquées ici à chaque génération.")
+    w(
+        "> **Ce fichier est régénéré à chaque passage : ne pas l'éditer.** Tes décisions vont dans "
+        f"`{decisions_name}` (par règle) ou dans les colonnes `decision_utilisateur` / `note` du CSV "
+        "(par ligne) ; elles sont relues et appliquées ici à chaque génération."
+    )
     w("")
-    w("**Statut : pré-classement automatique + tes décisions — à valider (§4.5).** Rien n'est "
-      "marqué pour traduction tant que cet inventaire n'est pas validé.")
+    w(
+        "**Statut : pré-classement automatique + tes décisions — à valider (§4.5).** Rien n'est "
+        "marqué pour traduction tant que cet inventaire n'est pas validé."
+    )
     w("")
     if missing:
         w("⚠️ Sources absentes : " + " ; ".join(missing))
@@ -1026,43 +1809,78 @@ def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path,
     w("")
     w("| Catégorie | Sens | Ce que tu dois faire |")
     w("|---|---|---|")
-    w("| `TRADUIRE` | texte pour l'utilisateur, contexte reconnu sans ambiguïté (bouton, titre, notification, fiche du guide…) | survol |")
-    w("| `TRADUIRE-PROBABLE` | a l'air humain, dans un écran, mais le contexte n'est pas reconnu | vérifier |")
-    w("| `NE-PAS-TRADUIRE` | identifiant, clé, valeur, chemin, motif, CSS, journal, contrat machine | **vérifier les raisons** : une erreur ici = texte resté en français |")
-    w("| `A-DECIDER` | messages du cœur, stderr, exceptions, sorties de commandes | **décider un par un** (ou par groupe) |")
+    w(
+        "| `TRADUIRE` | texte pour l'utilisateur, contexte reconnu sans ambiguïté (bouton, titre, notification, fiche du guide…) | survol |"
+    )
+    w(
+        "| `TRADUIRE-PROBABLE` | a l'air humain, dans un écran, mais le contexte n'est pas reconnu | vérifier |"
+    )
+    w(
+        "| `NE-PAS-TRADUIRE` | identifiant, clé, valeur, chemin, motif, CSS, journal, contrat machine | **vérifier les raisons** : une erreur ici = texte resté en français |"
+    )
+    w(
+        "| `A-DECIDER` | messages du cœur, stderr, exceptions, sorties de commandes | **décider un par un** (ou par groupe) |"
+    )
     w("")
-    w(f"Total : **{len(entries)} textes relevés** "
-      f"({skipped} chaînes sans aucune lettre ignorées : ponctuation, séparateurs, nombres).")
+    w(
+        f"Total : **{len(entries)} textes relevés** "
+        f"({skipped} chaînes sans aucune lettre ignorées : ponctuation, séparateurs, nombres)."
+    )
     w("")
     w("## 2. Récapitulatif par zone")
     w("")
-    w("| Zone | TRADUIRE | PROBABLE | NE PAS | À DÉCIDER | Total | Caractères à traduire* |")
+    w(
+        "| Zone | TRADUIRE | PROBABLE | NE PAS | À DÉCIDER | Total | Caractères à traduire* |"
+    )
     w("|---|---:|---:|---:|---:|---:|---:|")
-    for zone in [z for z in ZONE_ORDER if z in by_zone_cat] + sorted(set(by_zone_cat) - set(ZONE_ORDER)):
+    for zone in [z for z in ZONE_ORDER if z in by_zone_cat] + sorted(
+        set(by_zone_cat) - set(ZONE_ORDER)
+    ):
         c = by_zone_cat[zone]
-        w(f"| {zone} | {c[TRADUIRE]} | {c[PROBABLE]} | {c[NE_PAS]} | {c[A_DECIDER]} | {sum(c.values())} | {chars[zone]:,} |".replace(",", " "))
-    w(f"| **Total** | **{totals[TRADUIRE]}** | **{totals[PROBABLE]}** | **{totals[NE_PAS]}** | **{totals[A_DECIDER]}** | **{len(entries)}** | **{sum(chars.values()):,}** |".replace(",", " "))
+        w(
+            f"| {zone} | {c[TRADUIRE]} | {c[PROBABLE]} | {c[NE_PAS]} | {c[A_DECIDER]} | {sum(c.values())} | {chars[zone]:,} |".replace(
+                ",", " "
+            )
+        )
+    w(
+        f"| **Total** | **{totals[TRADUIRE]}** | **{totals[PROBABLE]}** | **{totals[NE_PAS]}** | **{totals[A_DECIDER]}** | **{len(entries)}** | **{sum(chars.values()):,}** |".replace(
+            ",", " "
+        )
+    )
     w("")
     w("\\* TRADUIRE + PROBABLE, avant décision sur les « à décider ».")
     w("")
     w("## 3. Raisons du pré-classement (pour valider les règles d'un coup)")
     w("")
-    w("Chaque règle s'applique à beaucoup de textes : valider ou corriger une **règle** est plus "
-      "rapide que de relire chaque ligne. Exemples pris au hasard dans chaque groupe.")
+    w(
+        "Chaque règle s'applique à beaucoup de textes : valider ou corriger une **règle** est plus "
+        "rapide que de relire chaque ligne. Exemples pris au hasard dans chaque groupe."
+    )
     w("")
     by_reason: dict[tuple[str, str], list[Entry]] = defaultdict(list)
     for e in entries:
         by_reason[(e.auto, e.reason)].append(e)
     w("| Catégorie retenue | Raison | Nombre | Pré-classement d'origine | Exemples |")
     w("|---|---|---:|---|---|")
-    for (category, reason), group in sorted(by_reason.items(), key=lambda kv: (CATEGORIES.index(kv[1][0].category), CATEGORIES.index(kv[0][0]), -len(kv[1]))):
+    for (category, reason), group in sorted(
+        by_reason.items(),
+        key=lambda kv: (
+            CATEGORIES.index(kv[1][0].category),
+            CATEGORIES.index(kv[0][0]),
+            -len(kv[1]),
+        ),
+    ):
         step = max(1, len(group) // 3)
         samples = " · ".join(_md_code(e.text, 40) for e in group[::step][:3])
         final = Counter(e.category for e in group)
-        final_text = ", ".join(c if n == len(group) else f"{c} {n}" for c, n in final.most_common())
+        final_text = ", ".join(
+            c if n == len(group) else f"{c} {n}" for c, n in final.most_common()
+        )
         decided = any(e.rule_decision or e.line_decision for e in group)
         origin = f"`{category}` (décidé)" if decided else f"`{category}`"
-        w(f"| **{final_text}** | {_md_text(reason)} | {len(group)} | {origin} | {samples} |")
+        w(
+            f"| **{final_text}** | {_md_text(reason)} | {len(group)} | {origin} | {samples} |"
+        )
     w("")
     w("## 4. Écrans : volume par fichier")
     w("")
@@ -1072,8 +1890,12 @@ def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path,
     for e in entries:
         if e.zone in {"ecrans", "widgets", "tui-autre"}:
             per_file[e.file][e.category] += 1
-    for file, c in sorted(per_file.items(), key=lambda kv: -(kv[1][TRADUIRE] + kv[1][PROBABLE])):
-        w(f"| `{file}` | {c[TRADUIRE]} | {c[PROBABLE]} | {c[A_DECIDER]} | {c[NE_PAS]} |")
+    for file, c in sorted(
+        per_file.items(), key=lambda kv: -(kv[1][TRADUIRE] + kv[1][PROBABLE])
+    ):
+        w(
+            f"| `{file}` | {c[TRADUIRE]} | {c[PROBABLE]} | {c[A_DECIDER]} | {c[NE_PAS]} |"
+        )
     w("")
     w("## 5. Contrats machine (§4.3) — jamais traduits")
     w("")
@@ -1081,12 +1903,16 @@ def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path,
     w("|---|---|---|")
     for marker, why in MACHINE_CONTRACTS:
         found = [f"`{e.file}:{e.line}`" for e in entries if marker in e.text]
-        w(f"| `{marker.strip()}` | {why} | {', '.join(found[:6]) or '—'}{' …' if len(found) > 6 else ''} |")
+        w(
+            f"| `{marker.strip()}` | {why} | {', '.join(found[:6]) or '—'}{' …' if len(found) > 6 else ''} |"
+        )
     w("")
-    w("Aussi jamais traduits : clés et valeurs de config, noms de commandes et options CLI, sortie "
-      "de `nft`/`iptables`/`fail2ban-client`/`systemctl` analysée par l'application, format de `app.log` "
-      "et `audit.log`, formats lnav, schéma SQLite, noms de jails/tables/chaînes/sets, "
-      "noms de fichiers et identifiants de règles.")
+    w(
+        "Aussi jamais traduits : clés et valeurs de config, noms de commandes et options CLI, sortie "
+        "de `nft`/`iptables`/`fail2ban-client`/`systemctl` analysée par l'application, format de `app.log` "
+        "et `audit.log`, formats lnav, schéma SQLite, noms de jails/tables/chaînes/sets, "
+        "noms de fichiers et identifiants de règles."
+    )
     w("")
     w("## 6. Textes hors de notre code (§4.4)")
     w("")
@@ -1119,27 +1945,43 @@ def write_md(entries: list[Entry], skipped: int, missing: list[str], path: Path,
         w("| Ligne | Contexte | Raison | Texte |")
         w("|---:|---|---|---|")
         for e in group:
-            w(f"| {e.line} | {_md_code(e.context, 40)} | {_md_text(e.reason)} | {_md_code(e.text)} |")
+            w(
+                f"| {e.line} | {_md_code(e.context, 40)} | {_md_text(e.reason)} | {_md_code(e.text)} |"
+            )
         w("")
     w("## 8. Revue (§4.5)")
     w("")
-    w(f"1. Décider par **règle** dans `{decisions_name}` (colonne Décision), surtout les règles "
-      "en `NE-PAS-TRADUIRE` : une erreur là = texte resté en français.")
+    w(
+        f"1. Décider par **règle** dans `{decisions_name}` (colonne Décision), surtout les règles "
+        "en `NE-PAS-TRADUIRE` : une erreur là = texte resté en français."
+    )
     w("2. Trancher ce qui reste en section 7.")
-    w("3. Toute correction ponctuelle : colonne `decision_utilisateur` du CSV "
-      "(`TRADUIRE` / `NE-PAS-TRADUIRE`) + `note`.")
-    w("4. Relancer `.venv/bin/python tools/i18n_inventory.py` : ce fichier se met à jour, "
-      "tes décisions sont conservées.")
-    w("5. Une fois validé : l'inventaire est figé et devient la référence du lot 4 (marquage) ; "
-      "un test (§4.6) empêchera ensuite tout nouveau texte non classé.")
+    w(
+        "3. Toute correction ponctuelle : colonne `decision_utilisateur` du CSV "
+        "(`TRADUIRE` / `NE-PAS-TRADUIRE`) + `note`."
+    )
+    w(
+        "4. Relancer `.venv/bin/python tools/i18n_inventory.py` : ce fichier se met à jour, "
+        "tes décisions sont conservées."
+    )
+    w(
+        "5. Une fois validé : l'inventaire est figé et devient la référence du lot 4 (marquage) ; "
+        "un test (§4.6) empêchera ensuite tout nouveau texte non classé."
+    )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--csv", type=Path, default=PROJECT.parent / "i18n_inventaire.csv")
-    parser.add_argument("--md", type=Path, default=PROJECT.parent / "I18N_INVENTAIRE.md")
-    parser.add_argument("--decisions", type=Path, default=PROJECT.parent / "I18N_DECISIONS.md")
+    parser.add_argument(
+        "--csv", type=Path, default=PROJECT.parent / "i18n_inventaire.csv"
+    )
+    parser.add_argument(
+        "--md", type=Path, default=PROJECT.parent / "I18N_INVENTAIRE.md"
+    )
+    parser.add_argument(
+        "--decisions", type=Path, default=PROJECT.parent / "I18N_DECISIONS.md"
+    )
     args = parser.parse_args(argv)
     entries, skipped, missing = scan()
     rules = load_rule_decisions(args.decisions)
@@ -1149,8 +1991,12 @@ def main(argv: list[str] | None = None) -> int:
     write_csv(entries, args.csv)
     write_md(entries, skipped, missing, args.md, args.csv.name, args.decisions.name)
     totals = Counter(e.category for e in entries)
-    print(f"{len(entries)} textes : " + ", ".join(f"{c} {totals[c]}" for c in CATEGORIES))
-    print(f"-> {args.md}\n-> {args.csv}\n-> {args.decisions} (decisions : {sum(1 for d in rules.values() if d[0])} regles, {sum(1 for d in lines.values() if d[0])} lignes)")
+    print(
+        f"{len(entries)} textes : " + ", ".join(f"{c} {totals[c]}" for c in CATEGORIES)
+    )
+    print(
+        f"-> {args.md}\n-> {args.csv}\n-> {args.decisions} (decisions : {sum(1 for d in rules.values() if d[0])} regles, {sum(1 for d in lines.values() if d[0])} lignes)"
+    )
     if missing:
         print("ATTENTION : " + " ; ".join(missing), file=sys.stderr)
     return 0

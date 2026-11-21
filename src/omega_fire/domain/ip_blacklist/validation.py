@@ -13,18 +13,19 @@ only. Reading/writing the actual file is infrastructure's job
 (TextStore); deciding whether a line is acceptable is a business
 rule, hence domain/.
 """
+
 from dataclasses import dataclass
 from enum import Enum
 from ipaddress import ip_network
-from typing import Optional
-from omega_fire.shared.i18n import _
 
+from omega_fire.shared.i18n import _
 
 COMMENT_PREFIX = "#"
 
 
 class LineKind(Enum):
     """Classification of a single line in a blocklist file."""
+
     IP = "ip"
     COMMENT = "comment"
     BLANK = "blank"
@@ -34,11 +35,12 @@ class LineKind(Enum):
 @dataclass(frozen=True)
 class ParsedLine:
     """Result of classifying one line of a blocklist file."""
+
     line_number: int
     raw: str
     kind: LineKind
-    ip: Optional[str] = None  # normalized IP/CIDR, only set when kind == IP
-    reason: Optional[str] = None  # explanation, only set when kind == INVALID
+    ip: str | None = None  # normalized IP/CIDR, only set when kind == IP
+    reason: str | None = None  # explanation, only set when kind == INVALID
 
 
 def classify_line(raw: str, line_number: int = 0) -> ParsedLine:
@@ -75,7 +77,9 @@ def classify_line(raw: str, line_number: int = 0) -> ParsedLine:
             line_number=line_number,
             raw=raw,
             kind=LineKind.INVALID,
-            reason=_("Plusieurs valeurs ou texte libre sur une seule ligne (une IP par ligne)."),
+            reason=_(
+                "Plusieurs valeurs ou texte libre sur une seule ligne (une IP par ligne)."
+            ),
         )
 
     try:
@@ -92,7 +96,9 @@ def classify_line(raw: str, line_number: int = 0) -> ParsedLine:
             line_number=line_number,
             raw=raw,
             kind=LineKind.INVALID,
-            reason=_("'{candidate}' n'est pas une adresse IP ou un réseau CIDR valide.").format(candidate=candidate),
+            reason=_(
+                "'{candidate}' n'est pas une adresse IP ou un réseau CIDR valide."
+            ).format(candidate=candidate),
         )
 
 
@@ -171,4 +177,4 @@ def rebuild_clean_content(parsed_lines: list[ParsedLine]) -> str:
 # - application/commands/manage_blocklist_file.py (Phase 4) l'utilisera
 #   pour valider le contenu avant sauvegarde et produire le rapport
 #   affiché à l'utilisateur par le menu 2.7 (Phase 6)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -6,6 +6,7 @@ La langue ne change jamais en cours de processus (changer = redemarrer l'interfa
 l'installant avant d'importer le conteneur et la TUI, toute phrase traduite au chargement
 d'un module (menus, sections, aide) est deja dans la bonne langue. Ce module ne charge
 volontairement que le strict minimum (reglages, catalogues, choix de la langue)."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -16,11 +17,17 @@ from omega_lib.infrastructure.terminal.detector import SystemTerminalDetector
 
 from omega_fire.application.commands.select_language import install_interface_language
 from omega_fire.infrastructure.config.paths import RUNTIME_DIR
-from omega_fire.infrastructure.i18n.gettext_language_catalog import GettextLanguageCatalog
-from omega_fire.infrastructure.storage.files.json_settings_store import JsonSettingsStore
+from omega_fire.infrastructure.i18n.gettext_language_catalog import (
+    GettextLanguageCatalog,
+)
+from omega_fire.infrastructure.storage.files.json_settings_store import (
+    JsonSettingsStore,
+)
 
 
-def install_language_early(environ: Mapping[str, str], runtime_dir: Path = RUNTIME_DIR) -> LanguageChoice:
+def install_language_early(
+    environ: Mapping[str, str], runtime_dir: Path = RUNTIME_DIR
+) -> LanguageChoice:
     return install_interface_language(
         settings_store=JsonSettingsStore(runtime_dir / "settings.json"),
         catalog=GettextLanguageCatalog(),

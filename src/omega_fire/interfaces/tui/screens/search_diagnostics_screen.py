@@ -11,6 +11,7 @@ attribut `.entries`/`.logs` ni une liste, donc `raw_entries` reste
 toujours vide quel que soit le contenu reel du journal. Cet ecran ne
 porte donc que la partie recherche-capacites, la seule qui fonctionne
 reellement aujourd'hui."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -59,8 +60,13 @@ class SearchDiagnosticsScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-form-panel"):
             with Vertical(id="search-form"):
-                yield Static(_("RECHERCHER DANS LES DIAGNOSTICS"), classes="omega-title")
-                yield Input(placeholder=_("Mot-clé (id, raison ou détails techniques)"), id="query-input")
+                yield Static(
+                    _("RECHERCHER DANS LES DIAGNOSTICS"), classes="omega-title"
+                )
+                yield Input(
+                    placeholder=_("Mot-clé (id, raison ou détails techniques)"),
+                    id="query-input",
+                )
                 with Horizontal(classes="omega-actions"):
                     with Container(classes="omega-btn-frame"):
                         yield Button(_("Rechercher"), id="search", variant="primary")
@@ -87,7 +93,8 @@ class SearchDiagnosticsScreen(OmegaScreen):
         capabilities = self._container.capability_registry.list_all()
         if keyword:
             capabilities = [
-                cap for cap in capabilities
+                cap
+                for cap in capabilities
                 if keyword in cap.id.lower()
                 or keyword in (cap.reason or "").lower()
                 or keyword in str(getattr(cap, "detail", "") or "").lower()
@@ -98,6 +105,18 @@ class SearchDiagnosticsScreen(OmegaScreen):
 
         hint = self.query_one("#result-hint", Static)
         if not capabilities:
-            hint.update(_("Aucun diagnostic ou composant ne correspond à '{keyword}'.").format(keyword=keyword) if keyword else _("Aucun diagnostic."))
+            hint.update(
+                _("Aucun diagnostic ou composant ne correspond à '{keyword}'.").format(
+                    keyword=keyword
+                )
+                if keyword
+                else _("Aucun diagnostic.")
+            )
         else:
-            hint.update(_("{count} résultat(s) pour '{keyword}'.").format(count=len(capabilities), keyword=keyword) if keyword else _("{count} capacité(s).").format(count=len(capabilities)))
+            hint.update(
+                _("{count} résultat(s) pour '{keyword}'.").format(
+                    count=len(capabilities), keyword=keyword
+                )
+                if keyword
+                else _("{count} capacité(s).").format(count=len(capabilities))
+            )

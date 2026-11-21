@@ -15,6 +15,7 @@ a label and the other doesn't.
 
 No external dependencies beyond domain/rules/models.py.
 """
+
 from dataclasses import dataclass, field
 
 from omega_fire.domain.rules.models import FirewallRule
@@ -31,6 +32,7 @@ class RuleGroup:
         rules: All rules belonging to this group, including the
             representative.
     """
+
     fingerprint: str
     representative: FirewallRule
     rules: list[FirewallRule] = field(default_factory=list)
@@ -67,8 +69,14 @@ def compute_fingerprint(rule: FirewallRule) -> str:
         duplicates for display/grouping purposes.
     """
     chain_val = rule.chain.value if hasattr(rule.chain, "value") else str(rule.chain)
-    action_val = rule.action.value if hasattr(rule.action, "value") else str(rule.action)
-    protocol_val = rule.protocol.value if rule.protocol and hasattr(rule.protocol, "value") else "any"
+    action_val = (
+        rule.action.value if hasattr(rule.action, "value") else str(rule.action)
+    )
+    protocol_val = (
+        rule.protocol.value
+        if rule.protocol and hasattr(rule.protocol, "value")
+        else "any"
+    )
 
     parts = [
         rule.backend or "",
@@ -137,4 +145,4 @@ def group_rules(rules: list[FirewallRule]) -> list[RuleGroup]:
 #   pour préparer la vue Synthèse HTML (menu 6.2)
 # - La vue Complète (JSON/TXT) n'utilise PAS ce regroupement : elle
 #   reste exhaustive, une ligne par règle, pour un usage fidèle/réinjectable
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

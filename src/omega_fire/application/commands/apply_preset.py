@@ -24,12 +24,16 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
+from omega_fire.application.commands.backup_state import (
+    _collect_banned_ips,
+    _collect_jails,
+)
 from omega_fire.domain.rules.presets import FirewallPreset
 from omega_fire.infrastructure.config.paths import RUNTIME_DIR
-from omega_fire.application.commands.backup_state import _collect_banned_ips, _collect_jails
 from omega_fire.shared.i18n import _
+
 
 def snapshot_file_for(backend: str) -> Path:
     """Get the snapshot file path for a specific backend.
@@ -59,6 +63,7 @@ def state_file_for(backend: str) -> Path:
 @dataclass
 class ApplyPresetRequest:
     """Input for the apply preset use case."""
+
     preset: FirewallPreset
     backend: str
 
@@ -66,6 +71,7 @@ class ApplyPresetRequest:
 @dataclass
 class ApplyPresetResult:
     """Output of the apply preset use case."""
+
     success: bool
     message: str
 
@@ -76,7 +82,7 @@ class ApplyPresetCommand:
     def __init__(
         self,
         firewall_adapter: Any,
-        adapters: Optional[dict[str, Any]] = None,
+        adapters: dict[str, Any] | None = None,
         persistence_port: Any = None,
         rule_repository: Any = None,
     ):
@@ -106,7 +112,9 @@ class ApplyPresetCommand:
         if self._adapter is None:
             return ApplyPresetResult(
                 success=False,
-                message=_("Aucun backend disponible pour appliquer un profil sur {backend}.").format(backend=request.backend),
+                message=_(
+                    "Aucun backend disponible pour appliquer un profil sur {backend}."
+                ).format(backend=request.backend),
             )
 
         snapshot_file = snapshot_file_for(request.backend)
@@ -119,7 +127,9 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=_("Impossible de sauvegarder l'état actuel avant application : {e}. Application annulée par sécurité.").format(e=e),
+                message=_(
+                    "Impossible de sauvegarder l'état actuel avant application : {e}. Application annulée par sécurité."
+                ).format(e=e),
             )
 
         try:
@@ -128,7 +138,9 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=_("Impossible d'écrire le fichier de sauvegarde ({e}). Application annulée par sécurité.").format(e=e),
+                message=_(
+                    "Impossible d'écrire le fichier de sauvegarde ({e}). Application annulée par sécurité."
+                ).format(e=e),
             )
 
         # --- 1b. Snapshot complet multi-backend (nouveau, non bloquant) ---
@@ -149,7 +161,9 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=_("Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R].").format(name=request.preset.name, backend=request.backend, e=e),
+                message=_(
+                    "Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R]."
+                ).format(name=request.preset.name, backend=request.backend, e=e),
             )
 
         # --- 2b. Synchronisation RuleRepository (non bloquant) ---
@@ -174,27 +188,35 @@ class ApplyPresetCommand:
         rules_count_at_apply = None
         if self._rule_repository is not None:
             try:
-                rules_count_at_apply = self._rule_repository.count_managed(request.backend)
+                rules_count_at_apply = self._rule_repository.count_managed(
+                    request.backend
+                )
             except Exception:
                 rules_count_at_apply = None
 
         try:
             RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
             state_file.write_text(
-                json.dumps({
-                    "active_preset": request.preset.key,
-                    "backend": request.backend,
-                    "applied_at": datetime.now().isoformat(),
-                    "rules_count_at_apply": rules_count_at_apply,
-                }),
+                json.dumps(
+                    {
+                        "active_preset": request.preset.key,
+                        "backend": request.backend,
+                        "applied_at": datetime.now().isoformat(),
+                        "rules_count_at_apply": rules_count_at_apply,
+                    }
+                ),
                 encoding="utf-8",
             )
         except Exception:
             return ApplyPresetResult(
                 success=True,
-                message=_("Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage).").format(name=request.preset.name, backend=request.backend),
+                message=_(
+                    "Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage)."
+                ).format(name=request.preset.name, backend=request.backend),
             )
-        message = _("Le profil '{name}' est maintenant actif sur {backend}.").format(name=request.preset.name, backend=request.backend)
+        message = _("Le profil '{name}' est maintenant actif sur {backend}.").format(
+            name=request.preset.name, backend=request.backend
+        )
         if warnings:
             message += _(" Avertissement : ") + " ; ".join(warnings) + "."
 
@@ -209,31 +231,39 @@ class ApplyPresetCommand:
         except Exception as e:
             return ApplyPresetResult(
                 success=False,
-                message=_("Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R].").format(name=request.preset.name, backend=request.backend, e=e),
+                message=_(
+                    "Échec de l'application du profil '{name}' sur {backend} : {e}. L'état antérieur reste disponible via [R]."
+                ).format(name=request.preset.name, backend=request.backend, e=e),
             )
 
         # --- 3. Enregistrement de l'état actif (propre à ce backend) ---
         try:
             RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
             state_file.write_text(
-                json.dumps({
-                    "active_preset": request.preset.key,
-                    "backend": request.backend,
-                    "applied_at": datetime.now().isoformat(),
-                }),
+                json.dumps(
+                    {
+                        "active_preset": request.preset.key,
+                        "backend": request.backend,
+                        "applied_at": datetime.now().isoformat(),
+                    }
+                ),
                 encoding="utf-8",
             )
         except Exception:
             return ApplyPresetResult(
                 success=True,
-                message=_("Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage).").format(name=request.preset.name, backend=request.backend),
+                message=_(
+                    "Le profil '{name}' a été appliqué sur {backend}, mais son état n'a pas pu être enregistré (l'indicateur ACTIF pourrait être incorrect au prochain affichage)."
+                ).format(name=request.preset.name, backend=request.backend),
             )
 
         return ApplyPresetResult(
             success=True,
-            message=_("Le profil '{name}' est maintenant actif sur {backend}.").format(name=request.preset.name, backend=request.backend),
+            message=_("Le profil '{name}' est maintenant actif sur {backend}.").format(
+                name=request.preset.name, backend=request.backend
+            ),
         )
-    
+
     def _capture_full_snapshot(self, request: ApplyPresetRequest) -> None:
         """Capture l'état complet (tous backends) juste avant le flush du
         profil, et le sauvegarde via persistence_port avec
@@ -241,10 +271,13 @@ class ApplyPresetCommand:
         menu 7.1 (application/commands/backup_state.py) pour rester
         cohérent avec ce que 7.2 sait déjà lire.
         """
-        banned_ips = _collect_banned_ips({
-            k: v for k, v in self._adapters.items()
-            if k in ("nftables", "iptables", "ip6tables", "fail2ban")
-        })
+        banned_ips = _collect_banned_ips(
+            {
+                k: v
+                for k, v in self._adapters.items()
+                if k in ("nftables", "iptables", "ip6tables", "fail2ban")
+            }
+        )
 
         rules = []
         for backend_name in ("nftables", "iptables", "ip6tables"):
@@ -310,7 +343,8 @@ class ApplyPresetCommand:
 
         if backend == "nftables":
             live_rules = [
-                r for r in live_rules
+                r
+                for r in live_rules
                 if getattr(getattr(r, "family", None), "value", None) == "inet"
                 and (r.table_name or "filter") == "filter"
             ]
@@ -321,6 +355,7 @@ class ApplyPresetCommand:
                 self._rule_repository.save(live_rule)
             except Exception:
                 pass
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -358,4 +393,4 @@ class ApplyPresetCommand:
 #   ↓ récupère le preset via domain/rules/presets.py (get_preset(key))
 # application/commands/apply_preset.py : ApplyPresetCommand.execute()
 #   ↓ adapter.dump_ruleset() / adapter.apply_preset()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

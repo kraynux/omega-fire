@@ -3,6 +3,7 @@
 utilisateur 2026-10-28) : automatique depuis les instances omega-serv detectees (a chaque
 ouverture), epinglage d'un chemin a la main, ou copie d'un log distant (SSH). Aucun
 lanceur ici : la Bibliotheque alimente 5.2 Favoris et 5.3 Voir les logs."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -14,7 +15,10 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 from omega_fire.application.commands.manage_log_library import LogLibraryCommand
 from omega_fire.domain.logs.library import ACCESS_OMEGA_SERV, ACCESS_SSH, LogFile
 from omega_fire.infrastructure.config.paths import RUNTIME_DIR
-from omega_fire.infrastructure.probe.omega_serv_detector import detect_omega_serv_instances, instance_log_files
+from omega_fire.infrastructure.probe.omega_serv_detector import (
+    detect_omega_serv_instances,
+    instance_log_files,
+)
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
@@ -45,12 +49,18 @@ def short_path(path: str, width: int = 46) -> str:
         return path
     name = path.rsplit("/", 1)[-1]
     head = max(width - len(name) - 2, 8)
-    return f"{path[:head]}…/{name}" if len(name) < width - 8 else f"…{path[-(width - 1):]}"
+    return (
+        f"{path[:head]}…/{name}"
+        if len(name) < width - 8
+        else f"…{path[-(width - 1) :]}"
+    )
 
 
 def scroll_panel_home(screen: Any) -> None:
     """Le focus initial (tableau) fait defiler la zone : titre masque en 80x24."""
-    screen.call_after_refresh(lambda: screen.query_one(".omega-panel").scroll_home(animate=False))
+    screen.call_after_refresh(
+        lambda: screen.query_one(".omega-panel").scroll_home(animate=False)
+    )
 
 
 def origin_label(entry: LogFile) -> str:
@@ -76,7 +86,10 @@ def library_command() -> LogLibraryCommand:
 
 
 def omega_serv_logs() -> list[tuple[str, list]]:
-    return [(instance.name, instance_log_files(instance)) for instance in detect_omega_serv_instances()]
+    return [
+        (instance.name, instance_log_files(instance))
+        for instance in detect_omega_serv_instances()
+    ]
 
 
 class LogLibraryScreen(OmegaScreen):
@@ -105,8 +118,10 @@ class LogLibraryScreen(OmegaScreen):
         with Vertical(classes="omega-panel"):
             yield Static(_("BIBLIOTHÈQUE DE LOGS"), classes="omega-title")
             yield Static(
-                _("Les logs importés ici alimentent 5.2 Favoris et 5.3 Voir les logs. Les journaux "
-                  "des instances omega-serv détectées sont importés automatiquement."),
+                _(
+                    "Les logs importés ici alimentent 5.2 Favoris et 5.3 Voir les logs. Les journaux "
+                    "des instances omega-serv détectées sont importés automatiquement."
+                ),
                 classes="omega-hint",
             )
             yield Static("", id="library-status", classes="omega-hint")
@@ -120,10 +135,19 @@ class LogLibraryScreen(OmegaScreen):
                     yield Button(_("Sources SSH"), id="remote")
 
             yield Static(_("Épingler un chemin"), classes="omega-subtitle")
-            yield Input(placeholder=_("Chemin absolu (ex. /var/log/nginx/access.log)"), id="path-input")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            yield Input(
+                placeholder=_("Chemin absolu (ex. /var/log/nginx/access.log)"),
+                id="path-input",
+            )
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Épingler"), id="pin", variant="primary")
-        with Horizontal(classes="omega-actions", id="library-actions"), Container(classes="omega-btn-frame"):
+        with (
+            Horizontal(classes="omega-actions", id="library-actions"),
+            Container(classes="omega-btn-frame"),
+        ):
             yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -147,14 +171,27 @@ class LogLibraryScreen(OmegaScreen):
         table = self.query_one("#library-table", DataTable)
         table.clear()
         for index, entry in enumerate(self._entries, start=1):
-            table.add_row(str(index), origin_label(entry), state_label(entry), short_path(entry.path), key=entry.path)
+            table.add_row(
+                str(index),
+                origin_label(entry),
+                state_label(entry),
+                short_path(entry.path),
+                key=entry.path,
+            )
         status = self.query_one("#library-status", Static)
-        status.update(_("{count} log(s) dans la Bibliothèque.").format(count=len(self._entries)) if self._entries
-                      else _("Bibliothèque vide : épinglez un chemin ou importez des logs."))
+        status.update(
+            _("{count} log(s) dans la Bibliothèque.").format(count=len(self._entries))
+            if self._entries
+            else _("Bibliothèque vide : épinglez un chemin ou importez des logs.")
+        )
 
     def _highlighted(self) -> LogFile | None:
         table = self.query_one("#library-table", DataTable)
-        if not self._entries or table.cursor_row is None or not 0 <= table.cursor_row < len(self._entries):
+        if (
+            not self._entries
+            or table.cursor_row is None
+            or not 0 <= table.cursor_row < len(self._entries)
+        ):
             return None
         return self._entries[table.cursor_row]
 
@@ -164,7 +201,9 @@ class LogLibraryScreen(OmegaScreen):
             self.dismiss()
         elif button_id == "pin":
             result = self._library.pin_path(self.query_one("#path-input", Input).value)
-            self.app.notify(result.message, severity="information" if result.success else "warning")
+            self.app.notify(
+                result.message, severity="information" if result.success else "warning"
+            )
             if result.success:
                 self.query_one("#path-input", Input).value = ""
                 if result.count:
@@ -172,12 +211,17 @@ class LogLibraryScreen(OmegaScreen):
                 self._refresh()
         elif button_id == "import-serv":
             result = self._library.import_omega_serv(omega_serv_logs())
-            self.app.notify(result.message, severity="information" if result.success else "warning")
+            self.app.notify(
+                result.message, severity="information" if result.success else "warning"
+            )
             if result.count:
                 log_action_result(self._container, _ACTION_TITLE, status="success")
             self._refresh()
         elif button_id == "remote":
-            from omega_fire.interfaces.tui.screens.remote_log_sources_screen import RemoteLogSourcesScreen
+            from omega_fire.interfaces.tui.screens.remote_log_sources_screen import (
+                RemoteLogSourcesScreen,
+            )
+
             self.app.push_screen(RemoteLogSourcesScreen(container=self._container))
         elif button_id == "remove":
             entry = self._highlighted()
@@ -187,8 +231,10 @@ class LogLibraryScreen(OmegaScreen):
             self.app.push_screen(
                 ConfirmScreen(
                     title=_("RETIRER DE LA BIBLIOTHÈQUE"),
-                    message=_("Retirer {path} de la Bibliothèque ?\nLe fichier n'est pas supprimé ; les "
-                              "favoris qui l'utilisent ne pourront plus l'ouvrir.").format(path=entry.path),
+                    message=_(
+                        "Retirer {path} de la Bibliothèque ?\nLe fichier n'est pas supprimé ; les "
+                        "favoris qui l'utilisent ne pourront plus l'ouvrir."
+                    ).format(path=entry.path),
                 ),
                 lambda confirmed: self._remove_if_confirmed(confirmed, entry.path),
             )

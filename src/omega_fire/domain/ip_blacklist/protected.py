@@ -6,15 +6,22 @@ reseaux locaux. Un transfert jail -> pare-feu est semi-automatique (des centaine
 avant, une adresse du reseau local ou de Tailscale bannie par un jail devenait bannie definitivement
 au niveau du pare-feu, sans liste protegee. Un ban MANUEL d'une seule adresse reste possible (choix
 explicite de l'administrateur)."""
+
 from __future__ import annotations
 
 import ipaddress
 
 PROTECTED_NETWORKS: tuple[str, ...] = (
-    "127.0.0.0/8", "::1/128",                      # hote local
-    "100.64.0.0/10", "fd7a:115c:a1e0::/48",        # Tailscale (CGNAT, ULA Tailscale)
-    "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16",  # reseaux locaux IPv4
-    "fc00::/7", "fe80::/10",                       # reseaux locaux IPv6
+    "127.0.0.0/8",
+    "::1/128",  # hote local
+    "100.64.0.0/10",
+    "fd7a:115c:a1e0::/48",  # Tailscale (CGNAT, ULA Tailscale)
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "169.254.0.0/16",  # reseaux locaux IPv4
+    "fc00::/7",
+    "fe80::/10",  # reseaux locaux IPv6
 )
 
 _NETWORKS = tuple(ipaddress.ip_network(n) for n in PROTECTED_NETWORKS)

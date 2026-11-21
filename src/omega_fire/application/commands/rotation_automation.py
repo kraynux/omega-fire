@@ -12,6 +12,7 @@
 
 Stockage : var/runtime/scheduled_rotations.json, le MEME fichier qu'avant la 3.6 (les automatisations
 deja configurees sont reprises telles quelles)."""
+
 from __future__ import annotations
 
 import json
@@ -59,8 +60,14 @@ Runner = Callable[[list[str], str | None], CommandResult]
 
 def run_command(argv: list[str], input_text: str | None = None) -> CommandResult:
     try:
-        done = subprocess.run(argv, input=input_text, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS,
-                              check=False)
+        done = subprocess.run(
+            argv,
+            input=input_text,
+            capture_output=True,
+            text=True,
+            timeout=_TIMEOUT_SECONDS,
+            check=False,
+        )
     except FileNotFoundError:
         return CommandResult(_CRONTAB_MISSING, "", f"{argv[0]}: introuvable")
     except (OSError, subprocess.SubprocessError) as exc:
@@ -69,6 +76,7 @@ def run_command(argv: list[str], input_text: str | None = None) -> CommandResult
 
 
 # ---- automatisations ----------------------------------------------------------------
+
 
 class AutomationStore:
     """var/runtime/scheduled_rotations.json (liste de dicts) ; illisible = liste vide, jamais d'erreur."""
@@ -81,11 +89,17 @@ class AutomationStore:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return []
-        return [item for item in data if isinstance(item, dict)] if isinstance(data, list) else []
+        return (
+            [item for item in data if isinstance(item, dict)]
+            if isinstance(data, list)
+            else []
+        )
 
     def save_all(self, automations: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(automations, indent=2, ensure_ascii=False), encoding="utf-8")
+        self.path.write_text(
+            json.dumps(automations, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
 
 @dataclass(frozen=True)
@@ -96,7 +110,9 @@ class AutomationRun:
 
 
 def run_due_automations(
-    store: AutomationStore, now: datetime, backup: Callable[[str, int], tuple[bool, str]],
+    store: AutomationStore,
+    now: datetime,
+    backup: Callable[[str, int], tuple[bool, str]],
 ) -> list[AutomationRun]:
     """`backup(chemin, a_garder)` -> (reussi, message) : RotateLogsCommand. Une automatisation en echec
     ne bloque jamais les suivantes et reste due."""
@@ -126,6 +142,7 @@ def run_due_automations(
 
 # ---- tache planifiee ------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ScheduleResult:
     mechanism: Literal["systemd", "cron", "manual", "error"]
@@ -135,7 +152,9 @@ class ScheduleResult:
 
 def uses_systemd() -> bool:
     """systemd est le gestionnaire du systeme (pas seulement installe)."""
-    return shutil.which("systemctl") is not None and Path("/run/systemd/system").is_dir()
+    return (
+        shutil.which("systemctl") is not None and Path("/run/systemd/system").is_dir()
+    )
 
 
 _TIMER = f"{UNIT_BASE_NAME}.timer"
@@ -145,65 +164,138 @@ _SERVICE = f"{UNIT_BASE_NAME}.service"
 def rotation_schedule_status(runner: Runner = run_command) -> ScheduleResult:
     if uses_systemd():
         if runner(["systemctl", "is-enabled", _TIMER], None).ok:
-            return ScheduleResult("systemd", True, _("Exécution : timer systemd {timer} actif (chaque nuit).").format(timer=_TIMER))
-        return ScheduleResult("systemd", False, _("Exécution : timer systemd {timer} non installé.").format(timer=_TIMER))
+            return ScheduleResult(
+                "systemd",
+                True,
+                _("Exécution : timer systemd {timer} actif (chaque nuit).").format(
+                    timer=_TIMER
+                ),
+            )
+        return ScheduleResult(
+            "systemd",
+            False,
+            _("Exécution : timer systemd {timer} non installé.").format(timer=_TIMER),
+        )
     listing = runner(["crontab", "-l"], None)
     if listing.returncode == _CRONTAB_MISSING:
-        return ScheduleResult("manual", False, _("Exécution : aucun planificateur (ni systemd, ni crontab)."))
+        return ScheduleResult(
+            "manual",
+            False,
+            _("Exécution : aucun planificateur (ni systemd, ni crontab)."),
+        )
     if any(line.rstrip().endswith(CRON_MARKER) for line in listing.stdout.splitlines()):
-        return ScheduleResult("cron", True, _("Exécution : ligne crontab installée (chaque nuit)."))
-    return ScheduleResult("cron", False, _("Exécution : aucune ligne crontab pour ce compte."))
+        return ScheduleResult(
+            "cron", True, _("Exécution : ligne crontab installée (chaque nuit).")
+        )
+    return ScheduleResult(
+        "cron", False, _("Exécution : aucune ligne crontab pour ce compte.")
+    )
 
 
-def install_rotation_schedule(project_root: Path, python_executable: str, runner: Runner = run_command,
-                              unit_dir: Path = SYSTEMD_UNIT_DIR) -> ScheduleResult:
+def install_rotation_schedule(
+    project_root: Path,
+    python_executable: str,
+    runner: Runner = run_command,
+    unit_dir: Path = SYSTEMD_UNIT_DIR,
+) -> ScheduleResult:
     root = str(project_root.resolve())
     if uses_systemd():
         try:
             unit_dir.mkdir(parents=True, exist_ok=True)
             for name, content in (
-                (_SERVICE, build_rotation_service_unit(python_executable=python_executable, project_root=root)),
+                (
+                    _SERVICE,
+                    build_rotation_service_unit(
+                        python_executable=python_executable, project_root=root
+                    ),
+                ),
                 (_TIMER, build_rotation_timer_unit()),
             ):
                 (unit_dir / name).write_text(content, encoding="utf-8")
                 (unit_dir / name).chmod(0o644)
         except OSError as exc:
-            return ScheduleResult("error", False, _("Timer systemd non installé : {error}").format(error=exc))
-        for argv in (["systemctl", "daemon-reload"], ["systemctl", "enable", "--now", _TIMER]):
+            return ScheduleResult(
+                "error",
+                False,
+                _("Timer systemd non installé : {error}").format(error=exc),
+            )
+        for argv in (
+            ["systemctl", "daemon-reload"],
+            ["systemctl", "enable", "--now", _TIMER],
+        ):
             result = runner(argv, None)
             if not result.ok:
-                error = result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode)
-                return ScheduleResult("error", False, _("Timer systemd non installé : {error}").format(error=error))
-        return ScheduleResult("systemd", True, _("Timer systemd {timer} installé : les automatisations "
-                                                 "s'exécutent chaque nuit.").format(timer=_TIMER))
+                error = result.stderr.strip() or _("code {returncode}").format(
+                    returncode=result.returncode
+                )
+                return ScheduleResult(
+                    "error",
+                    False,
+                    _("Timer systemd non installé : {error}").format(error=error),
+                )
+        return ScheduleResult(
+            "systemd",
+            True,
+            _(
+                "Timer systemd {timer} installé : les automatisations "
+                "s'exécutent chaque nuit."
+            ).format(timer=_TIMER),
+        )
 
-    line = build_rotation_cron_line(python_executable=python_executable, project_root=root)
+    line = build_rotation_cron_line(
+        python_executable=python_executable, project_root=root
+    )
     listing = runner(["crontab", "-l"], None)
     if listing.returncode == _CRONTAB_MISSING:
-        return ScheduleResult("manual", False, render_manual_rotation_instructions(cron_line=line))
+        return ScheduleResult(
+            "manual", False, render_manual_rotation_instructions(cron_line=line)
+        )
     kept = without_marked_line(listing.stdout if listing.returncode == 0 else "")
     written = runner(["crontab", "-"], "\n".join([*kept, line]) + "\n")
     if not written.ok:
-        return ScheduleResult("error", False, _("Échec de l'écriture de la crontab : {value}").format(
-            value=(written.stderr or written.stdout).strip()))
-    return ScheduleResult("cron", True, _("Ligne crontab installée : les automatisations s'exécutent chaque nuit."))
+        return ScheduleResult(
+            "error",
+            False,
+            _("Échec de l'écriture de la crontab : {value}").format(
+                value=(written.stderr or written.stdout).strip()
+            ),
+        )
+    return ScheduleResult(
+        "cron",
+        True,
+        _("Ligne crontab installée : les automatisations s'exécutent chaque nuit."),
+    )
 
 
-def remove_rotation_schedule(runner: Runner = run_command, unit_dir: Path = SYSTEMD_UNIT_DIR) -> ScheduleResult:
+def remove_rotation_schedule(
+    runner: Runner = run_command, unit_dir: Path = SYSTEMD_UNIT_DIR
+) -> ScheduleResult:
     if uses_systemd():
         if not (unit_dir / _TIMER).exists():
             return ScheduleResult("systemd", True, "")
         disabled = runner(["systemctl", "disable", "--now", _TIMER], None)
         if not disabled.ok:
-            error = disabled.stderr.strip() or _("code {returncode}").format(returncode=disabled.returncode)
-            return ScheduleResult("error", False, _("Timer systemd non retiré : {error}").format(error=error))
+            error = disabled.stderr.strip() or _("code {returncode}").format(
+                returncode=disabled.returncode
+            )
+            return ScheduleResult(
+                "error",
+                False,
+                _("Timer systemd non retiré : {error}").format(error=error),
+            )
         for name in (_TIMER, _SERVICE):
             try:
                 (unit_dir / name).unlink(missing_ok=True)
             except OSError as exc:
-                return ScheduleResult("error", False, _("Timer systemd non retiré : {error}").format(error=exc))
+                return ScheduleResult(
+                    "error",
+                    False,
+                    _("Timer systemd non retiré : {error}").format(error=exc),
+                )
         runner(["systemctl", "daemon-reload"], None)
-        return ScheduleResult("systemd", True, _("Plus aucune automatisation : timer systemd retiré."))
+        return ScheduleResult(
+            "systemd", True, _("Plus aucune automatisation : timer systemd retiré.")
+        )
     listing = runner(["crontab", "-l"], None)
     if listing.returncode != 0:
         return ScheduleResult("cron", True, "")
@@ -212,6 +304,13 @@ def remove_rotation_schedule(runner: Runner = run_command, unit_dir: Path = SYST
         return ScheduleResult("cron", True, "")
     written = runner(["crontab", "-"], "\n".join(kept) + "\n" if kept else "")
     if not written.ok:
-        return ScheduleResult("error", False, _("Échec de l'écriture de la crontab : {value}").format(
-            value=(written.stderr or written.stdout).strip()))
-    return ScheduleResult("cron", True, _("Plus aucune automatisation : ligne crontab retirée."))
+        return ScheduleResult(
+            "error",
+            False,
+            _("Échec de l'écriture de la crontab : {value}").format(
+                value=(written.stderr or written.stdout).strip()
+            ),
+        )
+    return ScheduleResult(
+        "cron", True, _("Plus aucune automatisation : ligne crontab retirée.")
+    )

@@ -13,8 +13,9 @@ Conforms to Omega-Fire architecture charter:
   already resolved by the caller)
 - No subprocess calls
 """
+
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Optional
 
 from omega_fire.infrastructure.storage.files.json_store import JsonStore, JsonStoreError
 from omega_fire.shared.i18n import _
@@ -41,6 +42,7 @@ RELATIVE_STORE_PATH = "pinned_log_paths.json"
 @dataclass
 class PinnedLogPathsResult:
     """Output of an add/remove operation on the pinned log paths list."""
+
     success: bool
     paths: list[str] = field(default_factory=list)
     message: str = ""
@@ -60,11 +62,13 @@ class ManagePinnedLogPathsCommand:
         self,
         json_store: JsonStore,
         relative_path: str = RELATIVE_STORE_PATH,
-        defaults: Optional[list[str]] = None,
+        defaults: list[str] | None = None,
     ):
         self._store = json_store
         self._relative_path = relative_path
-        self._defaults = list(defaults if defaults is not None else DEFAULT_PINNED_LOG_PATHS)
+        self._defaults = list(
+            defaults if defaults is not None else DEFAULT_PINNED_LOG_PATHS
+        )
 
     def list_paths(self) -> list[str]:
         """Return the current pinned paths, seeding the store on first use.
@@ -101,17 +105,27 @@ class ManagePinnedLogPathsCommand:
         path = path.strip()
         paths = self.list_paths()
         if not path:
-            return PinnedLogPathsResult(success=False, paths=paths, message=_("Chemin vide."))
+            return PinnedLogPathsResult(
+                success=False, paths=paths, message=_("Chemin vide.")
+            )
         if path in paths:
             return PinnedLogPathsResult(
-                success=False, paths=paths, message=_("'{path}' est déjà dans la liste.").format(path=path)
+                success=False,
+                paths=paths,
+                message=_("'{path}' est déjà dans la liste.").format(path=path),
             )
 
         paths.append(path)
         self._store.save(self._relative_path, paths)
-        return PinnedLogPathsResult(success=True, paths=paths, message=_("'{path}' ajouté à la liste.").format(path=path))
+        return PinnedLogPathsResult(
+            success=True,
+            paths=paths,
+            message=_("'{path}' ajouté à la liste.").format(path=path),
+        )
 
-    def preset_candidates(self, candidates: list[str], exists: Callable[[str], bool]) -> list[str]:
+    def preset_candidates(
+        self, candidates: list[str], exists: Callable[[str], bool]
+    ) -> list[str]:
         """Presets a cocher (version 3.5) : candidats presents sur cette machine et pas
         encore epingles, sans doublon, dans l'ordre recu. `exists` est fourni par
         l'appelant (pas d'acces disque ici, cf. charte)."""
@@ -125,13 +139,24 @@ class ManagePinnedLogPathsCommand:
     def add_paths(self, new_paths: list[str]) -> PinnedLogPathsResult:
         """Epingle plusieurs chemins d'un coup (presets coches) ; ignore ceux deja presents."""
         paths = self.list_paths()
-        added = [p for p in dict.fromkeys(p.strip() for p in new_paths) if p and p not in paths]
+        added = [
+            p
+            for p in dict.fromkeys(p.strip() for p in new_paths)
+            if p and p not in paths
+        ]
         if not added:
-            return PinnedLogPathsResult(success=False, paths=paths, message=_("Aucun nouveau chemin à épingler."))
+            return PinnedLogPathsResult(
+                success=False,
+                paths=paths,
+                message=_("Aucun nouveau chemin à épingler."),
+            )
         paths.extend(added)
         self._store.save(self._relative_path, paths)
         return PinnedLogPathsResult(
-            success=True, paths=paths, message=_("{count} chemin(s) épinglé(s).").format(count=len(added)))
+            success=True,
+            paths=paths,
+            message=_("{count} chemin(s) épinglé(s).").format(count=len(added)),
+        )
 
     def remove_path(self, path: str) -> PinnedLogPathsResult:
         """Remove a path from the pinned list — any entry, default or
@@ -147,12 +172,18 @@ class ManagePinnedLogPathsCommand:
         paths = self.list_paths()
         if path not in paths:
             return PinnedLogPathsResult(
-                success=False, paths=paths, message=_("'{path}' n'est pas dans la liste.").format(path=path)
+                success=False,
+                paths=paths,
+                message=_("'{path}' n'est pas dans la liste.").format(path=path),
             )
 
         paths.remove(path)
         self._store.save(self._relative_path, paths)
-        return PinnedLogPathsResult(success=True, paths=paths, message=_("'{path}' retiré de la liste.").format(path=path))
+        return PinnedLogPathsResult(
+            success=True,
+            paths=paths,
+            message=_("'{path}' retiré de la liste.").format(path=path),
+        )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -189,4 +220,4 @@ class ManagePinnedLogPathsCommand:
 # interfaces/cli/actions.py : action_4_4_create_jail(ctx)
 # application/commands/manage_pinned_log_paths.py : ManagePinnedLogPathsCommand
 #   ↓ JsonStore (infrastructure/storage/files/json_store.py), base_dir=var/runtime/
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

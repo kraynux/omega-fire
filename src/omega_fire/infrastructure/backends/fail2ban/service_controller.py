@@ -6,22 +6,29 @@ using the detected service manager (systemd, openrc, runit).
 
 This module uses the ServiceManager adapter to perform service operations.
 """
+
 import os
 
-from omega_fire.infrastructure.backends.service_manager.detector import ServiceManagerDetector
-from omega_fire.infrastructure.backends.service_manager.adapter import ServiceManager
-from omega_fire.infrastructure.backends.service_manager.systemd import SystemdServiceManager
-from omega_fire.infrastructure.backends.service_manager.openrc import OpenRCServiceManager
-from omega_fire.infrastructure.backends.service_manager.runit import RunitServiceManager
-from omega_fire.infrastructure.backends.service_manager.exceptions import (
-    NoServiceManagerDetectedError,
-    ServiceNotFoundError,
-    ServiceControlError,
-)
+from omega_fire.core.enums import ServiceManagerType
 from omega_fire.infrastructure.backends.fail2ban.exceptions import (
     Fail2banServiceError,
 )
-from omega_fire.core.enums import ServiceManagerType
+from omega_fire.infrastructure.backends.service_manager.adapter import ServiceManager
+from omega_fire.infrastructure.backends.service_manager.detector import (
+    ServiceManagerDetector,
+)
+from omega_fire.infrastructure.backends.service_manager.exceptions import (
+    NoServiceManagerDetectedError,
+    ServiceControlError,
+    ServiceNotFoundError,
+)
+from omega_fire.infrastructure.backends.service_manager.openrc import (
+    OpenRCServiceManager,
+)
+from omega_fire.infrastructure.backends.service_manager.runit import RunitServiceManager
+from omega_fire.infrastructure.backends.service_manager.systemd import (
+    SystemdServiceManager,
+)
 
 # Chemin standard du log propre a fail2ban (logtarget par defaut de
 # fail2ban.conf sur toutes les distributions majeures) — distinct du
@@ -99,7 +106,11 @@ class Fail2banServiceController:
         try:
             manager = self._get_manager()
             return manager.start("fail2ban")
-        except (NoServiceManagerDetectedError, ServiceNotFoundError, ServiceControlError) as e:
+        except (
+            NoServiceManagerDetectedError,
+            ServiceNotFoundError,
+            ServiceControlError,
+        ) as e:
             raise Fail2banServiceError(operation="start", reason=str(e)) from e
 
     def stop(self) -> bool:
@@ -114,7 +125,11 @@ class Fail2banServiceController:
         try:
             manager = self._get_manager()
             return manager.stop("fail2ban")
-        except (NoServiceManagerDetectedError, ServiceNotFoundError, ServiceControlError) as e:
+        except (
+            NoServiceManagerDetectedError,
+            ServiceNotFoundError,
+            ServiceControlError,
+        ) as e:
             raise Fail2banServiceError(operation="stop", reason=str(e)) from e
 
     def restart(self) -> bool:
@@ -130,7 +145,11 @@ class Fail2banServiceController:
         try:
             manager = self._get_manager()
             return manager.restart("fail2ban")
-        except (NoServiceManagerDetectedError, ServiceNotFoundError, ServiceControlError) as e:
+        except (
+            NoServiceManagerDetectedError,
+            ServiceNotFoundError,
+            ServiceControlError,
+        ) as e:
             raise Fail2banServiceError(operation="restart", reason=str(e)) from e
 
     def enable(self) -> bool:
@@ -145,7 +164,11 @@ class Fail2banServiceController:
         try:
             manager = self._get_manager()
             return manager.enable("fail2ban")
-        except (NoServiceManagerDetectedError, ServiceNotFoundError, ServiceControlError) as e:
+        except (
+            NoServiceManagerDetectedError,
+            ServiceNotFoundError,
+            ServiceControlError,
+        ) as e:
             raise Fail2banServiceError(operation="enable", reason=str(e)) from e
 
     def disable(self) -> bool:
@@ -160,7 +183,11 @@ class Fail2banServiceController:
         try:
             manager = self._get_manager()
             return manager.disable("fail2ban")
-        except (NoServiceManagerDetectedError, ServiceNotFoundError, ServiceControlError) as e:
+        except (
+            NoServiceManagerDetectedError,
+            ServiceNotFoundError,
+            ServiceControlError,
+        ) as e:
             raise Fail2banServiceError(operation="disable", reason=str(e)) from e
 
     def is_active(self) -> bool:
@@ -224,4 +251,4 @@ class Fail2banServiceController:
 # - app/bootstrap.py instanciera ce controller et l'injectera via les ports
 # - application/commands/ utilisera le port (pas ce controller directement)
 # - Les tests mockeront ServiceManager pour simuler différents états
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

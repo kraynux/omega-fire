@@ -4,9 +4,14 @@
 Maps parsed fail2ban data (from parser.py) to domain models (from domain/).
 This is the bridge between infrastructure parsing and domain objects.
 """
-from typing import Optional
-from omega_fire.domain.fail2ban.models import Jail, JailConfig, JailStatus, JailManagedBy
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+
+from omega_fire.domain.fail2ban.models import (
+    Jail,
+    JailConfig,
+    JailManagedBy,
+    JailStatus,
+)
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
 
 
 class JailMapper:
@@ -107,4 +112,4 @@ def map_jail_bans(ips: list[str], jail_name: str) -> list[BanEntry]:
 # - infrastructure/backends/fail2ban/adapter.py l'appellera après parsing
 # - Le résultat sera retourné via les ports à l'application/
 # - Les tests vérifieront que les mappings sont corrects pour différents formats
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

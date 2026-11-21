@@ -6,36 +6,38 @@ This module defines HOW to construct a backup snapshot from domain data,
 but does NOT write files, create archives, or compute checksums.
 Execution is delegated to infrastructure/.
 """
+
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.ip_blacklist.models import BanEntry
-from omega_fire.domain.rules.models import FirewallRule
+
 from omega_fire.domain.fail2ban.models import Jail
-from omega_fire.domain.persistence.snapshots import (
-    Snapshot,
-    SnapshotMetadata,
-    SnapshotContent,
-    SnapshotScope,
-    SnapshotStatus,
-    SnapshotOrigin,
-    BlacklistSnapshot,
-    RulesSnapshot,
-    Fail2banSnapshot,
-    create_snapshot_id,
-)
+from omega_fire.domain.ip_blacklist.models import BanEntry
 from omega_fire.domain.persistence.exceptions import (
     BackupError,
     EmptyBackupError,
     InvalidSnapshotError,
 )
+from omega_fire.domain.persistence.snapshots import (
+    BlacklistSnapshot,
+    Fail2banSnapshot,
+    RulesSnapshot,
+    Snapshot,
+    SnapshotContent,
+    SnapshotMetadata,
+    SnapshotOrigin,
+    SnapshotScope,
+    SnapshotStatus,
+    create_snapshot_id,
+)
+from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.shared.i18n import _
 
 
 class BackupRequest:
     """Request object for a backup operation.
-    
+
     Describes what should be backed up, without performing any I/O.
     """
+
     def __init__(
         self,
         scope: SnapshotScope = SnapshotScope.FULL,
@@ -43,7 +45,7 @@ class BackupRequest:
         include_blacklist: bool = True,
         include_rules: bool = True,
         include_fail2ban: bool = True,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
         origin: str = "manual",
     ):
         self.scope = scope
@@ -53,21 +55,25 @@ class BackupRequest:
         self.include_fail2ban = include_fail2ban
         self.timestamp = timestamp or datetime.now()
         self.origin = origin
-    
+
     def validate(self) -> list[str]:
         """Validate the backup request.
-        
+
         Returns:
             List of validation error messages (empty if valid)
         """
         errors = []
-        
+
         if self.scope == SnapshotScope.CUSTOM:
-            if not (self.include_blacklist or self.include_rules or self.include_fail2ban):
-                errors.append(_("Une portée personnalisée doit inclure au moins un élément"))
-        
+            if not (
+                self.include_blacklist or self.include_rules or self.include_fail2ban
+            ):
+                errors.append(
+                    _("Une portée personnalisée doit inclure au moins un élément")
+                )
+
         return errors
-    
+
     def is_valid(self) -> bool:
         """Check if the request is valid."""
         return len(self.validate()) == 0
@@ -75,11 +81,12 @@ class BackupRequest:
 
 class BackupResult:
     """Result of a backup planning operation.
-    
+
     Contains the constructed snapshot (in memory) and metadata about
     what was backed up. Does NOT contain file paths or checksums —
     those are set by infrastructure/ after writing.
     """
+
     def __init__(
         self,
         snapshot: Snapshot,
@@ -91,19 +98,19 @@ class BackupResult:
         self.blacklist_count = blacklist_count
         self.rules_count = rules_count
         self.fail2ban_count = fail2ban_count
-    
+
     @property
     def snapshot_id(self) -> str:
         return self.snapshot.metadata.snapshot_id
-    
+
     @property
     def scope(self) -> SnapshotScope:
         return self.snapshot.metadata.scope
-    
+
     def total_items(self) -> int:
         """Get the total number of items backed up."""
         return self.blacklist_count + self.rules_count + self.fail2ban_count
-    
+
     def get_summary(self) -> dict:
         """Get a summary of the backup result."""
         return {
@@ -119,15 +126,15 @@ class BackupResult:
 
 def build_blacklist_snapshot(banned_ips: list[BanEntry]) -> BlacklistSnapshot:
     """Build a blacklist snapshot from BanEntry objects.
-    
+
     Args:
         banned_ips: List of banned IP entries
-    
+
     Returns:
         BlacklistSnapshot with all entries
     """
     snapshot = BlacklistSnapshot()
-    
+
     for ban in banned_ips:
         snapshot.add_entry(
             ip=ban.ip,
@@ -135,7 +142,7 @@ def build_blacklist_snapshot(banned_ips: list[BanEntry]) -> BlacklistSnapshot:
             status=ban.status.value,
             comment=ban.comment or "",
         )
-    
+
     return snapshot
 
 
@@ -150,7 +157,7 @@ def build_rules_snapshot(rules: list[FirewallRule]) -> RulesSnapshot:
     rules in the exact same relative order, per chain.
     """
     snapshot = RulesSnapshot()
-    
+
     for index, rule in enumerate(rules):
         snapshot.add_rule(
             backend=rule.backend,
@@ -165,48 +172,49 @@ def build_rules_snapshot(rules: list[FirewallRule]) -> RulesSnapshot:
             chain_name=getattr(rule, "chain_name", None),
             restorable=bool(getattr(rule, "restorable", False)),
         )
-    
+
     return snapshot
+
 
 def build_fail2ban_snapshot(jails: list[Jail]) -> Fail2banSnapshot:
     """Build a fail2ban snapshot from Jail objects.
-    
+
     Args:
         jails: List of fail2ban jails
-    
+
     Returns:
         Fail2banSnapshot with all jails
     """
     snapshot = Fail2banSnapshot()
-    
+
     for jail in jails:
         snapshot.add_jail(
-           name=jail.name,
-           status=jail.status.value,
-           maxretry=jail.config.maxretry,
-           bantime=jail.config.bantime,
-           findtime=jail.config.findtime,
-           banned_ips=[],  # Jail n'a pas de liste d'IPs bannies, juste des compteurs
+            name=jail.name,
+            status=jail.status.value,
+            maxretry=jail.config.maxretry,
+            bantime=jail.config.bantime,
+            findtime=jail.config.findtime,
+            banned_ips=[],  # Jail n'a pas de liste d'IPs bannies, juste des compteurs
         )
-    
+
     return snapshot
 
 
 def plan_backup(
     request: BackupRequest,
-    banned_ips: Optional[list[BanEntry]] = None,
-    rules: Optional[list[FirewallRule]] = None,
-    jails: Optional[list[Jail]] = None,
-    hostname: Optional[str] = None,
-    os_info: Optional[str] = None,
-    app_version: Optional[str] = None,
+    banned_ips: list[BanEntry] | None = None,
+    rules: list[FirewallRule] | None = None,
+    jails: list[Jail] | None = None,
+    hostname: str | None = None,
+    os_info: str | None = None,
+    app_version: str | None = None,
 ) -> BackupResult:
     """Plan a backup operation by constructing a Snapshot in memory.
-    
+
     This function builds the logical snapshot structure without
     writing any files. The infrastructure layer will handle
     serialization, archiving, and checksum computation.
-    
+
     Args:
         request: Backup request describing what to include
         banned_ips: List of banned IP entries (if include_blacklist)
@@ -215,10 +223,10 @@ def plan_backup(
         hostname: Optional hostname for metadata
         os_info: Optional OS info for metadata
         app_version: Optional app version for metadata
-    
+
     Returns:
         BackupResult with the constructed snapshot
-    
+
     Raises:
         BackupError: If the request is invalid
         EmptyBackupError: If no data is available to backup
@@ -227,7 +235,7 @@ def plan_backup(
     errors = request.validate()
     if errors:
         raise BackupError("validation", "; ".join(errors))
-    
+
     # Determine actual scope
     scope = request.scope
     if scope == SnapshotScope.CUSTOM:
@@ -242,35 +250,35 @@ def plan_backup(
     elif scope == SnapshotScope.FAIL2BAN_ONLY:
         request.include_blacklist = False
         request.include_rules = False
-    
+
     # Build content
     content = SnapshotContent()
     blacklist_count = 0
     rules_count = 0
     fail2ban_count = 0
-    
+
     # Blacklist
     if request.include_blacklist and banned_ips is not None:
         content.blacklist = build_blacklist_snapshot(banned_ips)
         blacklist_count = content.blacklist.count
-    
+
     # Rules
     if request.include_rules and rules is not None:
         content.rules = build_rules_snapshot(rules)
         rules_count = content.rules.count
-    
+
     # Fail2ban
     if request.include_fail2ban and jails is not None:
         content.fail2ban = build_fail2ban_snapshot(jails)
         fail2ban_count = content.fail2ban.count
-    
+
     # Compute totals
     content.compute_totals()
-    
+
     # Check for empty backup
     if content.is_empty():
         raise EmptyBackupError(_("Aucune donnée à sauvegarder"))
-    
+
     # Build metadata
     snapshot_id = create_snapshot_id(request.timestamp)
     metadata = SnapshotMetadata(
@@ -286,17 +294,16 @@ def plan_backup(
         status=SnapshotStatus.COMPLETED,
         origin=SnapshotOrigin(request.origin),
     )
-    
+
     # Build snapshot
     snapshot = Snapshot(metadata=metadata, content=content)
-    
+
     # Validate snapshot
     if not snapshot.is_valid():
         raise InvalidSnapshotError(
-            snapshot_id,
-            _("Le snapshot construit n'a pas passé la validation")
+            snapshot_id, _("Le snapshot construit n'a pas passé la validation")
         )
-    
+
     return BackupResult(
         snapshot=snapshot,
         blacklist_count=blacklist_count,
@@ -306,43 +313,44 @@ def plan_backup(
 
 
 def validate_backup_data(
-    banned_ips: Optional[list[BanEntry]] = None,
-    rules: Optional[list[FirewallRule]] = None,
-    jails: Optional[list[Jail]] = None,
+    banned_ips: list[BanEntry] | None = None,
+    rules: list[FirewallRule] | None = None,
+    jails: list[Jail] | None = None,
 ) -> list[str]:
     """Validate backup data before planning.
-    
+
     Args:
         banned_ips: List of banned IP entries
         rules: List of firewall rules
         jails: List of fail2ban jails
-    
+
     Returns:
         List of validation error messages (empty if valid)
     """
     errors = []
-    
+
     # Check for None values (data not provided)
     if banned_ips is None and rules is None and jails is None:
         errors.append(_("Aucune donnée fournie pour la sauvegarde"))
-    
+
     # Check for invalid entries
     if banned_ips is not None:
         for i, ban in enumerate(banned_ips):
             if not ban.ip:
                 errors.append(_("Le bannissement n° {i} n'a pas d'IP").format(i=i))
-    
+
     if rules is not None:
         for i, rule in enumerate(rules):
             if not rule.backend:
                 errors.append(_("La règle n° {i} n'a pas de backend").format(i=i))
-    
+
     if jails is not None:
         for i, jail in enumerate(jails):
             if not jail.name:
                 errors.append(_("Le jail n° {i} n'a pas de nom").format(i=i))
-    
+
     return errors
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -372,4 +380,4 @@ def validate_backup_data(
 # - application/commands/backup_state.py appellera plan_backup() pour construire le snapshot
 # - infrastructure/storage/files/archive_store.py prendra le Snapshot et le sérialisera en .tar.gz
 # - interfaces/cli/actions.py proposera les options de backup à l'utilisateur
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

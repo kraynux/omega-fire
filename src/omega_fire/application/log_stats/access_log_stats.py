@@ -12,6 +12,7 @@ ponctuelle) : PermissionRequiredError sans lui sur un log protege.
 
 2026-11-06 : calcul EN FLUX par StatsAccumulator (log_tasks.py), plus jamais la liste des lignes en
 memoire ; `stats` (LogStats) retire, le rapport le remplace partout."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -33,9 +34,14 @@ class AccessLogStatsResult:
 
 
 def compute_access_log_stats(
-    paths: list[str], *, period: str | None = None, runner: ProcessRunnerPort | None = None,
+    paths: list[str],
+    *,
+    period: str | None = None,
+    runner: ProcessRunnerPort | None = None,
 ) -> AccessLogStatsResult:
     """Version sequentielle (tests, CLI). L'ecran, lui, repartit les memes taches sur plusieurs processus
     (log_tasks.plan_read_tasks / run_read_task) et fusionne."""
     accumulator = accumulate_paths(paths, period=period, runner=runner)
-    return AccessLogStatsResult(sources=paths, period=period, report=accumulator.to_report())
+    return AccessLogStatsResult(
+        sources=paths, period=period, report=accumulator.to_report()
+    )

@@ -3,6 +3,7 @@
 2026-10-28 : `r, _, _ = select.select(...)` dans render_lnav_live faisait de `_` une variable
 locale ; le `_("🛡  OMEGA-FIRE …")` ajoute par le marquage i18n levait TypeError, lnav ne
 s'ouvrait plus en 8.6, 5.2 et 5.3)."""
+
 from __future__ import annotations
 
 import ast
@@ -24,12 +25,22 @@ def _shadowing_functions() -> list[str]:
                 continue
             stores = calls = False
             for node in ast.walk(function):
-                if isinstance(node, ast.Name) and node.id == "_" and isinstance(node.ctx, ast.Store):
+                if (
+                    isinstance(node, ast.Name)
+                    and node.id == "_"
+                    and isinstance(node.ctx, ast.Store)
+                ):
                     stores = True
-                elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_":
+                elif (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "_"
+                ):
                     calls = True
             if stores and calls:
-                found.append(f"{path.relative_to(SRC)}:{function.lineno} {function.name}")
+                found.append(
+                    f"{path.relative_to(SRC)}:{function.lineno} {function.name}"
+                )
     return found
 
 

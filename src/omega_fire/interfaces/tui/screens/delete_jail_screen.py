@@ -9,6 +9,7 @@ suppression (delete_jail(), qui recharge le service) s'executent en
 arriere-plan (run_blocking, voir _base.py) — synchrones dans __init__/le
 handler de confirmation, elles gelaient TOUTE l'app (retour utilisateur
 reel, mode degrade)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -50,18 +51,30 @@ class DeleteJailScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-form-panel"):
             yield Static(_("SUPPRIMER UN JAIL"), classes="omega-title")
-            yield Static(_("Chargement des jails..."), id="status-hint", classes="omega-hint")
-            yield Static(_("Jail"), id="jail-label", classes="omega-subtitle omega-hidden")
-            yield Select([], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Chargement des jails..."), id="status-hint", classes="omega-hint"
+            )
+            yield Static(
+                _("Jail"), id="jail-label", classes="omega-subtitle omega-hidden"
+            )
+            yield Select(
+                [], id="jail-select", classes="omega-hidden", prompt=_("Sélectionner")
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Supprimer"), id="launch", variant="error", disabled=True)
+                    yield Button(
+                        _("Supprimer"), id="launch", variant="error", disabled=True
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.run_blocking(self._collect_jail_files, self._on_loaded, busy_message=_("Chargement des jails..."))
+        self.run_blocking(
+            self._collect_jail_files,
+            self._on_loaded,
+            busy_message=_("Chargement des jails..."),
+        )
 
     def _collect_jail_files(self) -> tuple:
         try:
@@ -86,7 +99,11 @@ class DeleteJailScreen(OmegaScreen):
             if j.name not in jail_files:
                 # Version 3.5 : le vrai fichier (section [nom]), sinon jail.local / jail.conf.
                 definition = definitions.get(j.name)
-                jail_files[j.name] = ", ".join(definition.files) if definition else _("(fichier introuvable)")
+                jail_files[j.name] = (
+                    ", ".join(definition.files)
+                    if definition
+                    else _("(fichier introuvable)")
+                )
         return fail2ban_port, jail_files, definitions
 
     def _on_loaded(self, result) -> None:
@@ -97,7 +114,9 @@ class DeleteJailScreen(OmegaScreen):
 
         if not jail_files:
             self.query_one("#status-hint", Static).update(
-                _("Aucun jail personnalisé ou actif n'a été trouvé dans '/etc/fail2ban/jail.d/'.")
+                _(
+                    "Aucun jail personnalisé ou actif n'a été trouvé dans '/etc/fail2ban/jail.d/'."
+                )
             )
             return
 
@@ -105,11 +124,21 @@ class DeleteJailScreen(OmegaScreen):
         self.query_one("#jail-label", Static).set_class(False, "omega-hidden")
         jail_select = self.query_one("#jail-select", Select)
         jail_select.set_class(False, "omega-hidden")
-        jail_select.set_options([
-            (_("{name} — {origin} ({path})").format(
-                name=name, path=path, origin=origin_label(getattr(self._definitions.get(name), "origin", None))), name)
-            for name, path in sorted(jail_files.items())
-        ])
+        jail_select.set_options(
+            [
+                (
+                    _("{name} — {origin} ({path})").format(
+                        name=name,
+                        path=path,
+                        origin=origin_label(
+                            getattr(self._definitions.get(name), "origin", None)
+                        ),
+                    ),
+                    name,
+                )
+                for name, path in sorted(jail_files.items())
+            ]
+        )
         jail_select.value = sorted(jail_files)[0]
         self.query_one("#launch", Button).disabled = False
 
@@ -126,27 +155,40 @@ class DeleteJailScreen(OmegaScreen):
         # Version 3.5 (point 7) : jamais supprimer un fichier qui porte d'autres reglages.
         if definition is not None and definition.blocked == BLOCKED_MAIN_CONFIG:
             self.app.notify(
-                _("« {jail_name} » est défini dans la configuration principale de fail2ban ({files}) : "
-                  "omega-fire ne la modifie pas. Pour le désactiver, créez /etc/fail2ban/jail.d/{jail_name}.local "
-                  "avec une section au nom du jail contenant « enabled = false », puis rechargez "
-                  "fail2ban (4.10).").format(jail_name=jail_name, files=", ".join(definition.files)),
-                severity="warning", timeout=15)
+                _(
+                    "« {jail_name} » est défini dans la configuration principale de fail2ban ({files}) : "
+                    "omega-fire ne la modifie pas. Pour le désactiver, créez /etc/fail2ban/jail.d/{jail_name}.local "
+                    "avec une section au nom du jail contenant « enabled = false », puis rechargez "
+                    "fail2ban (4.10)."
+                ).format(jail_name=jail_name, files=", ".join(definition.files)),
+                severity="warning",
+                timeout=15,
+            )
             return
         if definition is not None and definition.blocked == BLOCKED_SHARED_FILE:
             self.app.notify(
-                _("« {jail_name} » partage son fichier ({files}) avec d'autres jails ({others}) : le "
-                  "supprimer les effacerait aussi. Retirez sa section à la main, puis rechargez "
-                  "fail2ban (4.10).").format(jail_name=jail_name, files=", ".join(definition.files),
-                                              others=", ".join(definition.shared_with)),
-                severity="warning", timeout=15)
+                _(
+                    "« {jail_name} » partage son fichier ({files}) avec d'autres jails ({others}) : le "
+                    "supprimer les effacerait aussi. Retirez sa section à la main, puis rechargez "
+                    "fail2ban (4.10)."
+                ).format(
+                    jail_name=jail_name,
+                    files=", ".join(definition.files),
+                    others=", ".join(definition.shared_with),
+                ),
+                severity="warning",
+                timeout=15,
+            )
             return
-        message = _("Supprimer définitivement le jail '{jail_name}' ?\nFichier impacte : {conf_file}").format(
-            jail_name=jail_name, conf_file=conf_file)
+        message = _(
+            "Supprimer définitivement le jail '{jail_name}' ?\nFichier impacte : {conf_file}"
+        ).format(jail_name=jail_name, conf_file=conf_file)
         if definition is not None and definition.origin == ORIGIN_OMEGA_JAIL:
             message += "\n\n" + _(
                 "Ce jail a été installé par omega-jail : son filtre est supprimé avec lui. omega-jail le "
                 "recréera à sa prochaine installation (« omega-jail --apply »). Pour l'écarter "
-                "durablement, ne relancez pas cette installation, ou retirez-le du catalogue d'omega-jail.")
+                "durablement, ne relancez pas cette installation, ou retirez-le du catalogue d'omega-jail."
+            )
         self.app.push_screen(
             ConfirmScreen(title=_("CONFIRMER LA SUPPRESSION"), message=message),
             lambda confirmed: self._delete_if_confirmed(confirmed, jail_name),
@@ -158,16 +200,36 @@ class DeleteJailScreen(OmegaScreen):
 
         def _execute() -> None:
             if self._fail2ban_port is None:
-                raise RuntimeError(_("Port Fail2ban indisponible (conteneur non initialisé)."))
+                raise RuntimeError(
+                    _("Port Fail2ban indisponible (conteneur non initialisé).")
+                )
             self._fail2ban_port.delete_jail(jail_name)
 
         def _on_done(_result: None) -> None:
-            self.app.notify(_("Jail '{jail_name}' arrêté et supprimé. Service Fail2ban recharge.").format(jail_name=jail_name))
+            self.app.notify(
+                _(
+                    "Jail '{jail_name}' arrêté et supprimé. Service Fail2ban recharge."
+                ).format(jail_name=jail_name)
+            )
             log_action_result(self._container, _ACTION_TITLE, status="success")
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(_("Erreur lors de la suppression du jail : {error}").format(error=error), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
+            self.app.notify(
+                _("Erreur lors de la suppression du jail : {error}").format(
+                    error=error
+                ),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(error)
+            )
 
-        self.run_blocking(_execute, _on_done, busy_message=_("Suppression du jail '{jail_name}'...").format(jail_name=jail_name), on_error=_on_error)
+        self.run_blocking(
+            _execute,
+            _on_done,
+            busy_message=_("Suppression du jail '{jail_name}'...").format(
+                jail_name=jail_name
+            ),
+            on_error=_on_error,
+        )

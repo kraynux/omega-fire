@@ -7,15 +7,18 @@ writes the file, and records this export in the audit journal — the
 journal entry is what allows the NEXT audit to know its "since" date
 (see application/queries/audit_report/report_builder.py).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.application.queries.audit_report.report_builder import build_audit_report
 from omega_fire.application.queries.audit_report.models import AuditReportData
+from omega_fire.application.queries.audit_report.report_builder import (
+    build_audit_report,
+)
 from omega_fire.shared.i18n import _
 
 # Doit correspondre exactement à _AUDIT_EXPORT_ACTION_TITLE dans
@@ -26,14 +29,19 @@ _AUDIT_EXPORT_ACTION_TITLE = "6.3 Export d'audit complet"
 @dataclass
 class ExportAuditReportRequest:
     """Input for the export audit report use case."""
+
     format: str = "html"  # "txt" | "html"
-    destination: Optional[str] = None
+    destination: str | None = None
     theme_name: str = "omega-base"
 
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.format not in ("txt", "html"):
-            errors.append(_("Format invalide : {format}. Valeurs possibles : « txt » ou « html »").format(format=self.format))
+            errors.append(
+                _(
+                    "Format invalide : {format}. Valeurs possibles : « txt » ou « html »"
+                ).format(format=self.format)
+            )
         return errors
 
     def is_valid(self) -> bool:
@@ -43,9 +51,10 @@ class ExportAuditReportRequest:
 @dataclass
 class ExportAuditReportResult:
     """Output of the export audit report use case."""
+
     success: bool
     message: str
-    file_path: Optional[Path] = None
+    file_path: Path | None = None
 
 
 class ExportAuditReportCommand:
@@ -125,7 +134,9 @@ class ExportAuditReportCommand:
 
         return ExportAuditReportResult(
             success=True,
-            message=_("Rapport d'audit généré avec succès : {dest_path}").format(dest_path=dest_path),
+            message=_("Rapport d'audit généré avec succès : {dest_path}").format(
+                dest_path=dest_path
+            ),
             file_path=dest_path,
         )
 
@@ -156,11 +167,21 @@ class ExportAuditReportCommand:
         lines.append("=" * 80)
         lines.append(_("                    OMEGA-FIRE — RAPPORT D'AUDIT COMPLET"))
         lines.append("=" * 80)
-        lines.append(_(" Généré le      : {value}").format(value=report.generated_at.strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(
+            _(" Généré le      : {value}").format(
+                value=report.generated_at.strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
         if report.period_since:
-            lines.append(_(" Période depuis : {period_since}").format(period_since=report.period_since))
+            lines.append(
+                _(" Période depuis : {period_since}").format(
+                    period_since=report.period_since
+                )
+            )
         else:
-            lines.append(_(" Période        : premier audit (depuis l'origine du journal)"))
+            lines.append(
+                _(" Période        : premier audit (depuis l'origine du journal)")
+            )
         lines.append("-" * 80)
         lines.append("")
         lines.append(_("[ RÉSUMÉ EXÉCUTIF ]"))
@@ -169,7 +190,14 @@ class ExportAuditReportCommand:
 
         lines.append(_("[ SERVICES & CAPACITÉS ]"))
         lines.append(
-            _("  Disponibles: {total_available}  Manquantes: {total_missing}  Dégradées: {total_degraded}  Disqualifiées: {total_disqualified}").format(total_available=report.capabilities.total_available, total_missing=report.capabilities.total_missing, total_degraded=report.capabilities.total_degraded, total_disqualified=report.capabilities.total_disqualified)
+            _(
+                "  Disponibles: {total_available}  Manquantes: {total_missing}  Dégradées: {total_degraded}  Disqualifiées: {total_disqualified}"
+            ).format(
+                total_available=report.capabilities.total_available,
+                total_missing=report.capabilities.total_missing,
+                total_degraded=report.capabilities.total_degraded,
+                total_disqualified=report.capabilities.total_disqualified,
+            )
         )
         for cap in report.capabilities.capabilities:
             lines.append(f"  • {cap['id']:<25} [{cap['status']}]  ({cap['category']})")
@@ -177,38 +205,70 @@ class ExportAuditReportCommand:
 
         lines.append(_("[ ACTIVITÉ RÈGLES & BANS ]"))
         lines.append(
-            _("  Règles totales: {total_count}  Actives: {enabled_count}").format(total_count=report.rules_inventory.total_count, enabled_count=report.rules_inventory.enabled_count)
+            _("  Règles totales: {total_count}  Actives: {enabled_count}").format(
+                total_count=report.rules_inventory.total_count,
+                enabled_count=report.rules_inventory.enabled_count,
+            )
         )
-        
+
         if report.sync_info.found:
-            lines.append(_("  Dernière synchronisation : {last_sync_at}").format(last_sync_at=report.sync_info.last_sync_at))
+            lines.append(
+                _("  Dernière synchronisation : {last_sync_at}").format(
+                    last_sync_at=report.sync_info.last_sync_at
+                )
+            )
         else:
             lines.append(_("  Aucune synchronisation enregistrée."))
         lines.append("")
 
-        lines.append(_("[ INVENTAIRE IP ACTUEL — photo à date, indépendant de la période ]"))
+        lines.append(
+            _("[ INVENTAIRE IP ACTUEL — photo à date, indépendant de la période ]")
+        )
         if report.ip_inventory:
             for inv in report.ip_inventory:
-                lines.append(_("  • {backend:<12} : {active_count} IP(s) active(s)").format(backend=inv.backend, active_count=inv.active_count))
+                lines.append(
+                    _("  • {backend:<12} : {active_count} IP(s) active(s)").format(
+                        backend=inv.backend, active_count=inv.active_count
+                    )
+                )
         else:
             lines.append(_("  Aucune IP active actuellement."))
         if report.ip_internal_duplicate_count > 0:
-            lines.append(_("  ⚠ {ip_internal_duplicate_count} doublon(s) IP au sein d'un même backend.").format(ip_internal_duplicate_count=report.ip_internal_duplicate_count))
+            lines.append(
+                _(
+                    "  ⚠ {ip_internal_duplicate_count} doublon(s) IP au sein d'un même backend."
+                ).format(ip_internal_duplicate_count=report.ip_internal_duplicate_count)
+            )
         if report.ip_cross_backend_count > 0:
-            lines.append(_("  ℹ {ip_cross_backend_count} IP(s) présente(s) dans plusieurs backends (normal après sync).").format(ip_cross_backend_count=report.ip_cross_backend_count))
+            lines.append(
+                _(
+                    "  ℹ {ip_cross_backend_count} IP(s) présente(s) dans plusieurs backends (normal après sync)."
+                ).format(ip_cross_backend_count=report.ip_cross_backend_count)
+            )
         lines.append("")
 
         lines.append(_("[ FAIL2BAN (résumé — détail complet : menu 6.4) ]"))
         lines.append(
-            _("  Jails: {total_jails}  IPs bannies: {total_currently_banned}").format(total_jails=report.fail2ban_summary.total_jails, total_currently_banned=report.fail2ban_summary.total_currently_banned)
+            _("  Jails: {total_jails}  IPs bannies: {total_currently_banned}").format(
+                total_jails=report.fail2ban_summary.total_jails,
+                total_currently_banned=report.fail2ban_summary.total_currently_banned,
+            )
         )
         lines.append("")
 
         lines.append(_("[ JOURNAL APPLICATIF — TOP ÉVÉNEMENTS ]"))
         for name, count in report.journal_summary.top_events:
             lines.append(f"  {count:>4}× {name}")
-        lines.append(_("  Erreurs      : {error_count}").format(error_count=report.journal_summary.error_count))
-        lines.append(_("  Autres       : {other_count}").format(other_count=report.journal_summary.other_count))
+        lines.append(
+            _("  Erreurs      : {error_count}").format(
+                error_count=report.journal_summary.error_count
+            )
+        )
+        lines.append(
+            _("  Autres       : {other_count}").format(
+                other_count=report.journal_summary.other_count
+            )
+        )
         lines.append("")
 
         lines.append(_("[ ANOMALIES DÉTECTÉES ]"))
@@ -222,27 +282,66 @@ class ExportAuditReportCommand:
         lines.append("")
 
         lines.append(_("[ SANTÉ APPLICATIVE & RESSOURCES ]"))
-        lines.append(_("  Version         : {version}").format(version=report.app_health.version))
-        lines.append(_("  Dernier backup  : {last_backup_info}").format(last_backup_info=report.app_health.last_backup_info))
         lines.append(
-            _("  Backups         : {backups_size_mb} MB ({backups_count} archives)").format(backups_size_mb=report.disk_usage.backups_size_mb, backups_count=report.disk_usage.backups_count)
+            _("  Version         : {version}").format(version=report.app_health.version)
         )
-        lines.append(_("  Base de données : {db_size_mb} MB").format(db_size_mb=report.disk_usage.db_size_mb))
-        lines.append(_("  Logs            : {logs_size_mb} MB").format(logs_size_mb=report.disk_usage.logs_size_mb))
-        lines.append(_("  Espace libre    : {free_space_gb} GB").format(free_space_gb=report.disk_usage.free_space_gb))
+        lines.append(
+            _("  Dernier backup  : {last_backup_info}").format(
+                last_backup_info=report.app_health.last_backup_info
+            )
+        )
+        lines.append(
+            _(
+                "  Backups         : {backups_size_mb} MB ({backups_count} archives)"
+            ).format(
+                backups_size_mb=report.disk_usage.backups_size_mb,
+                backups_count=report.disk_usage.backups_count,
+            )
+        )
+        lines.append(
+            _("  Base de données : {db_size_mb} MB").format(
+                db_size_mb=report.disk_usage.db_size_mb
+            )
+        )
+        lines.append(
+            _("  Logs            : {logs_size_mb} MB").format(
+                logs_size_mb=report.disk_usage.logs_size_mb
+            )
+        )
+        lines.append(
+            _("  Espace libre    : {free_space_gb} GB").format(
+                free_space_gb=report.disk_usage.free_space_gb
+            )
+        )
         if report.disk_usage.warning:
             lines.append(f"  ⚠ {report.disk_usage.warning}")
         lines.append("")
 
         lines.append(_("[ INTÉGRITÉ BASE DE DONNÉES ]"))
         status = "OK" if report.db_integrity.integrity_ok else _("PROBLÈME")
-        lines.append(_("  Statut          : {status} ({integrity_details})").format(status=status, integrity_details=report.db_integrity.integrity_details))
-        lines.append(_("  Taille          : {db_size_mb} MB").format(db_size_mb=report.db_integrity.db_size_mb))
-        lines.append(_("  Version schéma  : {schema_version}").format(schema_version=report.db_integrity.schema_version))
+        lines.append(
+            _("  Statut          : {status} ({integrity_details})").format(
+                status=status, integrity_details=report.db_integrity.integrity_details
+            )
+        )
+        lines.append(
+            _("  Taille          : {db_size_mb} MB").format(
+                db_size_mb=report.db_integrity.db_size_mb
+            )
+        )
+        lines.append(
+            _("  Version schéma  : {schema_version}").format(
+                schema_version=report.db_integrity.schema_version
+            )
+        )
         lines.append("")
 
         lines.append("-" * 80)
-        lines.append(_("-- Fin du rapport [{value}] --").format(value=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(
+            _("-- Fin du rapport [{value}] --").format(
+                value=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
 
         return "\n".join(lines)
 
@@ -298,4 +397,4 @@ def create_export_audit_report_command(
 #   ↓ application/queries/audit_report/report_builder.py::build_audit_report()
 #   ↓ HtmlExporter.export_data() ou écriture TXT directe
 #   ↓ audit_logger.log_event() (trace pour le prochain audit)
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

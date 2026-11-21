@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -26,6 +26,7 @@ class ConntrackEntry:
         bytes: nombre d'octets échangés.
         timeout: timeout restant en secondes.
     """
+
     source_ip: IPAddress
     source_port: int
     destination_ip: IPAddress
@@ -48,6 +49,7 @@ class NetworkCounters:
         dropped_packets: paquets dropés.
         accepted_packets: paquets acceptés.
     """
+
     total_connections: int
     incoming_bytes: int
     outgoing_bytes: int
@@ -65,6 +67,7 @@ class MonitoringSnapshot:
         active_connections: nombre de connexions actives.
         bans_per_minute: nombre de bans par minute (par backend).
     """
+
     timestamp: datetime
     counters: NetworkCounters
     active_connections: int
@@ -127,7 +130,9 @@ class MonitoringPort(Protocol):
         ...
 
     @abstractmethod
-    def get_bans_per_minute(self, backend: str, minutes: int = 60) -> list[tuple[datetime, int]]:
+    def get_bans_per_minute(
+        self, backend: str, minutes: int = 60
+    ) -> list[tuple[datetime, int]]:
         """Récupère le nombre de bans par minute pour un backend.
 
         Args:
@@ -150,6 +155,7 @@ class MonitoringPort(Protocol):
             Dictionnaire {date: {metric: value}} avec bans, packets, bytes.
         """
         ...
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -187,4 +193,4 @@ class MonitoringPort(Protocol):
 # - application/queries/dashboard_summary.py appellera monitoring_port.get_snapshot()
 # - infrastructure/backends/conntrack/adapter.py implémentera MonitoringPort
 # - interfaces/cli/renderers/monitoring_live.py appellera monitoring_port.get_snapshot()
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

@@ -10,29 +10,31 @@ Conforms to Omega-Fire architecture charter:
 - No direct SQL, no subprocess
 - Translates infrastructure exceptions into a structured result
 """
+
 from dataclasses import dataclass, field
-from typing import Optional
 
 from omega_fire.domain.rules.models import FirewallRule
-from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class FindEquivalentRulesRequest:
     """Input for the find-equivalent-rules use case."""
+
     exclude_backend: str
     chain: str
     action: str
     protocol: str
-    port_start: Optional[int]
-    source_cidr: Optional[str]
+    port_start: int | None
+    source_cidr: str | None
 
 
 @dataclass
 class FindEquivalentRulesResult:
     """Output of the find-equivalent-rules use case."""
+
     success: bool
     rules: list[FirewallRule] = field(default_factory=list)
     message: str = ""
@@ -60,7 +62,9 @@ class FindEquivalentRulesQuery:
             return FindEquivalentRulesResult(
                 success=False,
                 rules=[],
-                message=_("Erreur technique lors de la recherche de règles équivalentes : {e}").format(e=e),
+                message=_(
+                    "Erreur technique lors de la recherche de règles équivalentes : {e}"
+                ).format(e=e),
             )
 
         return FindEquivalentRulesResult(success=True, rules=rules)
@@ -89,4 +93,4 @@ class FindEquivalentRulesQuery:
 # interfaces/cli/actions.py : action_3_2_delete_rule(ctx)
 # application/queries/find_equivalent_rules.py : FindEquivalentRulesQuery.execute()
 #   ↓ RuleRepository.find_equivalent_rules()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

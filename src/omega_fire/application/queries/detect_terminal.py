@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Use case : detecter le terminal et resoudre son profil de rendu."""
+
 from __future__ import annotations
 
 from omega_lib.terminal.models import TerminalProfile

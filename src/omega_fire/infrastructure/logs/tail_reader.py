@@ -2,6 +2,7 @@
 """Lecture d'un log pour le lecteur Classique (5.2 / 5.3, version 3.5) : dernieres lignes lues
 depuis la FIN du fichier (jamais le fichier entier : un journal reel peut faire 100 Mo et
 plus), puis suivi incremental des lignes ajoutees, rotation et troncature comprises."""
+
 from __future__ import annotations
 
 import os

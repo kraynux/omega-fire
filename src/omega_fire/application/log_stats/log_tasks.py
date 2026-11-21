@@ -12,6 +12,7 @@ utilisateur : « il y a des logs plus gros de serveurs »).
 Periodes 24h/7j/30j : une seule tache par fichier, lecture depuis la FIN avec arret anticipe (deja rapide,
 voir _log_reading.py). Fichier protege : une seule tache, lecture privilegiee (sudo) si `runner` est
 fourni, sinon PermissionRequiredError (l'ecran demande l'authentification puis relance)."""
+
 from __future__ import annotations
 
 import os
@@ -67,11 +68,19 @@ def _aligned_boundaries(path: str, size: int, parts: int) -> list[int]:
 
 
 def plan_read_tasks(
-    paths: list[str], *, period: str | None = None, now: datetime | None = None, workers: int = 1,
+    paths: list[str],
+    *,
+    period: str | None = None,
+    now: datetime | None = None,
+    workers: int = 1,
     runner: ProcessRunnerPort | None = None,
 ) -> list[ReadTask]:
     """Taches de lecture de `paths`. Leve PermissionRequiredError pour un fichier protege sans `runner`."""
-    cutoff = (now or datetime.now()) - PERIOD_TO_TIMEDELTA[period] if period is not None else None
+    cutoff = (
+        (now or datetime.now()) - PERIOD_TO_TIMEDELTA[period]
+        if period is not None
+        else None
+    )
     tasks: list[ReadTask] = []
     for path in paths:
         try:
@@ -82,7 +91,11 @@ def plan_read_tasks(
         if not readable:
             if runner is None:
                 raise PermissionRequiredError(path)
-            tasks.append(ReadTask(path, period=period, cutoff=cutoff, privileged=True, weight=size))
+            tasks.append(
+                ReadTask(
+                    path, period=period, cutoff=cutoff, privileged=True, weight=size
+                )
+            )
             continue
         if period is not None:
             tasks.append(ReadTask(path, period=period, cutoff=cutoff, weight=size))
@@ -97,7 +110,10 @@ def plan_read_tasks(
             continue
         except OSError:
             continue
-        tasks.extend(ReadTask(path, start, end, weight=end - start) for start, end in pairwise(bounds))
+        tasks.extend(
+            ReadTask(path, start, end, weight=end - start)
+            for start, end in pairwise(bounds)
+        )
     return tasks
 
 
@@ -108,7 +124,9 @@ def _iter_range(path: str, start: int, end: int | None) -> Iterator[str]:
         remaining = None if end is None else end - start
         rest = b""
         while remaining is None or remaining > 0:
-            block = handle.read(_BLOCK_BYTES if remaining is None else min(_BLOCK_BYTES, remaining))
+            block = handle.read(
+                _BLOCK_BYTES if remaining is None else min(_BLOCK_BYTES, remaining)
+            )
             if not block:
                 break
             if remaining is not None:
@@ -139,14 +157,18 @@ def accumulate_text(text: str, path: str, cutoff: datetime | None) -> StatsAccum
     return accumulator
 
 
-def run_read_task(task: ReadTask, runner: ProcessRunnerPort | None = None) -> StatsAccumulator:
+def run_read_task(
+    task: ReadTask, runner: ProcessRunnerPort | None = None
+) -> StatsAccumulator:
     """Analyse les lignes du morceau, rend leurs agregats. Un morceau privilegie n'est jamais confie au pool
     (voir interfaces/tui/screens/_parallel_compute.py) : ici seulement en lecture sequentielle (CLI, tests)."""
     accumulator = StatsAccumulator()
     if task.privileged:
         if runner is None:
             raise PermissionRequiredError(task.path)
-        return accumulate_text(read_privileged_text(runner, task.path), task.path, task.cutoff)
+        return accumulate_text(
+            read_privileged_text(runner, task.path), task.path, task.cutoff
+        )
     try:
         if task.period is not None:
             _accumulate_period(task, accumulator)
@@ -181,7 +203,10 @@ def _accumulate_period(task: ReadTask, accumulator: StatsAccumulator) -> None:
 
 
 def accumulate_paths(
-    paths: list[str], *, period: str | None = None, now: datetime | None = None,
+    paths: list[str],
+    *,
+    period: str | None = None,
+    now: datetime | None = None,
     runner: ProcessRunnerPort | None = None,
 ) -> StatsAccumulator:
     """Version sequentielle (CLI, tests) : memes taches, executees une par une ici."""

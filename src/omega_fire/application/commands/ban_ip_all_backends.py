@@ -26,8 +26,9 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.application.commands.ban_ip import BanIpCommand, BanIpRequest
 
@@ -35,6 +36,7 @@ from omega_fire.application.commands.ban_ip import BanIpCommand, BanIpRequest
 @dataclass
 class BanIpAllBackendsRequest:
     """Input for the ban-IP-on-multiple-backends use case."""
+
     ips: list[str]
     comment: str = ""
     target_backends: list[str] = field(default_factory=list)
@@ -43,6 +45,7 @@ class BanIpAllBackendsRequest:
 @dataclass
 class BanIpAllBackendsResult:
     """Output of the ban-IP-on-multiple-backends use case."""
+
     success: bool  # True if AT LEAST one backend succeeded for AT LEAST one IP
     outcomes: dict[str, Any] = field(default_factory=dict)  # backend -> BanIpResult
 
@@ -50,7 +53,7 @@ class BanIpAllBackendsResult:
 class BanIpToAllBackendsCommand:
     """Use case: ban a set of IPs across every targeted backend."""
 
-    def __init__(self, adapters: dict[str, Any], ban_repository: Optional[Any] = None):
+    def __init__(self, adapters: dict[str, Any], ban_repository: Any | None = None):
         """Initialize the command.
 
         Args:
@@ -71,14 +74,15 @@ class BanIpToAllBackendsCommand:
         outcomes = {}
 
         for backend in request.target_backends:
-            single_result = BanIpCommand(self._adapters.get(backend), self._ban_repository).execute(
+            single_result = BanIpCommand(
+                self._adapters.get(backend), self._ban_repository
+            ).execute(
                 BanIpRequest(backend=backend, ips=request.ips, comment=request.comment)
             )
             outcomes[backend] = single_result
 
         overall_success = any(
-            len(o.banned) > 0 or len(o.already_banned) > 0
-            for o in outcomes.values()
+            len(o.banned) > 0 or len(o.already_banned) > 0 for o in outcomes.values()
         )
 
         return BanIpAllBackendsResult(success=overall_success, outcomes=outcomes)
@@ -114,4 +118,4 @@ class BanIpToAllBackendsCommand:
 #     un seul si diagnostic choisi explicitement)
 # application/commands/ban_ip_all_backends.py : BanIpToAllBackendsCommand.execute()
 #   ↓ pour chaque backend ciblé : BanIpCommand(...).execute() (inchangée)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

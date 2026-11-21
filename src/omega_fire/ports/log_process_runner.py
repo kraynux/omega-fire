@@ -7,6 +7,7 @@ l'acces aux logs proteges de /var/log (plan_omega_log.md §5.1, revise
 2026-10-03 : sudo ponctuel au moment de l'action plutot que la
 delegation par groupe seule, qui ne couvre pas tous les cas reels —
 ex. /var/log/audit, root:root 700)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -25,8 +26,12 @@ class ProcessResult:
 
 
 class ProcessRunnerPort(Protocol):
-    def run(self, args: list[str], input_text: str | None = None, timeout: float | None = None) -> ProcessResult:
-        ...
+    def run(
+        self,
+        args: list[str],
+        input_text: str | None = None,
+        timeout: float | None = None,
+    ) -> ProcessResult: ...
 
     def run_interactive(self, args: list[str]) -> int:
         """Execute en HERITANT INTEGRALEMENT les descripteurs du

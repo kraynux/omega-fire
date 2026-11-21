@@ -8,6 +8,7 @@ decide ; il doit seulement savoir ce qu'il efface.
 
 Sur nftables, Omega-Fire ne vide que sa propre table (inet filter) : les tables des
 autres outils ne sont jamais touchees, elles ne sont donc pas comptees ici."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -40,7 +41,8 @@ def foreign_rules_by_backend(adapters: dict[str, Any]) -> dict[str, Counter]:
 def describe_foreign_rules(found: dict[str, Counter]) -> str:
     """« iptables : UFW 60, Tailscale 4 ; ip6tables : UFW 90 »."""
     return " ; ".join(
-        f"{backend} : " + ", ".join(f"{tool} {count}" for tool, count in sorted(tools.items()))
+        f"{backend} : "
+        + ", ".join(f"{tool} {count}" for tool, count in sorted(tools.items()))
         for backend, tools in found.items()
     )
 
@@ -50,4 +52,4 @@ def describe_foreign_rules(found: dict[str, Counter]) -> str:
 # - Garde-fou de 3.4 (profil) et 3.5 (vidages, politiques) : dire à
 #   l'utilisateur quelles règles d'autres outils il va effacer.
 # - Lecture seule (list_rules), aucune écriture.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

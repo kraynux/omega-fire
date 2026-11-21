@@ -7,6 +7,7 @@ instantane) — collecte (subprocess fail2ban-client --version, lecture de
 is_available()) portee ligne a ligne, memes appels systeme, seule la
 presentation change. Bouton Rafraichir ajoute pour re-scanner sans
 rouvrir l'ecran (le CLI, lui, affiche une seule fois puis revient)."""
+
 from __future__ import annotations
 
 import os
@@ -42,7 +43,9 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static(_("DIAGNOSTIC & CONFIGURATION FAIL2BAN"), classes="omega-title")
+            yield Static(
+                _("DIAGNOSTIC & CONFIGURATION FAIL2BAN"), classes="omega-title"
+            )
             yield DataTable(id="system-table")
             yield DataTable(id="jails-table")
             yield Static(id="box-summary", classes="omega-dash-box")
@@ -54,9 +57,16 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#system-table", DataTable).add_columns(_("Composant / Indicateur"), _("Valeur / État"))
+        self.query_one("#system-table", DataTable).add_columns(
+            _("Composant / Indicateur"), _("Valeur / État")
+        )
         self.query_one("#jails-table", DataTable).add_columns(
-            _("Nom Jail"), _("Statut"), _("IPs Ban"), _("Filtre Source"), _("Log Surveille"), _("Règles (r/find/ban)")
+            _("Nom Jail"),
+            _("Statut"),
+            _("IPs Ban"),
+            _("Filtre Source"),
+            _("Log Surveille"),
+            _("Règles (r/find/ban)"),
         )
         self._refresh()
 
@@ -89,10 +99,16 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         # --- 1. Inspection systeme & demon ---
         f2b_version = "Inconnue"
         try:
-            v_res = subprocess.run(["fail2ban-client", "--version"], capture_output=True, text=True)
+            v_res = subprocess.run(
+                ["fail2ban-client", "--version"], capture_output=True, text=True
+            )
             if v_res.returncode == 0:
-                v_match = re.search(r'v?(\d+\.\d+\.\d+)', v_res.stdout)
-                f2b_version = v_match.group(1) if v_match else v_res.stdout.strip().splitlines()[0]
+                v_match = re.search(r"v?(\d+\.\d+\.\d+)", v_res.stdout)
+                f2b_version = (
+                    v_match.group(1)
+                    if v_match
+                    else v_res.stdout.strip().splitlines()[0]
+                )
         except Exception:
             pass
 
@@ -100,7 +116,9 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         sqlite_size = _("Absent")
         if os.path.exists(_SQLITE_DB_PATH):
             try:
-                sqlite_size = f"{os.path.getsize(_SQLITE_DB_PATH) / (1024 * 1024):.2f} MB"
+                sqlite_size = (
+                    f"{os.path.getsize(_SQLITE_DB_PATH) / (1024 * 1024):.2f} MB"
+                )
             except Exception:
                 sqlite_size = _("Présent")
 
@@ -117,7 +135,11 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         if fail2ban_port is not None and hasattr(fail2ban_port, "verify_config"):
             try:
                 syntax_ok, errors = fail2ban_port.verify_config()
-                syntax_output = _("OK (Aucune erreur de syntaxe détectée)") if syntax_ok else ("\n".join(errors) or _("Erreur de configuration"))
+                syntax_output = (
+                    _("OK (Aucune erreur de syntaxe détectée)")
+                    if syntax_ok
+                    else ("\n".join(errors) or _("Erreur de configuration"))
+                )
             except Exception as e:
                 syntax_output = _("Impossible de tester la syntaxe : {e}").format(e=e)
 
@@ -126,8 +148,11 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
         if service_running:
             try:
                 from omega_fire.application.queries.jail_status import get_jail_status
+
                 status_result = get_jail_status(fail2ban_port=fail2ban_port)
-                active_jails_data = {j.name: {"banned": j.banned_count} for j in status_result.jails}
+                active_jails_data = {
+                    j.name: {"banned": j.banned_count} for j in status_result.jails
+                }
             except Exception:
                 pass
 
@@ -144,91 +169,187 @@ class Fail2banDiagnosticsScreen(OmegaScreen):
                 try:
                     with open(fpath, "r", encoding="utf-8") as f:
                         content = f.read()
-                        sec_match = re.search(r'\[([^\]]+)\]', content)
-                        if sec_match and sec_match.group(1) not in ("DEFAULT", "INCLUDES"):
+                        sec_match = re.search(r"\[([^\]]+)\]", content)
+                        if sec_match and sec_match.group(1) not in (
+                            "DEFAULT",
+                            "INCLUDES",
+                        ):
                             j_name_from_file = sec_match.group(1).strip()
-                        if m := re.search(r'^\s*filter\s*=\s*(.+)$', content, re.MULTILINE):
+                        if m := re.search(
+                            r"^\s*filter\s*=\s*(.+)$", content, re.MULTILINE
+                        ):
                             filter_found = m.group(1).strip()
-                        if m := re.search(r'^\s*logpath\s*=\s*(.+)$', content, re.MULTILINE):
+                        if m := re.search(
+                            r"^\s*logpath\s*=\s*(.+)$", content, re.MULTILINE
+                        ):
                             logpath_found = m.group(1).strip()
-                        if m := re.search(r'^\s*maxretry\s*=\s*(.+)$', content, re.MULTILINE):
+                        if m := re.search(
+                            r"^\s*maxretry\s*=\s*(.+)$", content, re.MULTILINE
+                        ):
                             maxretry_found = m.group(1).strip()
-                        if m := re.search(r'^\s*findtime\s*=\s*(.+)$', content, re.MULTILINE):
+                        if m := re.search(
+                            r"^\s*findtime\s*=\s*(.+)$", content, re.MULTILINE
+                        ):
                             findtime_found = m.group(1).strip()
-                        if m := re.search(r'^\s*bantime\s*=\s*(.+)$', content, re.MULTILINE):
+                        if m := re.search(
+                            r"^\s*bantime\s*=\s*(.+)$", content, re.MULTILINE
+                        ):
                             bantime_found = m.group(1).strip()
                 except Exception:
                     pass
 
                 filter_exists = False
                 if filter_found != "Inconnu":
-                    filter_exists = (
-                        os.path.exists(f"/etc/fail2ban/filter.d/{filter_found}.conf")
-                        or os.path.exists(f"/etc/fail2ban/filter.d/{filter_found}.local")
-                    )
-                log_exists = os.path.exists(logpath_found) if logpath_found != "Inconnu" else False
+                    filter_exists = os.path.exists(
+                        f"/etc/fail2ban/filter.d/{filter_found}.conf"
+                    ) or os.path.exists(f"/etc/fail2ban/filter.d/{filter_found}.local")
+                log_exists = (
+                    os.path.exists(logpath_found)
+                    if logpath_found != "Inconnu"
+                    else False
+                )
                 is_active = j_name_from_file in active_jails_data
 
-                jail_files_info.append({
-                    "name": j_name_from_file, "active": is_active,
-                    "banned": active_jails_data.get(j_name_from_file, {}).get("banned", 0),
-                    "filter": filter_found, "filter_ok": filter_exists,
-                    "logpath": logpath_found, "log_ok": log_exists,
-                    "params": f"{maxretry_found} r / {findtime_found} / {bantime_found}",
-                })
+                jail_files_info.append(
+                    {
+                        "name": j_name_from_file,
+                        "active": is_active,
+                        "banned": active_jails_data.get(j_name_from_file, {}).get(
+                            "banned", 0
+                        ),
+                        "filter": filter_found,
+                        "filter_ok": filter_exists,
+                        "logpath": logpath_found,
+                        "log_ok": log_exists,
+                        "params": f"{maxretry_found} r / {findtime_found} / {bantime_found}",
+                    }
+                )
 
         # --- Rendu ---
         sys_table = self.query_one("#system-table", DataTable)
         sys_table.clear()
         sys_table.add_row(_("Version de Fail2ban"), f2b_version)
-        sys_table.add_row(_("Statut du Démon"), Text(_("Actif (En exécution)"), style=colors["available"]) if service_running else Text(_("Inactif / Déconnecté"), style=colors["danger"]))
-        sys_table.add_row(_("Socket Unix (/var/run/fail2ban/)"), Text(_("Accessible"), style=colors["available"]) if socket_ok else Text(_("Inaccessible / Absent"), style=colors["danger"]))
+        sys_table.add_row(
+            _("Statut du Démon"),
+            Text(_("Actif (En exécution)"), style=colors["available"])
+            if service_running
+            else Text(_("Inactif / Déconnecté"), style=colors["danger"]),
+        )
+        sys_table.add_row(
+            _("Socket Unix (/var/run/fail2ban/)"),
+            Text(_("Accessible"), style=colors["available"])
+            if socket_ok
+            else Text(_("Inaccessible / Absent"), style=colors["danger"]),
+        )
         sys_table.add_row(_("Base SQLite (/var/lib/fail2ban/)"), sqlite_size)
-        sys_table.add_row(_("Test de syntaxe global (-t)"), Text(_("Valide"), style=colors["available"]) if syntax_ok else Text(_("Erreur détectée"), style=colors["danger"]))
+        sys_table.add_row(
+            _("Test de syntaxe global (-t)"),
+            Text(_("Valide"), style=colors["available"])
+            if syntax_ok
+            else Text(_("Erreur détectée"), style=colors["danger"]),
+        )
 
         jails_table = self.query_one("#jails-table", DataTable)
         jails_table.clear()
         total_banned_global = 0
         if jail_files_info:
             for item in jail_files_info:
-                st = Text("Actif", style=colors["available"]) if item["active"] else Text(_("Inactif"), style="dim")
+                st = (
+                    Text("Actif", style=colors["available"])
+                    if item["active"]
+                    else Text(_("Inactif"), style="dim")
+                )
                 ban_str = str(item["banned"]) if item["active"] else "-"
                 if item["active"]:
                     total_banned_global += item["banned"]
-                f_str = Text(item["filter"] + (" (OK)" if item["filter_ok"] else " (Absent)"),
-                             style=colors["main"] if item["filter_ok"] else colors["warning"])
-                l_str = Text(item["logpath"] + (" (OK)" if item["log_ok"] else " (Introuvable)"),
-                             style=colors["main"] if item["log_ok"] else colors["warning"])
-                jails_table.add_row(item["name"], st, ban_str, f_str, l_str, item["params"])
+                f_str = Text(
+                    item["filter"] + (" (OK)" if item["filter_ok"] else " (Absent)"),
+                    style=colors["main"] if item["filter_ok"] else colors["warning"],
+                )
+                l_str = Text(
+                    item["logpath"] + (" (OK)" if item["log_ok"] else " (Introuvable)"),
+                    style=colors["main"] if item["log_ok"] else colors["warning"],
+                )
+                jails_table.add_row(
+                    item["name"], st, ban_str, f_str, l_str, item["params"]
+                )
         else:
             jails_table.add_row("(Aucun)", _("Inactif"), "0", "-", "-", "-")
 
         content = Text()
         content.append(_("Bilan du Diagnostic de Santé\n\n"), style=colors["heading"])
         if service_running:
-            content.append(_("✔ Le service Fail2ban est actif et répond correctement au socket.\n"), style=colors["available"])
+            content.append(
+                _(
+                    "✔ Le service Fail2ban est actif et répond correctement au socket.\n"
+                ),
+                style=colors["available"],
+            )
         else:
-            content.append(_("❌ Le service Fail2ban ne répond pas. Vérifiez s'il est démarré.\n"), style=colors["danger"])
+            content.append(
+                _("❌ Le service Fail2ban ne répond pas. Vérifiez s'il est démarré.\n"),
+                style=colors["danger"],
+            )
 
         if syntax_ok:
-            content.append(_("✔ La vérification de syntaxe 'fail2ban-client -t' a réussi.\n"), style=colors["available"])
+            content.append(
+                _("✔ La vérification de syntaxe 'fail2ban-client -t' a réussi.\n"),
+                style=colors["available"],
+            )
         else:
-            content.append(_("❌ Erreur de syntaxe dans la configuration : {syntax_output}\n").format(syntax_output=syntax_output), style=colors["danger"])
+            content.append(
+                _(
+                    "❌ Erreur de syntaxe dans la configuration : {syntax_output}\n"
+                ).format(syntax_output=syntax_output),
+                style=colors["danger"],
+            )
 
-        missing_filters = {i["filter"] for i in jail_files_info if not i["filter_ok"] and i["filter"] != "Inconnu"}
+        missing_filters = {
+            i["filter"]
+            for i in jail_files_info
+            if not i["filter_ok"] and i["filter"] != "Inconnu"
+        }
         if missing_filters:
-            content.append(_("⚠ Certains filtres sont introuvables dans filter.d : {value}\n").format(value=', '.join(missing_filters)), style=colors["warning"])
+            content.append(
+                _(
+                    "⚠ Certains filtres sont introuvables dans filter.d : {value}\n"
+                ).format(value=", ".join(missing_filters)),
+                style=colors["warning"],
+            )
         else:
-            content.append(_("✔ Tous les filtres déclarés sont bien présents dans /etc/fail2ban/filter.d/.\n"), style=colors["available"])
+            content.append(
+                _(
+                    "✔ Tous les filtres déclarés sont bien présents dans /etc/fail2ban/filter.d/.\n"
+                ),
+                style=colors["available"],
+            )
 
-        missing_logs = {i["logpath"] for i in jail_files_info if not i["log_ok"] and i["logpath"] != "Inconnu"}
+        missing_logs = {
+            i["logpath"]
+            for i in jail_files_info
+            if not i["log_ok"] and i["logpath"] != "Inconnu"
+        }
         if missing_logs:
-            content.append(_("⚠ Certains journaux surveilles n'existent pas sur le disque : {value}\n").format(value=', '.join(missing_logs)), style=colors["warning"])
+            content.append(
+                _(
+                    "⚠ Certains journaux surveilles n'existent pas sur le disque : {value}\n"
+                ).format(value=", ".join(missing_logs)),
+                style=colors["warning"],
+            )
         else:
-            content.append(_("✔ Tous les fichiers journaux cibles existent physiquement.\n"), style=colors["available"])
+            content.append(
+                _("✔ Tous les fichiers journaux cibles existent physiquement.\n"),
+                style=colors["available"],
+            )
 
         content.append(
-            _("\nSynthèse globale : {count} Jail(s) répertorié(s), {count2} actif(s), {total_banned_global} IP(s) actuellement bannie(s).").format(count=len(jail_files_info), count2=len(active_jails_data), total_banned_global=total_banned_global),
+            _(
+                "\nSynthèse globale : {count} Jail(s) répertorié(s), {count2} actif(s), {total_banned_global} IP(s) actuellement bannie(s)."
+            ).format(
+                count=len(jail_files_info),
+                count2=len(active_jails_data),
+                total_banned_global=total_banned_global,
+            ),
             style=colors["main"],
         )
         self.query_one("#box-summary", Static).update(content)

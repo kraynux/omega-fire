@@ -21,8 +21,9 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.application.commands.unban_ip import UnbanIpCommand, UnbanIpRequest
 
@@ -30,6 +31,7 @@ from omega_fire.application.commands.unban_ip import UnbanIpCommand, UnbanIpRequ
 @dataclass
 class UnbanIpAllBackendsRequest:
     """Input for the unban-IP-on-multiple-backends use case."""
+
     ips: list[str]
     target_backends: list[str] = field(default_factory=list)
 
@@ -37,6 +39,7 @@ class UnbanIpAllBackendsRequest:
 @dataclass
 class UnbanIpAllBackendsResult:
     """Output of the unban-IP-on-multiple-backends use case."""
+
     success: bool  # True if AT LEAST one backend succeeded for AT LEAST one IP
     outcomes: dict[str, Any] = field(default_factory=dict)  # backend -> UnbanIpResult
 
@@ -44,7 +47,7 @@ class UnbanIpAllBackendsResult:
 class UnbanIpToAllBackendsCommand:
     """Use case: unban a set of IPs across every targeted backend."""
 
-    def __init__(self, adapters: dict[str, Any], ban_repository: Optional[Any] = None):
+    def __init__(self, adapters: dict[str, Any], ban_repository: Any | None = None):
         """Initialize the command.
 
         Args:
@@ -63,14 +66,13 @@ class UnbanIpToAllBackendsCommand:
         outcomes = {}
 
         for backend in request.target_backends:
-            single_result = UnbanIpCommand(self._adapters.get(backend), self._ban_repository).execute(
-                UnbanIpRequest(backend=backend, ips=request.ips)
-            )
+            single_result = UnbanIpCommand(
+                self._adapters.get(backend), self._ban_repository
+            ).execute(UnbanIpRequest(backend=backend, ips=request.ips))
             outcomes[backend] = single_result
 
         overall_success = any(
-            len(o.unbanned) > 0 or len(o.already_free) > 0
-            for o in outcomes.values()
+            len(o.unbanned) > 0 or len(o.already_free) > 0 for o in outcomes.values()
         )
 
         return UnbanIpAllBackendsResult(success=overall_success, outcomes=outcomes)
@@ -109,4 +111,4 @@ class UnbanIpToAllBackendsCommand:
 #     un seul si diagnostic choisi explicitement)
 # application/commands/unban_ip_all_backends.py : UnbanIpToAllBackendsCommand.execute()
 #   ↓ pour chaque backend ciblé : UnbanIpCommand(...).execute() (inchangée)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

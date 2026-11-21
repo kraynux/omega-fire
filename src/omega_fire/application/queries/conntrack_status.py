@@ -10,17 +10,19 @@ Conforms to Omega-Fire architecture charter:
 - Returns formatted string for UI display
 - No dependency on interfaces/ or infrastructure/ directly
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from dataclasses import dataclass
+from typing import Any
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class ConntrackEntry:
     """DTO representing a conntrack connection entry.
-    
+
     Attributes:
         protocol: Protocol (tcp, udp, icmp).
         source_ip: Source IP address.
@@ -32,6 +34,7 @@ class ConntrackEntry:
         bytes: Number of bytes seen.
         timeout: Remaining timeout in seconds.
     """
+
     protocol: str
     source_ip: str
     source_port: int = 0
@@ -46,7 +49,7 @@ class ConntrackEntry:
 @dataclass
 class ConntrackStatusResult:
     """Result of the conntrack status query.
-    
+
     Attributes:
         entries: List of conntrack entries.
         total_count: Total number of tracked connections.
@@ -54,7 +57,8 @@ class ConntrackStatusResult:
         by_state: Count per state.
         message: Human-readable summary.
     """
-    entries: List[ConntrackEntry]
+
+    entries: list[ConntrackEntry]
     total_count: int
     by_protocol: dict
     by_state: dict
@@ -62,19 +66,19 @@ class ConntrackStatusResult:
 
 
 def get_conntrack_status(
-    monitoring_port: Optional[Any] = None,
+    monitoring_port: Any | None = None,
     protocol_filter: str = "",
     state_filter: str = "",
     limit: int = 100,
 ) -> ConntrackStatusResult:
     """8.2: Get the status of tracked connections via conntrack.
-    
+
     Args:
         monitoring_port: MonitoringPort implementation. If None, returns empty result.
         protocol_filter: Optional filter by protocol ("tcp", "udp", "icmp").
         state_filter: Optional filter by state ("ESTABLISHED", "SYN_SENT", etc.).
         limit: Maximum number of entries to return (default: 100).
-    
+
     Returns:
         ConntrackStatusResult with entries and counts.
     """
@@ -84,11 +88,13 @@ def get_conntrack_status(
             total_count=0,
             by_protocol={},
             by_state={},
-            message=_("⚠️ Port MonitoringPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
+            message=_(
+                "⚠️ Port MonitoringPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."
+            ),
         )
-    
+
     try:
-        if hasattr(monitoring_port, 'list_connections'):
+        if hasattr(monitoring_port, "list_connections"):
             raw_entries = monitoring_port.list_connections()
         else:
             return ConntrackStatusResult(
@@ -98,11 +104,11 @@ def get_conntrack_status(
                 by_state={},
                 message=_("⚠️ Le port ne supporte pas list_connections()."),
             )
-        
+
         entries = []
         by_protocol: dict = {}
         by_state: dict = {}
-        
+
         for entry in raw_entries:
             if isinstance(entry, dict):
                 dto = ConntrackEntry(
@@ -130,38 +136,43 @@ def get_conntrack_status(
                 )
             else:
                 continue
-            
+
             # Apply filters
             if protocol_filter and dto.protocol.lower() != protocol_filter.lower():
                 continue
             if state_filter and dto.state.upper() != state_filter.upper():
                 continue
-            
+
             entries.append(dto)
             by_protocol[dto.protocol] = by_protocol.get(dto.protocol, 0) + 1
             if dto.state:
                 by_state[dto.state] = by_state.get(dto.state, 0) + 1
-        
+
         # Apply limit
         if len(entries) > limit:
             entries = entries[:limit]
-        
+
         return ConntrackStatusResult(
             entries=entries,
             total_count=len(entries),
             by_protocol=by_protocol,
             by_state=by_state,
-            message=_("{count} connexion(s) suivie(s) par conntrack.").format(count=len(entries)),
+            message=_("{count} connexion(s) suivie(s) par conntrack.").format(
+                count=len(entries)
+            ),
         )
-    
+
     except Exception as e:
         return ConntrackStatusResult(
             entries=[],
             total_count=0,
             by_protocol={},
             by_state={},
-            message=_("❌ Erreur lors de la récupération des connexions : {e}").format(e=e),
+            message=_("❌ Erreur lors de la récupération des connexions : {e}").format(
+                e=e
+            ),
         )
+
 
 # Points clés :
 # - ConntrackEntry : DTO représentant une connexion (proto, src, dst, state, packets, bytes).
@@ -191,4 +202,4 @@ def get_conntrack_status(
 #   ↓
 # Retourne ConntrackStatusResult → interfaces/cli/renderers/
 #   conntrack_view.py (render_conntrack_summary()/render_conntrack_table())
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

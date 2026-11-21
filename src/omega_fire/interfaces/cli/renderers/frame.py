@@ -10,19 +10,24 @@ Conforms to Omega-Fire architecture charter:
 - Uses theme_registry for all styling
 - No dependency on domain/, application/, or infrastructure/
 """
-from typing import Optional, List, Callable
 
-from rich.console import Console, RenderableType, Group
+from collections.abc import Callable
+
+from rich.align import Align
+from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
 from rich.text import Text
-from rich.align import Align
 
+from omega_fire.interfaces.cli.renderers.styles import (
+    get_terminal_height,
+    get_terminal_width,
+)
 from omega_fire.interfaces.cli.themes.registry import theme_registry
-from omega_fire.interfaces.cli.renderers.styles import get_terminal_width, get_terminal_height
 
 
 class FrameMode:
     """Available footer contexts."""
+
     MENU = "menu"
     SUBMENU = "submenu"
     INPUT = "input"
@@ -33,22 +38,22 @@ class FrameMode:
 class Frame:
     """Global application frame with header, content, and dynamic footer."""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         self._console = console or Console()
 
     def render(
         self,
         content: RenderableType,
         footer_mode: str = FrameMode.MENU,
-        input_line: Optional[str] = "Votre choix : █",
-        header_extra: Optional[str] = None,
+        input_line: str | None = "Votre choix : █",
+        header_extra: str | None = None,
     ) -> None:
         """Render the complete framed interface."""
         term_width = get_terminal_width()
-        
+
         # Outer panel width: leave 2 columns of margin on each side
         panel_width = max(term_width - 4, 40)
-        
+
         # Inner width: panel_width minus 2 for borders (│) minus 2 for padding (1 left, 1 right)
         inner_width = panel_width - 4
 
@@ -78,11 +83,11 @@ class Frame:
         self,
         content: RenderableType,
         footer_mode: str,
-        input_line: Optional[str],
-        header_extra: Optional[str],
+        input_line: str | None,
+        header_extra: str | None,
         inner_width: int,
-    ) -> List[RenderableType]:
-        parts: List[RenderableType] = []
+    ) -> list[RenderableType]:
+        parts: list[RenderableType] = []
 
         # 1. Header principal
         parts.append(self._render_header(header_extra))
@@ -107,14 +112,17 @@ class Frame:
 
         return parts
 
-    def _render_header(self, extra: Optional[str] = None) -> Text:
+    def _render_header(self, extra: str | None = None) -> Text:
         title = Text("🛡  OMEGA-FIRE v3.5", style=theme_registry.get_style("menu.title"))
         theme_name = theme_registry.get_active().display_name
-        theme_text = Text(f"  │  Thème: {theme_name}  │  ", style=theme_registry.get_style("text.muted"))
-        
+        theme_text = Text(
+            f"  │  Thème: {theme_name}  │  ",
+            style=theme_registry.get_style("text.muted"),
+        )
+
         term_width = get_terminal_width()
         term_height = get_terminal_height()
-        
+
         size_text = Text(
             f"Terminal: {term_width}x{term_height}",
             style=theme_registry.get_style("text.muted"),
@@ -138,7 +146,7 @@ class Frame:
     def _render_footer(self, mode: str) -> Text:
         footer = Text(style=theme_registry.get_style("text.muted"))
 
-        mode_str = str(mode.value if hasattr(mode, 'value') else mode).lower()
+        mode_str = str(mode.value if hasattr(mode, "value") else mode).lower()
 
         if "submenu" in mode_str:
             footer.append("≡  Sous-menu  │  ")
@@ -146,17 +154,25 @@ class Frame:
             footer.append("  │  ")
             footer.append("[A]ide", style=theme_registry.get_style("text.link"))
             footer.append("  │  ")
-            footer.append("[M]enu principal", style=theme_registry.get_style("text.link"))
+            footer.append(
+                "[M]enu principal", style=theme_registry.get_style("text.link")
+            )
             footer.append("  │  ")
             footer.append("[Q]uitter", style=theme_registry.get_style("text.link"))
 
         elif "input" in mode_str:
             footer.append("✏  Saisie  │  ")
-            footer.append("[Enter] Valider", style=theme_registry.get_style("action.info"))
+            footer.append(
+                "[Enter] Valider", style=theme_registry.get_style("action.info")
+            )
             footer.append("  │  ")
-            footer.append("[Esc] Annuler", style=theme_registry.get_style("action.warning"))
+            footer.append(
+                "[Esc] Annuler", style=theme_registry.get_style("action.warning")
+            )
             footer.append("  │  ")
-            footer.append("[Tab] Champ suivant", style=theme_registry.get_style("text.muted"))
+            footer.append(
+                "[Tab] Champ suivant", style=theme_registry.get_style("text.muted")
+            )
 
         elif "confirm" in mode_str:
             footer.append("⚠  Confirmation  │  ")
@@ -164,15 +180,21 @@ class Frame:
             footer.append("  │  ")
             footer.append("n Non", style=theme_registry.get_style("action.error"))
             footer.append("  │  ")
-            footer.append("[Esc] Annuler", style=theme_registry.get_style("action.warning"))
+            footer.append(
+                "[Esc] Annuler", style=theme_registry.get_style("action.warning")
+            )
 
         elif "list" in mode_str:
             footer.append("📋 Liste  │  ")
             footer.append("↑↓ Naviguer", style=theme_registry.get_style("text.link"))
             footer.append("  │  ")
-            footer.append("[Enter] Valider", style=theme_registry.get_style("action.info"))
+            footer.append(
+                "[Enter] Valider", style=theme_registry.get_style("action.info")
+            )
             footer.append("  │  ")
-            footer.append("[Esc] Annuler", style=theme_registry.get_style("action.warning"))
+            footer.append(
+                "[Esc] Annuler", style=theme_registry.get_style("action.warning")
+            )
 
         else:
             footer.append("📋 Menu  │  ")
@@ -190,9 +212,9 @@ class Frame:
 def render_frame(
     content: RenderableType,
     footer_mode: str = FrameMode.MENU,
-    input_line: Optional[str] = "Votre choix : █",
-    header_extra: Optional[str] = None,
-    console: Optional[Console] = None,
+    input_line: str | None = "Votre choix : █",
+    header_extra: str | None = None,
+    console: Console | None = None,
 ) -> None:
     """Convenience function to render the global frame."""
     frame = Frame(console)
@@ -207,8 +229,8 @@ def render_frame(
 def render_action_frame(
     content_builder: Callable[[], RenderableType],
     footer_mode: str = FrameMode.SUBMENU,
-    header_extra: Optional[str] = None,
-    console: Optional[Console] = None,
+    header_extra: str | None = None,
+    console: Console | None = None,
 ) -> None:
     """Render an action's content within the global frame."""
     console = console or Console()
@@ -220,6 +242,7 @@ def render_action_frame(
         header_extra=header_extra,
         console=console,
     )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -247,4 +270,4 @@ def render_action_frame(
 # - interfaces/cli/app.py utilisera render_frame() comme point d'entrée unique
 # - interfaces/cli/renderers/dashboard.py l'utilisera pour le splash screen
 # - Les actions passeront le bon footer_mode (INPUT, CONFIRM, etc.)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

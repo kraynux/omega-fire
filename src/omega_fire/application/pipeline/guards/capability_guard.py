@@ -5,10 +5,10 @@ This guard verifies that required capabilities are available in the registry
 before allowing an action to proceed. It raises CapabilityUnavailableError
 if a capability is MISSING, DEGRADED, or DISQUALIFIED.
 """
-from typing import Optional
+
+from omega_fire.application.exceptions import CapabilityUnavailableError
 from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.core.enums import CapabilityStatus
-from omega_fire.application.exceptions import CapabilityUnavailableError
 from omega_fire.shared.i18n import _
 
 
@@ -18,52 +18,54 @@ def check_capability(
     allow_degraded: bool = False,
 ) -> None:
     """Check if a capability is available for execution.
-    
+
     This function verifies that the specified capability exists in the registry
     and has an acceptable status. If the capability is missing or in an
     unacceptable state, it raises CapabilityUnavailableError.
-    
+
     Args:
         capability_id: The capability identifier to check
         registry: The capability registry to query
         allow_degraded: If True, allow DEGRADED status (default: False)
-    
+
     Raises:
         CapabilityUnavailableError: If the capability is not available
     """
     capability = registry.get(capability_id)
-    
+
     if capability is None:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status="UNKNOWN",
-            reason=_("Capacité « {capability_id} » absente du registre").format(capability_id=capability_id)
+            reason=_("Capacité « {capability_id} » absente du registre").format(
+                capability_id=capability_id
+            ),
         )
-    
+
     status = capability.status
-    
+
     # Check if status is acceptable
     if status == CapabilityStatus.MISSING:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or _("Capacité non disponible sur ce système")
+            reason=capability.reason or _("Capacité non disponible sur ce système"),
         )
-    
+
     if status == CapabilityStatus.DISQUALIFIED:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or _("Capacité disqualifiée")
+            reason=capability.reason or _("Capacité disqualifiée"),
         )
-    
+
     if status == CapabilityStatus.DEGRADED and not allow_degraded:
         raise CapabilityUnavailableError(
             capability_id=capability_id,
             status=status.value,
-            reason=capability.reason or _("Capacité en état dégradé")
+            reason=capability.reason or _("Capacité en état dégradé"),
         )
-    
+
     # Status is AVAILABLE or DEGRADED (with allow_degraded=True)
     # Guard passes, no exception raised
 
@@ -74,15 +76,15 @@ def check_capabilities(
     allow_degraded: bool = False,
 ) -> None:
     """Check multiple capabilities at once.
-    
+
     This function verifies that all specified capabilities are available.
     It raises CapabilityUnavailableError for the first capability that fails.
-    
+
     Args:
         capability_ids: List of capability identifiers to check
         registry: The capability registry to query
         allow_degraded: If True, allow DEGRADED status (default: False)
-    
+
     Raises:
         CapabilityUnavailableError: If any capability is not available
     """
@@ -96,16 +98,16 @@ def is_capability_available(
     allow_degraded: bool = False,
 ) -> bool:
     """Check if a capability is available without raising an exception.
-    
+
     This is a non-throwing version of check_capability, useful for
     conditional logic where you want to check availability without
     interrupting the flow.
-    
+
     Args:
         capability_id: The capability identifier to check
         registry: The capability registry to query
         allow_degraded: If True, allow DEGRADED status (default: False)
-    
+
     Returns:
         True if the capability is available, False otherwise
     """
@@ -119,13 +121,13 @@ def is_capability_available(
 def get_capability_status(
     capability_id: str,
     registry: CapabilityRegistry,
-) -> Optional[CapabilityStatus]:
+) -> CapabilityStatus | None:
     """Get the status of a capability without raising an exception.
-    
+
     Args:
         capability_id: The capability identifier to query
         registry: The capability registry to query
-    
+
     Returns:
         The capability status, or None if the capability is not found
     """
@@ -141,15 +143,15 @@ def filter_available_capabilities(
     allow_degraded: bool = False,
 ) -> list[str]:
     """Filter a list of capabilities to keep only available ones.
-    
+
     This function returns a subset of the input list containing only
     the capabilities that are currently available.
-    
+
     Args:
         capability_ids: List of capability identifiers to filter
         registry: The capability registry to query
         allow_degraded: If True, include DEGRADED capabilities (default: False)
-    
+
     Returns:
         List of available capability identifiers
     """
@@ -166,15 +168,15 @@ def get_unavailable_capabilities(
     allow_degraded: bool = False,
 ) -> list[tuple[str, str, str]]:
     """Get a list of unavailable capabilities with their status and reason.
-    
+
     This function returns details about capabilities that are not available,
     useful for error reporting and diagnostics.
-    
+
     Args:
         capability_ids: List of capability identifiers to check
         registry: The capability registry to query
         allow_degraded: If True, treat DEGRADED as available (default: False)
-    
+
     Returns:
         List of tuples (capability_id, status, reason) for unavailable capabilities
     """
@@ -184,21 +186,24 @@ def get_unavailable_capabilities(
         if capability is None:
             unavailable.append((capability_id, "UNKNOWN", _("Absente du registre")))
             continue
-        
+
         status = capability.status
-        is_available = (
-            status == CapabilityStatus.AVAILABLE
-            or (status == CapabilityStatus.DEGRADED and allow_degraded)
+        is_available = status == CapabilityStatus.AVAILABLE or (
+            status == CapabilityStatus.DEGRADED and allow_degraded
         )
-        
+
         if not is_available:
-            unavailable.append((
-                capability_id,
-                status.value,
-                capability.reason or _("Aucune raison précisée")
-            ))
-    
+            unavailable.append(
+                (
+                    capability_id,
+                    status.value,
+                    capability.reason or _("Aucune raison précisée"),
+                )
+            )
+
     return unavailable
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Garde de capacité du pipeline. Ce guard vérifie qu'une capacité requise est disponible (AVAILABLE) dans le registre avant d'autoriser l'exécution d'une action. Si la capacité est MISSING, DEGRADED ou DISQUALIFIED, il lève CapabilityUnavailableError.
@@ -227,4 +232,4 @@ def get_unavailable_capabilities(
 # - application/commands/ban_ip.py définira requires=["nftables"] ou requires=["iptables"]
 # - interfaces/cli/menu_builder.py utilisera is_capability_available() pour griser les menus
 # - interfaces/cli/tree_builder.py construira l'arbre conditionnel basé sur les capacités disponibles
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

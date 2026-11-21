@@ -9,19 +9,19 @@ Conforms to Omega-Fire architecture charter:
 - Uses theme_registry for all styling via safe lookup
 - Non-blocking TTY keyboard input matching logs_live.py
 """
+
 from __future__ import annotations
 
 import fcntl
 import os
 import select
 import sys
-import threading
 import time
-from typing import Optional
 
 try:
     import termios
     import tty
+
     HAS_TERMIOS = True
 except ImportError:
     HAS_TERMIOS = False
@@ -35,20 +35,20 @@ from rich.style import Style
 from rich.text import Text
 
 from omega_fire.infrastructure.logging.stats.log_aggregator import LogAggregator
-from omega_fire.interfaces.cli.themes.registry import theme_registry
-from omega_fire.interfaces.cli.renderers.styles import (
-    get_terminal_width,
-    get_terminal_height,
-)
-from omega_fire.interfaces.cli.renderers.stats.kpi_cards import render_kpi_cards
 from omega_fire.interfaces.cli.renderers.stats.ascii_charts import render_hourly_chart
+from omega_fire.interfaces.cli.renderers.stats.kpi_cards import render_kpi_cards
 from omega_fire.interfaces.cli.renderers.stats.stat_tables import render_stat_tables
+from omega_fire.interfaces.cli.renderers.styles import (
+    get_terminal_height,
+    get_terminal_width,
+)
+from omega_fire.interfaces.cli.themes.registry import theme_registry
 
 
 # ----------------------------------------------------------------------
 # Helpers (Identiques à logs_live.py)
 # ----------------------------------------------------------------------
-def _get_key_non_blocking() -> Optional[str]:
+def _get_key_non_blocking() -> str | None:
     """Lit une touche en ignorant la molette et les séquences ANSI complexes."""
     if HAS_TERMIOS and sys.stdin.isatty():
         if select.select([sys.stdin], [], [], 0.0)[0]:
@@ -122,7 +122,7 @@ def _get_current_theme() -> str:
 # ----------------------------------------------------------------------
 # Main Dashboard Renderer
 # ----------------------------------------------------------------------
-def show_log_stats_dashboard(console: Optional[Console] = None) -> None:
+def show_log_stats_dashboard(console: Console | None = None) -> None:
     """Affiche le Dashboard Interactif 5.8 sur le modèle strict de logs_live.py."""
     console = console or Console()
     aggregator = LogAggregator()
@@ -148,11 +148,17 @@ def show_log_stats_dashboard(console: Optional[Console] = None) -> None:
         header_text = Text(no_wrap=True)
         if use_emoji:
             header_text.append("📊 ", style=_get_theme_style("menu.title"))
-        header_text.append("STATISTIQUES DES LOGS", style=_get_theme_style("menu.title"))
+        header_text.append(
+            "STATISTIQUES DES LOGS", style=_get_theme_style("menu.title")
+        )
         header_text.append("  │  ", style=_get_theme_style("text.muted"))
-        header_text.append(f"Période: {state['period']}", style=_get_theme_style("text.heading"))
+        header_text.append(
+            f"Période: {state['period']}", style=_get_theme_style("text.heading")
+        )
         header_text.append("  │  ", style=_get_theme_style("text.muted"))
-        header_text.append(f"Source: {summary.data_source}", style=_get_theme_style("text.muted"))
+        header_text.append(
+            f"Source: {summary.data_source}", style=_get_theme_style("text.muted")
+        )
         header_text.append("  │  ", style=_get_theme_style("text.muted"))
         header_text.append(
             f"Terminal: {get_terminal_width()}x{get_terminal_height()}",
@@ -227,7 +233,9 @@ def show_log_stats_dashboard(console: Optional[Console] = None) -> None:
             old_settings = None
 
     try:
-        with Live(build_layout(), console=console, screen=True, refresh_per_second=4) as live:
+        with Live(
+            build_layout(), console=console, screen=True, refresh_per_second=4
+        ) as live:
             while True:
                 key = _get_key_non_blocking()
                 if key:

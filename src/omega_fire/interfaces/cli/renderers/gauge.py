@@ -14,10 +14,11 @@ Conforme à la charte Omega-Fire :
 - Toutes les couleurs passent par theme_registry.get_style(...).
 - Pas de dépendance vers domain/, application/, infrastructure/.
 """
+
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
 
 from rich import box
 from rich.align import Align
@@ -75,7 +76,9 @@ class AnimatedGauge:
         t = (elapsed * self.speed) % cycle
         return int(t) if t <= span else int(cycle - t)
 
-    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
         if self._start_time is None:
             self._start_time = console.get_time()
         elapsed = console.get_time() - self._start_time
@@ -151,7 +154,9 @@ def gauge_status(
     qui désynchronisait le calcul d'effacement de Live et laissait la
     bordure basse du panel incrustée à l'écran (cf. pager.py).
     """
-    gauge = AnimatedGauge(message, fill_width=fill_width, speed=speed, dialog_width=dialog_width)
+    gauge = AnimatedGauge(
+        message, fill_width=fill_width, speed=speed, dialog_width=dialog_width
+    )
     console.print()
     with bypass_pagination(console):
         with Live(gauge, console=console, refresh_per_second=18, transient=True):
@@ -190,4 +195,4 @@ def gauge_status(
 # - DEFAULT_FILL_WIDTH=6, DEFAULT_SPEED=18 : un aller-retour complet
 #   dure ~2s — assez rapide pour donner l'impression d'un scan réel
 #   sans être distrayant.
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

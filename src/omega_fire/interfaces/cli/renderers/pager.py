@@ -12,10 +12,12 @@ Conforme à la charte Omega-Fire :
 - Toutes les couleurs passent par theme_registry.get_style(...).
 - Pas de dépendance vers domain/, application/, infrastructure/.
 """
+
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator, List
+from typing import Any
 
 from rich.console import Console, Group, RenderableType
 from rich.segment import Segment, Segments
@@ -68,7 +70,10 @@ def _build_nav_bar(page: int, total_pages: int) -> Text:
     sep_s = theme_registry.get_style("footer.separator")
 
     bar = Text()
-    bar.append(_("Page {page}/{total_pages}").format(page=page, total_pages=total_pages), style=label_s)
+    bar.append(
+        _("Page {page}/{total_pages}").format(page=page, total_pages=total_pages),
+        style=label_s,
+    )
 
     def _entry(key: str, label: str) -> None:
         bar.append("  │  ", style=sep_s)
@@ -83,15 +88,17 @@ def _build_nav_bar(page: int, total_pages: int) -> Text:
     return bar
 
 
-def _page_segments(lines: List[List[Segment]], start: int, end: int) -> Segments:
-    segments: List[Segment] = []
+def _page_segments(lines: list[list[Segment]], start: int, end: int) -> Segments:
+    segments: list[Segment] = []
     for line in lines[start:end]:
         segments.extend(line)
         segments.append(Segment.line())
     return Segments(segments)
 
 
-def _run_pager(console: Console, raw_print: Any, lines: List[List[Segment]], height: int) -> bool:
+def _run_pager(
+    console: Console, raw_print: Any, lines: list[list[Segment]], height: int
+) -> bool:
     """Boucle de pagination interactive. Retourne False si l'utilisateur
     a quitté prématurément (touche [q]), True sinon."""
     page_height = max(height - 2, 1)
@@ -115,7 +122,12 @@ def _run_pager(console: Console, raw_print: Any, lines: List[List[Segment]], hei
             page = total_pages
         elif kb.is_arrow_left(key) or kb.is_arrow_up(key):
             page = max(page - 1, 1)
-        elif kb.is_arrow_right(key) or kb.is_arrow_down(key) or kb.is_enter(key) or key == " ":
+        elif (
+            kb.is_arrow_right(key)
+            or kb.is_arrow_down(key)
+            or kb.is_enter(key)
+            or key == " "
+        ):
             # Suivant sur la dernière page = sortie du pager, la suite
             # (input réel ou fin d'action) s'affiche normalement.
             if page >= total_pages:
@@ -124,13 +136,17 @@ def _run_pager(console: Console, raw_print: Any, lines: List[List[Segment]], hei
         # touche non reconnue : on réaffiche simplement la page courante
 
 
-def _display(console: Console, raw_print: Any, renderables: List[RenderableType]) -> tuple[bool, bool]:
+def _display(
+    console: Console, raw_print: Any, renderables: list[RenderableType]
+) -> tuple[bool, bool]:
     """Retourne (completed, was_paginated).
 
     completed=False signifie une sortie anticipée via [q].
     was_paginated=True signifie que la pagination interactive s'est
     réellement déclenchée (contenu > hauteur du terminal)."""
-    content: RenderableType = renderables[0] if len(renderables) == 1 else Group(*renderables)
+    content: RenderableType = (
+        renderables[0] if len(renderables) == 1 else Group(*renderables)
+    )
     height = get_terminal_height()
 
     lines = console.render_lines(content, console.options)
@@ -151,7 +167,7 @@ def paginated(console: Console) -> Iterator[Console]:
     """
     original_print = console.print
     original_input = console.input
-    buffer: List[RenderableType] = []
+    buffer: list[RenderableType] = []
 
     def _flush() -> bool:
         """Retourne True si la pagination interactive s'est réellement
@@ -208,7 +224,9 @@ def paginated(console: Console) -> Iterator[Console]:
             # l'affiche donc nous-mêmes via le vrai original_print, puis
             # on lit avec un prompt vide pour éviter un double affichage.
             original_print(prompt, end="")
-        return original_input("", password=kwargs.get("password", False), stream=kwargs.get("stream"))
+        return original_input(
+            "", password=kwargs.get("password", False), stream=kwargs.get("stream")
+        )
 
     console.print = buffered_print
     console.input = buffered_input
@@ -252,4 +270,4 @@ def paginated(console: Console) -> Iterator[Console]:
 # - interfaces/cli/app.py encadrera child.action(ctx) avec
 #   `with paginated(console): child.action(ctx)`, sauf pour les
 #   actions à rafraîchissement continu (5.1, 8.1 — exclues explicitement)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

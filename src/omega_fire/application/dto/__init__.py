@@ -32,4 +32,4 @@
 # - Les DTO de requests/responses/views seront importés depuis ce package
 # - Les modules application/dto/* seront consommés sans exposition forcée ici
 # - Les tests vérifieront que le package est importable sans effet de bord
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

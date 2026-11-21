@@ -10,27 +10,26 @@ Conforms to Omega-Fire architecture charter:
 - Uses theme_registry for all styling (no hardcoded colors)
 - No dependency on domain/, application/, or infrastructure/
 """
-from typing import Optional
 
+from rich.align import Align
 from rich.console import RenderableType
 from rich.panel import Panel
 from rich.text import Text
-from rich.align import Align
 
-from omega_fire.interfaces.cli.themes.registry import theme_registry
 from omega_fire.interfaces.cli.renderers.styles import center_text
+from omega_fire.interfaces.cli.themes.registry import theme_registry
 
 
 def create_panel(
     content: RenderableType,
-    title: Optional[str] = None,
-    subtitle: Optional[str] = None,
-    border_style: Optional[str] = None,
+    title: str | None = None,
+    subtitle: str | None = None,
+    border_style: str | None = None,
     padding: tuple[int, int] = (1, 2),
     expand: bool = True,
 ) -> Panel:
     """Create a Rich panel with theme-consistent styling.
-    
+
     Args:
         content: Panel content (str, Text, or Rich renderable)
         title: Optional panel title
@@ -38,13 +37,13 @@ def create_panel(
         border_style: Optional border style (uses theme default if None)
         padding: Padding (vertical, horizontal)
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object
     """
     if border_style is None:
         border_style = theme_registry.get_style("border.default")
-    
+
     return Panel(
         content,
         title=title,
@@ -61,17 +60,17 @@ def create_info_panel(
     expand: bool = True,
 ) -> Panel:
     """Create an info panel with theme-consistent styling.
-    
+
     Args:
         content: Panel content
         title: Panel title (default: "ℹ️  Information")
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with info styling
     """
     border_style = theme_registry.get_style("action.info")
-    
+
     return Panel(
         content,
         title=title,
@@ -87,17 +86,17 @@ def create_warning_panel(
     expand: bool = True,
 ) -> Panel:
     """Create a warning panel with theme-consistent styling.
-    
+
     Args:
         content: Panel content
         title: Panel title (default: "⚠️  Avertissement")
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with warning styling
     """
     border_style = theme_registry.get_style("action.warning")
-    
+
     return Panel(
         content,
         title=title,
@@ -113,17 +112,17 @@ def create_error_panel(
     expand: bool = True,
 ) -> Panel:
     """Create an error panel with theme-consistent styling.
-    
+
     Args:
         content: Panel content
         title: Panel title (default: "❌ Erreur")
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with error styling
     """
     border_style = theme_registry.get_style("action.error")
-    
+
     return Panel(
         content,
         title=title,
@@ -139,17 +138,17 @@ def create_success_panel(
     expand: bool = True,
 ) -> Panel:
     """Create a success panel with theme-consistent styling.
-    
+
     Args:
         content: Panel content
         title: Panel title (default: "✅ Succès")
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with success styling
     """
     border_style = theme_registry.get_style("action.success")
-    
+
     return Panel(
         content,
         title=title,
@@ -162,25 +161,25 @@ def create_success_panel(
 def create_menu_panel(
     menu_content: RenderableType,
     title: str = "Menu Principal",
-    subtitle: Optional[str] = None,
+    subtitle: str | None = None,
     expand: bool = True,
 ) -> Panel:
     """Create a menu panel with theme-consistent styling.
-    
+
     Args:
         menu_content: Menu content (typically a list of menu items)
         title: Panel title (default: "Menu Principal")
         subtitle: Optional subtitle
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with menu styling
     """
     border_style = theme_registry.get_style("border.accent")
     title_style = theme_registry.get_style("menu.title")
-    
+
     title_text = Text(title, style=title_style)
-    
+
     return Panel(
         menu_content,
         title=title_text,
@@ -193,33 +192,33 @@ def create_menu_panel(
 
 def create_splash_panel(
     ascii_art: str,
-    subtitle: Optional[str] = None,
+    subtitle: str | None = None,
     expand: bool = True,
 ) -> Panel:
     """Create a splash/welcome panel with centered ASCII art.
-    
+
     Args:
         ascii_art: ASCII art string (will be centered)
         subtitle: Optional subtitle below the ASCII art
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with splash styling
     """
     border_style = theme_registry.get_style("border.accent")
-    
+
     centered_lines = [center_text(line) for line in ascii_art.split("\n")]
     centered_art = "\n".join(centered_lines)
-    
+
     content_parts = [centered_art]
-    
+
     if subtitle:
         subtitle_text = Text(subtitle, style=theme_registry.get_style("text.muted"))
         content_parts.append("")
         content_parts.append(Align.center(subtitle_text))
-    
+
     content = "\n".join(content_parts)
-    
+
     return Panel(
         content,
         border_style=border_style,
@@ -234,24 +233,24 @@ def create_status_panel(
     expand: bool = True,
 ) -> Panel:
     """Create a status panel showing multiple status items.
-    
+
     Args:
         status_items: List of (label, value, status_key) tuples
                      status_key can be "available", "degraded", "missing", "disqualified"
         title: Panel title
         expand: Whether to expand to full width
-    
+
     Returns:
         Rich Panel object with status items
     """
     content = Text()
-    
+
     for label, value, status_key in status_items:
         style = theme_registry.get_style(f"status.{status_key}")
-        
+
         content.append(f"{label}: ", style=theme_registry.get_style("text.main"))
         content.append(f"{value}\n", style=style)
-    
+
     return Panel(
         content,
         title=title,
@@ -289,4 +288,4 @@ def create_status_panel(
 # - interfaces/cli/app.py utilisera create_menu_panel() pour le menu principal
 # - interfaces/cli/actions.py utilisera create_success_panel() après une action
 # - interfaces/cli/renderers/splash.py utilisera create_splash_panel()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -5,29 +5,35 @@ Orchestrates the generation of the detailed fail2ban report: builds
 the report data via the query layer, renders it to TXT or HTML, and
 writes the file.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.application.queries.f2b_report.report_builder import build_f2b_report
 from omega_fire.application.queries.f2b_report.models import F2bReportData
+from omega_fire.application.queries.f2b_report.report_builder import build_f2b_report
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class ExportF2bReportRequest:
     """Input for the export fail2ban report use case."""
+
     format: str = "html"  # "txt" | "html"
-    destination: Optional[str] = None
+    destination: str | None = None
     theme_name: str = "omega-base"
 
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.format not in ("txt", "html"):
-            errors.append(_("Format invalide : {format}. Valeurs possibles : « txt » ou « html »").format(format=self.format))
+            errors.append(
+                _(
+                    "Format invalide : {format}. Valeurs possibles : « txt » ou « html »"
+                ).format(format=self.format)
+            )
         return errors
 
     def is_valid(self) -> bool:
@@ -37,9 +43,10 @@ class ExportF2bReportRequest:
 @dataclass
 class ExportF2bReportResult:
     """Output of the export fail2ban report use case."""
+
     success: bool
     message: str
-    file_path: Optional[Path] = None
+    file_path: Path | None = None
 
 
 class ExportF2bReportCommand:
@@ -96,7 +103,9 @@ class ExportF2bReportCommand:
 
         return ExportF2bReportResult(
             success=True,
-            message=_("Rapport fail2ban généré avec succès : {dest_path}").format(dest_path=dest_path),
+            message=_("Rapport fail2ban généré avec succès : {dest_path}").format(
+                dest_path=dest_path
+            ),
             file_path=dest_path,
         )
 
@@ -116,33 +125,79 @@ class ExportF2bReportCommand:
         lines.append("=" * 80)
         lines.append(_("                 OMEGA-FIRE — RAPPORT DÉTAILLÉ FAIL2BAN"))
         lines.append("=" * 80)
-        lines.append(_(" Généré le : {value}").format(value=report.generated_at.strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(
+            _(" Généré le : {value}").format(
+                value=report.generated_at.strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
         lines.append("-" * 80)
         lines.append("")
 
         lines.append(_("[ SYSTÈME ]"))
-        lines.append(_("  Installé          : {value}").format(value=_('Oui') if report.system.installed else _('Non')))
-        lines.append(_("  Service actif     : {value}").format(value=_('Oui') if report.system.service_running else _('Non')))
+        lines.append(
+            _("  Installé          : {value}").format(
+                value=_("Oui") if report.system.installed else _("Non")
+            )
+        )
+        lines.append(
+            _("  Service actif     : {value}").format(
+                value=_("Oui") if report.system.service_running else _("Non")
+            )
+        )
         if report.system.enabled_at_boot is None:
-            lines.append(_("  Activé au démarrage : Indéterminé (gestionnaire de service non détecté)"))
+            lines.append(
+                _(
+                    "  Activé au démarrage : Indéterminé (gestionnaire de service non détecté)"
+                )
+            )
         else:
-            lines.append(_("  Activé au démarrage : {value}").format(value=_('Oui') if report.system.enabled_at_boot else _('Non')))
+            lines.append(
+                _("  Activé au démarrage : {value}").format(
+                    value=_("Oui") if report.system.enabled_at_boot else _("Non")
+                )
+            )
         lines.append("")
 
-        lines.append(_("[ JAILS ({total_jails}) ]").format(total_jails=report.total_jails))
+        lines.append(
+            _("[ JAILS ({total_jails}) ]").format(total_jails=report.total_jails)
+        )
         lines.append("")
         for jail in report.jails:
             lines.append(f"● {jail.name}")
-            lines.append(_("  ├─ Échecs (actuel/total) : {currently_failed} / {total_failed}").format(currently_failed=jail.currently_failed, total_failed=jail.total_failed))
-            lines.append(_("  ├─ Bannis (actuel/total) : {currently_banned} / {total_banned}").format(currently_banned=jail.currently_banned, total_banned=jail.total_banned))
             lines.append(
-                _("  ├─ Config : maxretry={value}  bantime={value2}  findtime={value3}").format(value=jail.maxretry or _('N/A'), value2=jail.bantime or _('N/A'), value3=jail.findtime or _('N/A'))
+                _(
+                    "  ├─ Échecs (actuel/total) : {currently_failed} / {total_failed}"
+                ).format(
+                    currently_failed=jail.currently_failed,
+                    total_failed=jail.total_failed,
+                )
+            )
+            lines.append(
+                _(
+                    "  ├─ Bannis (actuel/total) : {currently_banned} / {total_banned}"
+                ).format(
+                    currently_banned=jail.currently_banned,
+                    total_banned=jail.total_banned,
+                )
+            )
+            lines.append(
+                _(
+                    "  ├─ Config : maxretry={value}  bantime={value2}  findtime={value3}"
+                ).format(
+                    value=jail.maxretry or _("N/A"),
+                    value2=jail.bantime or _("N/A"),
+                    value3=jail.findtime or _("N/A"),
+                )
             )
             if jail.banned_ips:
                 ips_str = ", ".join(jail.banned_ips)
                 lines.append(_("  ├─ IPs bannies : {ips_str}").format(ips_str=ips_str))
                 if jail.banned_ips_overflow > 0:
-                    lines.append(_("  │  (+{banned_ips_overflow} autre(s))").format(banned_ips_overflow=jail.banned_ips_overflow))
+                    lines.append(
+                        _("  │  (+{banned_ips_overflow} autre(s))").format(
+                            banned_ips_overflow=jail.banned_ips_overflow
+                        )
+                    )
             else:
                 lines.append(_("  ├─ IPs bannies : aucune"))
 
@@ -150,11 +205,15 @@ class ExportF2bReportCommand:
                 if jail.recent_bans:
                     lines.append(_("  └─ 10 derniers bans (historique fail2ban) :"))
                     for rb in jail.recent_bans:
-                        lines.append(f"       {rb.timeofban.strftime('%Y-%m-%d %H:%M:%S')} — {rb.ip}")
+                        lines.append(
+                            f"       {rb.timeofban.strftime('%Y-%m-%d %H:%M:%S')} — {rb.ip}"
+                        )
                 else:
                     lines.append(_("  └─ Aucun ban dans l'historique fail2ban."))
             else:
-                lines.append(_("  └─ Historique fail2ban indisponible (base non trouvée)."))
+                lines.append(
+                    _("  └─ Historique fail2ban indisponible (base non trouvée).")
+                )
             lines.append("")
 
         lines.append(_("[ IPS PRÉSENTES DANS PLUSIEURS JAILS ]"))
@@ -167,7 +226,11 @@ class ExportF2bReportCommand:
         lines.append("")
 
         lines.append("-" * 80)
-        lines.append(_("-- Fin du rapport [{value}] --").format(value=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(
+            _("-- Fin du rapport [{value}] --").format(
+                value=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
 
         return "\n".join(lines)
 
@@ -202,4 +265,4 @@ def create_export_f2b_report_command(
 # Comment il sera utilisé :
 # - interfaces/cli/actions.py::action_6_4_export_f2b_stats résout les
 #   dépendances via ctx.container, construit la command, l'exécute.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

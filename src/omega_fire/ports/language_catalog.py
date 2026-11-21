@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Catalogues de traduction de l'interface (OMEGA-FIRE_PLAN-DETAILLE_I18N.md §5)."""
+
 from __future__ import annotations
 
 import gettext

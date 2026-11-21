@@ -5,70 +5,69 @@ Orchestrates business operations for persistence.
 This service coordinates the domain modules (backup, restore, snapshots)
 and enforces business rules by raising domain exceptions.
 """
+
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.ip_blacklist.models import BanEntry
-from omega_fire.domain.rules.models import FirewallRule
+
 from omega_fire.domain.fail2ban.models import Jail
-from omega_fire.domain.persistence.snapshots import (
-    Snapshot,
-    SnapshotScope,
-    SnapshotStatus,
-)
+from omega_fire.domain.ip_blacklist.models import BanEntry
 from omega_fire.domain.persistence.backup import (
     BackupRequest,
     BackupResult,
     plan_backup,
     validate_backup_data,
 )
+from omega_fire.domain.persistence.exceptions import (
+    BackupError,
+    CorruptedSnapshotError,
+    EmptyBackupError,
+    IncompatibleVersionError,
+    InvalidRestoreScopeError,
+    InvalidSnapshotError,
+    RestoreError,
+)
 from omega_fire.domain.persistence.restore import (
-    RestoreRequest,
     RestorePlan,
+    RestoreRequest,
     plan_restore,
 )
-from omega_fire.domain.persistence.exceptions import (
-    PersistenceError,
-    InvalidSnapshotError,
-    BackupError,
-    RestoreError,
-    SnapshotNotFoundError,
-    CorruptedSnapshotError,
-    IncompatibleVersionError,
-    EmptyBackupError,
-    InvalidRestoreScopeError,
+from omega_fire.domain.persistence.snapshots import (
+    Snapshot,
+    SnapshotScope,
+    SnapshotStatus,
 )
+from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.shared.i18n import _
 
 
 class PersistenceService:
     """Domain service for persistence operations.
-    
+
     This service orchestrates business logic for backup and restore.
     It enforces business rules and raises domain exceptions when rules
     are violated.
     """
-    
+
     def create_backup(
         self,
-        banned_ips: Optional[list[BanEntry]] = None,
-        rules: Optional[list[FirewallRule]] = None,
-        jails: Optional[list[Jail]] = None,
+        banned_ips: list[BanEntry] | None = None,
+        rules: list[FirewallRule] | None = None,
+        jails: list[Jail] | None = None,
         scope: SnapshotScope = SnapshotScope.FULL,
         description: str = "",
         include_blacklist: bool = True,
         include_rules: bool = True,
         include_fail2ban: bool = True,
-        hostname: Optional[str] = None,
-        os_info: Optional[str] = None,
-        app_version: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        hostname: str | None = None,
+        os_info: str | None = None,
+        app_version: str | None = None,
+        timestamp: datetime | None = None,
         origin: str = "manual",
     ) -> BackupResult:
         """Create a backup by planning a snapshot.
-        
+
         This method validates the request, builds the snapshot in memory,
         and returns the result. It does NOT write any files.
-        
+
         Args:
             banned_ips: List of banned IP entries
             rules: List of firewall rules
@@ -82,10 +81,10 @@ class PersistenceService:
             os_info: Optional OS info for metadata
             app_version: Optional app version for metadata
             timestamp: Optional timestamp (default: now)
-        
+
         Returns:
             BackupResult with the constructed snapshot
-        
+
         Raises:
             BackupError: If the request is invalid
             EmptyBackupError: If no data is available
@@ -109,7 +108,7 @@ class PersistenceService:
         )
         if validation_errors:
             raise BackupError("data_validation", "; ".join(validation_errors))
-        
+
         # Plan backup
         try:
             return plan_backup(
@@ -124,21 +123,23 @@ class PersistenceService:
         except (BackupError, EmptyBackupError, InvalidSnapshotError):
             raise
         except Exception as e:
-            raise BackupError("planning", _("Erreur inattendue : {e}").format(e=e)) from e
-    
+            raise BackupError(
+                "planning", _("Erreur inattendue : {e}").format(e=e)
+            ) from e
+
     def create_full_backup(
         self,
         banned_ips: list[BanEntry],
         rules: list[FirewallRule],
         jails: list[Jail],
         description: str = "",
-        app_version: Optional[str] = None,
+        app_version: str | None = None,
         origin: str = "manual",
     ) -> BackupResult:
         """Create a full backup of all components.
-        
+
         Convenience method that creates a FULL scope backup.
-        
+
         Args:
             banned_ips: List of banned IP entries
             rules: List of firewall rules
@@ -146,7 +147,7 @@ class PersistenceService:
             description: Optional description
             app_version: Optional app version
             origin: Snapshot origin ("manual" or "auto_preset")
-        
+
         Returns:
             BackupResult with the constructed snapshot
         """
@@ -159,18 +160,18 @@ class PersistenceService:
             app_version=app_version,
             origin=origin,
         )
-    
+
     def create_blacklist_backup(
         self,
         banned_ips: list[BanEntry],
         description: str = "",
     ) -> BackupResult:
         """Create a backup of the blacklist only.
-        
+
         Args:
             banned_ips: List of banned IP entries
             description: Optional description
-        
+
         Returns:
             BackupResult with the constructed snapshot
         """
@@ -181,18 +182,18 @@ class PersistenceService:
             include_rules=False,
             include_fail2ban=False,
         )
-    
+
     def create_rules_backup(
         self,
         rules: list[FirewallRule],
         description: str = "",
     ) -> BackupResult:
         """Create a backup of the rules only.
-        
+
         Args:
             rules: List of firewall rules
             description: Optional description
-        
+
         Returns:
             BackupResult with the constructed snapshot
         """
@@ -203,18 +204,18 @@ class PersistenceService:
             include_blacklist=False,
             include_fail2ban=False,
         )
-    
+
     def create_fail2ban_backup(
         self,
         jails: list[Jail],
         description: str = "",
     ) -> BackupResult:
         """Create a backup of the fail2ban configuration only.
-        
+
         Args:
             jails: List of fail2ban jails
             description: Optional description
-        
+
         Returns:
             BackupResult with the constructed snapshot
         """
@@ -225,7 +226,7 @@ class PersistenceService:
             include_blacklist=False,
             include_rules=False,
         )
-    
+
     def plan_restore(
         self,
         snapshot: Snapshot,
@@ -236,11 +237,11 @@ class PersistenceService:
         current_app_version: str = "1.0",
     ) -> RestorePlan:
         """Plan a restore operation from a snapshot.
-        
+
         This method validates the request, extracts domain objects from
         the snapshot, and returns a restore plan. It does NOT apply the
         restoration.
-        
+
         Args:
             snapshot: Snapshot to restore from
             restore_blacklist: Whether to restore blacklist
@@ -248,10 +249,10 @@ class PersistenceService:
             restore_fail2ban: Whether to restore fail2ban
             dry_run: If True, plan only without execution
             current_app_version: Current app version for compatibility check
-        
+
         Returns:
             RestorePlan with reconstructed domain objects
-        
+
         Raises:
             RestoreError: If the request is invalid
             CorruptedSnapshotError: If the snapshot is corrupted
@@ -266,69 +267,76 @@ class PersistenceService:
             restore_fail2ban=restore_fail2ban,
             dry_run=dry_run,
         )
-        
+
         # Plan restore
         try:
             return plan_restore(
                 request=request,
                 current_app_version=current_app_version,
             )
-        except (RestoreError, CorruptedSnapshotError, IncompatibleVersionError, InvalidRestoreScopeError):
+        except (
+            RestoreError,
+            CorruptedSnapshotError,
+            IncompatibleVersionError,
+            InvalidRestoreScopeError,
+        ):
             raise
         except Exception as e:
             raise RestoreError(
-                snapshot.metadata.snapshot_id,
-                _("Erreur inattendue : {e}").format(e=e)
+                snapshot.metadata.snapshot_id, _("Erreur inattendue : {e}").format(e=e)
             ) from e
-    
+
     def validate_snapshot(self, snapshot: Snapshot) -> list[str]:
         """Validate a snapshot for restore compatibility.
-        
+
         Args:
             snapshot: Snapshot to validate
-        
+
         Returns:
             List of validation error messages (empty if valid)
         """
         errors = []
-        
+
         # Check metadata
         if not snapshot.metadata.is_valid():
             errors.append(_("Les métadonnées du snapshot sont invalides"))
-        
+
         # Check status
         if snapshot.metadata.status != SnapshotStatus.COMPLETED:
             errors.append(
-                _("Le snapshot est à l'état {value}, pas COMPLETED").format(value=snapshot.metadata.status.value)
+                _("Le snapshot est à l'état {value}, pas COMPLETED").format(
+                    value=snapshot.metadata.status.value
+                )
             )
-        
+
         # Check content
         if snapshot.content.is_empty():
             errors.append(_("Le contenu du snapshot est vide"))
-        
+
         return errors
-    
+
     def is_snapshot_valid(self, snapshot: Snapshot) -> bool:
         """Check if a snapshot is valid for restore.
-        
+
         Args:
             snapshot: Snapshot to check
-        
+
         Returns:
             True if the snapshot is valid
         """
         return len(self.validate_snapshot(snapshot)) == 0
-    
+
     def get_snapshot_summary(self, snapshot: Snapshot) -> dict:
         """Get a complete summary of a snapshot.
-        
+
         Args:
             snapshot: Snapshot to summarize
-        
+
         Returns:
             Dictionary with metadata and content summaries
         """
         return snapshot.get_full_summary()
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -355,4 +363,4 @@ class PersistenceService:
 # - application/commands/restore_state.py appellera plan_restore() pour construire le plan
 # - application/queries/snapshot_info.py appellera get_snapshot_summary() pour afficher les infos
 # - interfaces/cli/actions.py utilisera les méthodes de convenance pour proposer les options
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

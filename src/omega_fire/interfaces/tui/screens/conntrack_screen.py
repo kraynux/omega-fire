@@ -3,6 +3,7 @@
 rafraichissement automatique — relance manuelle via le bouton), avec
 filtres protocole/etat/limite et export HTML. Logique identique a
 interfaces/cli/actions.py::action_8_2_conntrack_status."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -10,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static
 
 from omega_fire.application.queries.conntrack_status import get_conntrack_status
@@ -52,18 +53,28 @@ class ConntrackScreen(OmegaScreen):
             yield Static(_("ÉTAT DES CONNEXIONS (CONNTRACK)"), classes="omega-title")
 
             if self._monitoring_port is None:
-                yield Static(_("Port de monitoring non disponible."), classes="omega-hint")
-                with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+                yield Static(
+                    _("Port de monitoring non disponible."), classes="omega-hint"
+                )
+                with (
+                    Horizontal(classes="omega-actions"),
+                    Container(classes="omega-btn-frame"),
+                ):
                     yield Button(_("Retour"), id="back")
                 yield Footer()
                 return
 
             yield Static("", id="summary-hint", classes="omega-hint")
 
-            yield Select([(_("Tous les protocoles"), _ALL)], value=_ALL, id="protocol-select")
+            yield Select(
+                [(_("Tous les protocoles"), _ALL)], value=_ALL, id="protocol-select"
+            )
             yield Select([(_("Tous les états"), _ALL)], value=_ALL, id="state-select")
             yield Input(value="100", id="limit-input")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Filtrer / Rafraîchir"), id="filter", variant="primary")
 
             yield DataTable(id="connections-table")
@@ -84,10 +95,20 @@ class ConntrackScreen(OmegaScreen):
         if self._monitoring_port is None:
             return
         table = self.query_one("#connections-table", DataTable)
-        table.add_columns(_("Protocole"), _("Source"), _("Destination"), _("État"), _("Paquets"), _("Octets"), _("Timeout"))
+        table.add_columns(
+            _("Protocole"),
+            _("Source"),
+            _("Destination"),
+            _("État"),
+            _("Paquets"),
+            _("Octets"),
+            _("Timeout"),
+        )
         self._fetch_and_render()
 
-    def _fetch_and_render(self, protocol_filter: str = "", state_filter: str = "", limit: int = 100) -> None:
+    def _fetch_and_render(
+        self, protocol_filter: str = "", state_filter: str = "", limit: int = 100
+    ) -> None:
         self._result = get_conntrack_status(
             monitoring_port=self._monitoring_port,
             protocol_filter=protocol_filter,
@@ -102,22 +123,39 @@ class ConntrackScreen(OmegaScreen):
             filters_desc.append(f"protocole={protocol_filter}")
         if state_filter:
             filters_desc.append(f"etat={state_filter}")
-        filters_str = _(" (filtres : {value})").format(value=', '.join(filters_desc)) if filters_desc else ""
+        filters_str = (
+            _(" (filtres : {value})").format(value=", ".join(filters_desc))
+            if filters_desc
+            else ""
+        )
         # Text(...) : result.message peut contenir le texte d'une exception
         # conntrack (ConntrackPermissionError/ConntrackCommandError) - meme
         # correctif que restore_state_screen.py/action_history_screen.py
         # (retour utilisateur 2026-09-24/25, MarkupError).
-        hint.update(Text(_("{total_count} connexion(s) au total{filters_str}. {message}").format(total_count=result.total_count, filters_str=filters_str, message=result.message)))
+        hint.update(
+            Text(
+                _("{total_count} connexion(s) au total{filters_str}. {message}").format(
+                    total_count=result.total_count,
+                    filters_str=filters_str,
+                    message=result.message,
+                )
+            )
+        )
 
         protocol_select = self.query_one("#protocol-select", Select)
         protocol_select.set_options(
-            [(_("Tous les protocoles"), _ALL)] + [(_("{p} ({c})").format(p=p, c=c), p) for p, c in result.by_protocol.items()]
+            [(_("Tous les protocoles"), _ALL)]
+            + [
+                (_("{p} ({c})").format(p=p, c=c), p)
+                for p, c in result.by_protocol.items()
+            ]
         )
         protocol_select.value = protocol_filter or _ALL
 
         state_select = self.query_one("#state-select", Select)
         state_select.set_options(
-            [(_("Tous les états"), _ALL)] + [(_("{s} ({c})").format(s=s, c=c), s) for s, c in result.by_state.items()]
+            [(_("Tous les états"), _ALL)]
+            + [(_("{s} ({c})").format(s=s, c=c), s) for s, c in result.by_state.items()]
         )
         state_select.value = state_filter or _ALL
 
@@ -126,8 +164,12 @@ class ConntrackScreen(OmegaScreen):
         for entry in result.entries:
             table.add_row(
                 entry.protocol,
-                f"{entry.source_ip}:{entry.source_port}" if entry.source_port else entry.source_ip,
-                f"{entry.destination_ip}:{entry.destination_port}" if entry.destination_port else entry.destination_ip,
+                f"{entry.source_ip}:{entry.source_port}"
+                if entry.source_port
+                else entry.source_ip,
+                f"{entry.destination_ip}:{entry.destination_port}"
+                if entry.destination_port
+                else entry.destination_ip,
                 entry.state,
                 str(entry.packets),
                 str(entry.bytes),
@@ -146,16 +188,22 @@ class ConntrackScreen(OmegaScreen):
 
     def _apply_filter(self) -> None:
         protocol = self.query_one("#protocol-select", Select).value
-        protocol_filter = "" if protocol in (None, Select.BLANK, _ALL) else str(protocol)
+        protocol_filter = (
+            "" if protocol in (None, Select.BLANK, _ALL) else str(protocol)
+        )
         state = self.query_one("#state-select", Select).value
         state_filter = "" if state in (None, Select.BLANK, _ALL) else str(state)
         limit_raw = self.query_one("#limit-input", Input).value.strip()
         try:
             limit = int(limit_raw) if limit_raw else 100
         except ValueError:
-            self.app.notify(_("Nombre invalide, valeur précédente conservée."), severity="warning")
+            self.app.notify(
+                _("Nombre invalide, valeur précédente conservée."), severity="warning"
+            )
             limit = 100
-        self._fetch_and_render(protocol_filter=protocol_filter, state_filter=state_filter, limit=limit)
+        self._fetch_and_render(
+            protocol_filter=protocol_filter, state_filter=state_filter, limit=limit
+        )
 
     def _export(self) -> None:
         if self._result is None:
@@ -184,11 +232,17 @@ class ConntrackScreen(OmegaScreen):
                     "theme_name": theme_name,
                 }
                 exporter = HtmlExporter(templates_dir=TEMPLATES_DIR)
-                exporter.export_data(data, output_path, template_name="conntrack_export.html.j2")
+                exporter.export_data(
+                    data, output_path, template_name="conntrack_export.html.j2"
+                )
         except Exception as e:
             self.app.notify(_("Échec de l'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("Rapport exporté : {output_path}").format(output_path=output_path))
+        self.app.notify(
+            _("Rapport exporté : {output_path}").format(output_path=output_path)
+        )
         log_action_result(self._container, _ACTION_TITLE, status="success")

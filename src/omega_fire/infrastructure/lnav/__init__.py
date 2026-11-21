@@ -6,6 +6,7 @@ un pty, définitions de format embarquées (formats/omega_fire/*.json), et
 le répondeur minimal de capacités terminal requis pour que lnav (basé sur
 notcurses) démarre sans bloquer. Ne modifie jamais lnav lui-même.
 """
+
 from omega_fire.infrastructure.lnav.pty_session import (
     CONFIG_DIR,
     TerminalResponder,

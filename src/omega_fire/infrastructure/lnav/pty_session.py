@@ -16,6 +16,7 @@ Conforme à la charte d'architecture Omega-Fire :
 - Aucune couleur ni logique de rendu ici (voir
   interfaces/cli/renderers/lnav_live.py)
 """
+
 from __future__ import annotations
 
 import fcntl
@@ -28,6 +29,7 @@ import subprocess
 import termios
 import time
 from pathlib import Path
+
 from omega_fire.shared.i18n import _
 
 CONFIG_DIR = Path(__file__).resolve().parent

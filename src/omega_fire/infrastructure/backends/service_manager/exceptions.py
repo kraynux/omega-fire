@@ -6,15 +6,17 @@ These express failures in detecting or controlling system services
 (systemd, openrc, runit). They are caught by the application layer
 and translated into capability status updates in the registry.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class ServiceManagerError(CoreError):
     """Base exception for service manager operations.
-    
+
     All service manager-specific exceptions inherit from this class.
     """
+
     def __init__(self, message: str, manager_type: str = None, context: dict = None):
         super().__init__(message, context)
         self.manager_type = manager_type
@@ -24,10 +26,11 @@ class ServiceManagerError(CoreError):
 
 class NoServiceManagerDetectedError(ServiceManagerError):
     """Raised when no service manager is detected on the system.
-    
+
     This is a non-fatal error: the application can still function,
     but service control operations (start/stop/enable) will be unavailable.
     """
+
     def __init__(self, context: dict = None):
         super().__init__(
             _("Aucun gestionnaire de services détecté sur ce système"),
@@ -38,13 +41,16 @@ class NoServiceManagerDetectedError(ServiceManagerError):
 
 class ServiceManagerDetectionError(ServiceManagerError):
     """Raised when service manager detection fails.
-    
+
     This is raised when the detection process encounters an unexpected
     error (permission denied, filesystem issue, etc.).
     """
+
     def __init__(self, reason: str, manager_type: str = None, context: dict = None):
         super().__init__(
-            _("Échec de la détection du gestionnaire de services : {reason}").format(reason=reason),
+            _("Échec de la détection du gestionnaire de services : {reason}").format(
+                reason=reason
+            ),
             manager_type=manager_type,
             context=context,
         )
@@ -53,13 +59,18 @@ class ServiceManagerDetectionError(ServiceManagerError):
 
 class ServiceNotFoundError(ServiceManagerError):
     """Raised when a requested service is not found.
-    
+
     This is raised when trying to control a service that does not exist
     in the service manager's registry.
     """
-    def __init__(self, service_name: str, manager_type: str = None, context: dict = None):
+
+    def __init__(
+        self, service_name: str, manager_type: str = None, context: dict = None
+    ):
         super().__init__(
-            _("Service « {service_name} » introuvable").format(service_name=service_name),
+            _("Service « {service_name} » introuvable").format(
+                service_name=service_name
+            ),
             manager_type=manager_type,
             context={**(context or {}), "service_name": service_name},
         )
@@ -68,10 +79,11 @@ class ServiceNotFoundError(ServiceManagerError):
 
 class ServiceControlError(ServiceManagerError):
     """Raised when a service control operation fails.
-    
+
     This is raised when start/stop/restart/enable/disable operations
     fail at the system level.
     """
+
     def __init__(
         self,
         service_name: str,
@@ -81,7 +93,9 @@ class ServiceControlError(ServiceManagerError):
         context: dict = None,
     ):
         super().__init__(
-            _("Échec de l'opération {operation} sur le service « {service_name} » : {reason}").format(operation=operation, service_name=service_name, reason=reason),
+            _(
+                "Échec de l'opération {operation} sur le service « {service_name} » : {reason}"
+            ).format(operation=operation, service_name=service_name, reason=reason),
             manager_type=manager_type,
             context={
                 **(context or {}),
@@ -97,10 +111,11 @@ class ServiceControlError(ServiceManagerError):
 
 class ServiceStatusError(ServiceManagerError):
     """Raised when retrieving service status fails.
-    
+
     This is raised when the status query cannot be completed
     (service manager not responding, permission denied, etc.).
     """
+
     def __init__(
         self,
         service_name: str,
@@ -109,7 +124,9 @@ class ServiceStatusError(ServiceManagerError):
         context: dict = None,
     ):
         super().__init__(
-            _("Impossible de lire l'état du service « {service_name} » : {reason}").format(service_name=service_name, reason=reason),
+            _(
+                "Impossible de lire l'état du service « {service_name} » : {reason}"
+            ).format(service_name=service_name, reason=reason),
             manager_type=manager_type,
             context={
                 **(context or {}),
@@ -123,13 +140,16 @@ class ServiceStatusError(ServiceManagerError):
 
 class UnsupportedServiceManagerError(ServiceManagerError):
     """Raised when an unsupported service manager is encountered.
-    
+
     This is raised when the detected service manager is not one of
     the supported types (systemd, openrc, runit).
     """
+
     def __init__(self, detected_type: str, context: dict = None):
         super().__init__(
-            _("Unsupported service manager type: {detected_type}").format(detected_type=detected_type),
+            _("Unsupported service manager type: {detected_type}").format(
+                detected_type=detected_type
+            ),
             manager_type=detected_type,
             context=context,
         )
@@ -165,4 +185,4 @@ class UnsupportedServiceManagerError(ServiceManagerError):
 # - infrastructure/backends/service_manager/detector.py les lèvera lors de la détection
 # - infrastructure/backends/service_manager/systemd.py les lèvera lors du contrôle
 # - application/pipeline/guards/ les capturera pour mettre à jour le registre
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

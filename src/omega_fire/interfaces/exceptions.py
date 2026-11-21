@@ -5,21 +5,26 @@ Technical exceptions specific to the interface layer (CLI/TUI).
 These express failures in rendering, user input, navigation, or display.
 They are caught by the application layer or displayed directly to the user.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class InterfaceError(CoreError):
     """Base exception for interface operations."""
+
     def __init__(self, message: str, context: dict = None):
         super().__init__(message, context)
 
 
 class RenderError(InterfaceError):
     """Raised when rendering fails."""
+
     def __init__(self, component: str, reason: str, context: dict = None):
         super().__init__(
-            _("Impossible d'afficher « {component} » : {reason}").format(component=component, reason=reason),
+            _("Impossible d'afficher « {component} » : {reason}").format(
+                component=component, reason=reason
+            ),
             {**(context or {}), "component": component, "reason": reason},
         )
         self.component = component
@@ -28,9 +33,12 @@ class RenderError(InterfaceError):
 
 class UserInputError(InterfaceError):
     """Raised when user input is invalid or cannot be processed."""
+
     def __init__(self, prompt_name: str, reason: str, context: dict = None):
         super().__init__(
-            _("Saisie invalide pour « {prompt_name} » : {reason}").format(prompt_name=prompt_name, reason=reason),
+            _("Saisie invalide pour « {prompt_name} » : {reason}").format(
+                prompt_name=prompt_name, reason=reason
+            ),
             {**(context or {}), "prompt_name": prompt_name, "reason": reason},
         )
         self.prompt_name = prompt_name
@@ -39,9 +47,12 @@ class UserInputError(InterfaceError):
 
 class NavigationError(InterfaceError):
     """Raised when menu navigation fails."""
+
     def __init__(self, node_path: str, reason: str, context: dict = None):
         super().__init__(
-            _("Navigation impossible vers « {node_path} » : {reason}").format(node_path=node_path, reason=reason),
+            _("Navigation impossible vers « {node_path} » : {reason}").format(
+                node_path=node_path, reason=reason
+            ),
             {**(context or {}), "node_path": node_path, "reason": reason},
         )
         self.node_path = node_path
@@ -50,6 +61,7 @@ class NavigationError(InterfaceError):
 
 class MenuBuildError(InterfaceError):
     """Raised when menu construction fails."""
+
     def __init__(self, reason: str, context: dict = None):
         super().__init__(
             _("Impossible de construire le menu : {reason}").format(reason=reason),
@@ -60,9 +72,12 @@ class MenuBuildError(InterfaceError):
 
 class KeybindingError(InterfaceError):
     """Raised when keybinding handling fails."""
+
     def __init__(self, key: str, reason: str, context: dict = None):
         super().__init__(
-            _("Erreur de raccourci clavier pour « {key} » : {reason}").format(key=key, reason=reason),
+            _("Erreur de raccourci clavier pour « {key} » : {reason}").format(
+                key=key, reason=reason
+            ),
             {**(context or {}), "key": key, "reason": reason},
         )
         self.key = key
@@ -96,4 +111,4 @@ class KeybindingError(InterfaceError):
 # - interfaces/cli/prompts.py les lèvera lors de la saisie utilisateur
 # - interfaces/cli/tree_builder.py les lèvera lors de la navigation
 # - application/pipeline/ les capturera pour afficher des messages stables
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

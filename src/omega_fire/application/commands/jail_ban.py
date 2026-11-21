@@ -11,20 +11,22 @@ Conforms to Omega-Fire architecture charter:
   adapter, received already resolved by the caller)
 - No import of infrastructure/backends/ concrete classes
 """
+
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.domain.fail2ban.exceptions import (
-    JailNotFoundError,
     IPAlreadyBannedError,
+    JailNotFoundError,
 )
-from omega_fire.shared.networking import IPAddress
 from omega_fire.shared.i18n import _
+from omega_fire.shared.networking import IPAddress
 
 
 @dataclass
 class JailBanRequest:
     """Input for the jail ban use case."""
+
     jail_name: str
     ip: str
 
@@ -32,6 +34,7 @@ class JailBanRequest:
 @dataclass
 class JailBanResult:
     """Output of the jail ban use case."""
+
     success: bool
     message: str = ""
 
@@ -39,7 +42,7 @@ class JailBanResult:
 class JailBanCommand:
     """Use case: ban an IP in a specific fail2ban jail."""
 
-    def __init__(self, fail2ban_port: Optional[Any]):
+    def __init__(self, fail2ban_port: Any | None):
         self._port = fail2ban_port
 
     def execute(self, request: JailBanRequest) -> JailBanResult:
@@ -49,21 +52,35 @@ class JailBanCommand:
         try:
             ip = IPAddress(request.ip)
         except ValueError as e:
-            return JailBanResult(success=False, message=_("Adresse IP invalide : {e}").format(e=e))
+            return JailBanResult(
+                success=False, message=_("Adresse IP invalide : {e}").format(e=e)
+            )
 
         try:
             self._port.ban_ip(request.jail_name, ip)
         except IPAlreadyBannedError:
             return JailBanResult(
                 success=False,
-                message=_("IP {ip} déjà bannie dans '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name),
+                message=_("IP {ip} déjà bannie dans '{jail_name}'.").format(
+                    ip=request.ip, jail_name=request.jail_name
+                ),
             )
         except JailNotFoundError:
-            return JailBanResult(success=False, message=_("Jail '{jail_name}' introuvable.").format(jail_name=request.jail_name))
+            return JailBanResult(
+                success=False,
+                message=_("Jail '{jail_name}' introuvable.").format(
+                    jail_name=request.jail_name
+                ),
+            )
         except Exception as e:
             return JailBanResult(success=False, message=str(e))
 
-        return JailBanResult(success=True, message=_("IP {ip} bannie dans '{jail_name}'.").format(ip=request.ip, jail_name=request.jail_name))
+        return JailBanResult(
+            success=True,
+            message=_("IP {ip} bannie dans '{jail_name}'.").format(
+                ip=request.ip, jail_name=request.jail_name
+            ),
+        )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -102,4 +119,4 @@ class JailBanCommand:
 # interfaces/cli/actions.py : action_4_2_jail_ban_unban(ctx)
 # application/commands/jail_ban.py : JailBanCommand.execute()
 #   ↓ fail2ban_port.ban_ip() (infrastructure/backends/fail2ban/adapter.py)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

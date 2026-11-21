@@ -5,35 +5,39 @@ Pure domain exceptions. These express business rule violations,
 not technical failures. They are caught by application/ and
 translated into Results or user-facing messages.
 """
+
 from omega_fire.shared.i18n import _
 
 
 class IPBlacklistError(Exception):
     """Base exception for IP blacklist domain.
-    
+
     All domain-specific exceptions inherit from this.
     """
-    pass
 
 
 class IPAlreadyBannedError(IPBlacklistError):
     """Raised when attempting to ban an IP that is already banned.
-    
+
     This is a business rule violation: the invariant is that
     an IP cannot be banned twice on the same backend.
     """
+
     def __init__(self, ip: str, backend: str):
         self.ip = ip
         self.backend = backend
-        super().__init__(_("L'IP {ip} est déjà bannie sur {backend}").format(ip=ip, backend=backend))
+        super().__init__(
+            _("L'IP {ip} est déjà bannie sur {backend}").format(ip=ip, backend=backend)
+        )
 
 
 class IPNotFoundError(IPBlacklistError):
     """Raised when attempting to unban or query an IP that is not banned.
-    
+
     This is a business rule violation: you cannot unban an IP
     that doesn't exist in the blacklist.
     """
+
     def __init__(self, ip: str):
         self.ip = ip
         super().__init__(_("IP {ip} absente de la blacklist").format(ip=ip))
@@ -45,6 +49,7 @@ class InvalidIPError(IPBlacklistError):
     This is a validation error at the domain level: the IP
     doesn't conform to IPv4 or IPv6 standards.
     """
+
     def __init__(self, ip: str):
         self.ip = ip
         super().__init__(_("Format d'adresse IP invalide : {ip}").format(ip=ip))
@@ -62,18 +67,22 @@ class IPFamilyMismatchError(IPBlacklistError):
     the tool level (unlike nftables), so each adapter instance can only
     ever represent one family.
     """
+
     def __init__(self, ip: str, expected_version: int, backend: str):
         self.ip = ip
         self.expected_version = expected_version
         self.backend = backend
         super().__init__(
-            _("L'IP {ip} n'est pas en IPv{expected_version} — incompatible avec le backend « {backend} »").format(ip=ip, expected_version=expected_version, backend=backend)
+            _(
+                "L'IP {ip} n'est pas en IPv{expected_version} — incompatible avec le backend « {backend} »"
+            ).format(ip=ip, expected_version=expected_version, backend=backend)
         )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit les exceptions métier spécifiques au sous-domaine blacklist d'IPs. Ces exceptions expriment des règles métier violées (IP déjà bannie, IP introuvable, IP invalide), pas des pannes techniques.
-# Pourquoi dans domain/ (charte) : 
+# Pourquoi dans domain/ (charte) :
 # - C'est une erreur métier : violation d'un invariant du domaine
 # - Aucune dépendance externe (hérite juste de Exception)
 # - Testable sans aucun backend réel
@@ -91,4 +100,4 @@ class IPFamilyMismatchError(IPBlacklistError):
 # - domain/ip_blacklist/service.py les lèvera quand une règle métier est violée
 # - application/commands/ban_ip.py les capturera et les traduira en Result.fail()
 # - interfaces/cli/actions.py affichera le message à l'utilisateur
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

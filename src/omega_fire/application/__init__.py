@@ -32,4 +32,4 @@
 # - Les imports de la couche application passeront par ce package
 # - Les modules application/* seront consommés sans exposition forcée ici
 # - Les tests vérifieront que le package est importable sans effet de bord
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

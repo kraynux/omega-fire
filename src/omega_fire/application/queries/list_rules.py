@@ -10,17 +10,19 @@ Conforms to Omega-Fire architecture charter:
 - Returns formatted string for UI display
 - No dependency on interfaces/ or infrastructure/ directly
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class FirewallRuleEntry:
     """DTO representing a firewall rule entry.
-    
+
     Attributes:
         id: Rule identifier (backend-specific).
         backend: Backend that owns the rule (nftables, iptables).
@@ -35,6 +37,7 @@ class FirewallRuleEntry:
         packets: Packet counter.
         bytes: Byte counter.
     """
+
     id: str
     backend: str
     family: str = ""
@@ -52,29 +55,30 @@ class FirewallRuleEntry:
 @dataclass
 class FirewallRulesResult:
     """Result of the list rules query.
-    
+
     Attributes:
         entries: List of firewall rule entries.
         total_count: Total number of rules.
         by_backend: Count per backend.
         message: Human-readable summary.
     """
-    entries: List[FirewallRuleEntry]
+
+    entries: list[FirewallRuleEntry]
     total_count: int
     by_backend: dict
     message: str
 
 
 def list_rules(
-    firewall_port: Optional[Any] = None,
+    firewall_port: Any | None = None,
     backend_filter: str = "",
 ) -> FirewallRulesResult:
     """3.3: List all firewall rules across backends.
-    
+
     Args:
         firewall_port: FirewallPort implementation. If None, returns empty result.
         backend_filter: Optional filter by backend name ("nftables", "iptables").
-    
+
     Returns:
         FirewallRulesResult with entries and counts.
     """
@@ -83,11 +87,13 @@ def list_rules(
             entries=[],
             total_count=0,
             by_backend={},
-            message=_("⚠️ Port FirewallPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."),
+            message=_(
+                "⚠️ Port FirewallPort non disponible. Les adapters infrastructure/ ne sont pas encore câblés."
+            ),
         )
-    
+
     try:
-        if hasattr(firewall_port, 'list_rules'):
+        if hasattr(firewall_port, "list_rules"):
             raw_entries = firewall_port.list_rules()
         else:
             return FirewallRulesResult(
@@ -96,10 +102,10 @@ def list_rules(
                 by_backend={},
                 message=_("⚠️ Le port ne supporte pas list_rules()."),
             )
-        
+
         entries = []
         by_backend: dict = {}
-        
+
         for entry in raw_entries:
             if isinstance(entry, dict):
                 dto = FirewallRuleEntry(
@@ -133,20 +139,20 @@ def list_rules(
                 )
             else:
                 continue
-            
+
             if backend_filter and dto.backend != backend_filter:
                 continue
-            
+
             entries.append(dto)
             by_backend[dto.backend] = by_backend.get(dto.backend, 0) + 1
-        
+
         return FirewallRulesResult(
             entries=entries,
             total_count=len(entries),
             by_backend=by_backend,
             message=_("{count} règle(s) trouvée(s).").format(count=len(entries)),
         )
-    
+
     except Exception as e:
         return FirewallRulesResult(
             entries=[],
@@ -158,28 +164,34 @@ def list_rules(
 
 def format_rules_table(result: FirewallRulesResult) -> str:
     """Format the rules result as a readable string table.
-    
+
     Args:
         result: The query result.
-    
+
     Returns:
         Formatted string for UI display.
     """
     lines = [_("═══ RÈGLES FIREWALL ═══"), ""]
-    
+
     if not result.entries:
         lines.append(result.message)
         return "\n".join(lines)
-    
-    lines.append(_("Total : {total_count} règle(s)").format(total_count=result.total_count))
+
+    lines.append(
+        _("Total : {total_count} règle(s)").format(total_count=result.total_count)
+    )
     if result.by_backend:
         backend_summary = " | ".join(f"{k}: {v}" for k, v in result.by_backend.items())
-        lines.append(_("Par backend : {backend_summary}").format(backend_summary=backend_summary))
+        lines.append(
+            _("Par backend : {backend_summary}").format(backend_summary=backend_summary)
+        )
     lines.append("")
-    
-    lines.append(f"{'ID':<8} {'Backend':<10} {'Proto':<6} {'Port':<8} {'Source':<18} {'Dest':<18} {'Action':<8} {'Packets':<10} {'Bytes'}")
+
+    lines.append(
+        f"{'ID':<8} {'Backend':<10} {'Proto':<6} {'Port':<8} {'Source':<18} {'Dest':<18} {'Action':<8} {'Packets':<10} {'Bytes'}"
+    )
     lines.append("─" * 110)
-    
+
     for entry in result.entries:
         source = entry.source[:18] if entry.source else "any"
         dest = entry.destination[:18] if entry.destination else "any"
@@ -187,10 +199,10 @@ def format_rules_table(result: FirewallRulesResult) -> str:
             f"{entry.id:<8} {entry.backend:<10} {entry.protocol:<6} {entry.port:<8} "
             f"{source:<18} {dest:<18} {entry.action:<8} {entry.packets:<10} {entry.bytes}"
         )
-    
+
     lines.append("")
     lines.append(result.message)
-    
+
     return "\n".join(lines)
 
 
@@ -233,4 +245,4 @@ def format_rules_table(result: FirewallRulesResult) -> str:
 # infrastructure/backends/*/adapter.py : implémentation concrète
 #   ↓
 # Retourne FirewallRulesResult → format_rules_table() → affichage UI
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

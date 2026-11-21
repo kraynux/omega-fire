@@ -10,6 +10,7 @@ CORRIGE : la limite de mot `\\b` utilisee jusqu'ici ne trouvait jamais une IPv6 
 (`2a03:2880:f800:15::`) - ni le `:` final ni l'espace suivant ne sont des caracteres de mot, il n'y a donc
 pas de limite. Les limites sont maintenant explicites : une IP n'est jamais le morceau d'une IP plus longue
 (1.1.1.1 ne trouve pas 1.1.1.11 ni 21.1.1.1), un port apres une IPv4 (1.1.1.1:443) est accepte."""
+
 from __future__ import annotations
 
 import ipaddress

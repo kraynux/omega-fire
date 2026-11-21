@@ -10,16 +10,19 @@ restore_snapshot, delete_snapshot) are out of scope for this adapter
 for now — they belong to the separate full-state snapshot feature
 (menus 7.1/7.2/3.4) and are not yet implemented here.
 """
+
 from __future__ import annotations
+
 import json
-from pathlib import Path
 from datetime import datetime
-from omega_fire.ports.persistence import BackupInfo, PersistencePort, Snapshot
+from pathlib import Path
+
+from omega_fire.infrastructure.exceptions import StorageError
 from omega_fire.infrastructure.storage.files.archive_store import (
     ArchiveStore,
     ArchiveStoreError,
 )
-from omega_fire.infrastructure.exceptions import StorageError
+from omega_fire.ports.persistence import BackupInfo, Snapshot
 from omega_fire.shared.i18n import _
 
 
@@ -60,7 +63,11 @@ class FileBackupAdapter:
             StorageError: if archive creation fails.
         """
         if not source_paths:
-            raise StorageError(_("create_backup : la liste des chemins source (source_paths) ne doit pas être vide"))
+            raise StorageError(
+                _(
+                    "create_backup : la liste des chemins source (source_paths) ne doit pas être vide"
+                )
+            )
 
         if archive_name is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -74,7 +81,9 @@ class FileBackupAdapter:
             )
             info = self._archive_store.get_archive_info(archive_path)
         except ArchiveStoreError as e:
-            raise StorageError(_("Impossible de créer la sauvegarde : {e}").format(e=e)) from e
+            raise StorageError(
+                _("Impossible de créer la sauvegarde : {e}").format(e=e)
+            ) from e
 
         return BackupInfo(
             path=archive_path,
@@ -97,7 +106,11 @@ class FileBackupAdapter:
         try:
             self._archive_store.extract_archive(backup.path, dest_dir)
         except ArchiveStoreError as e:
-            raise StorageError(_("Impossible de restaurer la sauvegarde {path} : {e}").format(path=backup.path, e=e)) from e
+            raise StorageError(
+                _("Impossible de restaurer la sauvegarde {path} : {e}").format(
+                    path=backup.path, e=e
+                )
+            ) from e
 
     def list_backups(self, backup_dir: Path) -> list[BackupInfo]:
         """List available backup archives, most recent first.
@@ -124,7 +137,11 @@ class FileBackupAdapter:
                     )
                 )
         except ArchiveStoreError as e:
-            raise StorageError(_("Impossible de lister les sauvegardes de {backup_dir} : {e}").format(backup_dir=backup_dir, e=e)) from e
+            raise StorageError(
+                _("Impossible de lister les sauvegardes de {backup_dir} : {e}").format(
+                    backup_dir=backup_dir, e=e
+                )
+            ) from e
 
         return sorted(infos, key=lambda b: b.created_at, reverse=True)
 
@@ -137,7 +154,7 @@ class FileBackupAdapter:
         self._archive_store.delete_archive(backup.path)
 
     # ------------------------------------------------------------------
-    # Snapshot operations — 
+    # Snapshot operations —
     # ------------------------------------------------------------------
 
     def _get_snapshots_dir(self) -> Path:
@@ -165,8 +182,8 @@ class FileBackupAdapter:
         Raises:
             StorageError: if snapshot creation fails.
         """
-        from omega_fire.domain.persistence.service import PersistenceService
         from omega_fire.domain.persistence.exceptions import PersistenceError
+        from omega_fire.domain.persistence.service import PersistenceService
 
         try:
             service = PersistenceService()
@@ -178,7 +195,9 @@ class FileBackupAdapter:
                 origin=origin,
             )
         except PersistenceError as e:
-            raise StorageError(_("Impossible de construire le contenu du snapshot : {e}").format(e=e)) from e
+            raise StorageError(
+                _("Impossible de construire le contenu du snapshot : {e}").format(e=e)
+            ) from e
 
         domain_snapshot = backup_result.snapshot
         snapshot_id = domain_snapshot.metadata.snapshot_id
@@ -198,7 +217,9 @@ class FileBackupAdapter:
                 source_paths=[temp_json_path],
             )
         except ArchiveStoreError as e:
-            raise StorageError(_("Impossible de compresser le snapshot : {e}").format(e=e)) from e
+            raise StorageError(
+                _("Impossible de compresser le snapshot : {e}").format(e=e)
+            ) from e
         finally:
             temp_json_path.unlink(missing_ok=True)
 
@@ -223,15 +244,17 @@ class FileBackupAdapter:
             except Exception:
                 continue
 
-            results.append(Snapshot(
-                id=domain_snapshot.metadata.snapshot_id,
-                created_at=domain_snapshot.metadata.created_at,
-                blacklist_count=domain_snapshot.content.total_bans,
-                rules_count=domain_snapshot.content.total_rules,
-                jails_count=domain_snapshot.content.total_jails,
-                description=domain_snapshot.metadata.description,
-                origin=domain_snapshot.metadata.origin.value,
-            ))
+            results.append(
+                Snapshot(
+                    id=domain_snapshot.metadata.snapshot_id,
+                    created_at=domain_snapshot.metadata.created_at,
+                    blacklist_count=domain_snapshot.content.total_bans,
+                    rules_count=domain_snapshot.content.total_rules,
+                    jails_count=domain_snapshot.content.total_jails,
+                    description=domain_snapshot.metadata.description,
+                    origin=domain_snapshot.metadata.origin.value,
+                )
+            )
 
         return sorted(results, key=lambda s: s.created_at, reverse=True)
 
@@ -242,7 +265,9 @@ class FileBackupAdapter:
         from application/ to retrieve the data, then apply it via the
         appropriate backend adapters."""
         raise NotImplementedError(
-            _("restore_snapshot() a besoin des adaptateurs de backends pour appliquer l'état restauré — utiliser plutôt get_snapshot_content() puis application/commands/restore_state.py.")
+            _(
+                "restore_snapshot() a besoin des adaptateurs de backends pour appliquer l'état restauré — utiliser plutôt get_snapshot_content() puis application/commands/restore_state.py."
+            )
         )
 
     def delete_snapshot(self, snapshot_id: str) -> None:
@@ -252,7 +277,9 @@ class FileBackupAdapter:
         if archive_path.exists():
             archive_path.unlink()
 
-    def update_snapshot_description(self, snapshot_id: str, new_description: str) -> bool:
+    def update_snapshot_description(
+        self, snapshot_id: str, new_description: str
+    ) -> bool:
         """Update only the description of an existing snapshot.
 
         Decompresses the existing archive, rewrites description in the
@@ -274,7 +301,11 @@ class FileBackupAdapter:
         try:
             domain_snapshot = self._read_snapshot_archive(archive_path)
         except Exception as e:
-            raise StorageError(_("Impossible de lire le snapshot {snapshot_id} pour le mettre à jour : {e}").format(snapshot_id=snapshot_id, e=e)) from e
+            raise StorageError(
+                _(
+                    "Impossible de lire le snapshot {snapshot_id} pour le mettre à jour : {e}"
+                ).format(snapshot_id=snapshot_id, e=e)
+            ) from e
 
         domain_snapshot.metadata.description = new_description
         json_data = self._serialize_domain_snapshot(domain_snapshot)
@@ -294,7 +325,11 @@ class FileBackupAdapter:
                 source_paths=[temp_json_path],
             )
         except ArchiveStoreError as e:
-            raise StorageError(_("Impossible de recompresser le snapshot {snapshot_id} : {e}").format(snapshot_id=snapshot_id, e=e)) from e
+            raise StorageError(
+                _("Impossible de recompresser le snapshot {snapshot_id} : {e}").format(
+                    snapshot_id=snapshot_id, e=e
+                )
+            ) from e
         finally:
             temp_json_path.unlink(missing_ok=True)
 
@@ -326,7 +361,11 @@ class FileBackupAdapter:
             self._archive_store.extract_archive(archive_path, Path(tmp_dir))
             json_files = list(Path(tmp_dir).glob("*.json"))
             if not json_files:
-                raise StorageError(_("Aucun contenu JSON dans {archive_path}").format(archive_path=archive_path))
+                raise StorageError(
+                    _("Aucun contenu JSON dans {archive_path}").format(
+                        archive_path=archive_path
+                    )
+                )
             data = json.loads(json_files[0].read_text(encoding="utf-8"))
             return self._deserialize_domain_snapshot(data)
 
@@ -349,14 +388,22 @@ class FileBackupAdapter:
             },
             "content": {
                 "blacklist": {
-                    "banned_ips": content.blacklist.banned_ips if content.blacklist else [],
-                } if content.blacklist else None,
+                    "banned_ips": content.blacklist.banned_ips
+                    if content.blacklist
+                    else [],
+                }
+                if content.blacklist
+                else None,
                 "rules": {
                     "rules": content.rules.rules if content.rules else [],
-                } if content.rules else None,
+                }
+                if content.rules
+                else None,
                 "fail2ban": {
                     "jails": content.fail2ban.jails if content.fail2ban else [],
-                } if content.fail2ban else None,
+                }
+                if content.fail2ban
+                else None,
                 "total_bans": content.total_bans,
                 "total_rules": content.total_rules,
                 "total_jails": content.total_jails,
@@ -366,16 +413,19 @@ class FileBackupAdapter:
     def _deserialize_domain_snapshot(self, data: dict):
         """Reconstruct a domain Snapshot from its serialized dict form."""
         from datetime import datetime
+
         from omega_fire.domain.persistence.snapshots import (
-            Snapshot as DomainSnapshot,
-            SnapshotMetadata,
+            BlacklistSnapshot,
+            Fail2banSnapshot,
+            RulesSnapshot,
             SnapshotContent,
+            SnapshotMetadata,
+            SnapshotOrigin,
             SnapshotScope,
             SnapshotStatus,
-            SnapshotOrigin,
-            BlacklistSnapshot,
-            RulesSnapshot,
-            Fail2banSnapshot,
+        )
+        from omega_fire.domain.persistence.snapshots import (
+            Snapshot as DomainSnapshot,
         )
 
         meta_raw = data["metadata"]
@@ -395,15 +445,21 @@ class FileBackupAdapter:
             blacklist=BlacklistSnapshot(
                 banned_ips=content_raw["blacklist"]["banned_ips"],
                 count=len(content_raw["blacklist"]["banned_ips"]),
-            ) if content_raw.get("blacklist") else None,
+            )
+            if content_raw.get("blacklist")
+            else None,
             rules=RulesSnapshot(
                 rules=content_raw["rules"]["rules"],
                 count=len(content_raw["rules"]["rules"]),
-            ) if content_raw.get("rules") else None,
+            )
+            if content_raw.get("rules")
+            else None,
             fail2ban=Fail2banSnapshot(
                 jails=content_raw["fail2ban"]["jails"],
                 count=len(content_raw["fail2ban"]["jails"]),
-            ) if content_raw.get("fail2ban") else None,
+            )
+            if content_raw.get("fail2ban")
+            else None,
             total_bans=content_raw.get("total_bans", 0),
             total_rules=content_raw.get("total_rules", 0),
             total_jails=content_raw.get("total_jails", 0),
@@ -448,5 +504,5 @@ class FileBackupAdapter:
 #   purge_backups.py l'appelleront via un accesseur du container.
 # - interfaces/cli/actions.py (menu 7.2) appellera
 #   update_snapshot_description() pour l'option "Modifier la description"
-#----------------------------------------------------------------------
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------

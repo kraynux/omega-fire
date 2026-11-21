@@ -4,19 +4,19 @@
 Checks whether a rollback is safe to execute before attempting it.
 Validates preconditions for rollback operations.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from omega_fire.application.pipeline.planner import PipelineStep
-from omega_fire.application.exceptions import RollbackError
 from omega_fire.shared.i18n import _
 
 
 @dataclass(slots=True)
 class RollbackGuardResult:
     """Result of a rollback guard check."""
+
     can_rollback: bool
     reason: str = ""
     affected_steps: list[str] = None
@@ -62,7 +62,9 @@ class RollbackGuard:
 
         return RollbackGuardResult(
             can_rollback=True,
-            reason=_("Annulation possible pour {count} étape(s)").format(count=len(rollbackable)),
+            reason=_("Annulation possible pour {count} étape(s)").format(
+                count=len(rollbackable)
+            ),
             affected_steps=affected,
         )
 
@@ -92,6 +94,7 @@ def check_rollback_safe(executed_steps: list[PipelineStep]) -> RollbackGuardResu
     guard = RollbackGuard()
     return guard.check(executed_steps)
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Vérifie les préconditions avant d'exécuter un rollback
@@ -115,4 +118,4 @@ def check_rollback_safe(executed_steps: list[PipelineStep]) -> RollbackGuardResu
 # - RollbackGuard.check() : vérifie si le rollback est possible
 # - RollbackGuard.validate_rollback_step() : valide un step individuel
 # - check_rollback_safe() : fonction de convenance
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

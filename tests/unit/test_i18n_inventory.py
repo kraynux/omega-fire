@@ -2,6 +2,7 @@
 """Inventaire i18n tenu a jour (OMEGA-FIRE_PLAN-DETAILLE_I18N.md §4.6) : tout nouveau texte doit
 etre classe (traduire ou non) au moment ou il est ecrit ; les contrats machine ne sont jamais
 classes a traduire ; l'ancienne interface --legacy-cli reste hors inventaire (Q1)."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -14,7 +15,9 @@ DECISIONS = PROJECT.parent / "I18N_DECISIONS.md"
 
 
 def _load_tool():
-    spec = importlib.util.spec_from_file_location("i18n_inventory", PROJECT / "tools" / "i18n_inventory.py")
+    spec = importlib.util.spec_from_file_location(
+        "i18n_inventory", PROJECT / "tools" / "i18n_inventory.py"
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules["i18n_inventory"] = module
     spec.loader.exec_module(module)
@@ -24,7 +27,10 @@ def _load_tool():
 tool = _load_tool()
 
 
-@unittest.skipUnless(DECISIONS.is_file(), "decisions de l'inventaire absentes (hors poste de developpement)")
+@unittest.skipUnless(
+    DECISIONS.is_file(),
+    "decisions de l'inventaire absentes (hors poste de developpement)",
+)
 class InventoryTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -35,9 +41,14 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual(self.missing, [])
 
     def test_every_text_is_classified(self) -> None:
-        undecided = [f"{e.file}:{e.line} {e.text!r} ({e.reason})" for e in self.entries
-                     if e.category in (tool.A_DECIDER, tool.PROBABLE)]
-        self.assertEqual(undecided, [], "nouveau texte a classer : relancer tools/i18n_inventory.py")
+        undecided = [
+            f"{e.file}:{e.line} {e.text!r} ({e.reason})"
+            for e in self.entries
+            if e.category in (tool.A_DECIDER, tool.PROBABLE)
+        ]
+        self.assertEqual(
+            undecided, [], "nouveau texte a classer : relancer tools/i18n_inventory.py"
+        )
 
     def test_machine_contracts_never_translated(self) -> None:
         for e in self.entries:

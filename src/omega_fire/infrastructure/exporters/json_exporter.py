@@ -5,129 +5,134 @@ Infrastructure component that serializes report structures to JSON format.
 This is the concrete implementation that handles file I/O and JSON encoding.
 It consumes the serializable structures produced by domain/reports/serializers/.
 """
+
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
+
 from omega_fire.domain.reports.builders import Report
-from omega_fire.domain.reports.serializers import report_to_serializable, reports_to_serializable
+from omega_fire.domain.reports.serializers import (
+    report_to_serializable,
+    reports_to_serializable,
+)
 
 
 class JsonExporter:
     """Exporter that writes reports to JSON files.
-    
+
     This class takes serializable structures from the domain layer
     and writes them to JSON files with proper formatting.
     """
-    
+
     def __init__(self, pretty: bool = True, indent: int = 2):
         """Initialize the JSON exporter.
-        
+
         Args:
             pretty: If True, format JSON with indentation (default: True)
             indent: Number of spaces for indentation (default: 2)
         """
         self.pretty = pretty
         self.indent = indent
-    
+
     def export_report(
         self,
         report: Report,
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export a single report to a JSON file.
-        
+
         Args:
             report: Report domain model
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
         data = report_to_serializable(report)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
-    
+
     def export_reports(
         self,
         reports: list[Report],
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export multiple reports to a single JSON file.
-        
+
         Args:
             reports: List of Report domain models
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
         data = reports_to_serializable(reports)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
-    
+
     def export_data(
         self,
         data: Any,
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export arbitrary data to a JSON file.
-        
+
         This is a generic method that can export any serializable data,
         not just reports.
-        
+
         Args:
             data: Any JSON-serializable data
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
 
 
 def export_report_to_json(
     report: Report,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     pretty: bool = True,
 ) -> Path:
     """Convenience function to export a report to JSON.
-    
+
     Args:
         report: Report domain model
         output_path: Path where the JSON file will be written
         pretty: If True, format JSON with indentation (default: True)
-    
+
     Returns:
         Path to the created file
     """
@@ -137,21 +142,22 @@ def export_report_to_json(
 
 def export_reports_to_json(
     reports: list[Report],
-    output_path: Union[str, Path],
+    output_path: str | Path,
     pretty: bool = True,
 ) -> Path:
     """Convenience function to export multiple reports to JSON.
-    
+
     Args:
         reports: List of Report domain models
         output_path: Path where the JSON file will be written
         pretty: If True, format JSON with indentation (default: True)
-    
+
     Returns:
         Path to the created file
     """
     exporter = JsonExporter(pretty=pretty)
     return exporter.export_reports(reports, output_path)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Points clés :
@@ -159,136 +165,135 @@ def export_reports_to_json(
 # - Dépendances : utilise domain/reports/serializers.py pour obtenir les dicts
 # - I/O : c'est le seul endroit autorisé pour json.dumps() et Path.write_text()
 # - Conformité : respecte la charte — l'infrastructure gère la technique
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->
 """JSON exporter for reports.
 
 Infrastructure component that serializes report structures to JSON format.
 This is the concrete implementation that handles file I/O and JSON encoding.
 It consumes the serializable structures produced by domain/reports/serializers/.
 """
-import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
+
 from omega_fire.domain.reports.builders import Report
-from omega_fire.domain.reports.serializers import report_to_serializable, reports_to_serializable
 
 
 class JsonExporter:
     """Exporter that writes reports to JSON files.
-    
+
     This class takes serializable structures from the domain layer
     and writes them to JSON files with proper formatting.
     """
-    
+
     def __init__(self, pretty: bool = True, indent: int = 2):
         """Initialize the JSON exporter.
-        
+
         Args:
             pretty: If True, format JSON with indentation (default: True)
             indent: Number of spaces for indentation (default: 2)
         """
         self.pretty = pretty
         self.indent = indent
-    
+
     def export_report(
         self,
         report: Report,
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export a single report to a JSON file.
-        
+
         Args:
             report: Report domain model
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
         data = report_to_serializable(report)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
-    
+
     def export_reports(
         self,
         reports: list[Report],
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export multiple reports to a single JSON file.
-        
+
         Args:
             reports: List of Report domain models
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
         data = reports_to_serializable(reports)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
-    
+
     def export_data(
         self,
         data: Any,
-        output_path: Union[str, Path],
+        output_path: str | Path,
     ) -> Path:
         """Export arbitrary data to a JSON file.
-        
+
         This is a generic method that can export any serializable data,
         not just reports.
-        
+
         Args:
             data: Any JSON-serializable data
             output_path: Path where the JSON file will be written
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
-        
+
         # Serialize to JSON
         if self.pretty:
             json_str = json.dumps(data, indent=self.indent, ensure_ascii=False)
         else:
             json_str = json.dumps(data, ensure_ascii=False)
-        
+
         # Write to file
         output_path.write_text(json_str, encoding="utf-8")
-        
+
         return output_path
 
 
 def export_report_to_json(
     report: Report,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     pretty: bool = True,
 ) -> Path:
     """Convenience function to export a report to JSON.
-    
+
     Args:
         report: Report domain model
         output_path: Path where the JSON file will be written
         pretty: If True, format JSON with indentation (default: True)
-    
+
     Returns:
         Path to the created file
     """
@@ -298,21 +303,22 @@ def export_report_to_json(
 
 def export_reports_to_json(
     reports: list[Report],
-    output_path: Union[str, Path],
+    output_path: str | Path,
     pretty: bool = True,
 ) -> Path:
     """Convenience function to export multiple reports to JSON.
-    
+
     Args:
         reports: List of Report domain models
         output_path: Path where the JSON file will be written
         pretty: If True, format JSON with indentation (default: True)
-    
+
     Returns:
         Path to the created file
     """
     exporter = JsonExporter(pretty=pretty)
     return exporter.export_reports(reports, output_path)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -339,5 +345,4 @@ def export_reports_to_json(
 # - application/commands/export_report.py l'utilisera pour les exports JSON
 # - interfaces/cli/actions.py proposera le format JSON à l'utilisateur
 # - Les tests mockeront l'écriture de fichiers
-#---------------------------------------------------------  
-   
+# ---------------------------------------------------------

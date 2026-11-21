@@ -13,23 +13,26 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
-from dataclasses import dataclass
-from typing import Any, Optional
 
-from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
+from dataclasses import dataclass
+from typing import Any
+
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
+from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class DeleteRuleRequest:
     """Input for the delete rule use case."""
+
     rule_id: int
 
 
 @dataclass
 class DeleteRuleResult:
     """Output of the delete rule use case."""
+
     success: bool
     rule_id: int
     message: str
@@ -39,7 +42,9 @@ class DeleteRuleCommand:
     """Use case: delete a firewall rule by ID, removing it from the live
     kernel first if it was applied there."""
 
-    def __init__(self, rule_repository: RuleRepository, firewall_adapter: Optional[Any] = None):
+    def __init__(
+        self, rule_repository: RuleRepository, firewall_adapter: Any | None = None
+    ):
         """Initialize the command.
 
         Args:
@@ -60,24 +65,28 @@ class DeleteRuleCommand:
             return DeleteRuleResult(
                 success=False,
                 rule_id=request.rule_id,
-                message=_("Erreur technique lors de la lecture de la règle : {e}").format(e=e),
+                message=_(
+                    "Erreur technique lors de la lecture de la règle : {e}"
+                ).format(e=e),
             )
 
         if rule is None:
             return DeleteRuleResult(
                 success=False,
                 rule_id=request.rule_id,
-                message=_("Aucune règle trouvée avec l'ID #{rule_id}.").format(rule_id=request.rule_id),
+                message=_("Aucune règle trouvée avec l'ID #{rule_id}.").format(
+                    rule_id=request.rule_id
+                ),
             )
 
         # --- Retrait du noyau si la règle y était réellement appliquée ---
         kernel_warning = ""
         if rule.external_ref:
             if self._adapter is None:
-                kernel_warning = (
-                    _(" Attention : cette règle était active dans le noyau, mais aucun "
+                kernel_warning = _(
+                    " Attention : cette règle était active dans le noyau, mais aucun "
                     "backend n'est disponible pour l'en retirer — elle pourrait rester "
-                    "effective malgré sa suppression de la base.")
+                    "effective malgré sa suppression de la base."
                 )
             else:
                 try:
@@ -87,7 +96,9 @@ class DeleteRuleCommand:
                         success=False,
                         rule_id=request.rule_id,
                         message=(
-                            _("La règle n'a pas pu être retirée du noyau ({e}). Suppression annulée pour éviter une règle active orpheline.").format(e=e)
+                            _(
+                                "La règle n'a pas pu être retirée du noyau ({e}). Suppression annulée pour éviter une règle active orpheline."
+                            ).format(e=e)
                         ),
                     )
                 if not removed:
@@ -95,8 +106,10 @@ class DeleteRuleCommand:
                         success=False,
                         rule_id=request.rule_id,
                         message=(
-                            _("La règle n'a pas pu être retirée du noyau. "
-                            "Suppression annulée pour éviter une règle active orpheline.")
+                            _(
+                                "La règle n'a pas pu être retirée du noyau. "
+                                "Suppression annulée pour éviter une règle active orpheline."
+                            )
                         ),
                     )
 
@@ -114,13 +127,17 @@ class DeleteRuleCommand:
             return DeleteRuleResult(
                 success=True,
                 rule_id=request.rule_id,
-                message=_("La règle #{rule_id} a été supprimée avec succès.{kernel_warning}").format(rule_id=request.rule_id, kernel_warning=kernel_warning),
+                message=_(
+                    "La règle #{rule_id} a été supprimée avec succès.{kernel_warning}"
+                ).format(rule_id=request.rule_id, kernel_warning=kernel_warning),
             )
 
         return DeleteRuleResult(
             success=False,
             rule_id=request.rule_id,
-            message=_("Aucune règle trouvée avec l'ID #{rule_id}.").format(rule_id=request.rule_id),
+            message=_("Aucune règle trouvée avec l'ID #{rule_id}.").format(
+                rule_id=request.rule_id
+            ),
         )
 
     def _remove_from_backend(self, rule) -> bool:
@@ -183,4 +200,4 @@ class DeleteRuleCommand:
 # application/commands/delete_rule.py : DeleteRuleCommand.execute()
 #   ↓ RuleRepository.find_by_id() / delete()
 #   ↓ adapter.delete_rule() / delete_rule_by_content()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

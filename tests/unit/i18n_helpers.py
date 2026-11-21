@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Outils communs aux tests i18n : catalogue .mo minimal ecrit sans msgfmt, reglages en memoire."""
+
 from __future__ import annotations
 
 import struct
@@ -8,8 +9,12 @@ from pathlib import Path
 from textual.app import App
 
 from omega_fire.app.dependency_container import DependencyContainer
-from omega_fire.infrastructure.i18n.gettext_language_catalog import GettextLanguageCatalog
-from omega_fire.interfaces.tui.rendering.textual_theme_builder import build_all_textual_themes
+from omega_fire.infrastructure.i18n.gettext_language_catalog import (
+    GettextLanguageCatalog,
+)
+from omega_fire.interfaces.tui.rendering.textual_theme_builder import (
+    build_all_textual_themes,
+)
 
 
 def write_mo(path: Path, messages: dict[str, str], status: str | None = None) -> None:
@@ -30,7 +35,9 @@ def write_mo(path: Path, messages: dict[str, str], status: str | None = None) ->
     for _k, value in entries:
         offsets += [len(value.encode()), key_start + len(ids) + pos]
         pos += len(value.encode()) + 1
-    table = struct.pack("Iiiiiii", 0x950412DE, 0, len(entries), 28, 28 + 8 * len(entries), 0, 0)
+    table = struct.pack(
+        "Iiiiiii", 0x950412DE, 0, len(entries), 28, 28 + 8 * len(entries), 0, 0
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(table + struct.pack(f"{len(offsets)}i", *offsets) + ids + strs)
 
@@ -52,7 +59,9 @@ class MemorySettings:
 class FakeContainer(DependencyContainer):
     """Vrai conteneur, mais reglages en memoire et dossiers dans un repertoire temporaire."""
 
-    def __init__(self, settings: MemorySettings, root: Path, locale: Path | None = None) -> None:
+    def __init__(
+        self, settings: MemorySettings, root: Path, locale: Path | None = None
+    ) -> None:
         super().__init__()
         self._settings = settings
         self._root = root

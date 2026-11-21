@@ -9,6 +9,7 @@ morceau termine (vraie mesure, jamais simulee). Un petit fichier ou une periode 
 pas de barre. Sinon l'indicateur montre ce qui est vrai - une roue qui tourne, le temps ecoule, la taille des
 fichiers et leur nombre de lignes ESTIME (« environ », d'apres 16 echantillons) - et des messages qui
 changent pour dire que l'application travaille."""
+
 from __future__ import annotations
 
 import time
@@ -21,11 +22,18 @@ from textual.widgets import Static
 
 from omega_fire.shared.i18n import N_, _
 
-PERIOD_BUTTON_LABELS = {"24h": N_("24h"), "7j": N_("7j"), "30j": N_("30j"), "Tout": N_("Tout (fichier entier)")}
+PERIOD_BUTTON_LABELS = {
+    "24h": N_("24h"),
+    "7j": N_("7j"),
+    "30j": N_("30j"),
+    "Tout": N_("Tout (fichier entier)"),
+}
 """Cle = id du bouton (jamais traduite) ; libelle traduit a l'affichage avec _()."""
-PERIOD_HINT = (_("24h, 7j, 30j : lecture depuis la fin du fichier, rapide. « Tout » lit le "
-                 "fichier entier : la durée dépend de sa taille (de quelques secondes à "
-                 "plusieurs minutes pour un gros log)."))
+PERIOD_HINT = _(
+    "24h, 7j, 30j : lecture depuis la fin du fichier, rapide. « Tout » lit le "
+    "fichier entier : la durée dépend de sa taille (de quelques secondes à "
+    "plusieurs minutes pour un gros log)."
+)
 """Sous les boutons de periode des deux ecrans de calcul : la duree de « Tout » est annoncee avant le clic."""
 _FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 _PROGRESS_WIDTH = 30
@@ -35,19 +43,23 @@ _MESSAGE_SECONDS = 4.0
 _MESSAGES_FULL = (
     _("Lecture du fichier entier, ligne par ligne…"),
     _("Analyse des lignes (date, IP, code HTTP, chemin)…"),
-    _("Plus le fichier est gros, plus c'est long : quelques secondes à plusieurs minutes."),
+    _(
+        "Plus le fichier est gros, plus c'est long : quelques secondes à plusieurs minutes."
+    ),
     _("Échap arrête l'analyse : il faudra la relancer."),
     _("Toujours en cours, rien n'est bloqué…"),
 )
 _MESSAGES_PERIOD = (
-    _("Lecture depuis la fin du fichier, arrêt dès que les lignes sortent de la période…"),
+    _(
+        "Lecture depuis la fin du fichier, arrêt dès que les lignes sortent de la période…"
+    ),
     _("Analyse des lignes de la période…"),
     _("Toujours en cours, rien n'est bloqué…"),
 )
 
 
 def _format_size(size: int) -> str:
-    for unit, factor in ((_("Go"), 1024 ** 3), (_("Mo"), 1024 ** 2), (_("Ko"), 1024)):
+    for unit, factor in ((_("Go"), 1024**3), (_("Mo"), 1024**2), (_("Ko"), 1024)):
         if size >= factor:
             return f"{size / factor:.1f} {unit}"
     return f"{size} o"
@@ -95,7 +107,10 @@ def describe_selection(paths: list[str]) -> str:
     parts = [_("{count} log(s)").format(count=len(paths)), _format_size(total_size)]
     if total_lines:
         lines = f"{total_lines:,}".replace(",", " ")
-        parts.append(_("environ {lines} lignes").format(lines=lines) + (_(" (au moins)") if unknown else ""))
+        parts.append(
+            _("environ {lines} lignes").format(lines=lines)
+            + (_(" (au moins)") if unknown else "")
+        )
     return " · ".join(parts)
 
 
@@ -122,7 +137,9 @@ class BusyIndicator(Static):
         if self._timer is None:
             self._timer = self.set_interval(0.12, self._tick)
 
-    def set_progress(self, done_bytes: int, total_bytes: int, done_parts: int, total_parts: int) -> None:
+    def set_progress(
+        self, done_bytes: int, total_bytes: int, done_parts: int, total_parts: int
+    ) -> None:
         """Progression REELLE, mise a jour a chaque morceau termine (2026-11-06)."""
         self._progress = (done_bytes, total_bytes, done_parts, total_parts)
         self._tick()
@@ -146,10 +163,18 @@ class BusyIndicator(Static):
         content.append(f"   {message}")
         if self._progress is not None and self._progress[3] > 1:
             done_bytes, total_bytes, done_parts, total_parts = self._progress
-            share = done_bytes / total_bytes if total_bytes else done_parts / total_parts
+            share = (
+                done_bytes / total_bytes if total_bytes else done_parts / total_parts
+            )
             filled = round(share * _PROGRESS_WIDTH)
             content.append("\n   ")
             content.append("█" * filled, style="bold")
             content.append("░" * (_PROGRESS_WIDTH - filled), style="dim")
-            content.append(_(" {value:3.0f} %  ({done_parts}/{total_parts} morceaux analysés)").format(value=share * 100, done_parts=done_parts, total_parts=total_parts))
+            content.append(
+                _(
+                    " {value:3.0f} %  ({done_parts}/{total_parts} morceaux analysés)"
+                ).format(
+                    value=share * 100, done_parts=done_parts, total_parts=total_parts
+                )
+            )
         self.update(content)

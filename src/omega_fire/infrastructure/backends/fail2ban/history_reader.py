@@ -12,11 +12,11 @@ fail2ban-client via subprocess): here we read fail2ban's own storage
 directly, never write to it, and never assume it exists (fail2ban may
 be configured without persistent storage).
 """
+
 from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 DEFAULT_F2B_DB_PATH = Path("/var/lib/fail2ban/fail2ban.sqlite3")
 
@@ -93,4 +93,4 @@ class Fail2banHistoryReader:
 # Comment il sera utilisé :
 # - application/queries/f2b_report/jails_section.py appellera
 #   get_recent_bans() pour enrichir le détail de chaque jail.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

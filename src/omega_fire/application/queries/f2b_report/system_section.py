@@ -4,6 +4,7 @@
 Reuses Fail2banServiceController (already used by menu 4.10) rather
 than re-implementing service manager detection.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -76,4 +77,4 @@ def collect_system_status(
 # Comment il sera utilisé :
 # - report_builder.py (application/queries/f2b_report/report_builder.py)
 #   appelle cette fonction pour peupler F2bReportData.system.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

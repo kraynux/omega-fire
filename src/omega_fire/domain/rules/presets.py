@@ -9,8 +9,8 @@ into their own command language.
 
 No external dependencies beyond domain/rules/models.py.
 """
+
 from dataclasses import dataclass, field
-from typing import Optional
 
 from omega_fire.domain.rules.models import RuleAction, RuleChain, RuleProtocol
 from omega_fire.shared.i18n import _
@@ -23,6 +23,7 @@ class ChainPolicy:
     Example: chain=INPUT, default_action=DROP means "block everything
     on INPUT unless an explicit PresetRule below allows it".
     """
+
     chain: RuleChain
     default_action: RuleAction
 
@@ -44,12 +45,13 @@ class PresetRule:
     manageable afterwards (menu 3.2 delete, menu 7.2 restore) — a
     grouped rule can only be removed or restored as a whole.
     """
+
     chain: RuleChain
     action: RuleAction
-    protocol: Optional[RuleProtocol] = None
-    ports: Optional[list[int]] = None  # multiple ports (e.g. [22, 80, 443])
-    source_cidr: Optional[str] = None
-    dest_cidr: Optional[str] = None
+    protocol: RuleProtocol | None = None
+    ports: list[int] | None = None  # multiple ports (e.g. [22, 80, 443])
+    source_cidr: str | None = None
+    dest_cidr: str | None = None
     loopback_only: bool = False
     match_established: bool = False
 
@@ -57,6 +59,7 @@ class PresetRule:
 @dataclass(frozen=True)
 class FirewallPreset:
     """A complete predefined firewall profile."""
+
     key: str
     name: str
     description: str
@@ -69,15 +72,21 @@ PRESETS: dict[str, FirewallPreset] = {
     "1": FirewallPreset(
         key="1",
         name="Moyenne",
-        description=_("Profil Web/SSH standard : SSH (22), HTTP (80), HTTPS (443) autorisés."),
+        description=_(
+            "Profil Web/SSH standard : SSH (22), HTTP (80), HTTPS (443) autorisés."
+        ),
         policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True
+            ),
             PresetRule(
                 chain=RuleChain.INPUT,
                 action=RuleAction.ACCEPT,
@@ -89,16 +98,22 @@ PRESETS: dict[str, FirewallPreset] = {
     "2": FirewallPreset(
         key="2",
         name="Moyenne (Contrôle Distant)",
-        description=_("Profil Web/SSH standard + accès de secours : SSH (22), HTTP (80), "
-                     "HTTPS (443), VNC (5900, 5901), RDP (3389)."),
+        description=_(
+            "Profil Web/SSH standard + accès de secours : SSH (22), HTTP (80), "
+            "HTTPS (443), VNC (5900, 5901), RDP (3389)."
+        ),
         policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True
+            ),
             PresetRule(
                 chain=RuleChain.INPUT,
                 action=RuleAction.ACCEPT,
@@ -117,36 +132,70 @@ PRESETS: dict[str, FirewallPreset] = {
             ChainPolicy(chain=RuleChain.FORWARD, default_action=RuleAction.DROP),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True
+            ),
         ],
     ),
     "4": FirewallPreset(
         key="4",
         name="Local (Isolation)",
-        description=_("Isole la machine d'Internet. Autorise uniquement le trafic Local/LAN."),
+        description=_(
+            "Isole la machine d'Internet. Autorise uniquement le trafic Local/LAN."
+        ),
         policy_label=_("DROP (Internet)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.DROP),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, loopback_only=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
             # Réseaux privés RFC 1918 : couvre toutes les configurations LAN
             # possibles, pas seulement une sous-classe arbitraire.
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, source_cidr="10.0.0.0/8"),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, source_cidr="172.16.0.0/12"),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, source_cidr="192.168.0.0/16"),
-            PresetRule(chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, dest_cidr="10.0.0.0/8"),
-            PresetRule(chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, dest_cidr="172.16.0.0/12"),
-            PresetRule(chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, dest_cidr="192.168.0.0/16"),
+            PresetRule(
+                chain=RuleChain.INPUT,
+                action=RuleAction.ACCEPT,
+                source_cidr="10.0.0.0/8",
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT,
+                action=RuleAction.ACCEPT,
+                source_cidr="172.16.0.0/12",
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT,
+                action=RuleAction.ACCEPT,
+                source_cidr="192.168.0.0/16",
+            ),
+            PresetRule(
+                chain=RuleChain.OUTPUT, action=RuleAction.ACCEPT, dest_cidr="10.0.0.0/8"
+            ),
+            PresetRule(
+                chain=RuleChain.OUTPUT,
+                action=RuleAction.ACCEPT,
+                dest_cidr="172.16.0.0/12",
+            ),
+            PresetRule(
+                chain=RuleChain.OUTPUT,
+                action=RuleAction.ACCEPT,
+                dest_cidr="192.168.0.0/16",
+            ),
         ],
     ),
     "5": FirewallPreset(
         key="5",
         name="Paranoia",
-        description=_("Isolation absolue : Blocage total entrant, sortant, LAN, Internet et Loopback."),
+        description=_(
+            "Isolation absolue : Blocage total entrant, sortant, LAN, Internet et Loopback."
+        ),
         policy_label=_("DROP Total"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
@@ -164,7 +213,11 @@ PRESETS: dict[str, FirewallPreset] = {
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, protocol=RuleProtocol.ICMP),
+            PresetRule(
+                chain=RuleChain.INPUT,
+                action=RuleAction.ACCEPT,
+                protocol=RuleProtocol.ICMP,
+            ),
             PresetRule(
                 chain=RuleChain.INPUT,
                 action=RuleAction.ACCEPT,
@@ -188,17 +241,23 @@ PRESETS: dict[str, FirewallPreset] = {
     "8": FirewallPreset(
         key="8",
         name="Server Web & FTP",
-        description=_("Serveur Web + FTP : SSH (22), HTTP (80), HTTPS (443), FTP contrôle (21) "
-                     "et plage passive restreinte (30000-30009). Configurer le démon FTP "
-                     "(pasv_min_port/pasv_max_port) pour correspondre à cette plage."),
+        description=_(
+            "Serveur Web + FTP : SSH (22), HTTP (80), HTTPS (443), FTP contrôle (21) "
+            "et plage passive restreinte (30000-30009). Configurer le démon FTP "
+            "(pasv_min_port/pasv_max_port) pour correspondre à cette plage."
+        ),
         policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True
+            ),
             PresetRule(
                 chain=RuleChain.INPUT,
                 action=RuleAction.ACCEPT,
@@ -222,16 +281,22 @@ PRESETS: dict[str, FirewallPreset] = {
     "9": FirewallPreset(
         key="9",
         name="Multi-server (Reverse Proxy / Docker)",
-        description=_("Reverse proxy et services conteneurisés : SSH (22), HTTP (80), "
-                     "HTTPS (443), et ports d'exposition courants (8000, 8080, 8443)."),
+        description=_(
+            "Reverse proxy et services conteneurisés : SSH (22), HTTP (80), "
+            "HTTPS (443), et ports d'exposition courants (8000, 8080, 8443)."
+        ),
         policy_label=_("DROP (Restreint)"),
         chain_policies=[
             ChainPolicy(chain=RuleChain.INPUT, default_action=RuleAction.DROP),
             ChainPolicy(chain=RuleChain.OUTPUT, default_action=RuleAction.ACCEPT),
         ],
         rules=[
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True),
-            PresetRule(chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, loopback_only=True
+            ),
+            PresetRule(
+                chain=RuleChain.INPUT, action=RuleAction.ACCEPT, match_established=True
+            ),
             PresetRule(
                 chain=RuleChain.INPUT,
                 action=RuleAction.ACCEPT,
@@ -243,7 +308,7 @@ PRESETS: dict[str, FirewallPreset] = {
 }
 
 
-def get_preset(key: str) -> Optional[FirewallPreset]:
+def get_preset(key: str) -> FirewallPreset | None:
     """Get a preset by its menu key ("1" through "9").
 
     Args:
@@ -310,4 +375,4 @@ def list_presets() -> list[FirewallPreset]:
 # - application/commands/apply_preset.py orchestre la sélection + snapshot
 #   + application via l'adapter du backend choisi
 # - interfaces/cli/actions.py (menu 3.4) affiche list_presets() pour le choix
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

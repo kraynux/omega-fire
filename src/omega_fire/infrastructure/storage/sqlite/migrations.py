@@ -7,12 +7,12 @@ one version to the next.
 
 This module performs real file I/O and is therefore in infrastructure/.
 """
+
 import sqlite3
 from pathlib import Path
-from typing import Optional
+
 from omega_fire.infrastructure.storage.sqlite.connection import DatabaseConnection
 from omega_fire.infrastructure.storage.sqlite.exceptions import MigrationError
-
 
 # Fragments d'erreur SQLite indiquant qu'une instruction DDL a déjà été
 # appliquée précédemment (colonne ou table déjà existante). Dans ce cas,
@@ -28,10 +28,10 @@ _ALREADY_APPLIED_MARKERS = (
 
 class Migration:
     """Represents a single database migration."""
-    
+
     def __init__(self, version: str, name: str, sql: str):
         """Initialize a migration.
-        
+
         Args:
             version: Migration version (e.g., "001")
             name: Migration name (e.g., "initial_schema")
@@ -40,7 +40,7 @@ class Migration:
         self.version = version
         self.name = name
         self.sql = sql
-    
+
     @property
     def full_name(self) -> str:
         """Get the full migration name (version_name)."""
@@ -49,20 +49,20 @@ class Migration:
 
 class MigrationManager:
     """Manages database migrations."""
-    
+
     def __init__(self, db: DatabaseConnection, migrations_dir: Path):
         """Initialize the migration manager.
-        
+
         Args:
             db: Database connection
             migrations_dir: Directory containing migration SQL files
         """
         self._db = db
         self._migrations_dir = migrations_dir
-    
+
     def get_current_version(self) -> str:
         """Get the current database version.
-        
+
         Returns:
             Version string (e.g., "001") or "000" if no migrations applied
         """
@@ -72,7 +72,7 @@ class MigrationManager:
             )
             if cursor.fetchone() is None:
                 return "000"
-            
+
             cursor = self._db.execute(
                 "SELECT version FROM schema_version ORDER BY applied_at DESC LIMIT 1"
             )
@@ -80,18 +80,18 @@ class MigrationManager:
             return row["version"] if row else "000"
         except Exception:
             return "000"
-    
+
     def get_available_migrations(self) -> list[Migration]:
         """Get all available migrations from the migrations directory.
-        
+
         Returns:
             List of Migration objects sorted by version
         """
         migrations = []
-        
+
         if not self._migrations_dir.exists():
             return migrations
-        
+
         for file_path in sorted(self._migrations_dir.glob("v*.sql")):
             # Parse filename: v001_initial.sql
             name = file_path.stem  # v001_initial
@@ -101,45 +101,45 @@ class MigrationManager:
                 migration_name = parts[1]
                 sql = file_path.read_text()
                 migrations.append(Migration(version, migration_name, sql))
-        
+
         return migrations
-    
+
     def get_pending_migrations(self) -> list[Migration]:
         """Get migrations that haven't been applied yet.
-        
+
         Returns:
             List of pending Migration objects
         """
         current_version = self.get_current_version()
         available = self.get_available_migrations()
-        
+
         return [m for m in available if m.version > current_version]
-    
+
     def _is_already_applied_error(self, error: Exception) -> bool:
         """Check whether an error indicates a DDL statement already took effect.
-        
+
         Args:
             error: Exception raised while executing a migration statement
-        
+
         Returns:
             True if the error text matches a known "already applied" marker
         """
         message = str(error).lower()
         return any(marker in message for marker in _ALREADY_APPLIED_MARKERS)
-    
+
     def apply_migration(self, migration: Migration) -> None:
         """Apply a single migration.
-        
+
         Executes each SQL statement individually rather than as a single
         script. Statements that fail because their effect is already
         present (column/table already exists) are treated as no-ops
         instead of errors, making the migration safe to (re)apply even
         if a previous run partially succeeded without being recorded.
         Any other failure still raises MigrationError as before.
-        
+
         Args:
             migration: Migration to apply
-        
+
         Raises:
             MigrationError: If a statement fails for a reason other than
                 "already applied"
@@ -147,9 +147,7 @@ class MigrationManager:
         try:
             with self._db.transaction() as conn:
                 statements = [
-                    stmt.strip()
-                    for stmt in migration.sql.split(";")
-                    if stmt.strip()
+                    stmt.strip() for stmt in migration.sql.split(";") if stmt.strip()
                 ]
 
                 for statement in statements:
@@ -175,28 +173,28 @@ class MigrationManager:
                 migration_name=migration.full_name,
                 reason=str(e),
             ) from e
-    
+
     def apply_all_pending(self) -> list[str]:
         """Apply all pending migrations.
-        
+
         Returns:
             List of applied migration names
-        
+
         Raises:
             MigrationError: If any migration fails
         """
         pending = self.get_pending_migrations()
         applied = []
-        
+
         for migration in pending:
             self.apply_migration(migration)
             applied.append(migration.full_name)
-        
+
         return applied
-    
+
     def ensure_schema_version_table(self) -> None:
         """Ensure the schema_version table exists.
-        
+
         This table tracks which migrations have been applied.
         """
         self._db.execute("""
@@ -243,4 +241,4 @@ class MigrationManager:
 # - app/bootstrap.py appellera apply_all_pending() au démarrage
 # - Les fichiers SQL sont dans infrastructure/storage/sqlite/migrations/versions/
 # - Les tests utiliseront un fichier DB temporaire
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

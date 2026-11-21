@@ -126,6 +126,7 @@ Blacklist terpadu memungkinkan bekerja dengan nftables dan iptables dari satu la
 ### 3. Manajemen aturan dan kebijakan
 
 - Wizard langkah demi langkah untuk membuat aturan lanjutan.
+- Membuka port atas permintaan omega-serv (`port ouvrir`): port TCP yang hanya dibuka dari jaringan yang ditentukan, pada setiap firewall yang terdeteksi (termasuk ufw dan firewalld), dicatat seperti aturan dari menu 3.1.
 - Daftar aturan sistem dan aturan yang dibuat oleh Omega-Fire.
 - Menghapus aturan melalui pemilihan.
 - Pembersihan otomatis aturan nonaktif di basis referensi.
@@ -495,6 +496,10 @@ Untuk menjalankan antarmuka Rich lama (input angka berurutan) sebagai gantinya:
 ### Kontak dan dukungan
 
 Bantuan (tombol `a`) menyediakan layar **Kontak dan dukungan**: *Traktir kopi* (halaman PayPal pengembang), *Hubungi dukungan* (alamat email dan formulir kontak situs, ditampilkan apa adanya), *Daftarkan saya sebagai pengguna (anonim)*, dan *Periksa pembaruan*. Pendaftaran bersifat sukarela, nonaktif secara bawaan, dan dikirim hanya sekali: hanya digunakan untuk menghitung pengguna dan, jika Anda mau, benua atau negara mereka (daftar tertutup, tidak pernah teks bebas). Yang dikirim adalah kunci yang diambil secara acak, nama perangkat lunak (`omega-fire`), dan versinya; tidak pernah nama, nama mesin, pengaturan, target, maupun hasil. Alamat IP tidak disimpan dalam pendaftaran, tetapi, seperti setiap kunjungan, melewati pemeriksaan keamanan dan log server penerima. Penarikan kapan saja dari layar yang sama (*Jangan daftarkan saya lagi*). Pemeriksaan pembaruan hanya membaca daftar versi yang dipublikasikan di situs, dan tidak pernah tanpa klik.
+
+### Tautan dengan alat omega lainnya
+
+Omega-Fire menjawab beberapa perintah tanpa antarmuka, yang dipanggil oleh alat lain dalam suite. `./omega-fire.sh synchro jeton` dan `./omega-fire.sh synchro fiche --format json` menjelaskan instalasi dan kemampuannya (firewall, Fail2Ban, Pustaka log), tanpa sudo. `./omega-fire.sh port ouvrir` membuka port TCP dari jaringan tertentu untuk administrasi web omega-serv: satu aturan per jaringan dan per firewall yang terdeteksi, juga ditambahkan ke ufw atau firewalld jika aktif, dicatat seperti aturan dari menu 3.1 dan ditulis ke log audit. Loopback tidak pernah dibuka dan aturan yang sudah ada tidak ditambahkan dua kali. omega-serv hanya memanggilnya jika kedua alat terdaftar di zona omega-connect yang sama; sudo diminta seperti untuk antarmuka. Jika zona omega-connect ada, setiap blokir atau pencabutan blokir yang diterapkan omega-fire sendiri di firewall (nftables, iptables, ip6tables) diterbitkan di jurnal blokir zona, yang dibaca alat omega lainnya; `./omega-fire.sh synchro bans` menyelaraskannya kembali dengan firewall (sudo diminta). Blokir dari jail Fail2Ban ditulis di sana oleh action yang dipasang omega-jail.
 
 ### Alur umum
 

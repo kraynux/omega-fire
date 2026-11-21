@@ -5,58 +5,62 @@ This module defines the logic for degraded mode: when a command can be
 executed partially (some steps skipped), when it must be blocked entirely,
 and how to evaluate the criticality of an action in degraded mode.
 """
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
-from omega_fire.core.capability_registry import CapabilityRegistry
-from omega_fire.core.enums import CapabilityStatus
-from omega_fire.application.pipeline.planner import ExecutionPlan
+
 from omega_fire.application.exceptions import DegradedModeError
+from omega_fire.application.pipeline.planner import ExecutionPlan
+from omega_fire.core.capability_registry import CapabilityRegistry
 from omega_fire.shared.i18n import _
 
 
 class ActionCriticality(Enum):
     """Criticality level of an action.
-    
+
     Determines whether the action can be executed in degraded mode.
     """
-    LOW = "low"           # Can be skipped or delayed
-    MEDIUM = "medium"     # Should execute but can be partial
-    HIGH = "high"         # Must execute fully or not at all
-    CRITICAL = "critical" # Must execute fully, block if degraded
+
+    LOW = "low"  # Can be skipped or delayed
+    MEDIUM = "medium"  # Should execute but can be partial
+    HIGH = "high"  # Must execute fully or not at all
+    CRITICAL = "critical"  # Must execute fully, block if degraded
 
 
 @dataclass
 class DegradedModePolicy:
     """Policy for degraded mode execution.
-    
+
     Defines which actions are allowed in degraded mode and under what conditions.
     """
+
     allow_degraded_by_default: bool = False
     criticality_overrides: dict[str, ActionCriticality] = field(default_factory=dict)
     blocked_capabilities: list[str] = field(default_factory=list)
     warning_threshold: int = 2  # Number of missing capabilities before warning
-    
+
     def get_criticality(self, command_name: str) -> ActionCriticality:
         """Get the criticality level for a command.
-        
+
         Args:
             command_name: Name of the command
-        
+
         Returns:
             ActionCriticality level
         """
         return self.criticality_overrides.get(
             command_name,
-            ActionCriticality.MEDIUM if self.allow_degraded_by_default else ActionCriticality.HIGH
+            ActionCriticality.MEDIUM
+            if self.allow_degraded_by_default
+            else ActionCriticality.HIGH,
         )
-    
+
     def is_capability_blocked(self, capability_id: str) -> bool:
         """Check if a capability is explicitly blocked.
-        
+
         Args:
             capability_id: ID of the capability
-        
+
         Returns:
             True if the capability is blocked
         """
@@ -66,20 +70,21 @@ class DegradedModePolicy:
 @dataclass
 class DegradedModeAssessment:
     """Assessment of whether a command can run in degraded mode.
-    
+
     Contains the decision (allowed/blocked), the reason, and metadata
     about missing capabilities.
     """
+
     allowed: bool
     command_name: str
     criticality: ActionCriticality
     missing_capabilities: list[str] = field(default_factory=list)
-    reason: Optional[str] = None
+    reason: str | None = None
     warnings: list[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict:
         """Convert the assessment to a dictionary.
-        
+
         Returns:
             Dictionary representation
         """
@@ -95,59 +100,63 @@ class DegradedModeAssessment:
 
 class DegradedModeManager:
     """Manages degraded mode decisions for the pipeline.
-    
+
     This class evaluates whether a command can be executed in degraded mode
     based on the policy, criticality, and missing capabilities.
     """
-    
+
     def __init__(
         self,
         registry: CapabilityRegistry,
-        policy: Optional[DegradedModePolicy] = None,
+        policy: DegradedModePolicy | None = None,
     ):
         """Initialize the degraded mode manager.
-        
+
         Args:
             registry: The capability registry to query
             policy: Optional policy for degraded mode (uses default if None)
         """
         self._registry = registry
         self._policy = policy or DegradedModePolicy()
-    
+
     def assess(
         self,
         plan: ExecutionPlan,
     ) -> DegradedModeAssessment:
         """Assess whether a command can run in degraded mode.
-        
+
         This method evaluates the execution plan, checks missing capabilities,
         and determines if the command can proceed in degraded mode.
-        
+
         Args:
             plan: The execution plan to assess
-        
+
         Returns:
             DegradedModeAssessment with the decision
         """
         # Get criticality
         criticality = self._policy.get_criticality(plan.command_name)
-        
+
         # Collect missing capabilities
         missing_caps = []
         for step, caps in plan.skipped_steps:
             missing_caps.extend(caps)
         missing_caps = list(set(missing_caps))  # Deduplicate
-        
+
         # Check for blocked capabilities
-        blocked_caps = [cap for cap in missing_caps if self._policy.is_capability_blocked(cap)]
-        
+        blocked_caps = [
+            cap for cap in missing_caps if self._policy.is_capability_blocked(cap)
+        ]
+
         # Build warnings
         warnings = []
         if len(missing_caps) >= self._policy.warning_threshold:
             warnings.append(
-                _("Plusieurs capacités manquantes ({count}) : {value}").format(count=len(missing_caps), value=', '.join(missing_caps))
+                _("Plusieurs capacités manquantes ({count}) : {value}").format(
+                    count=len(missing_caps), value=", ".join(missing_caps)
+                )
             )
-        
+
         # Decision logic
         if not missing_caps:
             # No missing capabilities — not in degraded mode
@@ -159,7 +168,7 @@ class DegradedModeManager:
                 reason=_("Toutes les capacités sont disponibles"),
                 warnings=warnings,
             )
-        
+
         if blocked_caps:
             # Blocked capabilities — cannot proceed
             return DegradedModeAssessment(
@@ -167,10 +176,12 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=_("Capacités bloquées : {value}").format(value=', '.join(blocked_caps)),
+                reason=_("Capacités bloquées : {value}").format(
+                    value=", ".join(blocked_caps)
+                ),
                 warnings=warnings,
             )
-        
+
         if criticality == ActionCriticality.CRITICAL:
             # Critical actions cannot run in degraded mode
             return DegradedModeAssessment(
@@ -178,21 +189,28 @@ class DegradedModeManager:
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=_("La commande « {command_name} » est critique et ne peut pas s'exécuter en mode dégradé").format(command_name=plan.command_name),
+                reason=_(
+                    "La commande « {command_name} » est critique et ne peut pas s'exécuter en mode dégradé"
+                ).format(command_name=plan.command_name),
                 warnings=warnings,
             )
-        
-        if criticality == ActionCriticality.HIGH and not self._policy.allow_degraded_by_default:
+
+        if (
+            criticality == ActionCriticality.HIGH
+            and not self._policy.allow_degraded_by_default
+        ):
             # High criticality with no degraded mode allowed
             return DegradedModeAssessment(
                 allowed=False,
                 command_name=plan.command_name,
                 criticality=criticality,
                 missing_capabilities=missing_caps,
-                reason=_("La commande « {command_name} » nécessite toutes les capacités").format(command_name=plan.command_name),
+                reason=_(
+                    "La commande « {command_name} » nécessite toutes les capacités"
+                ).format(command_name=plan.command_name),
                 warnings=warnings,
             )
-        
+
         # Medium or Low criticality, or degraded mode allowed — can proceed
         return DegradedModeAssessment(
             allowed=True,
@@ -202,61 +220,61 @@ class DegradedModeManager:
             reason=_("Partial exécution allowed"),
             warnings=warnings,
         )
-    
+
     def can_execute(
         self,
         plan: ExecutionPlan,
     ) -> bool:
         """Check if a command can execute (possibly in degraded mode).
-        
+
         Args:
             plan: The execution plan to check
-        
+
         Returns:
             True if the command can execute
         """
         assessment = self.assess(plan)
         return assessment.allowed
-    
+
     def must_block(
         self,
         plan: ExecutionPlan,
     ) -> bool:
         """Check if a command must be blocked (cannot run even in degraded mode).
-        
+
         Args:
             plan: The execution plan to check
-        
+
         Returns:
             True if the command must be blocked
         """
         assessment = self.assess(plan)
         return not assessment.allowed
-    
+
     def get_warnings(
         self,
         plan: ExecutionPlan,
     ) -> list[str]:
         """Get warnings for a command execution.
-        
+
         Args:
             plan: The execution plan to assess
-        
+
         Returns:
             List of warning messages
         """
         assessment = self.assess(plan)
         return assessment.warnings
-    
+
     def validate_and_raise(
         self,
         plan: ExecutionPlan,
     ) -> None:
         """Validate the plan and raise DegradedModeError if blocked.
-        
+
         Args:
             plan: The execution plan to validate
-        
+
         Raises:
             DegradedModeError: If the command cannot execute
         """
@@ -270,7 +288,7 @@ class DegradedModeManager:
 
 def create_default_policy() -> DegradedModePolicy:
     """Create a default degraded mode policy.
-    
+
     Returns:
         DegradedModePolicy with sensible defaults
     """
@@ -290,22 +308,23 @@ def create_default_policy() -> DegradedModePolicy:
 def assess_degraded_mode(
     plan: ExecutionPlan,
     registry: CapabilityRegistry,
-    policy: Optional[DegradedModePolicy] = None,
+    policy: DegradedModePolicy | None = None,
 ) -> DegradedModeAssessment:
     """Convenience function to assess degraded mode.
-    
+
     This function creates a DegradedModeManager and assesses the plan in one call.
-    
+
     Args:
         plan: The execution plan to assess
         registry: The capability registry to query
         policy: Optional policy for degraded mode
-    
+
     Returns:
         DegradedModeAssessment with the decision
     """
     manager = DegradedModeManager(registry, policy)
     return manager.assess(plan)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -343,4 +362,4 @@ def assess_degraded_mode(
 # - application/commands/ban_ip.py définira sa criticité via la politique
 # - interfaces/cli/actions.py affichera les warnings via get_warnings()
 # - Les tests mockeront le CapabilityRegistry pour simuler différents scénarios de mode dégradé
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

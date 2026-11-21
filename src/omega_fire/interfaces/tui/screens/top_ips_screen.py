@@ -5,8 +5,10 @@ conditionnels. Logique identique a
 interfaces/cli/actions.py::action_5_2_top_ips. La gestion des epingles
 reutilise PinnedPathsScreen (Phase 2/2.2) plutot que de dupliquer le
 CRUD ici."""
+
 from __future__ import annotations
 
+import ipaddress
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -17,20 +19,33 @@ from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.css.query import NoMatches
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static
 
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
-from omega_fire.domain.reports.top_ips import TOP_IPS_EXPORT_PREFIX, TopIpRow, TopIpsReport
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
+from omega_fire.domain.reports.top_ips import (
+    TOP_IPS_EXPORT_PREFIX,
+    TopIpRow,
+    TopIpsReport,
+)
+from omega_fire.infrastructure.config.paths import (
+    DEFAULT_PINNED_FILES,
+    RUNTIME_DIR,
+    VAR_DIR,
+)
 from omega_fire.infrastructure.exporters.top_ips_exporter import write_top_ips
-from omega_fire.infrastructure.config.paths import DEFAULT_PINNED_FILES, RUNTIME_DIR, VAR_DIR
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
+from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
 from omega_fire.interfaces.tui.export_language import export_translation
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
-from omega_fire.interfaces.tui.screens.ban_ip_list_screen import _extract_valid_ips
-from omega_fire.interfaces.tui.screens.export_blacklist_screen import _HTML_THEMES
 from omega_fire.interfaces.tui.screens._log_sources import log_source_options
+from omega_fire.interfaces.tui.screens.ban_ip_list_screen import _extract_valid_ips
 from omega_fire.interfaces.tui.screens.confirm import ConfirmScreen
-from omega_fire.infrastructure.storage.files.log_ip_removal import remove_ips_in_place
-from omega_fire.interfaces.tui.screens.remove_ip_from_log_screen import parse_ip_list, split_lines_by_ips
+from omega_fire.interfaces.tui.screens.export_blacklist_screen import _HTML_THEMES
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
+from omega_fire.interfaces.tui.screens.remove_ip_from_log_screen import (
+    parse_ip_list,
+    split_lines_by_ips,
+)
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.shared.i18n import _, translating_as
 
@@ -55,7 +70,9 @@ def _format_size(size: int) -> str:
     return f"{size} B"
 
 
-def _count_ips(log_path: Path, time_limit: datetime | None) -> tuple[dict[str, int], dict[str, int], int, bool]:
+def _count_ips(
+    log_path: Path, time_limit: datetime | None
+) -> tuple[dict[str, int], dict[str, int], int, bool]:
     """Comptage des IPs (logique d'origine de 5.4, deplacee hors de l'ecran pour tourner dans un fil).
     Leve OSError si le fichier est illisible."""
     ip_counts: dict[str, int] = {}
@@ -72,6 +89,12 @@ def _count_ips(log_path: Path, time_limit: datetime | None) -> tuple[dict[str, i
         match = _LOG_PATTERN.search(line)
         if match:
             ip = match.group("ip")
+            # Scan de securite 2026-11-21 (F4) : le 1er champ peut venir du client (X-Forwarded-For) ; seule
+            # une vraie adresse est comptee, jamais du texte affiche ensuite dans le tableau et la confirmation.
+            try:
+                ipaddress.ip_address(ip)
+            except ValueError:
+                continue
             raw_time = match.group("time")
             raw_size = match.group("size")
             if time_limit:
@@ -94,6 +117,7 @@ def _count_ips(log_path: Path, time_limit: datetime | None) -> tuple[dict[str, i
                     ip_counts[ip] = ip_counts.get(ip, 0) + 1
                     total_occurrences += 1
     return ip_counts, ip_bytes, total_occurrences, is_raw_ip_file
+
 
 class TopIpsScreen(OmegaScreen):
     """Analyse Top N des IPs les plus actives dans un log ou fichier brut."""
@@ -144,21 +168,34 @@ class TopIpsScreen(OmegaScreen):
 
     @staticmethod
     def _period_options() -> list[tuple[str, str]]:
-        return [(_("Tout le fichier"), "all"), (_("Dernière heure"), "1h"), (_("Dernières 24 heures"), "24h"),
-                (_("Derniers 7 jours"), "7d"), (_("Saisie manuelle (jours)"), "custom")]
+        return [
+            (_("Tout le fichier"), "all"),
+            (_("Dernière heure"), "1h"),
+            (_("Dernières 24 heures"), "24h"),
+            (_("Derniers 7 jours"), "7d"),
+            (_("Saisie manuelle (jours)"), "custom"),
+        ]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
             yield Static(_("ANALYSER LES IPs (TOP N)"), classes="omega-title")
 
-            yield Static(_("Source (fichier log ou blocklist)"), classes="omega-subtitle")
-            yield Select(self._source_options(), id="source-select", prompt=_("Sélectionner"))
+            yield Static(
+                _("Source (fichier log ou blocklist)"), classes="omega-subtitle"
+            )
+            yield Select(
+                self._source_options(), id="source-select", prompt=_("Sélectionner")
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static(_("Chemin manuel"), id="manual-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Chemin manuel"),
+                id="manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(
                 value=str(VAR_DIR / "log" / "access.log"),
                 id="manual-input",
@@ -167,16 +204,29 @@ class TopIpsScreen(OmegaScreen):
 
             yield Static(_("Nombre d'IPs (Top N)"), classes="omega-subtitle")
             yield Select(
-                [(_("Top 10"), "10"), (_("Top 50"), "50"), (_("Top 100"), "100"), (_("Personnalisé"), "custom")],
+                [
+                    (_("Top 10"), "10"),
+                    (_("Top 50"), "50"),
+                    (_("Top 100"), "100"),
+                    (_("Personnalisé"), "custom"),
+                ],
                 value="10",
                 id="topn-select",
             )
-            yield Static(_("Nombre personnalisé"), id="topn-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Nombre personnalisé"),
+                id="topn-custom-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="20", id="topn-custom-input", classes="omega-hidden")
 
             yield Static(_("Période à analyser"), classes="omega-subtitle")
             yield Select(self._period_options(), value="all", id="period-select")
-            yield Static(_("Nombre de jours"), id="period-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Nombre de jours"),
+                id="period-custom-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="30", id="period-custom-input", classes="omega-hidden")
 
             with Horizontal(classes="omega-actions"):
@@ -190,27 +240,44 @@ class TopIpsScreen(OmegaScreen):
 
             # Au niveau de « Voir et traiter IP » d'omega-serv / omega-log (2026-11-09) : chercher une IP
             # precise dans le log (fichier entier) et retirer l'IP choisie (ligne du tableau ou recherche).
-            yield Static(_("Ou cherchez une IP précise dans ce log (fichier entier) :"), classes="omega-subtitle")
+            yield Static(
+                _("Ou cherchez une IP précise dans ce log (fichier entier) :"),
+                classes="omega-subtitle",
+            )
             yield Input(placeholder=_("Adresse IP"), id="search-ip-input")
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Rechercher cette IP"), id="search-ip")
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Retirer cette IP du log analysé"), id="remove-ip", variant="error",
-                                 disabled=True)
+                    yield Button(
+                        _("Retirer cette IP du log analysé"),
+                        id="remove-ip",
+                        variant="error",
+                        disabled=True,
+                    )
             yield Static("", id="ip-search-result", classes="omega-hint")
 
             # Version 3.5 : exporter le resultat (meme mecanisme que 6.1) pour le
             # recharger en 5.5 sans recopier les IPs a la main. Visible apres une analyse.
             with Vertical(id="export-section", classes="omega-hidden"):
-                yield Static(_("Exporter le résultat (rechargeable en 5.5)"), classes="omega-subtitle")
+                yield Static(
+                    _("Exporter le résultat (rechargeable en 5.5)"),
+                    classes="omega-subtitle",
+                )
                 yield Select(
-                    [(_("JSON (brut structure)"), "json"), (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
-                     (_("HTML (rapport visuel)"), "html")],
+                    [
+                        (_("JSON (brut structure)"), "json"),
+                        (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
+                        (_("HTML (rapport visuel)"), "html"),
+                    ],
                     value="json",
                     id="format-select",
                 )
-                yield Static(_("Thème HTML"), id="theme-label", classes="omega-subtitle omega-hidden")
+                yield Static(
+                    _("Thème HTML"),
+                    id="theme-label",
+                    classes="omega-subtitle omega-hidden",
+                )
                 yield Select(
                     [(label, name) for name, label in _HTML_THEMES.items()],
                     value="omega-base",
@@ -231,27 +298,46 @@ class TopIpsScreen(OmegaScreen):
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "source-select":
             is_manual = str(event.value) == _SRC_MANUAL
-            self.query_one("#manual-label", Static).set_class(not is_manual, "omega-hidden")
-            self.query_one("#manual-input", Input).set_class(not is_manual, "omega-hidden")
+            self.query_one("#manual-label", Static).set_class(
+                not is_manual, "omega-hidden"
+            )
+            self.query_one("#manual-input", Input).set_class(
+                not is_manual, "omega-hidden"
+            )
         elif event.select.id == "topn-select":
             is_custom = str(event.value) == "custom"
-            self.query_one("#topn-custom-label", Static).set_class(not is_custom, "omega-hidden")
-            self.query_one("#topn-custom-input", Input).set_class(not is_custom, "omega-hidden")
+            self.query_one("#topn-custom-label", Static).set_class(
+                not is_custom, "omega-hidden"
+            )
+            self.query_one("#topn-custom-input", Input).set_class(
+                not is_custom, "omega-hidden"
+            )
         elif event.select.id == "format-select":
             is_html = str(event.value) == "html"
-            self.query_one("#theme-label", Static).set_class(not is_html, "omega-hidden")
-            self.query_one("#theme-select", Select).set_class(not is_html, "omega-hidden")
+            self.query_one("#theme-label", Static).set_class(
+                not is_html, "omega-hidden"
+            )
+            self.query_one("#theme-select", Select).set_class(
+                not is_html, "omega-hidden"
+            )
         elif event.select.id == "period-select":
             is_custom = str(event.value) == "custom"
-            self.query_one("#period-custom-label", Static).set_class(not is_custom, "omega-hidden")
-            self.query_one("#period-custom-input", Input).set_class(not is_custom, "omega-hidden")
+            self.query_one("#period-custom-label", Static).set_class(
+                not is_custom, "omega-hidden"
+            )
+            self.query_one("#period-custom-input", Input).set_class(
+                not is_custom, "omega-hidden"
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.dismiss()
             return
         if event.button.id == "manage-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_source_select)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container),
+                self._refresh_source_select,
+            )
             return
         if event.button.id == "export":
             self._export()
@@ -306,12 +392,20 @@ class TopIpsScreen(OmegaScreen):
             return
         self._busy = True
         self.query_one("#launch", Button).disabled = True
-        self.query_one("#result-hint", Static).update(_("Analyse en cours... (l'interface reste utilisable)"))
+        self.query_one("#result-hint", Static).update(
+            _("Analyse en cours... (l'interface reste utilisable)")
+        )
         self._analyzed_path = log_path
-        self.run_worker(lambda: self._compute_in_thread(log_path, time_limit, limit_n), thread=True,
-                        exclusive=True, group="top-ips")
+        self.run_worker(
+            lambda: self._compute_in_thread(log_path, time_limit, limit_n),
+            thread=True,
+            exclusive=True,
+            group="top-ips",
+        )
 
-    def _compute_in_thread(self, log_path: Path, time_limit: datetime | None, limit_n: int) -> None:
+    def _compute_in_thread(
+        self, log_path: Path, time_limit: datetime | None, limit_n: int
+    ) -> None:
         """Lecture et comptage hors de l'interface (2026-11-09, comme omega-serv / omega-log : un gros
         log figeait l'ecran pendant l'analyse)."""
         try:
@@ -325,10 +419,20 @@ class TopIpsScreen(OmegaScreen):
         self._busy = False
         self.query_one("#launch", Button).disabled = False
         self.query_one("#result-hint", Static).update("")
-        self.app.notify(_("Erreur lors de la lecture du fichier : {e}").format(e=error), severity="error")
+        self.app.notify(
+            _("Erreur lors de la lecture du fichier : {e}").format(e=error),
+            severity="error",
+        )
 
-    def _show_analysis(self, log_path: Path, limit_n: int, ip_counts: dict[str, int], ip_bytes: dict[str, int],
-                       total_occurrences: int, is_raw_ip_file: bool) -> None:
+    def _show_analysis(
+        self,
+        log_path: Path,
+        limit_n: int,
+        ip_counts: dict[str, int],
+        ip_bytes: dict[str, int],
+        total_occurrences: int,
+        is_raw_ip_file: bool,
+    ) -> None:
         self._busy = False
         try:
             self.query_one("#launch", Button).disabled = False
@@ -344,18 +448,30 @@ class TopIpsScreen(OmegaScreen):
             hint.update(_("Aucune IP valide n'a pu être extraite de ce fichier."))
             return
 
-        sorted_ips = sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[:limit_n]
+        sorted_ips = sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[
+            :limit_n
+        ]
         duplicates_count = sum(count - 1 for count in ip_counts.values() if count > 1)
         period_value = str(self.query_one("#period-select", Select).value)
         self._custom_days = self.query_one("#period-custom-input", Input).value.strip()
         self._report = TopIpsReport(
-            source=str(log_path), period=period_value, total_occurrences=total_occurrences,
-            unique_ips=len(ip_counts), raw_ip_file=is_raw_ip_file,
+            source=str(log_path),
+            period=period_value,
+            total_occurrences=total_occurrences,
+            unique_ips=len(ip_counts),
+            raw_ip_file=is_raw_ip_file,
             rows=[
                 TopIpRow(
-                    rank=rank, ip=ip, count=count,
-                    percent=None if is_raw_ip_file else (
-                        round(count / total_occurrences * 100, 1) if total_occurrences else 0.0),
+                    rank=rank,
+                    ip=ip,
+                    count=count,
+                    percent=None
+                    if is_raw_ip_file
+                    else (
+                        round(count / total_occurrences * 100, 1)
+                        if total_occurrences
+                        else 0.0
+                    ),
                     volume_bytes=None if is_raw_ip_file else ip_bytes.get(ip, 0),
                 )
                 for rank, (ip, count) in enumerate(sorted_ips, start=1)
@@ -369,21 +485,50 @@ class TopIpsScreen(OmegaScreen):
                 status = _("Doublon") if count > 1 else _("Unique")
                 table.add_row(f"#{rank}", ip, str(count), status, key=ip)
             if duplicates_count > 0:
-                hint.update(_("Total entrées : {total_occurrences} | IPs uniques : {count} | Doublons : {duplicates_count}").format(total_occurrences=total_occurrences, count=len(ip_counts), duplicates_count=duplicates_count))
+                hint.update(
+                    _(
+                        "Total entrées : {total_occurrences} | IPs uniques : {count} | Doublons : {duplicates_count}"
+                    ).format(
+                        total_occurrences=total_occurrences,
+                        count=len(ip_counts),
+                        duplicates_count=duplicates_count,
+                    )
+                )
             else:
-                hint.update(_("Fichier propre : {count} IPs uniques sans doublon.").format(count=len(ip_counts)))
+                hint.update(
+                    _("Fichier propre : {count} IPs uniques sans doublon.").format(
+                        count=len(ip_counts)
+                    )
+                )
         else:
-            table.add_columns(_("Rang"), _("Adresse IP"), _("Requêtes"), _("% Trafic"), _("Volume"))
+            table.add_columns(
+                _("Rang"), _("Adresse IP"), _("Requêtes"), _("% Trafic"), _("Volume")
+            )
             for rank, (ip, count) in enumerate(sorted_ips, start=1):
                 pct = (count / total_occurrences * 100) if total_occurrences > 0 else 0
-                table.add_row(f"#{rank}", ip, f"{count:,}", f"{pct:.1f}%", _format_size(ip_bytes.get(ip, 0)), key=ip)
-            hint.update(_("Analyse terminée ({count} IPs affichées sur {total_occurrences} requêtes).").format(count=len(sorted_ips), total_occurrences=total_occurrences))
+                table.add_row(
+                    f"#{rank}",
+                    ip,
+                    f"{count:,}",
+                    f"{pct:.1f}%",
+                    _format_size(ip_bytes.get(ip, 0)),
+                    key=ip,
+                )
+            hint.update(
+                _(
+                    "Analyse terminée ({count} IPs affichées sur {total_occurrences} requêtes)."
+                ).format(count=len(sorted_ips), total_occurrences=total_occurrences)
+            )
 
     # ------------------------------------------------------------------
     # Recherche et retrait d'une IP (au niveau de « Voir et traiter IP », 2026-11-09)
     # ------------------------------------------------------------------
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        if event.data_table.id != "result-table" or event.row_key is None or event.row_key.value is None:
+        if (
+            event.data_table.id != "result-table"
+            or event.row_key is None
+            or event.row_key.value is None
+        ):
             return
         self._select_ip(str(event.row_key.value))
 
@@ -401,9 +546,13 @@ class TopIpsScreen(OmegaScreen):
         return Path(raw) if raw else None
 
     def _search_ip(self) -> None:
-        candidates, invalid = parse_ip_list(self.query_one("#search-ip-input", Input).value)
+        candidates, invalid = parse_ip_list(
+            self.query_one("#search-ip-input", Input).value
+        )
         if invalid or len(candidates) != 1:
-            self.app.notify(_("Saisissez une seule adresse IP valide."), severity="warning")
+            self.app.notify(
+                _("Saisissez une seule adresse IP valide."), severity="warning"
+            )
             return
         path = self._current_path()
         if path is None:
@@ -411,15 +560,23 @@ class TopIpsScreen(OmegaScreen):
             return
         ip = candidates[0]
         self.query_one("#ip-search-result", Static).update(_("Recherche en cours..."))
-        self.run_worker(lambda: self._search_in_thread(path, ip), thread=True, exclusive=True, group="top-ips-search")
+        self.run_worker(
+            lambda: self._search_in_thread(path, ip),
+            thread=True,
+            exclusive=True,
+            group="top-ips-search",
+        )
 
     def _search_in_thread(self, path: Path, ip: str) -> None:
         try:
             with open(path, "r", encoding="utf-8", errors="ignore") as f:
                 counts, _cleaned = split_lines_by_ips(f.readlines(), [ip])
         except OSError as e:
-            self.app.call_from_thread(self.app.notify, _("Impossible de lire le fichier : {e}").format(e=e),
-                                      severity="error")
+            self.app.call_from_thread(
+                self.app.notify,
+                _("Impossible de lire le fichier : {e}").format(e=e),
+                severity="error",
+            )
             return
         self.app.call_from_thread(self._show_search, path, ip, counts.get(ip, 0))
 
@@ -434,7 +591,11 @@ class TopIpsScreen(OmegaScreen):
             self._selected_ip = None
             self.query_one("#remove-ip", Button).disabled = True
             return
-        result.update(_("{ip} : {count} ligne(s) dans {name}.").format(ip=ip, count=count, name=path.name))
+        result.update(
+            _("{ip} : {count} ligne(s) dans {name}.").format(
+                ip=ip, count=count, name=path.name
+            )
+        )
         self._select_ip(ip)
 
     def _confirm_remove_ip(self) -> None:
@@ -445,38 +606,66 @@ class TopIpsScreen(OmegaScreen):
             with open(path, "r", encoding="utf-8", errors="ignore") as f:
                 counts, cleaned_lines = split_lines_by_ips(f.readlines(), [ip])
         except OSError as e:
-            self.app.notify(_("Impossible de lire le fichier : {e}").format(e=e), severity="error")
+            self.app.notify(
+                _("Impossible de lire le fichier : {e}").format(e=e), severity="error"
+            )
             return
         occurrences = counts.get(ip, 0)
         if occurrences == 0:
-            self.app.notify(_("Aucune de ces IPs n'a été trouvée dans '{name}'.").format(name=path.name),
-                            severity="warning")
+            self.app.notify(
+                _("Aucune de ces IPs n'a été trouvée dans '{name}'.").format(
+                    name=path.name
+                ),
+                severity="warning",
+            )
             return
         details = _("  {ip} : {count} ligne(s)").format(ip=ip, count=occurrences)
         # Meme confirmation et meme ecriture que 5.5 (Supprimer une IP des logs).
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LA SUPPRESSION"),
-                message=_("Fichier : {name}\n{details}\n{occurrences} ligne(s) retirée(s), {count} ligne(s) "
-                          "restante(s) après purge.").format(
-                    name=path.name, details=details, occurrences=occurrences, count=len(cleaned_lines)),
+                message=_(
+                    "Fichier : {name}\n{details}\n{occurrences} ligne(s) retirée(s), {count} ligne(s) "
+                    "restante(s) après purge."
+                ).format(
+                    name=path.name,
+                    details=details,
+                    occurrences=occurrences,
+                    count=len(cleaned_lines),
+                ),
             ),
-            lambda confirmed: self._remove_if_confirmed(confirmed, path, ip, occurrences, cleaned_lines),
+            lambda confirmed: self._remove_if_confirmed(
+                confirmed, path, ip, occurrences, cleaned_lines
+            ),
         )
 
-    def _remove_if_confirmed(self, confirmed: bool | None, path: Path, ip: str, occurrences: int,
-                             cleaned_lines: list[str]) -> None:
+    def _remove_if_confirmed(
+        self,
+        confirmed: bool | None,
+        path: Path,
+        ip: str,
+        occurrences: int,
+        cleaned_lines: list[str],
+    ) -> None:
         if not confirmed:
             return
         try:
             # Sur place, binaire, relu juste avant l'ecriture (correctif 2026-11-10, voir 5.5).
             occurrences = sum(remove_ips_in_place(path, [ip]).values())
         except OSError as e:
-            self.app.notify(_("Erreur lors de l'écriture dans le fichier : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _REMOVE_ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de l'écriture dans le fichier : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _REMOVE_ACTION_TITLE, status="failure", error=str(e)
+            )
             return
-        self.app.notify(_("{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s)).").format(
-            occurrences=occurrences, name=path.name, count=1))
+        self.app.notify(
+            _("{occurrences} ligne(s) retirée(s) de {name} ({count} IP(s)).").format(
+                occurrences=occurrences, name=path.name, count=1
+            )
+        )
         log_action_result(self._container, _REMOVE_ACTION_TITLE, status="success")
         self._selected_ip = None
         self.query_one("#remove-ip", Button).disabled = True
@@ -499,16 +688,29 @@ class TopIpsScreen(OmegaScreen):
                 html_context = None
                 if fmt == "html":
                     html_context = self._html_context(report, theme_name)
-                write_top_ips(report, fmt, path, generated_at,
-                              html_exporter=self._container.get_exporter_port("html") if fmt == "html" else None,
-                              html_context=html_context)
+                write_top_ips(
+                    report,
+                    fmt,
+                    path,
+                    generated_at,
+                    html_exporter=self._container.get_exporter_port("html")
+                    if fmt == "html"
+                    else None,
+                    html_context=html_context,
+                )
         except Exception as e:
-            self.app.notify(_("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
         self.app.notify(
-            _("Export réussi : {count} IP(s) dans '{path}'. Rechargeable en 5.5, visible en 6.6.").format(
-                count=len(report.rows), path=path),
+            _(
+                "Export réussi : {count} IP(s) dans '{path}'. Rechargeable en 5.5, visible en 6.6."
+            ).format(count=len(report.rows), path=path),
             timeout=8,
         )
         log_action_result(self._container, _ACTION_TITLE, status="success")
@@ -517,20 +719,48 @@ class TopIpsScreen(OmegaScreen):
         """Libelles traduits dans la langue des exports (appele sous translating_as)."""
         if report.raw_ip_file:
             columns = [_("Rang"), _("Adresse IP"), _("Occurrences"), _("Statut")]
-            rows = [[f"#{row.rank}", row.ip, str(row.count), _("Doublon") if row.count > 1 else _("Unique")]
-                    for row in report.rows]
+            rows = [
+                [
+                    f"#{row.rank}",
+                    row.ip,
+                    str(row.count),
+                    _("Doublon") if row.count > 1 else _("Unique"),
+                ]
+                for row in report.rows
+            ]
         else:
-            columns = [_("Rang"), _("Adresse IP"), _("Requêtes"), _("% Trafic"), _("Volume")]
-            rows = [[f"#{row.rank}", row.ip, f"{row.count:,}", f"{row.percent:.1f}%",
-                     _format_size(row.volume_bytes or 0)] for row in report.rows]
+            columns = [
+                _("Rang"),
+                _("Adresse IP"),
+                _("Requêtes"),
+                _("% Trafic"),
+                _("Volume"),
+            ]
+            rows = [
+                [
+                    f"#{row.rank}",
+                    row.ip,
+                    f"{row.count:,}",
+                    f"{row.percent:.1f}%",
+                    _format_size(row.volume_bytes or 0),
+                ]
+                for row in report.rows
+            ]
         period_value = report.period
-        period_label = next((label for label, value in self._period_options() if value == period_value), "")
+        period_label = next(
+            (label for label, value in self._period_options() if value == period_value),
+            "",
+        )
         if period_value == "custom":
             period_label = _("{days} derniers jours").format(days=self._custom_days)
         return {
             "page_title": _("Top IPs - Omega-Fire"),
             "heading": _("Classement des IPs les plus actives"),
-            "source_label": _("Source"), "source_value": report.source,
-            "period_label": _("Période"), "period_value": period_label,
-            "columns": columns, "table_rows": rows, "theme_name": theme_name,
+            "source_label": _("Source"),
+            "source_value": report.source,
+            "period_label": _("Période"),
+            "period_value": period_label,
+            "columns": columns,
+            "table_rows": rows,
+            "theme_name": theme_name,
         }

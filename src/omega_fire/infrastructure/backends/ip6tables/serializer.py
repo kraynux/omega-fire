@@ -3,7 +3,6 @@
 
 Converts domain model operations into ip6tables command strings.
 """
-from typing import Optional
 
 
 class Ip6tSerializer:
@@ -35,10 +34,10 @@ class Ip6tSerializer:
         self,
         chain: str,
         action: str,
-        protocol: Optional[str] = None,
-        port: Optional[str] = None,
-        source: Optional[str] = None,
-        destination: Optional[str] = None,
+        protocol: str | None = None,
+        port: str | None = None,
+        source: str | None = None,
+        destination: str | None = None,
         comment: str = "",
     ) -> list[str]:
         """Build the ip6tables command to add a rule."""
@@ -113,4 +112,4 @@ class Ip6tSerializer:
 # Comment il est utilisé :
 # - infrastructure/backends/ip6tables/adapter.py l'appellera pour construire
 #   les commandes
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

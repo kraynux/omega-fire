@@ -7,8 +7,8 @@ into structured data. Handles connection listing and counter queries.
 This module performs no I/O — it only parses strings. The actual command
 execution is done by the adapter.
 """
+
 import re
-from typing import Optional
 
 
 class ConntrackParser:
@@ -36,7 +36,7 @@ class ConntrackParser:
 
         return connections
 
-    def _parse_connection_line(self, line: str) -> Optional[dict]:
+    def _parse_connection_line(self, line: str) -> dict | None:
         """Parse a single conntrack connection line.
 
         Args:
@@ -74,7 +74,9 @@ class ConntrackParser:
         # sport=/dport= with only whitespace and any icmp-only fields
         # in between — non-greedy .*? bounded to stop at the first
         # sport=/dport=, never crossing into the reply-direction group.
-        src_match = re.search(r"src=(\S+)\s+dst=(\S+)\s+sport=(\d+)\s+dport=(\d+)", line)
+        src_match = re.search(
+            r"src=(\S+)\s+dst=(\S+)\s+sport=(\d+)\s+dport=(\d+)", line
+        )
         if src_match:
             conn["source_ip"] = src_match.group(1)
             conn["destination_ip"] = src_match.group(2)
@@ -88,7 +90,10 @@ class ConntrackParser:
             conn["destination_port"] = int(dst_match.group(2))
 
         # Extract state (for TCP)
-        state_match = re.search(r"\b(ESTABLISHED|SYN_SENT|SYN_RECV|FIN_WAIT|TIME_WAIT|CLOSE_WAIT|LAST_ACK|LISTEN)\b", line)
+        state_match = re.search(
+            r"\b(ESTABLISHED|SYN_SENT|SYN_RECV|FIN_WAIT|TIME_WAIT|CLOSE_WAIT|LAST_ACK|LISTEN)\b",
+            line,
+        )
         if state_match:
             conn["state"] = state_match.group(1)
 
@@ -152,4 +157,4 @@ def parse_conntrack_count(output: str) -> int:
 # Comment il sera utilisé (aperçu) :
 # - infrastructure/backends/conntrack/adapter.py l'appellera après chaque commande
 # - Les tests utiliseront des fixtures de sortie conntrack pour vérifier le parsing
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

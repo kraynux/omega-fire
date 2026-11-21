@@ -4,22 +4,23 @@
 Handles the rollback of executed steps when a pipeline fails.
 Executes rollback functions in reverse order of execution.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 from omega_fire.application.pipeline.planner import PipelineStep
-from omega_fire.application.exceptions import RollbackError
 
 
 @dataclass
 class RollbackResult:
     """Result of a rollback operation."""
+
     success: bool
     rolled_back_steps: list[str] = field(default_factory=list)
-    failed_step: Optional[str] = None
-    error_message: Optional[str] = None
+    failed_step: str | None = None
+    error_message: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -102,6 +103,7 @@ def execute_rollback(steps: list[PipelineStep]) -> RollbackResult:
         manager.record_execution(step)
     return manager.rollback()
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Gère le rollback des steps exécutés quand un pipeline échoue
@@ -126,4 +128,4 @@ def execute_rollback(steps: list[PipelineStep]) -> RollbackResult:
 # - rollback() : exécute les rollbacks en ordre inverse
 # - has_rollback_available() : vérifie si un rollback est possible
 # - execute_rollback() : fonction de convenance
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -38,7 +38,9 @@ class ShellResult:
             context: contexte optionnel pour le message d'erreur.
         """
         if not self.success:
-            msg = _("Commande échouée (rc={return_code})").format(return_code=self.return_code)
+            msg = _("Commande échouée (rc={return_code})").format(
+                return_code=self.return_code
+            )
             if context:
                 msg = f"{context}: {msg}"
             raise ShellCommandError(
@@ -117,6 +119,7 @@ def run_shell(
             return_code=None,
         ) from exc
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Fournit un wrapper générique pour exécuter des commandes shell via subprocess.
@@ -154,4 +157,4 @@ def run_shell(
 # - infrastructure/probe/command_probe.py utilisera run_shell() pour tester binaires
 # - infrastructure/probe/service_probe.py utilisera run_shell() pour tester services
 # - infrastructure/ encapsulera les ShellCommandError en BackendError (charte)
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

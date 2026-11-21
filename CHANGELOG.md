@@ -12,6 +12,76 @@ qui touchent aux **règles, aux bans ou aux services** sont toujours signalés e
 même mineurs. Les changements de textes affichés sont signalés aussi : ils doivent être
 reportés dans les 16 traductions (interface et README).
 
+## version 3.6.2 : construite le 2026-11-21 (archive omega-fire-3.6.2.tar.gz)
+
+### Ajouté
+
+- Journal des bans pour les autres outils omega (plan omega-connect, phase 3) : quand la zone
+  omega-synchro existe, chaque ban ou levée qu'omega-fire pose lui-même dans le pare-feu (nftables,
+  iptables, ip6tables ; Bannir, Débannir, transfert d'un jail, restauration, synchronisation) est écrit
+  dans `bans/journal.jsonl` et `bans/actifs.json` (origine `omega-fire:manual`, échéance d'un transfert
+  conservée). Après un vidage, un profil ou un échec, l'état est relu dans le pare-feu et les écarts sont
+  écrits ; même chose au lancement et avec `./omega-fire.sh synchro bans` (sudo, appelé par install.sh).
+  Les bans des jails Fail2Ban ne sont pas écrits par omega-fire (action installée par omega-jail).
+  Sans zone, rien ne change. Écriture commune dans omega-lib 0.3.0 (`ban_writer`).
+
+- **Règles** : `omega-fire.sh port ouvrir --port N --sources CIDR[,CIDR...] --pour OUTIL[:INSTANCE] [--format json]`
+  (2026-11-17, demande d'omega-serv pour son administration web) : ouvre N/tcp depuis ces réseaux seulement, sans
+  interface. Une règle ACCEPT (INPUT, tcp) par réseau et par backend détecté, enregistrée comme au menu 3.1 ; règle
+  identique déjà en base = « déjà ouvert » ; IPv6 ignoré sur iptables ; boucle locale jamais ouverte. **Si ufw ou
+  firewalld est actif, la même ouverture y est ajoutée** (sinon le paquet resterait refusé). Root obligatoire
+  (sudo demandé par omega-fire.sh), sortie JSON non traduite, une ligne au journal d'audit. Appelée par omega-serv
+  seulement quand omega-fire et l'instance sont inscrits dans la même zone omega-connect.
+- **README ×17** : puce au menu 3 et section « Liens avec les autres outils omega » (`synchro jeton`,
+  `synchro fiche`, `port ouvrir`), site régénéré.
+
+### Modifié
+
+- **Logs, lecteur Simple (8.5, et Simple de 5.2 / 5.3) aligné sur omega-serv** (2026-11-21, A_FAIRE §9) :
+  - mêmes colonnes que le viewer Simple d'omega-serv, plus **Type**, propre à omega-fire : Heure, Niveau, Source, IP,
+    Type, Service, Code, Durée, Message ;
+  - **Message** : la ligne entière (ascenseur horizontal jusqu'au bout, User-Agent visible), colorée avec les
+    couleurs du thème par information (date, adresse, méthode, code HTTP, User-Agent en italique ; référent,
+    taille et identifiant atténués ; sur un syslog : date, service, adresses, mots d'erreur) ;
+  - cadre de gauche calculé comme omega-serv : débits rapportés à la période couverte par les horodatages des
+    lignes (plus au temps passé devant l'écran), « - » pour une taille ou une durée absente du log ;
+  - aide F1 de 8.5 (5 points) et une question de la FAQ, traduites dans les 16 langues.
+
+### Sécurité
+
+Scan de sécurité complet du 2026-11-21 (10 failles confirmées, 8 corrigées ; les 2 restantes sont dans
+l'ancienne interface --legacy-cli, figée).
+
+- Création d'un jail (4.4, préréglages caddy/lighttpd compris) : un lien symbolique posé à la place du
+  journal, ou dans son chemin par un compte autre que root, est refusé. Avant, root suivait le lien, créait
+  la cible (/etc/ld.so.preload par exemple) et la donnait au compte de service : élévation vers root (HIGH).
+- Ouvrir un export dans le navigateur (6.6) depuis une session SSH : seul un écran X appartenant à
+  l'utilisateur ou à root est utilisé, jamais celui d'un autre compte de /tmp/.X11-unix.
+- TUI : aucune action ne peut plus être déclenchée par du texte affiché (« [@click=...] » dans un nom de
+  fichier ou une ligne de log) ; les journaux d'omega-serv dont le nom contient des caractères spéciaux ne
+  sont plus importés automatiquement ; noms et chemins des sources (8.5) affichés tels quels.
+- Top IP (5.4) : seule une vraie adresse IP est comptée dans le premier champ (un X-Forwarded-For piégé
+  n'est plus affiché ni proposé au retrait).
+- Retrait d'IP dans un log (5.5, Top IP) : un lien symbolique, ou un fichier à plusieurs noms, est refusé ;
+  root ne réécrit plus un autre fichier que celui affiché.
+- Sauvegardes de logs (5.4, 5.6, minuteur nocturne) : archives en 0660, jamais lisibles par les autres comptes.
+- var/ : install.sh pose 2770/660 (seul var/ reste traversable, pour le jeton lu par omega-connect) ;
+  omega-fire.sh, le service systemd et la ligne cron de rotation passent en umask 007.
+- Statistiques et Top IP : l'adresse d'une ligne sshd est prise dans « from <ip> port » (la dernière),
+  « rhost= » ou « Ban <ip> » ; un nom d'utilisateur en forme d'IP n'est plus compté à la place de la source.
+
+### Corrigé
+
+- **Lecteur Simple : valeurs inventées.** Une ligne sans taille comptait 350 octets, sans durée 25 ms (35 ms pour
+  une ligne Combined), et toute ligne Combined avait le User-Agent « Mozilla/5.0 » : la colonne Type affichait
+  toujours « Web », la bande passante et la latence étaient fausses. Le Type vient maintenant du vrai User-Agent
+  (« - » s'il n'y en a pas).
+- **Lecteur Simple sur une URL** : toute la fin du fichier était rajoutée au tampon à chaque rafraîchissement
+  (toutes les 2 s), les statistiques comptaient les mêmes lignes plusieurs fois. Seules les lignes nouvelles sont
+  ajoutées. Une erreur de lecture est signalée une fois, plus par une ligne « ERR » répétée.
+- **Colonne Service** (lecteur Simple et Classique) : l'heure d'une date syslog était prise pour le service
+  (`Nov 20 10:00:00` → « 10 ») ; c'est l'étiquette `machine service[pid]:` qui est lue, comme dans omega-serv.
+
 ## version 3.6.1 : construite le 2026-11-10, reconstruite le 2026-11-11 (archive omega-fire-3.6.1.tar.gz), non publiée
 
 Correctifs et contrats issus de l'étude de l'interconnecteur de la suite (`~/DEV/CONNECT/`), étapes 1 et 2 : l'archive 3.6 (construite le 2026-11-09) ne les contient pas, d'où ce numéro distinct.

@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Libelles traduits de l'origine d'un jail (domain/fail2ban/definitions.py), communs a 4.1
 (etat des jails) et 4.5 (suppression) — version 3.5, point 7."""
+
 from __future__ import annotations
 
 from omega_fire.domain.fail2ban.definitions import (

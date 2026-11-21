@@ -19,6 +19,7 @@ elevation sudo ponctuelle) : sans lui, une PermissionError leve
 PermissionRequiredError (signal pour l'ecran TUI appelant — voir son
 docstring) ; fourni (apres authentification via request_elevation()
 cote ecran), elle retombe sur une lecture/ecriture privilegiee."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -43,7 +44,11 @@ if TYPE_CHECKING:
 
 
 def compute_top_ips_for_paths(
-    paths: list[str], *, period: str | None = None, n: int = 10, now: datetime | None = None,
+    paths: list[str],
+    *,
+    period: str | None = None,
+    n: int = 10,
+    now: datetime | None = None,
     runner: ProcessRunnerPort | None = None,
 ) -> list[TopIP]:
     """Top N IP toutes sources confondues parmi `paths`. `period` filtre
@@ -58,7 +63,9 @@ class RemoveIpResult:
     message: str = ""
 
 
-def count_ip_occurrences(path: str, ip: str, *, runner: ProcessRunnerPort | None = None) -> int:
+def count_ip_occurrences(
+    path: str, ip: str, *, runner: ProcessRunnerPort | None = None
+) -> int:
     """Compte sans modifier — utilise pour l'apercu avant confirmation."""
     try:
         ipaddress.ip_address(ip)
@@ -74,12 +81,18 @@ def count_ip_occurrences(path: str, ip: str, *, runner: ProcessRunnerPort | None
         result = read_file_privileged(runner, path)
         if not result.success:
             return 0
-        return sum(1 for line in result.content.splitlines() if line_contains_ip(line, ip, pattern))
+        return sum(
+            1
+            for line in result.content.splitlines()
+            if line_contains_ip(line, ip, pattern)
+        )
     except OSError:
         return 0
 
 
-def remove_ip_from_file(path: str, ip: str, *, runner: ProcessRunnerPort | None = None) -> RemoveIpResult:
+def remove_ip_from_file(
+    path: str, ip: str, *, runner: ProcessRunnerPort | None = None
+) -> RemoveIpResult:
     """Retire toutes les lignes contenant `ip` (limite de mot, pas une
     sous-chaine d'une autre IP) de `path`. Ecriture atomique dans le cas
     non privilegie : la version filtree est ecrite dans un fichier
@@ -94,11 +107,15 @@ def remove_ip_from_file(path: str, ip: str, *, runner: ProcessRunnerPort | None 
     try:
         ipaddress.ip_address(ip)
     except ValueError:
-        return RemoveIpResult(success=False, message=_("Adresse IP invalide : {ip}").format(ip=ip))
+        return RemoveIpResult(
+            success=False, message=_("Adresse IP invalide : {ip}").format(ip=ip)
+        )
 
     target = Path(path)
     if not target.is_file():
-        return RemoveIpResult(success=False, message=_("Fichier introuvable : {path}").format(path=path))
+        return RemoveIpResult(
+            success=False, message=_("Fichier introuvable : {path}").format(path=path)
+        )
 
     pattern = ip_line_pattern(ip)
     try:
@@ -109,16 +126,26 @@ def remove_ip_from_file(path: str, ip: str, *, runner: ProcessRunnerPort | None 
             raise PermissionRequiredError(path) from None
         result = read_file_privileged(runner, path)
         if not result.success:
-            return RemoveIpResult(success=False, message=_("Lecture privilégiée impossible : "
-                                                           "{message}").format(message=result.message))
+            return RemoveIpResult(
+                success=False,
+                message=_("Lecture privilégiée impossible : {message}").format(
+                    message=result.message
+                ),
+            )
         lines = result.content.splitlines(keepends=True)
     except OSError as exc:
-        return RemoveIpResult(success=False, message=_("Lecture impossible : {exc}").format(exc=exc))
+        return RemoveIpResult(
+            success=False, message=_("Lecture impossible : {exc}").format(exc=exc)
+        )
 
     kept = [line for line in lines if not line_contains_ip(line, ip, pattern)]
     occurrences = len(lines) - len(kept)
     if occurrences == 0:
-        return RemoveIpResult(success=True, occurrences=0, message=_("Aucune occurrence de {ip} trouvée.").format(ip=ip))
+        return RemoveIpResult(
+            success=True,
+            occurrences=0,
+            message=_("Aucune occurrence de {ip} trouvée.").format(ip=ip),
+        )
 
     new_content = "".join(kept)
     tmp_path = target.with_suffix(target.suffix + ".omega-log-tmp")
@@ -137,11 +164,22 @@ def remove_ip_from_file(path: str, ip: str, *, runner: ProcessRunnerPort | None 
             raise PermissionRequiredError(path) from None
         priv_result = overwrite_file_privileged(runner, path, new_content)
         if not priv_result.success:
-            return RemoveIpResult(success=False, message=_("Écriture privilégiée impossible : "
-                                                           "{message}").format(message=priv_result.message))
+            return RemoveIpResult(
+                success=False,
+                message=_("Écriture privilégiée impossible : {message}").format(
+                    message=priv_result.message
+                ),
+            )
     except OSError as exc:
         tmp_path.unlink(missing_ok=True)
-        return RemoveIpResult(success=False, message=_("Écriture impossible : {exc}").format(exc=exc))
+        return RemoveIpResult(
+            success=False, message=_("Écriture impossible : {exc}").format(exc=exc)
+        )
 
-    return RemoveIpResult(success=True, occurrences=occurrences, message=_("{occurrences} occurrence(s) de {ip} "
-                                                                           "retirée(s).").format(occurrences=occurrences, ip=ip))
+    return RemoveIpResult(
+        success=True,
+        occurrences=occurrences,
+        message=_("{occurrences} occurrence(s) de {ip} retirée(s).").format(
+            occurrences=occurrences, ip=ip
+        ),
+    )

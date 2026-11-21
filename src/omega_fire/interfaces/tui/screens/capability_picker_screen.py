@@ -3,6 +3,7 @@
 pousse CapabilityDetailScreen. Meme patron que
 omega-check/screens/history.py (D-008) : DataTable + selection de ligne
 -> ecran de detail, plutot qu'une saisie de numero au clavier."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -12,7 +13,9 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
-from omega_fire.interfaces.tui.screens.capability_detail_screen import CapabilityDetailScreen
+from omega_fire.interfaces.tui.screens.capability_detail_screen import (
+    CapabilityDetailScreen,
+)
 from omega_fire.interfaces.tui.widgets.capabilities_table import CapabilitiesTable
 from omega_fire.shared.i18n import _
 
@@ -31,18 +34,27 @@ class CapabilityPickerScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(_("DÉTAIL D'UNE CAPACITÉ"), classes="omega-title")
-            yield Static(_("Sélectionnez une ligne pour voir le détail."), classes="omega-hint")
+            yield Static(
+                _("Sélectionnez une ligne pour voir le détail."), classes="omega-hint"
+            )
             yield CapabilitiesTable(id="capabilities-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one(CapabilitiesTable).set_capabilities(self._container.capability_registry.list_all())
+        self.query_one(CapabilitiesTable).set_capabilities(
+            self._container.capability_registry.list_all()
+        )
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         self.app.push_screen(
-            CapabilityDetailScreen(container=self._container, capability_id=str(event.row_key.value))
+            CapabilityDetailScreen(
+                container=self._container, capability_id=str(event.row_key.value)
+            )
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

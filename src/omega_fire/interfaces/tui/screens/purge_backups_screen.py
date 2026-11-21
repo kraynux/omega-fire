@@ -5,6 +5,7 @@ gestion des regles planifiees), meme structure que RotateLogsScreen
 (5.4) et RestoreBackupScreen (5.5). Logique identique a
 interfaces/cli/actions.py::action_5_6_purge_backups — meme fichier de
 persistance (var/runtime/scheduled_purges.json)."""
+
 from __future__ import annotations
 
 import json
@@ -14,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static
 
 from omega_fire.application.commands.purge_backups import PurgeBackupsCommand
@@ -50,7 +51,8 @@ class PurgeBackupsScreen(OmegaScreen):
         backup_dir.mkdir(parents=True, exist_ok=True)
         return sorted(
             [f for f in backup_dir.glob("*.tar.gz") if f.is_file()],
-            key=lambda x: x.stat().st_mtime, reverse=True,
+            key=lambda x: x.stat().st_mtime,
+            reverse=True,
         )
 
     def _load_rules(self) -> list[dict]:
@@ -64,18 +66,28 @@ class PurgeBackupsScreen(OmegaScreen):
 
     def _save_rules(self, rules: list[dict]) -> None:
         RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
-        (RUNTIME_DIR / _PURGE_AUTO_FILE).write_text(json.dumps(rules, indent=2, ensure_ascii=False), encoding="utf-8")
+        (RUNTIME_DIR / _PURGE_AUTO_FILE).write_text(
+            json.dumps(rules, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
     def compose(self) -> ComposeResult:
         all_backups = self._all_backups()
-        total_size_mb = sum(f.stat().st_size for f in all_backups) / (1024 * 1024) if all_backups else 0.0
-        free_gb = shutil.disk_usage(BACKUPS_DIR).free / (1024 ** 3)
+        total_size_mb = (
+            sum(f.stat().st_size for f in all_backups) / (1024 * 1024)
+            if all_backups
+            else 0.0
+        )
+        free_gb = shutil.disk_usage(BACKUPS_DIR).free / (1024**3)
 
         yield Header()
         with VerticalScroll(classes="omega-form-panel"):
             yield Static(_("PURGE ET NETTOYAGE DES BACKUPS"), classes="omega-title")
             yield Static(
-                _("{count} archive(s), {total_size_mb:.2f} MB occupés, {free_gb:.2f} GB libres sur disque.").format(count=len(all_backups), total_size_mb=total_size_mb, free_gb=free_gb),
+                _(
+                    "{count} archive(s), {total_size_mb:.2f} MB occupés, {free_gb:.2f} GB libres sur disque."
+                ).format(
+                    count=len(all_backups), total_size_mb=total_size_mb, free_gb=free_gb
+                ),
                 classes="omega-hint",
             )
 
@@ -83,8 +95,14 @@ class PurgeBackupsScreen(OmegaScreen):
             yield Select(
                 [
                     (_("Purger par ancienneté"), _MODE_AGE),
-                    (_("Purger par quota (conserver les N plus récentes)"), _MODE_QUOTA),
-                    (_("Purger les backups de sécurité ('safety_auto_*')"), _MODE_SAFETY),
+                    (
+                        _("Purger par quota (conserver les N plus récentes)"),
+                        _MODE_QUOTA,
+                    ),
+                    (
+                        _("Purger les backups de sécurité ('safety_auto_*')"),
+                        _MODE_SAFETY,
+                    ),
                     (_("Sélection manuelle ciblée"), _MODE_MANUAL),
                     (_("Gérer les règles de purge automatique"), _MODE_MANAGE),
                 ],
@@ -94,33 +112,67 @@ class PurgeBackupsScreen(OmegaScreen):
 
             yield Static(_("Âge limite"), id="age-label", classes="omega-subtitle")
             yield Select(
-                [(_("Plus de 30 jours"), "30"), (_("Plus de 90 jours"), "90"), (_("Plus de 180 jours"), "180"),
-                 (_("Plus de 365 jours"), "365"), (_("Personnalisé"), "custom")],
+                [
+                    (_("Plus de 30 jours"), "30"),
+                    (_("Plus de 90 jours"), "90"),
+                    (_("Plus de 180 jours"), "180"),
+                    (_("Plus de 365 jours"), "365"),
+                    (_("Personnalisé"), "custom"),
+                ],
                 value="30",
                 id="age-select",
             )
-            yield Static(_("Nombre de jours"), id="age-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Nombre de jours"),
+                id="age-custom-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="45", id="age-custom-input", classes="omega-hidden")
 
-            yield Static(_("Conserver"), id="quota-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Conserver"), id="quota-label", classes="omega-subtitle omega-hidden"
+            )
             yield Select(
-                [(_("Les 5 plus récentes"), "5"), (_("Les 10 plus récentes"), "10"),
-                 (_("Les 20 plus récentes"), "20"), (_("Personnalisé"), "custom")],
+                [
+                    (_("Les 5 plus récentes"), "5"),
+                    (_("Les 10 plus récentes"), "10"),
+                    (_("Les 20 plus récentes"), "20"),
+                    (_("Personnalisé"), "custom"),
+                ],
                 value="5",
                 id="quota-select",
                 classes="omega-hidden",
             )
-            yield Static(_("Nombre à conserver"), id="quota-custom-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Nombre à conserver"),
+                id="quota-custom-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield Input(value="15", id="quota-custom-input", classes="omega-hidden")
 
-            yield Static(_("Fichier à supprimer"), id="manual-label", classes="omega-subtitle omega-hidden")
-            yield Select(self._backup_options(), id="manual-select", classes="omega-hidden", prompt=_("Sélectionner"))
+            yield Static(
+                _("Fichier à supprimer"),
+                id="manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Select(
+                self._backup_options(),
+                id="manual-select",
+                classes="omega-hidden",
+                prompt=_("Sélectionner"),
+            )
 
-            yield Static(_("Règles de purge planifiées"), id="manage-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Règles de purge planifiées"),
+                id="manage-label",
+                classes="omega-subtitle omega-hidden",
+            )
             yield DataTable(id="rules-table", classes="omega-hidden")
             with Horizontal(classes="omega-actions", id="manage-actions"):
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Supprimer la sélection"), id="delete-rule", variant="error")
+                    yield Button(
+                        _("Supprimer la sélection"), id="delete-rule", variant="error"
+                    )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
@@ -132,9 +184,18 @@ class PurgeBackupsScreen(OmegaScreen):
     def _backup_options(self) -> list[tuple[str, str]]:
         options = []
         for bfile in self._all_backups():
-            mtime = datetime.fromtimestamp(bfile.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
+            mtime = datetime.fromtimestamp(bfile.stat().st_mtime).strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
             size_kb = bfile.stat().st_size / 1024
-            options.append((_("{name} ({mtime} — {size_kb:.1f} KB)").format(name=bfile.name, mtime=mtime, size_kb=size_kb), str(bfile)))
+            options.append(
+                (
+                    _("{name} ({mtime} — {size_kb:.1f} KB)").format(
+                        name=bfile.name, mtime=mtime, size_kb=size_kb
+                    ),
+                    str(bfile),
+                )
+            )
         return options
 
     def on_mount(self) -> None:
@@ -148,12 +209,20 @@ class PurgeBackupsScreen(OmegaScreen):
             self._apply_mode(str(event.value))
         elif event.select.id == "age-select":
             is_custom = str(event.value) == "custom"
-            self.query_one("#age-custom-label", Static).set_class(not is_custom, "omega-hidden")
-            self.query_one("#age-custom-input", Input).set_class(not is_custom, "omega-hidden")
+            self.query_one("#age-custom-label", Static).set_class(
+                not is_custom, "omega-hidden"
+            )
+            self.query_one("#age-custom-input", Input).set_class(
+                not is_custom, "omega-hidden"
+            )
         elif event.select.id == "quota-select":
             is_custom = str(event.value) == "custom"
-            self.query_one("#quota-custom-label", Static).set_class(not is_custom, "omega-hidden")
-            self.query_one("#quota-custom-input", Input).set_class(not is_custom, "omega-hidden")
+            self.query_one("#quota-custom-label", Static).set_class(
+                not is_custom, "omega-hidden"
+            )
+            self.query_one("#quota-custom-input", Input).set_class(
+                not is_custom, "omega-hidden"
+            )
 
     def _apply_mode(self, mode: str) -> None:
         is_age = mode == _MODE_AGE
@@ -163,23 +232,39 @@ class PurgeBackupsScreen(OmegaScreen):
 
         self.query_one("#age-label", Static).set_class(not is_age, "omega-hidden")
         self.query_one("#age-select", Select).set_class(not is_age, "omega-hidden")
-        age_custom = is_age and str(self.query_one("#age-select", Select).value) == "custom"
-        self.query_one("#age-custom-label", Static).set_class(not age_custom, "omega-hidden")
-        self.query_one("#age-custom-input", Input).set_class(not age_custom, "omega-hidden")
+        age_custom = (
+            is_age and str(self.query_one("#age-select", Select).value) == "custom"
+        )
+        self.query_one("#age-custom-label", Static).set_class(
+            not age_custom, "omega-hidden"
+        )
+        self.query_one("#age-custom-input", Input).set_class(
+            not age_custom, "omega-hidden"
+        )
 
         self.query_one("#quota-label", Static).set_class(not is_quota, "omega-hidden")
         self.query_one("#quota-select", Select).set_class(not is_quota, "omega-hidden")
-        quota_custom = is_quota and str(self.query_one("#quota-select", Select).value) == "custom"
-        self.query_one("#quota-custom-label", Static).set_class(not quota_custom, "omega-hidden")
-        self.query_one("#quota-custom-input", Input).set_class(not quota_custom, "omega-hidden")
+        quota_custom = (
+            is_quota and str(self.query_one("#quota-select", Select).value) == "custom"
+        )
+        self.query_one("#quota-custom-label", Static).set_class(
+            not quota_custom, "omega-hidden"
+        )
+        self.query_one("#quota-custom-input", Input).set_class(
+            not quota_custom, "omega-hidden"
+        )
 
         self.query_one("#manual-label", Static).set_class(not is_manual, "omega-hidden")
-        self.query_one("#manual-select", Select).set_class(not is_manual, "omega-hidden")
+        self.query_one("#manual-select", Select).set_class(
+            not is_manual, "omega-hidden"
+        )
 
         self.query_one("#manage-label", Static).set_class(not is_manage, "omega-hidden")
         table = self.query_one("#rules-table", DataTable)
         table.set_class(not is_manage, "omega-hidden")
-        self.query_one("#manage-actions", Horizontal).set_class(not is_manage, "omega-hidden")
+        self.query_one("#manage-actions", Horizontal).set_class(
+            not is_manage, "omega-hidden"
+        )
         self.query_one("#launch", Button).set_class(is_manage, "omega-hidden")
         if is_manage:
             self._refresh_rules_table()
@@ -190,7 +275,12 @@ class PurgeBackupsScreen(OmegaScreen):
         table.cursor_type = "row"
         table.add_columns(_("Type"), _("Valeur"), _("Créée le"))
         for idx, rule in enumerate(self._load_rules()):
-            table.add_row(rule.get("type", ""), rule.get("value", ""), rule.get("created_at", ""), key=str(idx))
+            table.add_row(
+                rule.get("type", ""),
+                rule.get("value", ""),
+                rule.get("created_at", ""),
+                key=str(idx),
+            )
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._selected_rule_index = int(str(event.row_key.value))
@@ -218,8 +308,14 @@ class PurgeBackupsScreen(OmegaScreen):
             else:
                 target_days = int(age_choice)
             cutoff = datetime.now() - timedelta(days=target_days)
-            files_to_delete = [f for f in all_backups if datetime.fromtimestamp(f.stat().st_mtime) < cutoff]
-            action_title = _("Purge des archives de plus de {target_days} jours").format(target_days=target_days)
+            files_to_delete = [
+                f
+                for f in all_backups
+                if datetime.fromtimestamp(f.stat().st_mtime) < cutoff
+            ]
+            action_title = _(
+                "Purge des archives de plus de {target_days} jours"
+            ).format(target_days=target_days)
 
         elif mode == _MODE_QUOTA:
             quota_choice = str(self.query_one("#quota-select", Select).value)
@@ -230,55 +326,96 @@ class PurgeBackupsScreen(OmegaScreen):
                 keep_count = int(quota_choice)
             if len(all_backups) > keep_count:
                 files_to_delete = all_backups[keep_count:]
-            action_title = _("Purge par quota (conservation des {keep_count} plus récentes)").format(keep_count=keep_count)
+            action_title = _(
+                "Purge par quota (conservation des {keep_count} plus récentes)"
+            ).format(keep_count=keep_count)
 
         elif mode == _MODE_SAFETY:
-            files_to_delete = [f for f in all_backups if f.name.startswith("safety_auto_")]
+            files_to_delete = [
+                f for f in all_backups if f.name.startswith("safety_auto_")
+            ]
             action_title = _("Purge des backups temporaires de sécurité")
 
         elif mode == _MODE_MANUAL:
             selected = self.query_one("#manual-select", Select).value
             if selected is None or selected == Select.BLANK:
-                self.app.notify(_("Aucun fichier disponible ou sélectionné."), severity="warning")
+                self.app.notify(
+                    _("Aucun fichier disponible ou sélectionné."), severity="warning"
+                )
                 return
             files_to_delete = [Path(str(selected))]
-            action_title = _("Suppression manuelle ciblée de '{name}'").format(name=files_to_delete[0].name)
+            action_title = _("Suppression manuelle ciblée de '{name}'").format(
+                name=files_to_delete[0].name
+            )
 
         if not files_to_delete:
-            self.app.notify(_("Aucun fichier ne correspond aux critères de suppression choisis."), severity="warning")
+            self.app.notify(
+                _("Aucun fichier ne correspond aux critères de suppression choisis."),
+                severity="warning",
+            )
             return
 
         recap_size_mb = sum(f.stat().st_size for f in files_to_delete) / (1024 * 1024)
         preview = "\n".join(f"  - {f.name}" for f in files_to_delete[:8])
         if len(files_to_delete) > 8:
-            preview += _("\n  ... et {value} autre(s).").format(value=len(files_to_delete) - 8)
+            preview += _("\n  ... et {value} autre(s).").format(
+                value=len(files_to_delete) - 8
+            )
 
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LA PURGE"),
-                message=_("{action_title}\n{count} fichier(s), {recap_size_mb:.2f} MB.\n{preview}").format(action_title=action_title, count=len(files_to_delete), recap_size_mb=recap_size_mb, preview=preview),
+                message=_(
+                    "{action_title}\n{count} fichier(s), {recap_size_mb:.2f} MB.\n{preview}"
+                ).format(
+                    action_title=action_title,
+                    count=len(files_to_delete),
+                    recap_size_mb=recap_size_mb,
+                    preview=preview,
+                ),
             ),
-            lambda confirmed: self._purge_if_confirmed(confirmed, files_to_delete, recap_size_mb),
+            lambda confirmed: self._purge_if_confirmed(
+                confirmed, files_to_delete, recap_size_mb
+            ),
         )
 
-    def _purge_if_confirmed(self, confirmed: bool | None, files_to_delete: list[Path], recap_size_mb: float) -> None:
+    def _purge_if_confirmed(
+        self, confirmed: bool | None, files_to_delete: list[Path], recap_size_mb: float
+    ) -> None:
         if not confirmed:
             return
 
         persistence_port = self._container.get_persistence_port()
         all_backup_infos = persistence_port.list_backups(BACKUPS_DIR)
         backups_by_path = {b.path: b for b in all_backup_infos}
-        backups_to_delete = [backups_by_path[f] for f in files_to_delete if f in backups_by_path]
+        backups_to_delete = [
+            backups_by_path[f] for f in files_to_delete if f in backups_by_path
+        ]
 
-        result = PurgeBackupsCommand(persistence_port=persistence_port).execute(backups_to_delete)
+        result = PurgeBackupsCommand(persistence_port=persistence_port).execute(
+            backups_to_delete
+        )
 
         if result.deleted_count > 0:
-            self.app.notify(_("Purge terminée : {deleted_count} fichier(s) supprimé(s), {recap_size_mb:.2f} MB libérés.").format(deleted_count=result.deleted_count, recap_size_mb=recap_size_mb))
+            self.app.notify(
+                _(
+                    "Purge terminée : {deleted_count} fichier(s) supprimé(s), {recap_size_mb:.2f} MB libérés."
+                ).format(
+                    deleted_count=result.deleted_count, recap_size_mb=recap_size_mb
+                )
+            )
         if result.error_count > 0:
             for err in result.errors:
-                self.app.notify(_("Erreur lors de la suppression de {err}").format(err=err), severity="error")
+                self.app.notify(
+                    _("Erreur lors de la suppression de {err}").format(err=err),
+                    severity="error",
+                )
 
-        log_action_result(self._container, _ACTION_TITLE, status="success" if result.deleted_count else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if result.deleted_count else "failure",
+        )
         self.dismiss()
 
     def _delete_selected_rule(self) -> None:
@@ -289,6 +426,10 @@ class PurgeBackupsScreen(OmegaScreen):
             return
         removed = rules.pop(idx)
         self._save_rules(rules)
-        self.app.notify(_("Règle de purge '{value}' supprimée.").format(value=removed.get('type', '')))
+        self.app.notify(
+            _("Règle de purge '{value}' supprimée.").format(
+                value=removed.get("type", "")
+            )
+        )
         self._selected_rule_index = None
         self._refresh_rules_table()

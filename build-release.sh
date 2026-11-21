@@ -86,6 +86,7 @@ rsync -a \
     --exclude='.pytest_cache/' --exclude='.mypy_cache/' --exclude='.ruff_cache/' \
     --exclude='.import_linter_cache/' --exclude='*.egg-info/' \
     --exclude='.git/' --exclude='.claude/' \
+    --exclude='/CLAUDE-SECURITY-*/' \
     --exclude='docs/assets/' \
     --exclude='var/blocklist/*' --exclude='var/cache/*' --exclude='var/backups/*' \
     --exclude='var/runtime/*' --exclude='var/exports/*' --exclude='var/db/*' \

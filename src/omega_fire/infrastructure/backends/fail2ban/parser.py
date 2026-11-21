@@ -7,8 +7,8 @@ Handles jail listing, status queries, and ban lists.
 This module performs no I/O — it only parses strings. The actual command
 execution is done by the adapter.
 """
+
 import re
-from typing import Optional
 
 
 class Fail2banParser:
@@ -83,7 +83,9 @@ class Fail2banParser:
                 if match:
                     ip_str = match.group(1).strip()
                     if ip_str:
-                        status["banned_ips"] = [ip.strip() for ip in ip_str.split() if ip.strip()]
+                        status["banned_ips"] = [
+                            ip.strip() for ip in ip_str.split() if ip.strip()
+                        ]
 
         return status
 
@@ -199,4 +201,4 @@ def parse_fail2ban_status(output: str, jail_name: str) -> dict:
 # - infrastructure/backends/fail2ban/adapter.py l'appellera après chaque commande
 # - infrastructure/backends/fail2ban/jail_mapper.py transformera les dicts en objets métier
 # - Les tests utiliseront des fixtures de sortie fail2ban pour vérifier le parsing
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

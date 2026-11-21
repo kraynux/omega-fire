@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol
@@ -11,6 +11,7 @@ from typing import Any, Protocol
 
 class PluginStatus(str, Enum):
     """Statut d'un plugin."""
+
     LOADED = "loaded"
     ACTIVE = "active"
     DISABLED = "disabled"
@@ -30,6 +31,7 @@ class PluginInfo:
         capabilities: liste des capacités fournies par le plugin.
         error_message: message d'erreur si status=ERROR.
     """
+
     name: str
     version: str
     author: str
@@ -150,6 +152,7 @@ class PluginPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour le système de plugins.
@@ -183,4 +186,4 @@ class PluginPort(Protocol):
 # - plugins/loader.py utilisera PluginPort pour charger les plugins
 # - app/bootstrap.py appellera plugin_port.discover_plugins() au démarrage
 # - interfaces/cli/actions.py affichera la liste des plugins actifs
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

@@ -2,6 +2,7 @@
 """Ecran de demarrage : composition ASCII, se ferme sur une touche ou un clic.
 Porte depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from textual import events
@@ -24,7 +25,10 @@ class SplashScreen(Screen[None]):
             with Center():
                 yield SplashHero()
             with Center():
-                yield Static(_("Appuyez sur une touche pour continuer..."), classes="omega-splash-prompt")
+                yield Static(
+                    _("Appuyez sur une touche pour continuer..."),
+                    classes="omega-splash-prompt",
+                )
 
     def on_key(self, event: events.Key) -> None:
         event.stop()

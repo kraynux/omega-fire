@@ -6,25 +6,25 @@ for iptables support.
 This module performs real system I/O (reading /proc filesystem) and is
 therefore in infrastructure/.
 """
+
 import os
-from typing import Optional
-from omega_fire.infrastructure.probe.exceptions import ProbeExecutionError
+
 from omega_fire.shared.i18n import N_, lazy
 
 
 class KernelProbe:
     """Probes the presence of kernel modules for firewall backends.
-    
+
     Checks /proc filesystem for netfilter module availability.
     """
-    
+
     def __init__(self):
         """Initialize the kernel probe."""
         self._proc_net_path = "/proc/net"
-    
+
     def check_nftables_support(self) -> dict:
         """Check if nftables kernel support is available.
-        
+
         Returns:
             Dictionary with probe results:
             - available: bool
@@ -32,12 +32,12 @@ class KernelProbe:
             - message: str
         """
         modules = []
-        
+
         # Check /proc/net/nf_tables
         nf_tables_path = os.path.join(self._proc_net_path, "nf_tables")
         if os.path.exists(nf_tables_path):
             modules.append("nf_tables")
-        
+
         # Check for specific nftables modules
         nft_modules = ["nf_tables", "nft_chain_nat", "nft_compat"]
         for module in nft_modules:
@@ -45,23 +45,28 @@ class KernelProbe:
             if os.path.exists(module_path):
                 if module not in modules:
                     modules.append(module)
-        
+
         if modules:
             return {
                 "available": True,
                 "modules": modules,
-                "message": lazy(N_("Prise en charge de nftables par le noyau détectée : {value}"), value=', '.join(modules)),
+                "message": lazy(
+                    N_("Prise en charge de nftables par le noyau détectée : {value}"),
+                    value=", ".join(modules),
+                ),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": lazy(N_("Prise en charge de nftables par le noyau non détectée")),
+                "message": lazy(
+                    N_("Prise en charge de nftables par le noyau non détectée")
+                ),
             }
-    
+
     def check_iptables_support(self) -> dict:
         """Check if iptables kernel support is available.
-        
+
         Returns:
             Dictionary with probe results:
             - available: bool
@@ -69,12 +74,12 @@ class KernelProbe:
             - message: str
         """
         modules = []
-        
+
         # Check /proc/net/ip_tables_names (iptables legacy)
         ip_tables_path = os.path.join(self._proc_net_path, "ip_tables_names")
         if os.path.exists(ip_tables_path):
             modules.append("ip_tables")
-        
+
         # Check for iptables modules
         ipt_modules = ["ip_tables", "iptable_filter", "iptable_nat", "iptable_mangle"]
         for module in ipt_modules:
@@ -82,23 +87,28 @@ class KernelProbe:
             if os.path.exists(module_path):
                 if module not in modules:
                     modules.append(module)
-        
+
         if modules:
             return {
                 "available": True,
                 "modules": modules,
-                "message": lazy(N_("Prise en charge d'iptables par le noyau détectée : {value}"), value=', '.join(modules)),
+                "message": lazy(
+                    N_("Prise en charge d'iptables par le noyau détectée : {value}"),
+                    value=", ".join(modules),
+                ),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": lazy(N_("Prise en charge d'iptables par le noyau non détectée")),
+                "message": lazy(
+                    N_("Prise en charge d'iptables par le noyau non détectée")
+                ),
             }
-    
+
     def check_netfilter_support(self) -> dict:
         """Check if netfilter kernel support is available (generic).
-        
+
         Returns:
             Dictionary with probe results:
             - available: bool
@@ -106,12 +116,12 @@ class KernelProbe:
             - message: str
         """
         modules = []
-        
+
         # Check /proc/net/netfilter
         netfilter_path = os.path.join(self._proc_net_path, "netfilter")
         if os.path.exists(netfilter_path):
             modules.append("netfilter")
-        
+
         # Check for core netfilter modules
         nf_modules = ["netfilter", "nf_conntrack", "nf_nat"]
         for module in nf_modules:
@@ -119,26 +129,31 @@ class KernelProbe:
             if os.path.exists(module_path):
                 if module not in modules:
                     modules.append(module)
-        
+
         if modules:
             return {
                 "available": True,
                 "modules": modules,
-                "message": lazy(N_("Prise en charge de netfilter par le noyau détectée : {value}"), value=', '.join(modules)),
+                "message": lazy(
+                    N_("Prise en charge de netfilter par le noyau détectée : {value}"),
+                    value=", ".join(modules),
+                ),
             }
         else:
             return {
                 "available": False,
                 "modules": [],
-                "message": lazy(N_("Prise en charge de netfilter par le noyau non détectée")),
+                "message": lazy(
+                    N_("Prise en charge de netfilter par le noyau non détectée")
+                ),
             }
-    
+
     def probe_kernel(self, backend: str = "netfilter") -> dict:
         """Probe kernel support for a specific backend.
-        
+
         Args:
             backend: Backend to probe ("nftables", "iptables", or "netfilter")
-        
+
         Returns:
             Dictionary with probe results
         """
@@ -158,10 +173,10 @@ class KernelProbe:
 
 def probe_kernel(backend: str = "netfilter") -> dict:
     """Convenience function to probe kernel support.
-    
+
     Args:
         backend: Backend to probe ("nftables", "iptables", or "netfilter")
-    
+
     Returns:
         Dictionary with probe results
     """
@@ -171,7 +186,7 @@ def probe_kernel(backend: str = "netfilter") -> dict:
 
 def is_nftables_supported() -> bool:
     """Check if nftables kernel support is available.
-    
+
     Returns:
         True if nftables is supported
     """
@@ -182,7 +197,7 @@ def is_nftables_supported() -> bool:
 
 def is_iptables_supported() -> bool:
     """Check if iptables kernel support is available.
-    
+
     Returns:
         True if iptables is supported
     """
@@ -225,4 +240,4 @@ def is_iptables_supported() -> bool:
 # - infrastructure/probe/scanner.py l'utilisera pour tester le support noyau
 # - infrastructure/probe/capability_mapper.py transformera les résultats en Capability
 # - Les tests mockeront os.path.exists pour simuler différents états
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

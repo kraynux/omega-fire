@@ -18,11 +18,12 @@ tty/termios/fcntl helpers), extracted from app.py so it can be shared
 with other renderers (e.g. the pager) without duplicating this logic.
 """
 
+import fcntl
 import os
 import sys
-import tty
 import termios
-import fcntl
+import tty
+
 from omega_fire.shared.i18n import _
 
 # ----------------------------------------------------------------------
@@ -155,12 +156,12 @@ def _getch() -> str:
         _flush_stdin()
         tty.setcbreak(fd)
         first = sys.stdin.read(1)
-        if first != '\x1b':
+        if first != "\x1b":
             _flush_stdin()
             return first
         _set_nonblocking(fd)
         try:
-            seq = ''
+            seq = ""
             for _ in range(5):
                 try:
                     ch = sys.stdin.read(1)
@@ -168,12 +169,12 @@ def _getch() -> str:
                         seq += ch
                     else:
                         break
-                except (IOError, OSError):
+                except OSError:
                     break
         finally:
             _set_blocking(fd)
             _flush_stdin()
-        return '\x1b' + seq
+        return "\x1b" + seq
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
@@ -220,4 +221,4 @@ def _getch() -> str:
 # - interfaces/cli/renderers/splash.py : utilise les constantes pour le footer
 # - interfaces/cli/app.py : utilise les helpers pour la capture clavier
 # - interfaces/cli/renderers/dashboard.py : utilisera les constantes
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

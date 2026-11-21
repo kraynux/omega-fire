@@ -7,10 +7,10 @@ audit logs. Uses RotatingFileHandler for log rotation.
 
 This module performs file I/O to write logs and is therefore in infrastructure/.
 """
+
 import logging
 import logging.handlers
 from pathlib import Path
-from typing import Optional
 
 
 def configure_logging(
@@ -22,12 +22,12 @@ def configure_logging(
     format_str: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 ) -> None:
     """Configure the logging system for the application.
-    
+
     Sets up:
     - Root logger with console and file handlers
     - Application logger (omega_fire) with rotating file handler
     - Audit logger (omega_fire.audit) with separate rotating file handler
-    
+
     Args:
         app_log_path: Path to the application log file
         audit_log_path: Path to the audit log file
@@ -39,26 +39,26 @@ def configure_logging(
     # Ensure parent directories exist
     app_log_path.parent.mkdir(parents=True, exist_ok=True)
     audit_log_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Parse log level
     log_level = getattr(logging, level.upper(), logging.INFO)
-    
+
     # Create formatter
     formatter = logging.Formatter(format_str)
-    
+
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
-    
+
     # Clear existing handlers
     root_logger.handlers.clear()
-    
+
     # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
-    
+
     # Application file handler (rotating)
     app_file_handler = logging.handlers.RotatingFileHandler(
         filename=str(app_log_path),
@@ -69,15 +69,15 @@ def configure_logging(
     app_file_handler.setLevel(log_level)
     app_file_handler.setFormatter(formatter)
     root_logger.addHandler(app_file_handler)
-    
+
     # Configure audit logger (separate file)
     audit_logger = logging.getLogger("omega_fire.audit")
     audit_logger.setLevel(logging.INFO)
     audit_logger.propagate = False  # Don't propagate to root
-    
+
     # Clear existing audit handlers
     audit_logger.handlers.clear()
-    
+
     # Audit file handler (rotating)
     audit_file_handler = logging.handlers.RotatingFileHandler(
         filename=str(audit_log_path),
@@ -88,7 +88,7 @@ def configure_logging(
     audit_file_handler.setLevel(logging.INFO)
     audit_file_handler.setFormatter(formatter)
     audit_logger.addHandler(audit_file_handler)
-    
+
     # Suppress noisy loggers
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
@@ -96,10 +96,10 @@ def configure_logging(
 
 def get_app_logger(name: str = "omega_fire") -> logging.Logger:
     """Get the application logger.
-    
+
     Args:
         name: Logger name (default: omega_fire)
-    
+
     Returns:
         Logger instance
     """
@@ -108,7 +108,7 @@ def get_app_logger(name: str = "omega_fire") -> logging.Logger:
 
 def get_audit_logger() -> logging.Logger:
     """Get the audit logger.
-    
+
     Returns:
         Logger instance for audit events
     """
@@ -144,4 +144,4 @@ def get_audit_logger() -> logging.Logger:
 # - infrastructure/logging/app_logger.py utilisera get_app_logger()
 # - infrastructure/logging/audit_logger.py utilisera get_audit_logger()
 # - Les tests mockeront les loggers pour vérifier les appels
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

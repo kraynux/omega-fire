@@ -5,6 +5,7 @@ interfaces/cli/actions.py::_execute_action_flow() (journal applicatif +
 audit.log). Seul l'acteur differe ("tui:admin" au lieu de "cli:admin"),
 pour distinguer la provenance dans l'historique (menu 7.3) sans changer
 le format des entrees."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,7 +24,9 @@ def log_action_result(
             if status == "success":
                 app_logger.info(f"Action '{action_title}' executee avec succes.")
             else:
-                app_logger.error(f"Echec lors de l'execution de l'action '{action_title}' : {error}")
+                app_logger.error(
+                    f"Echec lors de l'execution de l'action '{action_title}' : {error}"
+                )
     except Exception:
         pass
 

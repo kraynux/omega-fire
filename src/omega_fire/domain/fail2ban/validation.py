@@ -5,38 +5,39 @@ Pure domain logic for validating fail2ban-specific parameters.
 This module complements jails.py by validating ports, log paths,
 filter names, protocols, and actions.
 """
+
 import os
 import re
-from typing import Optional
+
 from omega_fire.domain.fail2ban.exceptions import InvalidParameterError
 from omega_fire.shared.i18n import _
 
 
 def validate_port(port: str) -> None:
     """Validate a port specification.
-    
+
     Rules:
     - Can be a single port: "80"
     - Can be a comma-separated list: "80,443"
     - Can be a range: "8000-9000"
     - Can be a service name: "http", "https", "ssh"
     - Can mix formats: "80,443,8000-9000,http"
-    
+
     Args:
         port: Port specification to validate
-    
+
     Raises:
         InvalidParameterError: If port format is invalid
     """
     if not port:
         return  # Port is optional
-    
+
     # Split by comma
     parts = port.split(",")
-    
+
     for part in parts:
         part = part.strip()
-        
+
         # Check if it's a range
         if "-" in part:
             range_parts = part.split("-")
@@ -44,7 +45,9 @@ def validate_port(port: str) -> None:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    _("Format de plage de ports invalide : « {part} »").format(part=part)
+                    _("Format de plage de ports invalide : « {part} »").format(
+                        part=part
+                    ),
                 )
             try:
                 start, end = int(range_parts[0]), int(range_parts[1])
@@ -52,21 +55,25 @@ def validate_port(port: str) -> None:
                     raise InvalidParameterError(
                         "port",
                         port,
-                        _("Plage de ports : début ({start}) > fin ({end})").format(start=start, end=end)
+                        _("Plage de ports : début ({start}) > fin ({end})").format(
+                            start=start, end=end
+                        ),
                     )
                 if not (1 <= start <= 65535 and 1 <= end <= 65535):
                     raise InvalidParameterError(
                         "port",
                         port,
-                        _("Les ports doivent être compris entre 1 et 65535")
+                        _("Les ports doivent être compris entre 1 et 65535"),
                     )
             except ValueError:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    _("Une plage de ports doit contenir des nombres entiers : « {part} »").format(part=part)
+                    _(
+                        "Une plage de ports doit contenir des nombres entiers : « {part} »"
+                    ).format(part=part),
                 )
-        
+
         # Check if it's a number
         elif part.isdigit():
             port_num = int(part)
@@ -74,210 +81,213 @@ def validate_port(port: str) -> None:
                 raise InvalidParameterError(
                     "port",
                     port,
-                    _("Le numéro de port doit être compris entre 1 et 65535 : {port_num}").format(port_num=port_num)
+                    _(
+                        "Le numéro de port doit être compris entre 1 et 65535 : {port_num}"
+                    ).format(port_num=port_num),
                 )
-        
+
         # Check if it's a valid service name (alphanumeric)
-        elif re.match(r'^[a-zA-Z][a-zA-Z0-9-]*$', part):
+        elif re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", part):
             pass  # Valid service name
-        
+
         else:
             raise InvalidParameterError(
                 "port",
                 port,
-                _("Format de port invalide : « {part} »").format(part=part)
+                _("Format de port invalide : « {part} »").format(part=part),
             )
 
 
 def validate_log_path(log_path: str) -> None:
     """Validate a log file path format.
-    
+
     Rules:
     - Must be non-empty
     - Must be an absolute path (starts with /)
     - Must not contain invalid characters
     - Note: Does NOT check if file exists (that's infrastructure's job)
-    
+
     Args:
         log_path: Log path to validate
-    
+
     Raises:
         InvalidParameterError: If log path format is invalid
     """
     if not log_path:
         raise InvalidParameterError(
-            "log_path",
-            log_path,
-            _("Le chemin du journal (log_path) est obligatoire")
+            "log_path", log_path, _("Le chemin du journal (log_path) est obligatoire")
         )
-    
+
     if not os.path.isabs(log_path):
         raise InvalidParameterError(
-            "log_path",
-            log_path,
-            _("Le chemin du journal (log_path) doit être absolu")
+            "log_path", log_path, _("Le chemin du journal (log_path) doit être absolu")
         )
-    
+
     # Check for invalid characters
     if "\x00" in log_path:
         raise InvalidParameterError(
             "log_path",
             log_path,
-            _("Le chemin du journal (log_path) contient des octets nuls")
+            _("Le chemin du journal (log_path) contient des octets nuls"),
         )
 
 
 def validate_filter_name(filter_name: str) -> None:
     """Validate a fail2ban filter name.
-    
+
     Rules:
     - Must be non-empty if provided
     - Must contain only alphanumeric characters, hyphens, underscores
     - Maximum length: 64 characters
-    
+
     Args:
         filter_name: Filter name to validate
-    
+
     Raises:
         InvalidParameterError: If filter name format is invalid
     """
     if not filter_name:
         return  # Filter name is optional
-    
+
     if len(filter_name) > 64:
         raise InvalidParameterError(
             "filter_name",
             filter_name,
-            _("Le nom du filtre (filter_name) doit faire 64 caractères au plus")
+            _("Le nom du filtre (filter_name) doit faire 64 caractères au plus"),
         )
-    
-    pattern = r'^[a-zA-Z][a-zA-Z0-9_-]*$'
+
+    pattern = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
     if not re.match(pattern, filter_name):
         raise InvalidParameterError(
             "filter_name",
             filter_name,
-            _("Le nom du filtre (filter_name) doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés")
+            _(
+                "Le nom du filtre (filter_name) doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés"
+            ),
         )
 
 
 def validate_protocol(protocol: str) -> None:
     """Validate a protocol specification.
-    
+
     Rules:
     - Must be one of: tcp, udp, tcp,udp (or variations)
     - Case-insensitive
-    
+
     Args:
         protocol: Protocol to validate
-    
+
     Raises:
         InvalidParameterError: If protocol is invalid
     """
     if not protocol:
         return  # Protocol is optional
-    
+
     # Normalize to lowercase
     protocol_lower = protocol.lower().strip()
-    
+
     # Split by comma
     parts = [p.strip() for p in protocol_lower.split(",")]
-    
+
     valid_protocols = {"tcp", "udp"}
-    
+
     for part in parts:
         if part not in valid_protocols:
             raise InvalidParameterError(
                 "protocol",
                 protocol,
-                _("Protocole invalide : « {part} ». Valeurs possibles : tcp, udp ou tcp,udp").format(part=part)
+                _(
+                    "Protocole invalide : « {part} ». Valeurs possibles : tcp, udp ou tcp,udp"
+                ).format(part=part),
             )
 
 
 def validate_action(action: str) -> None:
     """Validate a fail2ban action name.
-    
+
     Rules:
     - Must be non-empty if provided
     - Must contain only alphanumeric characters, hyphens, underscores
     - Maximum length: 64 characters
-    
+
     Args:
         action: Action name to validate
-    
+
     Raises:
         InvalidParameterError: If action name format is invalid
     """
     if not action:
         return  # Action is optional
-    
+
     if len(action) > 64:
         raise InvalidParameterError(
-            "action",
-            action,
-            _("L'action doit faire 64 caractères au plus")
+            "action", action, _("L'action doit faire 64 caractères au plus")
         )
-    
-    pattern = r'^[a-zA-Z][a-zA-Z0-9_-]*$'
+
+    pattern = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
     if not re.match(pattern, action):
         raise InvalidParameterError(
             "action",
             action,
-            _("L'action doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés")
+            _(
+                "L'action doit commencer par une lettre et ne contenir que des lettres, chiffres, tirets et soulignés"
+            ),
         )
 
 
 def validate_all_parameters(
-    port: Optional[str] = None,
-    log_path: Optional[str] = None,
-    filter_name: Optional[str] = None,
-    protocol: Optional[str] = None,
-    action: Optional[str] = None,
+    port: str | None = None,
+    log_path: str | None = None,
+    filter_name: str | None = None,
+    protocol: str | None = None,
+    action: str | None = None,
 ) -> list[str]:
     """Validate all optional fail2ban parameters.
-    
+
     Args:
         port: Port specification (optional)
         log_path: Log file path (optional)
         filter_name: Filter name (optional)
         protocol: Protocol (optional)
         action: Action name (optional)
-    
+
     Returns:
         List of validation error messages (empty if all valid)
     """
     errors = []
-    
+
     try:
         if port is not None:
             validate_port(port)
     except InvalidParameterError as e:
         errors.append(str(e))
-    
+
     try:
         if log_path is not None:
             validate_log_path(log_path)
     except InvalidParameterError as e:
         errors.append(str(e))
-    
+
     try:
         if filter_name is not None:
             validate_filter_name(filter_name)
     except InvalidParameterError as e:
         errors.append(str(e))
-    
+
     try:
         if protocol is not None:
             validate_protocol(protocol)
     except InvalidParameterError as e:
         errors.append(str(e))
-    
+
     try:
         if action is not None:
             validate_action(action)
     except InvalidParameterError as e:
         errors.append(str(e))
-    
+
     return errors
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -307,4 +317,4 @@ def validate_all_parameters(
 # - domain/fail2ban/service.py appellera ces validations avant de créer un jail
 # - domain/fail2ban/jails.py pourrait utiliser validate_all_parameters() dans create_valid_jail_config()
 # - interfaces/cli/actions.py validera les entrées utilisateur avant de les passer au service
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

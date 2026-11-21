@@ -5,9 +5,9 @@ Automatically detects the terminal emulator and its capabilities
 to suggest the most appropriate default theme.
 Supports 13 known terminals + SSH modes + heuristics for unknown modern terminals.
 """
+
 import os
-import sys
-from typing import Optional
+
 from omega_fire.interfaces.cli.themes.normalization import normalize_name
 
 
@@ -44,16 +44,28 @@ class TerminalDetector:
     # Profiles based on official compatibility matrix
     TERMINAL_PROFILES = {
         normalize_name("Ghostty"): TerminalInfo("Ghostty", "24-bit", True, True, []),
-        normalize_name("Alacritty"): TerminalInfo("Alacritty", "24-bit", True, True, []),
+        normalize_name("Alacritty"): TerminalInfo(
+            "Alacritty", "24-bit", True, True, []
+        ),
         normalize_name("WezTerm"): TerminalInfo("WezTerm", "24-bit", True, True, []),
         normalize_name("Kitty"): TerminalInfo("Kitty", "24-bit", True, True, []),
         normalize_name("Konsole"): TerminalInfo("Konsole", "256", True, True, []),
-        normalize_name("GNOME Terminal"): TerminalInfo("GNOME Terminal", "256", True, True, []),
+        normalize_name("GNOME Terminal"): TerminalInfo(
+            "GNOME Terminal", "256", True, True, []
+        ),
         normalize_name("Terminator"): TerminalInfo("Terminator", "256", True, True, []),
-        normalize_name("xfce4-terminal"): TerminalInfo("xfce4-terminal", "256", True, True, []),
-        normalize_name("urxvt"): TerminalInfo("urxvt", "256", False, True, ["--no-emoji"]),
-        normalize_name("xterm"): TerminalInfo("xterm", "16", False, True, ["--no-emoji", "--no-color"]),
-        normalize_name("Linux TTY"): TerminalInfo("Linux TTY", "16", False, False, ["--plain"]),
+        normalize_name("xfce4-terminal"): TerminalInfo(
+            "xfce4-terminal", "256", True, True, []
+        ),
+        normalize_name("urxvt"): TerminalInfo(
+            "urxvt", "256", False, True, ["--no-emoji"]
+        ),
+        normalize_name("xterm"): TerminalInfo(
+            "xterm", "16", False, True, ["--no-emoji", "--no-color"]
+        ),
+        normalize_name("Linux TTY"): TerminalInfo(
+            "Linux TTY", "16", False, False, ["--plain"]
+        ),
     }
 
     def __init__(self):
@@ -129,7 +141,9 @@ class TerminalDetector:
             return TerminalInfo("Unknown modern (24-bit)", "24-bit", True, True, [])
 
         if self._colorterm and self._colorterm not in ("", "none"):
-            return TerminalInfo("Unknown (24-bit via COLORTERM)", "24-bit", True, True, [])
+            return TerminalInfo(
+                "Unknown (24-bit via COLORTERM)", "24-bit", True, True, []
+            )
 
         if "256" in self._term:
             return TerminalInfo("Unknown (256)", "256", True, True, [])

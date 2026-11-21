@@ -3,6 +3,7 @@
 liste d'IPs d'un export (5.5). La relecture accepte tout export d'IPs d'omega-fire :
 JSON (cle "rows" ou "ips"), sinon extraction des IPs ligne par ligne (TXT, HTML), dans
 l'ordre du fichier et sans doublon."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -18,24 +19,40 @@ FORMATS = ("json", "txt", "html")
 _MAX_READ_BYTES = 20 * 1024 * 1024
 
 
-def write_top_ips(report: TopIpsReport, fmt: str, path: Path, generated_at: str,
-                  html_exporter: Any = None, html_context: dict[str, Any] | None = None) -> Path:
+def write_top_ips(
+    report: TopIpsReport,
+    fmt: str,
+    path: Path,
+    generated_at: str,
+    html_exporter: Any = None,
+    html_context: dict[str, Any] | None = None,
+) -> Path:
     """html_context : libelles deja traduits (langue des exports), theme_name, columns et
     table_rows (cellules deja mises en forme, comme le tableau de 5.4)."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if fmt == "json":
         data = {
-            "source": "Omega-Fire", "type": "Top IPs", "source_file": report.source,
-            "period": report.period, "exported_at": generated_at,
-            "total_occurrences": report.total_occurrences, "unique_ips": report.unique_ips,
+            "source": "Omega-Fire",
+            "type": "Top IPs",
+            "source_file": report.source,
+            "period": report.period,
+            "exported_at": generated_at,
+            "total_occurrences": report.total_occurrences,
+            "unique_ips": report.unique_ips,
             "raw_ip_file": report.raw_ip_file,
             "rows": [asdict(row) for row in report.rows],
         }
-        path.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     elif fmt == "txt":
         lines = [
-            "# Omega-Fire Top IPs Export", f"# Source : {report.source}", f"# Period : {report.period}",
-            f"# Generated : {generated_at}", f"# Total : {report.total_occurrences}", "",
+            "# Omega-Fire Top IPs Export",
+            f"# Source : {report.source}",
+            f"# Period : {report.period}",
+            f"# Generated : {generated_at}",
+            f"# Total : {report.total_occurrences}",
+            "",
         ]
         # Une IP par ligne, dans l'ordre du classement (reinjectable, comme 6.1).
         lines += [row.ip for row in report.rows]
@@ -69,7 +86,9 @@ def read_exported_ips(path: Path) -> list[str]:
             data = None
         if isinstance(data, dict):
             if isinstance(data.get("rows"), list):
-                values = [row.get("ip", "") for row in data["rows"] if isinstance(row, dict)]
+                values = [
+                    row.get("ip", "") for row in data["rows"] if isinstance(row, dict)
+                ]
             elif isinstance(data.get("ips"), list):
                 values = [str(value) for value in data["ips"]]
             else:

@@ -4,16 +4,18 @@
 These dataclasses represent validated input payloads that cross
 multiple use cases. They are NOT tied to a single command.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+
 from omega_fire.shared.i18n import _
 
 
 class BackendTarget(str, Enum):
     """Target backend for firewall operations."""
+
     NFTABLES = "nftables"
     IPTABLES = "iptables"
     FAIL2BAN = "fail2ban"
@@ -22,6 +24,7 @@ class BackendTarget(str, Enum):
 
 class ExportFormat(str, Enum):
     """Supported export formats."""
+
     JSON = "json"
     TXT = "txt"
     HTML = "html"
@@ -30,6 +33,7 @@ class ExportFormat(str, Enum):
 
 class SyncDirection(str, Enum):
     """Direction of backend synchronization."""
+
     NFTABLES_TO_IPTABLES = "nftables_to_iptables"
     IPTABLES_TO_NFTABLES = "iptables_to_nftables"
     NFTABLES_TO_FAIL2BAN = "nftables_to_fail2ban"
@@ -39,6 +43,7 @@ class SyncDirection(str, Enum):
 @dataclass(slots=True)
 class IPAddressInput:
     """Validated IP address input shared across ban/unban/sync use cases."""
+
     ip: str
     backend: BackendTarget = BackendTarget.NFTABLES
     comment: str = ""
@@ -68,14 +73,17 @@ class IPAddressInput:
 @dataclass(slots=True)
 class IPListInput:
     """Validated list of IP addresses for bulk operations."""
+
     ips: list[str] = field(default_factory=list)
     backend: BackendTarget = BackendTarget.NFTABLES
-    source_file: Optional[str] = None
+    source_file: str | None = None
 
     def validate(self) -> list[str]:
         errors: list[str] = []
         if not self.ips and not self.source_file:
-            errors.append(_("Une liste d'IP ou un fichier source (source_file) est obligatoire"))
+            errors.append(
+                _("Une liste d'IP ou un fichier source (source_file) est obligatoire")
+            )
         for ip in self.ips:
             if not IPAddressInput._is_valid_ipv4(ip):
                 errors.append(_("IPv4 invalide dans la liste : {ip}").format(ip=ip))
@@ -88,20 +96,23 @@ class IPListInput:
 @dataclass(slots=True)
 class RuleInput:
     """Validated rule parameters for create/delete rule use cases."""
+
     source_ip: str = ""
     target: BackendTarget = BackendTarget.NFTABLES
     action: str = "deny"
-    port: Optional[int] = None
-    protocol: Optional[str] = None
-    comment: Optional[str] = None
-    rule_id: Optional[str] = None
+    port: int | None = None
+    protocol: str | None = None
+    comment: str | None = None
+    rule_id: str | None = None
 
     def validate(self) -> list[str]:
         errors: list[str] = []
         if self.port is not None and (self.port < 1 or self.port > 65535):
             errors.append(_("Port invalide : {port}").format(port=self.port))
         if self.protocol and self.protocol not in ("tcp", "udp", "icmp", "all"):
-            errors.append(_("Protocole invalide : {protocol}").format(protocol=self.protocol))
+            errors.append(
+                _("Protocole invalide : {protocol}").format(protocol=self.protocol)
+            )
         if self.action not in ("accept", "deny", "drop", "reject"):
             errors.append(_("Action invalide : {action}").format(action=self.action))
         return errors
@@ -113,10 +124,11 @@ class RuleInput:
 @dataclass(slots=True)
 class JailInput:
     """Validated jail parameters for fail2ban operations."""
+
     jail_name: str = ""
     ip_address: str = ""
-    reason: Optional[str] = None
-    duration_seconds: Optional[int] = None
+    reason: str | None = None
+    duration_seconds: int | None = None
 
     def validate(self) -> list[str]:
         errors: list[str] = []
@@ -135,9 +147,10 @@ class JailInput:
 @dataclass(slots=True)
 class ExportInput:
     """Validated export parameters shared across export use cases."""
+
     report_name: str = ""
     format: ExportFormat = ExportFormat.JSON
-    destination: Optional[str] = None
+    destination: str | None = None
     include_metadata: bool = True
 
     def validate(self) -> list[str]:
@@ -153,13 +166,14 @@ class ExportInput:
 @dataclass(slots=True)
 class MaintenanceInput:
     """Validated parameters for maintenance operations (backup, rotate, reload)."""
+
     target: str = "all"
     compress: bool = True
     keep: int = 7
     force: bool = False
-    reason: Optional[str] = None
+    reason: str | None = None
     scope: str = "all"
-    destination: Optional[str] = None
+    destination: str | None = None
 
     def validate(self) -> list[str]:
         errors: list[str] = []
@@ -169,6 +183,7 @@ class MaintenanceInput:
 
     def is_valid(self) -> bool:
         return len(self.validate()) == 0
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -197,4 +212,4 @@ class MaintenanceInput:
 # - ExportInput : paramètres d'export
 # - MaintenanceInput : paramètres de maintenance (backup, rotate, reload)
 # - Tous les DTOs ont validate() -> list[str] et is_valid() -> bool
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

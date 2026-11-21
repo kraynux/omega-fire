@@ -140,7 +140,10 @@ else
 fi
 
 sudo chgrp -R omega-fire var
-sudo chmod -R 2775 var
+# Scan de sécurité 2026-11-21 (F10) : rien pour les autres comptes (dossiers 2770,
+# fichiers 660) ; seul var/ reste traversable, pour le jeton lu par omega-connect.
+sudo chmod -R u=rwX,g=rwXs,o= var
+sudo chmod o+x var
 ok "Permissions var/ prêtes."
 tip "L'appli (toujours lancée en sudo) fonctionne dès maintenant, aucune reconnexion requise."
 tip "Optionnel : pour accéder aux fichiers de var/ SANS sudo, le groupe omega-fire doit être actif dans votre session — automatique à la prochaine connexion, ou immédiat avec 'newgrp omega-fire'."
@@ -219,7 +222,7 @@ esac
 # -------------------------------------------------------------------------
 # 8. Jeton d'installation (var/omega-jeton.json, contrats d'interconnexion
 #    2026-11-10) : lu par omega-connect, sans rien exécuter. Écrit sous VOTRE
-#    compte (jamais en root) ; remis en 0644 après le chmod -R 2775 de var/.
+#    compte (jamais en root) ; remis en 0644 après le chmod -R de var/.
 #    Un échec ne bloque jamais l'installation.
 # -------------------------------------------------------------------------
 if "$SCRIPT_DIR/omega-fire.sh" synchro jeton >/dev/null 2>&1; then
@@ -228,6 +231,16 @@ if "$SCRIPT_DIR/omega-fire.sh" synchro jeton >/dev/null 2>&1; then
 else
     warn "Jeton d'installation non écrit : omega-connect ne verra pas cette installation tant qu'il manque."
     tip "Créez-le sans sudo avec : ${SCRIPT_DIR}/omega-fire.sh synchro jeton"
+fi
+
+# 9. Journal des bans (plan omega-connect, phase 3, 2026-11-21) : seulement si la zone omega-synchro
+#    existe (omega-connect installé). Bans réellement en place publiés pour les autres outils omega.
+if [ -d /var/lib/omega-synchro/bans ]; then
+    if sudo "$SCRIPT_DIR/omega-fire.sh" synchro bans >/dev/null 2>&1; then
+        ok "Bans d'omega-fire publiés dans la zone omega-synchro."
+    else
+        warn "Bans d'omega-fire non publiés ; omega-fire le refera à son prochain lancement."
+    fi
 fi
 
 echo ""

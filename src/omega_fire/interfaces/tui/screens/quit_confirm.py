@@ -2,12 +2,14 @@
 """Ecran de confirmation avant fermeture de l'application.
 Porte depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Center, Container, Horizontal, Middle, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Static
+
 from omega_fire.shared.i18n import _
 
 

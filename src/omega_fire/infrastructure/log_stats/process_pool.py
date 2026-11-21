@@ -47,6 +47,7 @@ Taille : coeurs LOGIQUES moins un (laisse a l'interface), entre 2 et 8 (2026-11-
 machine chargee : 1 processus 155 s, 2 processus 96 s, 4 processus 80 s - l'hyperthreading apporte encore
 ~17 % sur ce calcul. Avant : `max_workers=2` fixe. Arret propre via `atexit` — les processus du pool ne
 doivent jamais survivre au process principal."""
+
 from __future__ import annotations
 
 import atexit

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Builtin plugin for conntrack monitoring."""
+
 from omega_fire.shared.i18n import _
 
 PLUGIN_NAME = "conntrack"
@@ -26,7 +27,8 @@ def on_connection_established(**kwargs) -> None:
 def on_connection_closed(**kwargs) -> None:
     pass
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle : Plugin builtin pour le monitoring conntrack.
 # Même structure que nftables.py, avec capacités spécifiques à conntrack.
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

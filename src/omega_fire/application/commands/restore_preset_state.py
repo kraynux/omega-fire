@@ -15,22 +15,28 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
+
 from dataclasses import dataclass
 from typing import Any
 
-from omega_fire.application.commands.apply_preset import snapshot_file_for, state_file_for
+from omega_fire.application.commands.apply_preset import (
+    snapshot_file_for,
+    state_file_for,
+)
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class RestorePresetStateRequest:
     """Input for the restore preset state use case."""
+
     backend: str
 
 
 @dataclass
 class RestorePresetStateResult:
     """Output of the restore preset state use case."""
+
     success: bool
     message: str
 
@@ -52,7 +58,9 @@ class RestorePresetStateCommand:
         if self._adapter is None:
             return RestorePresetStateResult(
                 success=False,
-                message=_("Aucun backend disponible pour restaurer l'état sur {backend}.").format(backend=request.backend),
+                message=_(
+                    "Aucun backend disponible pour restaurer l'état sur {backend}."
+                ).format(backend=request.backend),
             )
 
         snapshot_file = snapshot_file_for(request.backend)
@@ -62,7 +70,9 @@ class RestorePresetStateCommand:
         if not snapshot_file.exists():
             return RestorePresetStateResult(
                 success=False,
-                message=_("Aucun état antérieur disponible pour restauration sur {backend}. Rien n'a été modifié. Reconstruisez vos règles via 3.1/3.3 si nécessaire.").format(backend=request.backend),
+                message=_(
+                    "Aucun état antérieur disponible pour restauration sur {backend}. Rien n'a été modifié. Reconstruisez vos règles via 3.1/3.3 si nécessaire."
+                ).format(backend=request.backend),
             )
 
         try:
@@ -70,7 +80,9 @@ class RestorePresetStateCommand:
         except Exception as e:
             return RestorePresetStateResult(
                 success=False,
-                message=_("Impossible de lire la sauvegarde de l'état antérieur ({e}). Rien n'a été modifié.").format(e=e),
+                message=_(
+                    "Impossible de lire la sauvegarde de l'état antérieur ({e}). Rien n'a été modifié."
+                ).format(e=e),
             )
 
         # --- Restauration (flush + reload, jamais de cumul) ---
@@ -79,7 +91,9 @@ class RestorePresetStateCommand:
         except Exception as e:
             return RestorePresetStateResult(
                 success=False,
-                message=_("Échec de la restauration sur {backend} : {e}. Le système peut être dans un état incohérent — vérifiez manuellement l'état du pare-feu.").format(backend=request.backend, e=e),
+                message=_(
+                    "Échec de la restauration sur {backend} : {e}. Le système peut être dans un état incohérent — vérifiez manuellement l'état du pare-feu."
+                ).format(backend=request.backend, e=e),
             )
 
         # --- Nettoyage : le snapshot de CE backend vient d'être consommé ---
@@ -96,7 +110,9 @@ class RestorePresetStateCommand:
         return RestorePresetStateResult(
             success=True,
             message=(
-                _("L'état antérieur a été restauré avec succès sur {backend}. Pensez à repasser par 3.3 (Lister les règles) pour resynchroniser la base avec l'état réellement actif dans le noyau.").format(backend=request.backend)
+                _(
+                    "L'état antérieur a été restauré avec succès sur {backend}. Pensez à repasser par 3.3 (Lister les règles) pour resynchroniser la base avec l'état réellement actif dans le noyau."
+                ).format(backend=request.backend)
             ),
         )
 
@@ -141,4 +157,4 @@ class RestorePresetStateCommand:
 #   ↓ résout l'adapter via ctx.container.get_firewall_port(backend)
 # application/commands/restore_preset_state.py : RestorePresetStateCommand.execute()
 #   ↓ adapter.load_ruleset()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

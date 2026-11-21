@@ -6,125 +6,132 @@ structures from domain/reports/serializers.py and renders them to HTML files.
 
 This module performs file I/O and is therefore in infrastructure/.
 """
+
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
+
 from omega_fire.domain.reports.serializers import report_to_serializable
 from omega_fire.shared.i18n import _, html_dir, html_lang, ngettext
 
 
 class HtmlExporter:
     """Exporter that writes data to HTML files.
-    
+
     Uses Jinja2 templates to render HTML output. Templates are loaded
     from domain/reports/templates/.
     """
-    
+
     def __init__(self, templates_dir: Path):
         """Initialize the HTML exporter.
-        
+
         Args:
             templates_dir: Directory containing Jinja2 templates
         """
         self.templates_dir = templates_dir
         self._env = None
-    
+
     def _get_jinja_env(self):
         """Get or create the Jinja2 environment.
-        
+
         Returns:
             Jinja2 Environment instance
         """
         if self._env is None:
             try:
                 from jinja2 import Environment, FileSystemLoader
+
                 self._env = Environment(
                     loader=FileSystemLoader(str(self.templates_dir)),
                     autoescape=True,
                 )
                 # Textes des modeles : {{ _("...") }}, traduits AU RENDU dans la langue active
                 # (langue des exports pendant un export, lot N) - jamais figes au chargement.
-                self._env.globals.update(_=_, ngettext=ngettext, html_lang=html_lang, html_dir=html_dir)
+                self._env.globals.update(
+                    _=_, ngettext=ngettext, html_lang=html_lang, html_dir=html_dir
+                )
             except ImportError:
                 raise RuntimeError(
-                    _("L'export HTML nécessite Jinja2. Installation : pip install jinja2")
+                    _(
+                        "L'export HTML nécessite Jinja2. Installation : pip install jinja2"
+                    )
                 )
         return self._env
-    
+
     def export_data(
         self,
         data: Any,
-        output_path: Union[str, Path],
+        output_path: str | Path,
         template_name: str = "report_full.html.j2",
     ) -> Path:
         """Export arbitrary data to an HTML file.
-        
+
         Args:
             data: Data to export (must be dict-like)
             output_path: Path where the HTML file will be written
             template_name: Name of the Jinja2 template to use
-        
+
         Returns:
             Path to the created file
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         env = self._get_jinja_env()
         template = env.get_template(template_name)
-        
+
         if isinstance(data, dict):
             html_content = template.render(**data)
         else:
             html_content = template.render(data=data)
-        
+
         output_path.write_text(html_content, encoding="utf-8")
         return output_path
-    
+
     def export_report(
         self,
         report,
-        output_path: Union[str, Path],
+        output_path: str | Path,
         template_name: str = "report_full.html.j2",
     ) -> Path:
         """Export a Report domain object to an HTML file.
-        
+
         Args:
             report: Report domain object
             output_path: Path where the HTML file will be written
             template_name: Name of the Jinja2 template to use
-        
+
         Returns:
             Path to the created file
         """
         data = report_to_serializable(report)
         return self.export_data(data, output_path, template_name)
-    
+
     def list_templates(self) -> list[str]:
         """List available HTML templates.
-        
+
         Returns:
             List of template file names
         """
         if not self.templates_dir.exists():
             return []
-        
+
         return [f.name for f in self.templates_dir.glob("*.j2")]
 
 
 def export_to_html(
     data: Any,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     templates_dir: Path,
     template_name: str = "report_full.html.j2",
 ) -> Path:
     """Convenience function to export data to HTML.
-    
+
     Args:
         data: Data to export
         output_path: Path where the HTML file will be written
         templates_dir: Directory containing Jinja2 templates
         template_name: Name of the Jinja2 template to use
-    
+
     Returns:
         Path to the created file
     """
@@ -162,4 +169,4 @@ def export_to_html(
 # - interfaces/cli/actions.py proposera le format HTML à l'utilisateur
 # - Les templates sont dans domain/reports/templates/ (séparés du code)
 # - Les tests mockeront Jinja2 pour vérifier le rendu
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

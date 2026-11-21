@@ -4,6 +4,7 @@ conditionnel) : le choix du theme HTML n'apparait que pour le format
 HTML, meme mecanisme que JailBanUnbanScreen (Phase 2). Logique identique
 a action_1_7_export_state : chemin par defaut pre-rempli et editable,
 execution via application/commands/export_report.py::plan_export_report."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -46,9 +47,11 @@ class ExportStateScreen(OmegaScreen):
 
             yield Static(_("Format"), classes="omega-subtitle")
             yield Select(
-                [(_("JSON (données brutes structurées)"), "json"),
-                 (_("HTML (rapport visuel lisible)"), "html"),
-                 (_("TXT (rapport texte brut)"), "txt")],
+                [
+                    (_("JSON (données brutes structurées)"), "json"),
+                    (_("HTML (rapport visuel lisible)"), "html"),
+                    (_("TXT (rapport texte brut)"), "txt"),
+                ],
                 value="html",
                 id="format-select",
             )
@@ -84,7 +87,9 @@ class ExportStateScreen(OmegaScreen):
 
     def _refresh_default_path(self, fmt: str) -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_path = self._container.exports_dir / f"rapport_systeme_{timestamp}.{fmt}"
+        default_path = (
+            self._container.exports_dir / f"rapport_systeme_{timestamp}.{fmt}"
+        )
         self.query_one("#path-input", Input).value = str(default_path)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -95,15 +100,23 @@ class ExportStateScreen(OmegaScreen):
             return
 
         fmt = str(self.query_one("#format-select", Select).value)
-        theme_name = str(self.query_one("#theme-select", Select).value) if fmt == "html" else "omega-base"
+        theme_name = (
+            str(self.query_one("#theme-select", Select).value)
+            if fmt == "html"
+            else "omega-base"
+        )
         destination = self.query_one("#path-input", Input).value.strip()
         if not destination:
-            self.app.notify(_("Saisissez un chemin de destination."), severity="warning")
+            self.app.notify(
+                _("Saisissez un chemin de destination."), severity="warning"
+            )
             return
 
         try:
             with translating_as(export_translation(self, self._container)):
-                from omega_fire.application.commands.export_report import plan_export_report
+                from omega_fire.application.commands.export_report import (
+                    plan_export_report,
+                )
 
                 plan = plan_export_report(
                     report_name=_("Rapport d'état système Omega-Fire"),
@@ -117,9 +130,14 @@ class ExportStateScreen(OmegaScreen):
                         step.execute()
         except Exception as e:
             self.app.notify(_("Échec de l'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("Rapport exporté : {destination}").format(destination=destination), severity="information")
+        self.app.notify(
+            _("Rapport exporté : {destination}").format(destination=destination),
+            severity="information",
+        )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

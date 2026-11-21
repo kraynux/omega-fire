@@ -7,25 +7,28 @@ They are NOT domain exceptions (business rules) nor infrastructure exceptions
 (technical failures). They are caught by interfaces/ and translated into
 user-facing messages.
 """
+
 from omega_fire.shared.i18n import _
 
 
 class ApplicationError(Exception):
     """Base exception for application layer."""
-    pass
 
 
 class CapabilityUnavailableError(ApplicationError):
     """Raised when a required capability is not available.
-    
+
     This is raised by capability_guard when a backend or feature
     is MISSING, DEGRADED, or DISQUALIFIED.
     """
+
     def __init__(self, capability_id: str, status: str, reason: str = ""):
         self.capability_id = capability_id
         self.status = status
         self.reason = reason
-        message = _("Capacité « {capability_id} » : {status}").format(capability_id=capability_id, status=status)
+        message = _("Capacité « {capability_id} » : {status}").format(
+            capability_id=capability_id, status=status
+        )
         if reason:
             message += f": {reason}"
         super().__init__(message)
@@ -33,14 +36,17 @@ class CapabilityUnavailableError(ApplicationError):
 
 class UseCaseExecutionError(ApplicationError):
     """Raised when a use case fails during execution.
-    
+
     This is raised by executor when a step fails and cannot be recovered.
     """
+
     def __init__(self, use_case_name: str, reason: str, step_name: str = ""):
         self.use_case_name = use_case_name
         self.reason = reason
         self.step_name = step_name
-        message = _("Échec de l'opération « {use_case_name} »").format(use_case_name=use_case_name)
+        message = _("Échec de l'opération « {use_case_name} »").format(
+            use_case_name=use_case_name
+        )
         if step_name:
             message += _(" à l'étape « {step_name} »").format(step_name=step_name)
         message += f": {reason}"
@@ -49,14 +55,17 @@ class UseCaseExecutionError(ApplicationError):
 
 class PermissionDeniedError(ApplicationError):
     """Raised when the user lacks required permissions.
-    
+
     This is raised by permission_guard when root access is required
     but not available.
     """
+
     def __init__(self, required_permission: str, reason: str = ""):
         self.required_permission = required_permission
         self.reason = reason
-        message = _("Permission refusée : {required_permission} requis").format(required_permission=required_permission)
+        message = _("Permission refusée : {required_permission} requis").format(
+            required_permission=required_permission
+        )
         if reason:
             message += f" ({reason})"
         super().__init__(message)
@@ -64,62 +73,83 @@ class PermissionDeniedError(ApplicationError):
 
 class InvalidRequestError(ApplicationError):
     """Raised when a request object is invalid.
-    
+
     This is raised by use cases when the input parameters fail validation.
     """
+
     def __init__(self, request_type: str, errors: list[str]):
         self.request_type = request_type
         self.errors = errors
-        message = _("Requête « {request_type} » invalide : {value}").format(request_type=request_type, value='; '.join(errors))
+        message = _("Requête « {request_type} » invalide : {value}").format(
+            request_type=request_type, value="; ".join(errors)
+        )
         super().__init__(message)
 
 
 class RollbackError(ApplicationError):
     """Raised when a rollback operation fails.
-    
+
     This is raised by rollback_guard or executor when attempting to
     undo a failed step.
     """
+
     def __init__(self, step_name: str, reason: str):
         self.step_name = step_name
         self.reason = reason
-        super().__init__(_("Échec de l'annulation de l'étape « {step_name} » : {reason}").format(step_name=step_name, reason=reason))
+        super().__init__(
+            _("Échec de l'annulation de l'étape « {step_name} » : {reason}").format(
+                step_name=step_name, reason=reason
+            )
+        )
 
 
 class DegradedModeError(ApplicationError):
     """Raised when an action is blocked by degraded mode.
-    
+
     This is raised by degraded_mode when a partial action is not allowed
     or when the system is in a state that prevents execution.
     """
+
     def __init__(self, action_name: str, reason: str):
         self.action_name = action_name
         self.reason = reason
-        super().__init__(_("Action « {action_name} » bloquée en mode dégradé : {reason}").format(action_name=action_name, reason=reason))
+        super().__init__(
+            _("Action « {action_name} » bloquée en mode dégradé : {reason}").format(
+                action_name=action_name, reason=reason
+            )
+        )
 
 
 class PipelineExecutionError(ApplicationError):
     """Raised when the pipeline encounters an unrecoverable error.
-    
+
     This is a generic error for pipeline-level failures that don't fit
     into more specific categories.
     """
+
     def __init__(self, pipeline_name: str, reason: str):
         self.pipeline_name = pipeline_name
         self.reason = reason
-        super().__init__(_("Échec de l'enchaînement « {pipeline_name} » : {reason}").format(pipeline_name=pipeline_name, reason=reason))
+        super().__init__(
+            _("Échec de l'enchaînement « {pipeline_name} » : {reason}").format(
+                pipeline_name=pipeline_name, reason=reason
+            )
+        )
 
 
 class StepExecutionError(ApplicationError):
     """Raised when a pipeline step fails.
-    
+
     This is raised by executor when a specific step cannot be executed.
     """
+
     def __init__(self, step_name: str, reason: str, can_retry: bool = False):
         self.step_name = step_name
         self.reason = reason
         self.can_retry = can_retry
-        message = _("Échec de l'étape « {step_name} » : {reason}").format(step_name=step_name, reason=reason)
+        message = _("Échec de l'étape « {step_name} » : {reason}").format(
+            step_name=step_name, reason=reason
+        )
         if can_retry:
             message += " (retryable)"
         super().__init__(message)
@@ -127,25 +157,33 @@ class StepExecutionError(ApplicationError):
 
 class HookExecutionError(ApplicationError):
     """Raised when a pipeline hook fails.
-    
+
     This is raised by executor when an audit, metrics, or notification hook fails.
     """
+
     def __init__(self, hook_name: str, reason: str):
         self.hook_name = hook_name
         self.reason = reason
-        super().__init__(_("Échec du traitement associé « {hook_name} » : {reason}").format(hook_name=hook_name, reason=reason))
+        super().__init__(
+            _("Échec du traitement associé « {hook_name} » : {reason}").format(
+                hook_name=hook_name, reason=reason
+            )
+        )
 
 
 class BackendNotAvailableError(ApplicationError):
     """Raised when a specific backend is not available.
-    
+
     This is a more specific version of CapabilityUnavailableError for
     backend-related operations.
     """
+
     def __init__(self, backend_name: str, reason: str = ""):
         self.backend_name = backend_name
         self.reason = reason
-        message = _("Le backend « {backend_name} » n'est pas disponible").format(backend_name=backend_name)
+        message = _("Le backend « {backend_name} » n'est pas disponible").format(
+            backend_name=backend_name
+        )
         if reason:
             message += f": {reason}"
         super().__init__(message)
@@ -156,41 +194,58 @@ class UnknownThemeError(ApplicationError):
 
     Raised by application/commands/select_theme.py (migration TUI Textual).
     """
+
     def __init__(self, theme_name: str):
         self.theme_name = theme_name
-        super().__init__(_("Thème inconnu : '{theme_name}'").format(theme_name=theme_name))
+        super().__init__(
+            _("Thème inconnu : '{theme_name}'").format(theme_name=theme_name)
+        )
 
 
 class UnknownLanguageError(ApplicationError):
     """Langue demandee absente des catalogues proposes (application/commands/select_language.py)."""
+
     def __init__(self, language_code: str):
         self.language_code = language_code
-        super().__init__(_("langue inconnue : {language_code!r}").format(language_code=language_code))
+        super().__init__(
+            _("langue inconnue : {language_code!r}").format(language_code=language_code)
+        )
 
 
 class UnsafeDirectoryError(ApplicationError):
     """Dossier qu'on refuse de vider (application/commands/clear_directory.py) : systeme,
     personnel, ou contenant l'installation - omega-fire tourne en root."""
+
     def __init__(self, path: str, reason: str):
         self.path = path
         self.reason = reason
-        super().__init__(_("Dossier refusé ({reason}) : {path}").format(reason=reason, path=path))
+        super().__init__(
+            _("Dossier refusé ({reason}) : {path}").format(reason=reason, path=path)
+        )
 
 
 class PartialExecutionError(ApplicationError):
     """Raised when a multi-step operation partially succeeds.
-    
+
     This is raised by executor when some steps succeed but others fail,
     and the operation cannot be fully rolled back.
     """
-    def __init__(self, operation_name: str, succeeded_steps: list[str], failed_steps: list[str]):
+
+    def __init__(
+        self, operation_name: str, succeeded_steps: list[str], failed_steps: list[str]
+    ):
         self.operation_name = operation_name
         self.succeeded_steps = succeeded_steps
         self.failed_steps = failed_steps
-        message = (
-            _("Opération « {operation_name} » en partie échouée : {count} réussie(s), {count2} en échec").format(operation_name=operation_name, count=len(succeeded_steps), count2=len(failed_steps))
+        message = _(
+            "Opération « {operation_name} » en partie échouée : {count} réussie(s), {count2} en échec"
+        ).format(
+            operation_name=operation_name,
+            count=len(succeeded_steps),
+            count2=len(failed_steps),
         )
         super().__init__(message)
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -223,5 +278,4 @@ class PartialExecutionError(ApplicationError):
 # - application/pipeline/executor.py lèvera StepExecutionError, UseCaseExecutionError
 # - application/pipeline/rollback.py lèvera RollbackError
 # - interfaces/cli/actions.py capturera ces exceptions et les traduira en messages utilisateur
-#---------------------------------------------------------------------->
-
+# ---------------------------------------------------------------------->

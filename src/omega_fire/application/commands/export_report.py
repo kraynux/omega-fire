@@ -6,22 +6,27 @@ It constructs an ExecutionPlan with the necessary steps, defines
 required capabilities and permissions, and provides a factory
 function for easy invocation.
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.application.pipeline.planner import PipelineStep, ExecutionPlan, create_step
 from omega_fire.application.exceptions import InvalidRequestError
+from omega_fire.application.pipeline.planner import (
+    ExecutionPlan,
+    create_step,
+)
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class ExportReportRequest:
     """Request object for exporting a report."""
+
     report_name: str
     format: str = "json"
     destination: str | None = None
@@ -36,7 +41,11 @@ class ExportReportRequest:
             errors.append(_("Le nom du rapport est obligatoire"))
         valid_formats = ("json", "txt", "html", "csv")
         if self.format not in valid_formats:
-            errors.append(_("Format invalide : {format}. Valeurs possibles : {valid_formats}").format(format=self.format, valid_formats=valid_formats))
+            errors.append(
+                _(
+                    "Format invalide : {format}. Valeurs possibles : {valid_formats}"
+                ).format(format=self.format, valid_formats=valid_formats)
+            )
         return errors
 
     def is_valid(self) -> bool:
@@ -113,14 +122,32 @@ class ExportReportCommand:
         here, only which bucket a status falls into.
         """
         real_status = self._get_status_from_details(details_val)
-        val_str = json.dumps(details_val, ensure_ascii=False) if isinstance(details_val, (dict, list)) else str(details_val)
+        val_str = (
+            json.dumps(details_val, ensure_ascii=False)
+            if isinstance(details_val, (dict, list))
+            else str(details_val)
+        )
         val_lower = val_str.lower()
 
-        if real_status == "AVAILABLE" or "service actif" in val_lower or "binaire disponible" in val_lower or val_str == "Actif":
+        if (
+            real_status == "AVAILABLE"
+            or "service actif" in val_lower
+            or "binaire disponible" in val_lower
+            or val_str == "Actif"
+        ):
             return "success", _("DISPONIBLE")
-        elif real_status == "DEGRADED" or "inactif" in val_lower or "degraded" in val_lower:
+        elif (
+            real_status == "DEGRADED"
+            or "inactif" in val_lower
+            or "degraded" in val_lower
+        ):
             return "warning", _("DÉGRADÉ")
-        elif details_val is False or details_val is None or details_val == "" or real_status == "MISSING":
+        elif (
+            details_val is False
+            or details_val is None
+            or details_val == ""
+            or real_status == "MISSING"
+        ):
             return "danger", _("NON INSTALLÉ")
         elif real_status == "DISQUALIFIED":
             return "danger", _("DISQUALIFIÉ")
@@ -139,7 +166,11 @@ class ExportReportCommand:
 
     def _generate_report(self) -> None:
         """Generate the report file using infrastructure exporters with real data."""
-        dest_path = Path(self._request.destination) if self._request.destination else Path(f"var/exports/report.{self._request.format}")
+        dest_path = (
+            Path(self._request.destination)
+            if self._request.destination
+            else Path(f"var/exports/report.{self._request.format}")
+        )
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         fmt = self._request.format.lower()
 
@@ -152,27 +183,39 @@ class ExportReportCommand:
             if hasattr(registry, "to_dict"):
                 system_details = registry.to_dict()
             elif hasattr(registry, "capabilities"):
-                system_details = {k: str(v) for k, v in getattr(registry, "capabilities", {}).items()}
+                system_details = {
+                    k: str(v) for k, v in getattr(registry, "capabilities", {}).items()
+                }
             elif hasattr(registry, "list_all"):
                 capabilities_list = [str(c) for c in registry.list_all()]
 
-        items = system_details.items() if system_details else [(c, "Actif") for c in capabilities_list]
+        items = (
+            system_details.items()
+            if system_details
+            else [(c, "Actif") for c in capabilities_list]
+        )
         capability_rows = []
         for name, details in items:
             status_class, status_label = self._classify_capability_status(details)
-            capability_rows.append({
-                "name": name,
-                "value": json.dumps(details, ensure_ascii=False) if isinstance(details, (dict, list)) else str(details),
-                "status_class": status_class,
-                "status_label": status_label,
-            })
+            capability_rows.append(
+                {
+                    "name": name,
+                    "value": json.dumps(details, ensure_ascii=False)
+                    if isinstance(details, (dict, list))
+                    else str(details),
+                    "status_class": status_class,
+                    "status_label": status_label,
+                }
+            )
 
         report_data = {
             "title": self._request.report_name,
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "summary": {
                 "status": "OPERATIONAL",
-                "total_capabilities": len(capabilities_list) if capabilities_list else len(system_details),
+                "total_capabilities": len(capabilities_list)
+                if capabilities_list
+                else len(system_details),
             },
             "capabilities": system_details if system_details else capabilities_list,
             "capability_rows": capability_rows,
@@ -182,21 +225,35 @@ class ExportReportCommand:
         # 2. Export selon le format sélectionné
         if fmt == "json":
             try:
-                from omega_fire.infrastructure.exporters.json_exporter import JsonExporter
+                from omega_fire.infrastructure.exporters.json_exporter import (
+                    JsonExporter,
+                )
+
                 exporter = JsonExporter()
                 if hasattr(exporter, "export_data"):
                     exporter.export_data(report_data, dest_path)
                 else:
-                    dest_path.write_text(json.dumps(report_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                    dest_path.write_text(
+                        json.dumps(report_data, indent=2, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
             except Exception:
-                dest_path.write_text(json.dumps(report_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                dest_path.write_text(
+                    json.dumps(report_data, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
 
         elif fmt == "html":
             try:
-                from omega_fire.infrastructure.exporters.html_exporter import HtmlExporter
+                from omega_fire.infrastructure.exporters.html_exporter import (
+                    HtmlExporter,
+                )
+
                 templates_dir = Path("src/omega_fire/domain/reports/templates")
                 exporter = HtmlExporter(templates_dir=templates_dir)
-                exporter.export_data(report_data, dest_path, template_name="report_full.html.j2")
+                exporter.export_data(
+                    report_data, dest_path, template_name="report_full.html.j2"
+                )
             except Exception:
                 # Repli minimal si Jinja2/le template ne sont pas
                 # disponibles pour une raison quelconque — plus le
@@ -207,38 +264,88 @@ class ExportReportCommand:
                 # s'exécutait à chaque export, pas seulement en cas
                 # d'erreur réelle). Volontairement texte brut, sans
                 # dupliquer une nouvelle fois le CSS des rapports.
-                lines = [f"<html><body><pre>{report_data['title']} — {report_data['generated_at']}\n"]
+                lines = [
+                    f"<html><body><pre>{report_data['title']} — {report_data['generated_at']}\n"
+                ]
                 for row in capability_rows:
-                    lines.append(f"{row['name']}: {row['status_label']} — {row['value']}\n")
+                    lines.append(
+                        f"{row['name']}: {row['status_label']} — {row['value']}\n"
+                    )
                 lines.append("</pre></body></html>")
                 dest_path.write_text("".join(lines), encoding="utf-8")
 
         elif fmt in ("txt", "csv"):
-            items = system_details.items() if system_details else [(c, "Actif") for c in capabilities_list]
-            
+            items = (
+                system_details.items()
+                if system_details
+                else [(c, "Actif") for c in capabilities_list]
+            )
+
             lines = []
-            lines.append("================================================================================")
-            lines.append(_("                        OMEGA-FIRE SYSTEM DIAGNOSTIC REPORT                     "))
-            lines.append("================================================================================")
-            lines.append(_(" Titre          : {title}").format(title=report_data['title']))
-            lines.append(_(" Date / Heure   : {generated_at}").format(generated_at=report_data['generated_at']))
-            lines.append(_(" Statut Global  : {status}").format(status=report_data['summary']['status']))
-            lines.append(_(" Total Modules  : {total_capabilities}").format(total_capabilities=report_data['summary']['total_capabilities']))
-            lines.append("--------------------------------------------------------------------------------")
+            lines.append(
+                "================================================================================"
+            )
+            lines.append(
+                _(
+                    "                        OMEGA-FIRE SYSTEM DIAGNOSTIC REPORT                     "
+                )
+            )
+            lines.append(
+                "================================================================================"
+            )
+            lines.append(
+                _(" Titre          : {title}").format(title=report_data["title"])
+            )
+            lines.append(
+                _(" Date / Heure   : {generated_at}").format(
+                    generated_at=report_data["generated_at"]
+                )
+            )
+            lines.append(
+                _(" Statut Global  : {status}").format(
+                    status=report_data["summary"]["status"]
+                )
+            )
+            lines.append(
+                _(" Total Modules  : {total_capabilities}").format(
+                    total_capabilities=report_data["summary"]["total_capabilities"]
+                )
+            )
+            lines.append(
+                "--------------------------------------------------------------------------------"
+            )
             lines.append("")
             lines.append(_("[ DÉTAIL DES CAPACITÉS ET MODULES ]"))
             lines.append("")
 
             for name, details in items:
-                val_str_raw = json.dumps(details) if isinstance(details, (dict, list)) else str(details)
+                val_str_raw = (
+                    json.dumps(details)
+                    if isinstance(details, (dict, list))
+                    else str(details)
+                )
                 val_lower = val_str_raw.lower()
                 real_status = self._get_status_from_details(details)
-                
-                if real_status == "AVAILABLE" or "service actif" in val_lower or "binaire disponible" in val_lower or val_str_raw == "Actif":
+
+                if (
+                    real_status == "AVAILABLE"
+                    or "service actif" in val_lower
+                    or "binaire disponible" in val_lower
+                    or val_str_raw == "Actif"
+                ):
                     status_str = _("[ DISPONIBLE ]")
-                elif real_status == "DEGRADED" or "inactif" in val_lower or "degraded" in val_lower:
+                elif (
+                    real_status == "DEGRADED"
+                    or "inactif" in val_lower
+                    or "degraded" in val_lower
+                ):
                     status_str = _("[ DÉGRADÉ ]")
-                elif details is False or details is None or details == "" or real_status == "MISSING":
+                elif (
+                    details is False
+                    or details is None
+                    or details == ""
+                    or real_status == "MISSING"
+                ):
                     status_str = _("[ NON INSTALLÉ ]")
                 elif real_status == "DISQUALIFIED":
                     status_str = _("[ DISQUALIFIÉ ]")
@@ -247,26 +354,35 @@ class ExportReportCommand:
 
                 # 2. Formate le JSON sur plusieurs lignes si c'est un dictionnaire/liste
                 lines.append(f"● {name}")
-                lines.append(_("  ├─ Statut : {status_str}").format(status_str=status_str))
-                
+                lines.append(
+                    _("  ├─ Statut : {status_str}").format(status_str=status_str)
+                )
+
                 if isinstance(details, (dict, list)):
                     lines.append(_("  └─ Spécifications :"))
                     formatted_json = json.dumps(details, indent=4, ensure_ascii=False)
                     for line in formatted_json.splitlines():
                         lines.append(f"        {line}")
                 else:
-                    lines.append(_("  └─ Spécifications : {details}").format(details=details))
+                    lines.append(
+                        _("  └─ Spécifications : {details}").format(details=details)
+                    )
 
                 lines.append("")
 
-            lines.append("--------------------------------------------------------------------------------")
-            lines.append(_("-- Fin du rapport texte Omega-Fire CLI [{value}] --").format(value=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            lines.append(
+                "--------------------------------------------------------------------------------"
+            )
+            lines.append(
+                _("-- Fin du rapport texte Omega-Fire CLI [{value}] --").format(
+                    value=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                )
+            )
 
             dest_path.write_text("\n".join(lines), encoding="utf-8")
 
     def _audit_export(self) -> None:
         """Audit the export operation."""
-        pass
 
 
 def create_export_report_command(
@@ -298,8 +414,12 @@ def plan_export_report(
     theme_name: str = "omega-base",
 ) -> ExecutionPlan:
     """Convenience function to create and plan an export report command."""
-    command = create_export_report_command(report_name, format, destination, include_metadata, registry, theme_name)
+    command = create_export_report_command(
+        report_name, format, destination, include_metadata, registry, theme_name
+    )
     return command.build_plan()
+
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Commande d'export de rapport (JSON, TXT, HTML, CSV)
@@ -329,4 +449,4 @@ def plan_export_report(
 # - interfaces/cli/actions.py appellera plan_export_report()
 # - application/pipeline/executor.py exécutera le plan
 # - ports/exporter.py portera la génération réelle
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

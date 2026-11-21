@@ -6,16 +6,17 @@ This module defines WHAT to purge based on retention policies,
 but does NOT perform the actual file deletions. Execution is
 delegated to infrastructure/.
 """
+
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Optional
-from omega_fire.domain.logs.exceptions import InvalidRetentionError
+
 from omega_fire.shared.i18n import _
 
 
 class RetentionUnit(Enum):
     """Unit for retention period."""
+
     DAYS = "days"
     WEEKS = "weeks"
     MONTHS = "months"
@@ -24,48 +25,49 @@ class RetentionUnit(Enum):
 @dataclass
 class RetentionPolicy:
     """Policy defining how long to keep logs and archives.
-    
+
     This is a pure data structure describing retention rules,
     without any knowledge of how to execute them.
     """
-    max_age_days: int = 30                # Maximum age for log files
-    max_archive_age_days: int = 90        # Maximum age for archived rotations
-    max_total_size_bytes: Optional[int] = None  # Maximum total size (all logs + archives)
-    min_free_space_bytes: Optional[int] = None  # Minimum free space to preserve
-    
+
+    max_age_days: int = 30  # Maximum age for log files
+    max_archive_age_days: int = 90  # Maximum age for archived rotations
+    max_total_size_bytes: int | None = None  # Maximum total size (all logs + archives)
+    min_free_space_bytes: int | None = None  # Minimum free space to preserve
+
     def validate(self) -> list[str]:
         """Validate the retention policy.
-        
+
         Returns:
             List of validation error messages (empty if valid)
         """
         errors = []
-        
+
         if self.max_age_days < 1:
             errors.append(_("max_age_days doit être >= 1"))
-        
+
         if self.max_archive_age_days < 1:
             errors.append(_("max_archive_age_days doit être >= 1"))
-        
+
         if self.max_total_size_bytes is not None and self.max_total_size_bytes <= 0:
             errors.append(_("max_total_size_bytes doit être > 0 s'il est défini"))
-        
+
         if self.min_free_space_bytes is not None and self.min_free_space_bytes <= 0:
             errors.append(_("min_free_space_bytes doit être > 0 s'il est défini"))
-        
+
         return errors
-    
+
     def is_valid(self) -> bool:
         """Check if the policy is valid."""
         return len(self.validate()) == 0
-    
+
     def to_days(self, value: int, unit: RetentionUnit) -> int:
         """Convert a retention value to days.
-        
+
         Args:
             value: Retention value
             unit: Unit of the value
-        
+
         Returns:
             Equivalent value in days
         """
@@ -81,20 +83,21 @@ class RetentionPolicy:
 @dataclass
 class FileInfo:
     """Metadata about a log or archive file.
-    
+
     This is a pure data structure used for cleanup decisions.
     """
+
     path: str
     size_bytes: int
     mtime: datetime
     is_archive: bool = False
-    
-    def age_days(self, now: Optional[datetime] = None) -> float:
+
+    def age_days(self, now: datetime | None = None) -> float:
         """Calculate the age of the file in days.
-        
+
         Args:
             now: Current time (default: datetime.now())
-        
+
         Returns:
             Age in days (float)
         """
@@ -102,14 +105,14 @@ class FileInfo:
             now = datetime.now()
         delta = now - self.mtime
         return delta.total_seconds() / 86400.0
-    
-    def is_expired(self, max_age_days: int, now: Optional[datetime] = None) -> bool:
+
+    def is_expired(self, max_age_days: int, now: datetime | None = None) -> bool:
         """Check if the file is expired based on age.
-        
+
         Args:
             max_age_days: Maximum allowed age in days
             now: Current time (default: datetime.now())
-        
+
         Returns:
             True if the file is older than max_age_days
         """
@@ -119,24 +122,25 @@ class FileInfo:
 @dataclass
 class CleanupPlan:
     """Plan of cleanup operations.
-    
+
     This is a pure data structure describing what needs to be deleted,
     without any knowledge of how to execute it.
     """
+
     files_to_delete: list[str] = field(default_factory=list)
     total_size_to_free_bytes: int = 0
     files_to_keep: list[str] = field(default_factory=list)
     reasons: dict[str, str] = field(default_factory=dict)  # path -> reason
     created_at: datetime = datetime.now()
-    
+
     def count(self) -> int:
         """Return the number of files to delete."""
         return len(self.files_to_delete)
-    
+
     def is_empty(self) -> bool:
         """Check if no cleanup is needed."""
         return len(self.files_to_delete) == 0
-    
+
     def size_to_free_mb(self) -> float:
         """Return the total size to free in megabytes."""
         return self.total_size_to_free_bytes / (1024 * 1024)
@@ -145,15 +149,15 @@ class CleanupPlan:
 def identify_expired_files(
     files: list[FileInfo],
     max_age_days: int,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> list[FileInfo]:
     """Identify files that are expired based on age.
-    
+
     Args:
         files: List of files to check
         max_age_days: Maximum allowed age in days
         now: Current time (default: datetime.now())
-    
+
     Returns:
         List of expired FileInfo objects
     """
@@ -163,15 +167,15 @@ def identify_expired_files(
 def identify_expired_archives(
     files: list[FileInfo],
     max_archive_age_days: int,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> list[FileInfo]:
     """Identify archives that are expired based on age.
-    
+
     Args:
         files: List of files to check (only archives are considered)
         max_archive_age_days: Maximum allowed age for archives in days
         now: Current time (default: datetime.now())
-    
+
     Returns:
         List of expired archive FileInfo objects
     """
@@ -182,46 +186,46 @@ def identify_expired_archives(
 def identify_oversized_files(
     files: list[FileInfo],
     max_total_size_bytes: int,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> list[FileInfo]:
     """Identify files to delete to stay under total size limit.
-    
+
     Deletes oldest files first until total size is under the limit.
-    
+
     Args:
         files: List of files to check
         max_total_size_bytes: Maximum allowed total size in bytes
         now: Current time (default: datetime.now())
-    
+
     Returns:
         List of FileInfo objects to delete to meet size limit
     """
     total_size = sum(f.size_bytes for f in files)
-    
+
     if total_size <= max_total_size_bytes:
         return []
-    
+
     # Sort by mtime ascending (oldest first)
     sorted_files = sorted(files, key=lambda f: f.mtime)
-    
+
     to_delete = []
     current_size = total_size
-    
+
     for file in sorted_files:
         if current_size <= max_total_size_bytes:
             break
         to_delete.append(file)
         current_size -= file.size_bytes
-    
+
     return to_delete
 
 
 def compute_total_size(files: list[FileInfo]) -> int:
     """Compute the total size of all files.
-    
+
     Args:
         files: List of files
-    
+
     Returns:
         Total size in bytes
     """
@@ -231,27 +235,27 @@ def compute_total_size(files: list[FileInfo]) -> int:
 def plan_cleanup(
     files: list[FileInfo],
     policy: RetentionPolicy,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> CleanupPlan:
     """Plan a cleanup operation based on retention policy.
-    
+
     This function determines which files should be deleted to comply
     with the retention policy, but does NOT execute the deletions.
-    
+
     Args:
         files: List of all log and archive files
         policy: Retention policy to apply
         now: Current time (default: datetime.now())
-    
+
     Returns:
         CleanupPlan describing what needs to be deleted
     """
     if now is None:
         now = datetime.now()
-    
+
     files_to_delete = []
     reasons: dict[str, str] = {}
-    
+
     # Step 1: Identify expired log files
     expired_logs = identify_expired_files(
         [f for f in files if not f.is_archive],
@@ -261,15 +265,23 @@ def plan_cleanup(
     for f in expired_logs:
         if f.path not in reasons:
             files_to_delete.append(f)
-            reasons[f.path] = _("Expiré (âge : {value:.1f} jours, max : {max_age_days} jours)").format(value=f.age_days(now), max_age_days=policy.max_age_days)
-    
+            reasons[f.path] = _(
+                "Expiré (âge : {value:.1f} jours, max : {max_age_days} jours)"
+            ).format(value=f.age_days(now), max_age_days=policy.max_age_days)
+
     # Step 2: Identify expired archives
-    expired_archives = identify_expired_archives(files, policy.max_archive_age_days, now)
+    expired_archives = identify_expired_archives(
+        files, policy.max_archive_age_days, now
+    )
     for f in expired_archives:
         if f.path not in reasons:
             files_to_delete.append(f)
-            reasons[f.path] = _("Archive expirée (âge : {value:.1f} jours, max : {max_archive_age_days} jours)").format(value=f.age_days(now), max_archive_age_days=policy.max_archive_age_days)
-    
+            reasons[f.path] = _(
+                "Archive expirée (âge : {value:.1f} jours, max : {max_archive_age_days} jours)"
+            ).format(
+                value=f.age_days(now), max_archive_age_days=policy.max_archive_age_days
+            )
+
     # Step 3: Check total size limit
     if policy.max_total_size_bytes is not None:
         remaining_files = [f for f in files if f not in files_to_delete]
@@ -281,14 +293,16 @@ def plan_cleanup(
         for f in oversized:
             if f.path not in reasons:
                 files_to_delete.append(f)
-                reasons[f.path] = _("Taille totale maximale dépassée (les fichiers les plus anciens sont supprimés en premier)")
-    
+                reasons[f.path] = _(
+                    "Taille totale maximale dépassée (les fichiers les plus anciens sont supprimés en premier)"
+                )
+
     # Compute total size to free
     total_size_to_free = sum(f.size_bytes for f in files_to_delete)
-    
+
     # Compute files to keep
     files_to_keep = [f.path for f in files if f not in files_to_delete]
-    
+
     # Build cleanup plan
     return CleanupPlan(
         files_to_delete=[f.path for f in files_to_delete],
@@ -300,41 +314,58 @@ def plan_cleanup(
 
 
 def validate_retention_parameters(
-    max_age_days: Optional[int] = None,
-    max_archive_age_days: Optional[int] = None,
-    max_total_size_bytes: Optional[int] = None,
+    max_age_days: int | None = None,
+    max_archive_age_days: int | None = None,
+    max_total_size_bytes: int | None = None,
 ) -> list[str]:
     """Validate retention parameters.
-    
+
     Args:
         max_age_days: Maximum age for log files
         max_archive_age_days: Maximum age for archives
         max_total_size_bytes: Maximum total size
-    
+
     Returns:
         List of validation error messages (empty if valid)
     """
     errors = []
-    
+
     if max_age_days is not None and max_age_days < 1:
-        errors.append(_("max_age_days doit être >= 1 (reçu : {max_age_days})").format(max_age_days=max_age_days))
-    
+        errors.append(
+            _("max_age_days doit être >= 1 (reçu : {max_age_days})").format(
+                max_age_days=max_age_days
+            )
+        )
+
     if max_archive_age_days is not None and max_archive_age_days < 1:
-        errors.append(_("max_archive_age_days doit être >= 1 (reçu : {max_archive_age_days})").format(max_archive_age_days=max_archive_age_days))
-    
+        errors.append(
+            _(
+                "max_archive_age_days doit être >= 1 (reçu : {max_archive_age_days})"
+            ).format(max_archive_age_days=max_archive_age_days)
+        )
+
     if max_total_size_bytes is not None and max_total_size_bytes <= 0:
-        errors.append(_("max_total_size_bytes doit être > 0 (reçu : {max_total_size_bytes})").format(max_total_size_bytes=max_total_size_bytes))
-    
+        errors.append(
+            _(
+                "max_total_size_bytes doit être > 0 (reçu : {max_total_size_bytes})"
+            ).format(max_total_size_bytes=max_total_size_bytes)
+        )
+
     if (
         max_age_days is not None
         and max_archive_age_days is not None
         and max_archive_age_days < max_age_days
     ):
         errors.append(
-            _("max_archive_age_days ({max_archive_age_days}) devrait être >= max_age_days ({max_age_days})").format(max_archive_age_days=max_archive_age_days, max_age_days=max_age_days)
+            _(
+                "max_archive_age_days ({max_archive_age_days}) devrait être >= max_age_days ({max_age_days})"
+            ).format(
+                max_archive_age_days=max_archive_age_days, max_age_days=max_age_days
+            )
         )
-    
+
     return errors
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -366,4 +397,4 @@ def validate_retention_parameters(
 # - application/commands/rotate_logs.py exécutera le plan via les ports (infrastructure)
 # - infrastructure/storage/files/archive_store.py effectuera les suppressions réelles
 # - interfaces/cli/actions.py affichera le plan de purge à l'utilisateur avant exécution (confirmation)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

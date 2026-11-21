@@ -4,16 +4,17 @@
 Pure collection functions: read from the capability registry and the
 fail2ban adapter, return DTOs. No file I/O, no export logic.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
-from omega_fire.shared.i18n import retranslate
-from omega_fire.core.enums import CapabilityStatus
 from omega_fire.application.queries.audit_report.models import (
     CapabilitiesSection,
     Fail2banSummary,
 )
+from omega_fire.core.enums import CapabilityStatus
+from omega_fire.shared.i18n import retranslate
 
 
 def collect_capabilities_section(registry: Any) -> CapabilitiesSection:
@@ -50,7 +51,7 @@ def collect_capabilities_section(registry: Any) -> CapabilitiesSection:
     )
 
 
-def collect_fail2ban_summary(fail2ban_adapter: Optional[Any]) -> Fail2banSummary:
+def collect_fail2ban_summary(fail2ban_adapter: Any | None) -> Fail2banSummary:
     """Collect a minimal fail2ban overview (section 13).
 
     Detailed statistics belong to menu 6.4 — this section only gives a
@@ -111,4 +112,4 @@ def collect_fail2ban_summary(fail2ban_adapter: Optional[Any]) -> Fail2banSummary
 # Comment il sera utilisé :
 # - report_builder.py appelle ces deux fonctions pour peupler
 #   AuditReportData.capabilities et .fail2ban_summary.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

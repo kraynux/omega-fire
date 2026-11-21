@@ -1,14 +1,17 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Application lifecycle management."""
+
 import signal
-import sys
-from typing import Optional
+
 from rich.console import Console
+
 from omega_fire.shared.i18n import _
+
 
 class ApplicationLifecycle:
     """Manages the application lifecycle."""
-    def __init__(self, console: Optional[Console] = None):
+
+    def __init__(self, console: Console | None = None):
         self.console = console or Console()
         self._running = False
         self._registry = None  # CapabilityRegistry sera initialisé plus tard
@@ -22,7 +25,9 @@ class ApplicationLifecycle:
 
     def _handle_sigint(self, signum, frame):
         """Handle Ctrl+C."""
-        self.console.print(_("\n[yellow]Interrompu par l'utilisateur (Ctrl+C)[/yellow]"))
+        self.console.print(
+            _("\n[yellow]Interrompu par l'utilisateur (Ctrl+C)[/yellow]")
+        )
         self._running = False
 
     def _handle_sigterm(self, signum, frame):
@@ -47,6 +52,7 @@ class ApplicationLifecycle:
         self._running = False
         self.console.print(_("[yellow]Application arrêtée.[/yellow]"))
 
-def create_lifecycle(console: Optional[Console] = None) -> ApplicationLifecycle:
+
+def create_lifecycle(console: Console | None = None) -> ApplicationLifecycle:
     """Factory function to create an ApplicationLifecycle."""
     return ApplicationLifecycle(console)

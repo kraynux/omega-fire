@@ -14,6 +14,7 @@ Conforms to Omega-Fire architecture charter:
 - Consumes ConntrackStatusResult (application/queries/conntrack_status.py)
   as plain data, never fetches or filters connections itself
 """
+
 from rich.box import ROUNDED
 from rich.panel import Panel
 from rich.table import Table
@@ -43,7 +44,7 @@ def render_conntrack_summary(result) -> Panel:
     border_style = theme_registry.get_style("border.default")
 
     content = Text()
-    content.append(f"Total connexions : ", style=style_main)
+    content.append("Total connexions : ", style=style_main)
     content.append(f"{result.total_count}\n", style=style_info)
 
     if result.by_protocol:
@@ -61,7 +62,13 @@ def render_conntrack_summary(result) -> Panel:
             state_parts.append(f"{state}: {count}")
         content.append(" | ".join(state_parts), style=style_muted)
 
-    return Panel(content, title="Résumé", title_align="left", border_style=border_style, expand=True)
+    return Panel(
+        content,
+        title="Résumé",
+        title_align="left",
+        border_style=border_style,
+        expand=True,
+    )
 
 
 def render_conntrack_table(result) -> Table:
@@ -71,7 +78,9 @@ def render_conntrack_table(result) -> Table:
     style_muted = theme_registry.get_style("text.muted")
     style_main = theme_registry.get_style("text.main")
 
-    table = Table(box=ROUNDED, border_style=style_border, header_style=style_heading, expand=True)
+    table = Table(
+        box=ROUNDED, border_style=style_border, header_style=style_heading, expand=True
+    )
     table.add_column("Proto", style=style_muted, width=6)
     table.add_column("Source", style=style_main)
     table.add_column("Destination", style=style_main)
@@ -84,8 +93,16 @@ def render_conntrack_table(result) -> Table:
         return table
 
     for entry in result.entries:
-        source = f"{entry.source_ip}:{entry.source_port}" if entry.source_port else entry.source_ip
-        dest = f"{entry.destination_ip}:{entry.destination_port}" if entry.destination_port else entry.destination_ip
+        source = (
+            f"{entry.source_ip}:{entry.source_port}"
+            if entry.source_port
+            else entry.source_ip
+        )
+        dest = (
+            f"{entry.destination_ip}:{entry.destination_port}"
+            if entry.destination_port
+            else entry.destination_ip
+        )
 
         # Champs vides rendus explicites plutôt que silencieusement
         # blancs — signale un trou de collecte côté ConntrackAdapter
@@ -140,4 +157,4 @@ def render_conntrack_table(result) -> Table:
 # Comment il sera utilisé (aperçu) :
 # - interfaces/cli/actions.py (menu 8.2) appellera les deux fonctions
 #   directement pour l'affichage CLI
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

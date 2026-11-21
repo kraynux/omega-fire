@@ -14,15 +14,15 @@ Conforms to Omega-Fire architecture charter:
 - Depends on core/ for capability registry
 - Depends on infrastructure/ for system probing
 """
+
 import sys
 from collections.abc import MutableMapping
-from typing import Optional
 
 from rich.console import Console
 
 from omega_fire.interfaces.cli.renderers.styles import (
-    MIN_TERMINAL_WIDTH,
     MIN_TERMINAL_HEIGHT,
+    MIN_TERMINAL_WIDTH,
 )
 from omega_fire.interfaces.cli.themes.registry import theme_registry
 from omega_fire.shared.i18n import _
@@ -40,13 +40,16 @@ def check_terminal_size() -> bool:
 
     if size.columns < MIN_TERMINAL_WIDTH or size.lines < MIN_TERMINAL_HEIGHT:
         print(f"\n❌ Terminal trop petit : {size.columns}x{size.lines}")
-        print(f"   Taille minimale requise : {MIN_TERMINAL_WIDTH}x{MIN_TERMINAL_HEIGHT}")
-        print(f"   Veuillez redimensionner votre fenêtre et relancer.\n")
+        print(
+            f"   Taille minimale requise : {MIN_TERMINAL_WIDTH}x{MIN_TERMINAL_HEIGHT}"
+        )
+        print("   Veuillez redimensionner votre fenêtre et relancer.\n")
         return False
 
     return True
 
-def bootstrap(console: Optional[Console] = None) -> int:
+
+def bootstrap(console: Console | None = None) -> int:
     """Orchestrate application startup sequence.
 
     Startup order:
@@ -79,21 +82,29 @@ def bootstrap(console: Optional[Console] = None) -> int:
             pass
 
     # 3. Display splash screen
-    from omega_fire.interfaces.cli.actions import _error, _warning
     from rich.text import Text
+
+    from omega_fire.interfaces.cli.actions import _error, _warning
 
     try:
         from omega_fire.interfaces.cli.renderers.splash import render_splash
+
         proceed = render_splash(console=console, wait_for_key=True)
         if not proceed:
-            from rich.panel import Panel
-            from rich.align import Align
-            from rich import box as rich_box
             import shutil
+
+            from rich import box as rich_box
+            from rich.align import Align
+            from rich.panel import Panel
 
             dialog_width = min(shutil.get_terminal_size().columns - 10, 60)
             closing_panel = Panel(
-                Align.center(Text("Fermeture d'Omega-Fire.", style=theme_registry.get_style("text.muted"))),
+                Align.center(
+                    Text(
+                        "Fermeture d'Omega-Fire.",
+                        style=theme_registry.get_style("text.muted"),
+                    )
+                ),
                 border_style=theme_registry.get_style("border.accent"),
                 box=rich_box.ROUNDED,
                 padding=(1, 3),
@@ -107,24 +118,40 @@ def bootstrap(console: Optional[Console] = None) -> int:
         console.print(_error(f"Erreur splash : {e}"))
 
     import shutil
-    from rich.text import Text
-    from rich.spinner import Spinner
-    from rich.live import Live
-    from rich.panel import Panel
+
+    from rich import box as rich_box
     from rich.align import Align
     from rich.console import Group
-    from rich import box as rich_box
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.spinner import Spinner
+    from rich.text import Text
 
     dialog_width = min(shutil.get_terminal_size().columns - 10, 70)
 
     def _build_scan_panel(spinner: Spinner) -> Panel:
         body = Group(
-            Align.center(Text("Initialisation d'Omega-Fire", style=theme_registry.get_style("text.heading"))),
+            Align.center(
+                Text(
+                    "Initialisation d'Omega-Fire",
+                    style=theme_registry.get_style("text.heading"),
+                )
+            ),
             Text(""),
             Align.center(spinner),
             Text(""),
-            Align.center(Text("Analyse des services installés", style=theme_registry.get_style("text.muted"))),
-            Align.center(Text("(nftables, iptables, fail2ban, systemd...)", style=theme_registry.get_style("text.muted"))),
+            Align.center(
+                Text(
+                    "Analyse des services installés",
+                    style=theme_registry.get_style("text.muted"),
+                )
+            ),
+            Align.center(
+                Text(
+                    "(nftables, iptables, fail2ban, systemd...)",
+                    style=theme_registry.get_style("text.muted"),
+                )
+            ),
         )
         return Panel(
             body,
@@ -142,8 +169,12 @@ def bootstrap(console: Optional[Console] = None) -> int:
     registry = None
 
     try:
-        with Live(Align.center(_build_scan_panel(spinner)), console=console,
-                   refresh_per_second=10, transient=True):
+        with Live(
+            Align.center(_build_scan_panel(spinner)),
+            console=console,
+            refresh_per_second=10,
+            transient=True,
+        ):
             container = DependencyContainer()
             registry = container.capability_registry
             scanner = container.scanner
@@ -156,6 +187,7 @@ def bootstrap(console: Optional[Console] = None) -> int:
         console.print(_warning(f"Scan système partiel : {e}"))
         if registry is None:
             from omega_fire.core.capability_registry import CapabilityRegistry
+
             registry = CapabilityRegistry()
 
     # 4.5. Initialize Loggers (AppLogger & AuditLogger)
@@ -165,26 +197,31 @@ def bootstrap(console: Optional[Console] = None) -> int:
 
         app_logger = AppLogger()
         audit_logger = AuditLogger()
-        
+
         # Attache au conteneur si disponible
         if container is not None:
             container._cache["app_logger"] = app_logger
             container._cache["audit_logger"] = audit_logger
 
         # Logs automatiques de démarrage
-        app_logger.info("Initialisation du système et des composants système réassignés.")
+        app_logger.info(
+            "Initialisation du système et des composants système réassignés."
+        )
         audit_logger.log_event(
             event_type="system_startup",
             actor="system",
             action="bootstrap_init",
             result="success",
-            details={"message": "Démarrage d'Omega-Fire et initialisation des composants."}
+            details={
+                "message": "Démarrage d'Omega-Fire et initialisation des composants."
+            },
         )
-    except Exception as e:
+    except Exception:
         pass
 
     # 5. Launch main menu
     from omega_fire.interfaces.cli.app import run_app
+
     return run_app(registry=registry, console=console, container=container)
 
 
@@ -228,13 +265,22 @@ def bootstrap_tui() -> int:
     except OSError:
         pass
     container = DependencyContainer()
+    # Journal des bans (plan omega-connect, phase 3, 2026-11-21) : etat initial relu dans le pare-feu, en
+    # arriere-plan (rien a faire, donc immediat, sans zone omega-synchro). Jamais bloquant.
+    import threading
+
+    threading.Thread(target=container.resync_ban_journal, name="omega-bans", daemon=True).start()
     app = OmegaFireApp(container)
     _run_with_text_direction(app, choice.language.code)
     if app.pending_restart is not None:
         # Meme Python, meme installation, memes arguments : seule l'interface redemarre.
-        prepare_language_restart_environment(os.environ, app.pending_restart.language_code)
+        prepare_language_restart_environment(
+            os.environ, app.pending_restart.language_code
+        )
         path, exec_argv = build_execv_invocation(sys.executable, sys.argv[1:])
-        os.execv(path, exec_argv)  # pragma: no cover - remplace le processus, jamais testable pour de vrai
+        os.execv(
+            path, exec_argv
+        )  # pragma: no cover - remplace le processus, jamais testable pour de vrai
     return 0
 
 
@@ -261,14 +307,18 @@ def _run_with_text_direction(app, language_code: str) -> None:  # type: ignore[n
         sys.stdout.flush()
 
 
-def build_execv_invocation(python_executable: str, args: list[str]) -> tuple[str, list[str]]:
+def build_execv_invocation(
+    python_executable: str, args: list[str]
+) -> tuple[str, list[str]]:
     """Ce qui est passe a os.execv() apres un changement de langue (fonction pure, testable ;
     l'appel reel remplacerait le processus de test). Meme interpreteur (.venv), meme module ;
     l'environnement (PYTHONPATH pose par omega-fire.sh, droits root) est conserve par execv."""
     return python_executable, [python_executable, "-m", "omega_fire", *args]
 
 
-def prepare_language_restart_environment(environ: "MutableMapping[str, str]", language_code: str) -> None:
+def prepare_language_restart_environment(
+    environ: "MutableMapping[str, str]", language_code: str
+) -> None:
     """Environnement du processus relance : le splash « langue changee » est demande, et une
     eventuelle surcharge OMEGA_FIRE_LANG (voie de secours, une fois) est retiree - sinon elle
     masquerait la langue que l'utilisateur vient de choisir."""
@@ -296,6 +346,11 @@ def main() -> int:
             from omega_fire.app.synchro_runner import run_synchro
 
             return run_synchro(sys.argv[2:])
+        if sys.argv[1:2] == ["port"]:
+            # Ouverture d'un port pour un outil relie par omega-connect (omega-serv, 2026-11-17) : JSON, sans interface.
+            from omega_fire.app.port_runner import run_port
+
+            return run_port(sys.argv[2:])
         if sys.argv[1:3] == ["rotate", "run-automations"]:
             # Tache quotidienne des sauvegardes planifiees (5.6, 3.6) : jamais d'interface.
             from omega_fire.app.rotation_runner import run_rotation_automations
@@ -348,4 +403,4 @@ if __name__ == "__main__":
 #   estimation de delai, non fiable d'une machine a l'autre) + spinner
 #   Rich pendant le scan reel — reutilise _error()/_warning()
 #   (interfaces/cli/actions.py) plutot que des couleurs Rich en dur.
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

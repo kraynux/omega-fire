@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -21,6 +21,7 @@ class FirewallStats:
         dropped_packets: nombre de paquets dropés.
         accepted_packets: nombre de paquets acceptés.
     """
+
     total_rules: int
     total_packets: int
     total_bytes: int
@@ -114,6 +115,7 @@ class FirewallPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour les backends firewall (nftables, iptables).
@@ -156,4 +158,4 @@ class FirewallPort(Protocol):
 #   pas encore fait — les adaptateurs exposent déjà ban_single_ip/unban_single_ip)
 # - infrastructure/backends/nftables/adapter.py implémente FirewallPort
 # - infrastructure/backends/iptables/adapter.py implémente FirewallPort
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

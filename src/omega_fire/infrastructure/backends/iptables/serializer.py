@@ -3,7 +3,6 @@
 
 Converts domain model operations into iptables command strings.
 """
-from typing import Optional
 
 
 class IptSerializer:
@@ -35,10 +34,10 @@ class IptSerializer:
         self,
         chain: str,
         action: str,
-        protocol: Optional[str] = None,
-        port: Optional[str] = None,
-        source: Optional[str] = None,
-        destination: Optional[str] = None,
+        protocol: str | None = None,
+        port: str | None = None,
+        source: str | None = None,
+        destination: str | None = None,
         comment: str = "",
     ) -> list[str]:
         """Build the iptables command to add a rule."""
@@ -111,4 +110,4 @@ class IptSerializer:
 # - Suppression par numéro de règle (pas de handle)
 # Comment il est utilisé :
 # - infrastructure/backends/iptables/adapter.py l'appellera pour construire les commandes
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -12,6 +12,7 @@ Progression REELLE : `on_progress(octets_faits, octets_total, taches_faites, tac
 morceau termine. Annulation (ecran ferme, Textual annule son worker) : les morceaux pas encore demarres
 sont annules, jamais lances pour rien. Une erreur d'un morceau (PermissionRequiredError notamment)
 annule les autres et remonte telle quelle a l'ecran."""
+
 from __future__ import annotations
 
 import asyncio
@@ -27,14 +28,19 @@ from omega_fire.application.log_stats.log_tasks import (
     run_read_task,
 )
 from omega_fire.domain.log_stats.stats_accumulator import StatsAccumulator
-from omega_fire.infrastructure.log_stats.process_pool import POOL_WORKERS, STATS_PROCESS_POOL
 from omega_fire.infrastructure.log_stats.elevation import PermissionRequiredError
+from omega_fire.infrastructure.log_stats.process_pool import (
+    POOL_WORKERS,
+    STATS_PROCESS_POOL,
+)
 
 if TYPE_CHECKING:
     from omega_fire.ports.log_process_runner import ProcessRunnerPort
 
 
-async def _run_one(task: ReadTask, runner: ProcessRunnerPort | None) -> StatsAccumulator:
+async def _run_one(
+    task: ReadTask, runner: ProcessRunnerPort | None
+) -> StatsAccumulator:
     loop = asyncio.get_running_loop()
     if task.privileged:
         if runner is None:
@@ -42,12 +48,17 @@ async def _run_one(task: ReadTask, runner: ProcessRunnerPort | None) -> StatsAcc
         # Lecture sudo dans CE processus (un thread : c'est de l'attente), analyse dans le pool.
         text = await loop.run_in_executor(None, read_privileged_text, runner, task.path)
         return await loop.run_in_executor(
-            STATS_PROCESS_POOL, functools.partial(accumulate_text, text, task.path, task.cutoff))
-    return await loop.run_in_executor(STATS_PROCESS_POOL, functools.partial(run_read_task, task))
+            STATS_PROCESS_POOL,
+            functools.partial(accumulate_text, text, task.path, task.cutoff),
+        )
+    return await loop.run_in_executor(
+        STATS_PROCESS_POOL, functools.partial(run_read_task, task)
+    )
 
 
 async def run_read_tasks(
-    tasks: list[ReadTask], runner: ProcessRunnerPort | None,
+    tasks: list[ReadTask],
+    runner: ProcessRunnerPort | None,
     on_progress: Callable[[int, int, int, int], None] | None = None,
 ) -> StatsAccumulator:
     futures = [asyncio.ensure_future(_run_one(task, runner)) for task in tasks]
@@ -58,10 +69,14 @@ async def run_read_tasks(
     pending = set(futures)
     try:
         while pending:
-            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(
+                pending, return_when=asyncio.FIRST_COMPLETED
+            )
             for future in done:
                 index = index_of[future]
-                results[index] = future.result()  # leve l'erreur du morceau, le finally annule les autres
+                results[index] = (
+                    future.result()
+                )  # leve l'erreur du morceau, le finally annule les autres
                 done_weight += tasks[index].weight
                 done_tasks += 1
             if on_progress is not None:
@@ -77,7 +92,9 @@ async def run_read_tasks(
 
 
 async def accumulate_in_pool(
-    paths: list[str], period: str | None, runner: ProcessRunnerPort | None,
+    paths: list[str],
+    period: str | None,
+    runner: ProcessRunnerPort | None,
     on_progress: Callable[[int, int, int, int], None] | None = None,
 ) -> StatsAccumulator:
     """Planifie (processus principal, rapide) puis execute en parallele. PermissionRequiredError possible

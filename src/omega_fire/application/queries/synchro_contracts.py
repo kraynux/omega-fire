@@ -7,6 +7,7 @@
   l'interface elle-meme (omega-lib refuse d'ecrire en root).
 - Fiche : `omega-fire.sh synchro fiche --format json`, lecture seule. Sans root, fail2ban, nftables et
   iptables ne sont pas tous verifiables : la fiche est alors marquee `partial`."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,7 +17,12 @@ from omega_lib.synchro.models import CapabilityState, InstanceSheet
 from omega_lib.synchro.policies import format_utc
 
 FIRE_TOOL = "omega-fire"
-FIRE_CONTRACTS: dict[str, tuple[int, ...]] = {"omega-fiche": (1,)}
+FIRE_CONTRACTS: dict[str, tuple[int, ...]] = {
+    "omega-fiche": (1,),
+    # Journal des bans (plan omega-connect, phase 3, 2026-11-21) : omega-fire ecrit ses propres bans.
+    "omega-ban": (1,),
+    "omega-bans-actifs": (1,),
+}
 FIRE_OFFERS = ("fail2ban", "nftables", "iptables", "log-library")
 FIRE_WANTS = ("blocklist", "waf-logs", "riposte-decisions")
 
@@ -57,7 +63,9 @@ def _fail2ban_state(probes: FireProbes) -> CapabilityState:
     return CapabilityState.UNKNOWN
 
 
-def build_fire_sheet(probes: FireProbes, version: str, installation_id: str, now: datetime) -> InstanceSheet:
+def build_fire_sheet(
+    probes: FireProbes, version: str, installation_id: str, now: datetime
+) -> InstanceSheet:
     capabilities = {
         "fail2ban": _fail2ban_state(probes),
         "nftables": _binary_state(probes.nft, probes.as_root),
@@ -66,11 +74,21 @@ def build_fire_sheet(probes: FireProbes, version: str, installation_id: str, now
     }
     partial = not probes.as_root
     extra: dict[str, object] = {
-        "backends": {name: capabilities[name].value for name in ("fail2ban", "nftables", "iptables")},
+        "backends": {
+            name: capabilities[name].value
+            for name in ("fail2ban", "nftables", "iptables")
+        },
         "fail2ban_jail_d": "/etc/fail2ban/jail.d" if probes.jail_d_present else None,
     }
     return InstanceSheet(
-        tool=FIRE_TOOL, version=version, installation_id=installation_id, instance=FIRE_TOOL,
-        generated_at=format_utc(now), capabilities=capabilities, service=None, files={},
-        partial=partial, extra=extra,
+        tool=FIRE_TOOL,
+        version=version,
+        installation_id=installation_id,
+        instance=FIRE_TOOL,
+        generated_at=format_utc(now),
+        capabilities=capabilities,
+        service=None,
+        files={},
+        partial=partial,
+        extra=extra,
     )

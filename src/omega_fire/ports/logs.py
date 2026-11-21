@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +27,7 @@ class LogEntry:
         user_agent: user-agent du client (optionnel).
         raw_line: ligne brute du log.
     """
+
     timestamp: datetime
     source_ip: IPAddress
     destination_ip: IPAddress | None = None
@@ -49,6 +50,7 @@ class LogStats:
         hourly_distribution: répartition par heure (heure, count).
         daily_distribution: répartition par jour (date, count).
     """
+
     total_entries: int
     top_ips: list[tuple[IPAddress, int]]
     status_distribution: dict[int, int]
@@ -66,6 +68,7 @@ class LogBackup:
         size_bytes: taille en octets.
         compressed: True si compressé (gzip).
     """
+
     path: Path
     created_at: datetime
     size_bytes: int
@@ -158,7 +161,9 @@ class LogsPort(Protocol):
         ...
 
     @abstractmethod
-    def purge_backups(self, backup_dir: Path, older_than: datetime | None = None) -> int:
+    def purge_backups(
+        self, backup_dir: Path, older_than: datetime | None = None
+    ) -> int:
         """Supprime les backups anciens.
 
         Args:
@@ -171,7 +176,9 @@ class LogsPort(Protocol):
         ...
 
     @abstractmethod
-    def cleanup(self, *, keep_days: int | None = None, keep_lines: int | None = None) -> int:
+    def cleanup(
+        self, *, keep_days: int | None = None, keep_lines: int | None = None
+    ) -> int:
         """Nettoie les logs anciens.
 
         Args:
@@ -182,6 +189,7 @@ class LogsPort(Protocol):
             Nombre d'entrées supprimées.
         """
         ...
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -218,4 +226,4 @@ class LogsPort(Protocol):
 # - application/commands/rotate_logs.py appellera logs_port.rotate()
 # - infrastructure/ implémentera LogsPort (lecture fichiers, parsing)
 # - interfaces/cli/actions.py appellera logs_port.get_stats() pour menu 5.8
-#---------------------------------------------------------------------->        
+# ---------------------------------------------------------------------->

@@ -13,6 +13,7 @@ interactif supplementaire.
 Jamais de lecture/ecriture Python directe sur le chemin protege : tout
 passe par une commande shell privilegiee (`sudo cat/tee/truncate/rm/cp`)
 — c'est `sudo` qui verifie et autorise l'acces, pas ce module."""
+
 from __future__ import annotations
 
 import os
@@ -39,11 +40,17 @@ def read_file_privileged(runner: ProcessRunnerPort, path: str) -> PrivilegedOpRe
     les lectures non privilegiees)."""
     result = runner.run(["sudo", "cat", path], timeout=_TIMEOUT_SECONDS)
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True, content=result.stdout)
 
 
-def read_new_bytes_privileged(runner: ProcessRunnerPort, path: str, offset: int) -> PrivilegedOpResult:
+def read_new_bytes_privileged(
+    runner: ProcessRunnerPort, path: str, offset: int
+) -> PrivilegedOpResult:
     """Lecture incrementale via `sudo tail -c +N` (N = 1er octet a lire,
     convention 1-indexee de `tail`, d'ou offset+1) — equivalent
     privilegie de LiveTailReader.read_new_lines(). `offset` attendu est
@@ -53,31 +60,49 @@ def read_new_bytes_privileged(runner: ProcessRunnerPort, path: str, offset: int)
     correspond pas a un octet, le suivi d'offset deraillerait sinon)."""
     if offset <= 0:
         return read_file_privileged(runner, path)
-    result = runner.run(["sudo", "tail", "-c", f"+{offset + 1}", path], timeout=_TIMEOUT_SECONDS)
+    result = runner.run(
+        ["sudo", "tail", "-c", f"+{offset + 1}", path], timeout=_TIMEOUT_SECONDS
+    )
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True, content=result.stdout)
 
 
-def truncate_file_privileged(runner: ProcessRunnerPort, path: str) -> PrivilegedOpResult:
+def truncate_file_privileged(
+    runner: ProcessRunnerPort, path: str
+) -> PrivilegedOpResult:
     """Troncature EN PLACE via `sudo truncate -s 0` — meme inode,
     proprietaire/permissions inchanges (equivalent privilegie de
     purge_logs.py::purge_log_content, meme raisonnement : un service qui
     garde ce fichier ouvert ne doit jamais perdre son descripteur)."""
     result = runner.run(["sudo", "truncate", "-s", "0", path], timeout=_TIMEOUT_SECONDS)
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True)
 
 
 def delete_file_privileged(runner: ProcessRunnerPort, path: str) -> PrivilegedOpResult:
     result = runner.run(["sudo", "rm", "-f", path], timeout=_TIMEOUT_SECONDS)
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True)
 
 
-def overwrite_file_privileged(runner: ProcessRunnerPort, path: str, content: str) -> PrivilegedOpResult:
+def overwrite_file_privileged(
+    runner: ProcessRunnerPort, path: str, content: str
+) -> PrivilegedOpResult:
     """Remplacement COMPLET du contenu via un fichier temporaire que
     nous possedons (ecrit normalement) puis `sudo cp` vers la cible —
     jamais d'ecriture Python directe sur la cible. `cp` vers une
@@ -88,28 +113,44 @@ def overwrite_file_privileged(runner: ProcessRunnerPort, path: str, content: str
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(content)
-        result = runner.run(["sudo", "cp", "--", tmp_name, path], timeout=_TIMEOUT_SECONDS)
+        result = runner.run(
+            ["sudo", "cp", "--", tmp_name, path], timeout=_TIMEOUT_SECONDS
+        )
     finally:
         try:
             os.unlink(tmp_name)
         except OSError:
             pass
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True)
 
 
-def append_file_privileged(runner: ProcessRunnerPort, path: str, content: str) -> PrivilegedOpResult:
+def append_file_privileged(
+    runner: ProcessRunnerPort, path: str, content: str
+) -> PrivilegedOpResult:
     """Ajout en fin de fichier via `sudo tee -a`, alimente par stdin —
     pas de fichier temporaire necessaire ici (contrairement a
     overwrite_file_privileged : rien a faire lire a `cp`)."""
-    result = runner.run(["sudo", "tee", "-a", "--", path], input_text=content, timeout=_TIMEOUT_SECONDS)
+    result = runner.run(
+        ["sudo", "tee", "-a", "--", path], input_text=content, timeout=_TIMEOUT_SECONDS
+    )
     if not result.ok:
-        return PrivilegedOpResult(success=False, message=result.stderr.strip() or _("code {returncode}").format(returncode=result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=result.stderr.strip()
+            or _("code {returncode}").format(returncode=result.returncode),
+        )
     return PrivilegedOpResult(success=True)
 
 
-def stage_protected_copy_privileged(runner: ProcessRunnerPort, source: Path, dest_dir: Path) -> PrivilegedOpResult:
+def stage_protected_copy_privileged(
+    runner: ProcessRunnerPort, source: Path, dest_dir: Path
+) -> PrivilegedOpResult:
     """Copie un fichier protege vers `dest_dir` (que NOUS possedons deja)
     en conservant son nom exact, puis nous en rend proprietaire (`sudo
     chown`) — pour rotate_logs.py : permet de passer cette copie a
@@ -118,15 +159,26 @@ def stage_protected_copy_privileged(runner: ProcessRunnerPort, source: Path, des
     Python) : copie bit-a-bit, aucun risque d'encodage meme sur un log
     binaire. Le chemin stage dans `.content` en cas de succes."""
     dest = dest_dir / source.name
-    copy_result = runner.run(["sudo", "cp", "--", str(source), str(dest)], timeout=_TIMEOUT_SECONDS)
+    copy_result = runner.run(
+        ["sudo", "cp", "--", str(source), str(dest)], timeout=_TIMEOUT_SECONDS
+    )
     if not copy_result.ok:
-        return PrivilegedOpResult(success=False, message=copy_result.stderr.strip() or _("code {returncode}").format(returncode=copy_result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=copy_result.stderr.strip()
+            or _("code {returncode}").format(returncode=copy_result.returncode),
+        )
 
     chown_result = runner.run(
-        ["sudo", "chown", f"{os.getuid()}:{os.getgid()}", str(dest)], timeout=_TIMEOUT_SECONDS,
+        ["sudo", "chown", f"{os.getuid()}:{os.getgid()}", str(dest)],
+        timeout=_TIMEOUT_SECONDS,
     )
     if not chown_result.ok:
         dest.unlink(missing_ok=True)
-        return PrivilegedOpResult(success=False, message=chown_result.stderr.strip() or _("code {returncode}").format(returncode=chown_result.returncode))
+        return PrivilegedOpResult(
+            success=False,
+            message=chown_result.stderr.strip()
+            or _("code {returncode}").format(returncode=chown_result.returncode),
+        )
 
     return PrivilegedOpResult(success=True, content=str(dest))

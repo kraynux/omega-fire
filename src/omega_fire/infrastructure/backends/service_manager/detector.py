@@ -11,10 +11,10 @@ This module performs real system I/O (file reads, binary checks) and
 is therefore in infrastructure/. The result is a ServiceManagerType
 enum value that can be used by the capability registry.
 """
-import os
+
 import shutil
 from pathlib import Path
-from typing import Optional
+
 from omega_fire.core.enums import ServiceManagerType
 from omega_fire.infrastructure.backends.service_manager.exceptions import (
     ServiceManagerDetectionError,
@@ -23,71 +23,71 @@ from omega_fire.infrastructure.backends.service_manager.exceptions import (
 
 class ServiceManagerDetector:
     """Detects the service manager available on the current system.
-    
+
     Uses multiple detection strategies to determine which service
     manager is present: systemd, openrc, runit, or none.
     """
-    
+
     # Detection order: check most common first
     DETECTION_STRATEGIES = [
         ("systemd", ServiceManagerType.SYSTEMD),
         ("openrc", ServiceManagerType.OPENRC),
         ("runit", ServiceManagerType.RUNIT),
     ]
-    
+
     def __init__(self):
         """Initialize the detector."""
-        self._cache: Optional[ServiceManagerType] = None
-    
+        self._cache: ServiceManagerType | None = None
+
     def detect(self) -> ServiceManagerType:
         """Detect the service manager on the current system.
-        
+
         Uses multiple strategies:
         1. Check /proc/1/comm for the init process name
         2. Check for the presence of known binaries
         3. Check for known directories
-        
+
         Returns:
             ServiceManagerType indicating which manager is available
-        
+
         Raises:
             ServiceManagerDetectionError: If detection fails unexpectedly
         """
         if self._cache is not None:
             return self._cache
-        
+
         try:
             # Strategy 1: Check /proc/1/comm
             result = self._detect_from_proc()
             if result is not None:
                 self._cache = result
                 return result
-            
+
             # Strategy 2: Check for binaries
             result = self._detect_from_binaries()
             if result is not None:
                 self._cache = result
                 return result
-            
+
             # Strategy 3: Check for directories
             result = self._detect_from_directories()
             if result is not None:
                 self._cache = result
                 return result
-            
+
             # No service manager detected
             self._cache = ServiceManagerType.NONE
             return ServiceManagerType.NONE
-        
+
         except Exception as e:
             raise ServiceManagerDetectionError(
                 reason=str(e),
                 context={"strategies_tried": ["proc", "binaries", "directories"]},
             ) from e
-    
-    def _detect_from_proc(self) -> Optional[ServiceManagerType]:
+
+    def _detect_from_proc(self) -> ServiceManagerType | None:
         """Detect service manager by reading /proc/1/comm.
-        
+
         Returns:
             ServiceManagerType if detected, None otherwise
         """
@@ -95,7 +95,7 @@ class ServiceManagerDetector:
             proc_comm = Path("/proc/1/comm")
             if proc_comm.exists():
                 init_name = proc_comm.read_text().strip()
-                
+
                 if init_name == "systemd":
                     return ServiceManagerType.SYSTEMD
                 elif init_name == "openrc-init" or init_name == "openrc":
@@ -105,64 +105,64 @@ class ServiceManagerDetector:
         except (OSError, PermissionError):
             # Cannot read /proc/1/comm — try next strategy
             pass
-        
+
         return None
-    
-    def _detect_from_binaries(self) -> Optional[ServiceManagerType]:
+
+    def _detect_from_binaries(self) -> ServiceManagerType | None:
         """Detect service manager by checking for known binaries.
-        
+
         Returns:
             ServiceManagerType if detected, None otherwise
         """
         # Check for systemctl (systemd)
         if shutil.which("systemctl") is not None:
             return ServiceManagerType.SYSTEMD
-        
+
         # Check for rc-service (openrc)
         if shutil.which("rc-service") is not None:
             return ServiceManagerType.OPENRC
-        
+
         # Check for sv (runit)
         if shutil.which("sv") is not None:
             return ServiceManagerType.RUNIT
-        
+
         return None
-    
-    def _detect_from_directories(self) -> Optional[ServiceManagerType]:
+
+    def _detect_from_directories(self) -> ServiceManagerType | None:
         """Detect service manager by checking for known directories.
-        
+
         Returns:
             ServiceManagerType if detected, None otherwise
         """
         # Check for systemd runtime directory
         if Path("/run/systemd/system").exists():
             return ServiceManagerType.SYSTEMD
-        
+
         # Check for openrc init directory
         if Path("/etc/init.d").exists() and Path("/etc/rc.conf").exists():
             return ServiceManagerType.OPENRC
-        
+
         # Check for runit service directory
         if Path("/etc/runit").exists() or Path("/etc/sv").exists():
             return ServiceManagerType.RUNIT
-        
+
         return None
-    
+
     def is_available(self, manager_type: ServiceManagerType) -> bool:
         """Check if a specific service manager is available.
-        
+
         Args:
             manager_type: The service manager type to check
-        
+
         Returns:
             True if the specified manager is available
         """
         detected = self.detect()
         return detected == manager_type
-    
-    def get_detected_manager(self) -> Optional[ServiceManagerType]:
+
+    def get_detected_manager(self) -> ServiceManagerType | None:
         """Get the detected service manager without raising exceptions.
-        
+
         Returns:
             ServiceManagerType if detected, None if detection failed
         """
@@ -170,22 +170,22 @@ class ServiceManagerDetector:
             return self.detect()
         except ServiceManagerDetectionError:
             return None
-    
+
     def clear_cache(self) -> None:
         """Clear the detection cache.
-        
+
         This forces the next detect() call to re-run all strategies.
         """
         self._cache = None
-    
+
     def get_detection_details(self) -> dict:
         """Get detailed information about the detection process.
-        
+
         Returns:
             Dictionary with detection details
         """
         detected = self.detect()
-        
+
         return {
             "detected": detected.value,
             "binary_systemctl": shutil.which("systemctl") is not None,
@@ -196,10 +196,10 @@ class ServiceManagerDetector:
             "directory_runit": Path("/etc/runit").exists(),
             "proc_1_comm": self._read_proc_comm(),
         }
-    
-    def _read_proc_comm(self) -> Optional[str]:
+
+    def _read_proc_comm(self) -> str | None:
         """Read /proc/1/comm if accessible.
-        
+
         Returns:
             Init process name if readable, None otherwise
         """
@@ -214,7 +214,7 @@ class ServiceManagerDetector:
 
 def detect_service_manager() -> ServiceManagerType:
     """Convenience function to detect the service manager.
-    
+
     Returns:
         ServiceManagerType indicating which manager is available
     """
@@ -224,7 +224,7 @@ def detect_service_manager() -> ServiceManagerType:
 
 def is_systemd_available() -> bool:
     """Check if systemd is available.
-    
+
     Returns:
         True if systemd is detected
     """
@@ -234,7 +234,7 @@ def is_systemd_available() -> bool:
 
 def is_openrc_available() -> bool:
     """Check if openrc is available.
-    
+
     Returns:
         True if openrc is detected
     """
@@ -244,7 +244,7 @@ def is_openrc_available() -> bool:
 
 def is_runit_available() -> bool:
     """Check if runit is available.
-    
+
     Returns:
         True if runit is detected
     """
@@ -282,4 +282,4 @@ def is_runit_available() -> bool:
 # - infrastructure/probe/service_probe.py l'utilisera pour détecter le gestionnaire
 # - infrastructure/probe/scanner.py alimentera le registre avec le résultat
 # - interfaces/cli/tree_builder.py grisera les menus 4.10-4.12 si aucun gestionnaire
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

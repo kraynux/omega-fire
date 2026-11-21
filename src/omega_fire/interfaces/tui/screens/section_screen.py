@@ -7,10 +7,12 @@ SectionItem (voir section_registry.py) : soit un ecran deja migre
 (`direct_action`, voir support/direct_actions.py), soit rien encore
 (notify "pas encore migre", meme comportement que HomeScreen pour une
 section entiere avant cet ecran)."""
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
@@ -32,8 +34,8 @@ class SectionItem:
     action_id: str  # ex. "1.1"
     label: str
     description: str
-    screen_factory: Callable[["DependencyContainer"], Screen] | None = None
-    direct_action: Callable[["DependencyContainer"], tuple[bool, str]] | None = None
+    screen_factory: Callable[[DependencyContainer], Screen] | None = None
+    direct_action: Callable[[DependencyContainer], tuple[bool, str]] | None = None
     direct_action_title: str = ""
     # Si renseignes, direct_action passe d'abord par ConfirmScreen (patron
     # #1) avant d'executer — pour une action sans formulaire mais dont le
@@ -49,7 +51,14 @@ def _widget_id(action_id: str) -> str:
 class SectionScreen(OmegaScreen):
     """Sous-menu d'une section (ex. section "2" -> actions 2.1 a 2.10)."""
 
-    def __init__(self, *, container: DependencyContainer, section_id: str, title: str, items: tuple[SectionItem, ...]) -> None:
+    def __init__(
+        self,
+        *,
+        container: DependencyContainer,
+        section_id: str,
+        title: str,
+        items: tuple[SectionItem, ...],
+    ) -> None:
         super().__init__()
         self._container = container
         self._section_id = section_id
@@ -65,12 +74,19 @@ class SectionScreen(OmegaScreen):
                 for item in self._items:
                     with Container(classes="omega-btn-frame"):
                         yield Button(
-                            _("{action_id}  {label}").format(action_id=item.action_id, label=_(item.label)),
+                            _("{action_id}  {label}").format(
+                                action_id=item.action_id, label=_(item.label)
+                            ),
                             id=_widget_id(item.action_id),
                             tooltip=item.description or None,
                         )
-                menu.border_title = _("SECTION {section_id}").format(section_id=self._section_id)
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+                menu.border_title = _("SECTION {section_id}").format(
+                    section_id=self._section_id
+                )
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -97,7 +113,9 @@ class SectionScreen(OmegaScreen):
                 lines.append(format_help_entry(item_entry))
             elif item.description:
                 lines.append(item.description)
-        return _("SECTION {section_id} — {title}").format(section_id=self._section_id, title=self._title), "\n".join(lines)
+        return _("SECTION {section_id} — {title}").format(
+            section_id=self._section_id, title=self._title
+        ), "\n".join(lines)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -121,8 +139,12 @@ class SectionScreen(OmegaScreen):
         if item.direct_action is not None:
             if item.confirm_message:
                 self.app.push_screen(
-                    ConfirmScreen(title=item.confirm_title, message=item.confirm_message),
-                    lambda confirmed: self._run_direct_action_if_confirmed(confirmed, item),
+                    ConfirmScreen(
+                        title=item.confirm_title, message=item.confirm_message
+                    ),
+                    lambda confirmed: self._run_direct_action_if_confirmed(
+                        confirmed, item
+                    ),
                 )
                 return
             self._run_direct_action(item)
@@ -134,12 +156,15 @@ class SectionScreen(OmegaScreen):
             severity="information",
         )
 
-    def _run_direct_action_if_confirmed(self, confirmed: bool | None, item: SectionItem) -> None:
+    def _run_direct_action_if_confirmed(
+        self, confirmed: bool | None, item: SectionItem
+    ) -> None:
         if confirmed:
             self._run_direct_action(item)
 
     def _run_direct_action(self, item: SectionItem) -> None:
         assert item.direct_action is not None
+
         # Execute en arriere-plan (run_blocking) : direct_action() appelle
         # souvent fail2ban-client/subprocess/systemd (jusqu'a 10s de timeout
         # chacun) — en synchrone ici, ca gelerait TOUTE l'app le temps de
@@ -158,7 +183,9 @@ class SectionScreen(OmegaScreen):
             )
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(_("Échec de l'action : {error}").format(error=error), severity="error")
+            self.app.notify(
+                _("Échec de l'action : {error}").format(error=error), severity="error"
+            )
             log_action_result(
                 self._container,
                 item.direct_action_title or f"{item.action_id} {item.label}",
@@ -167,7 +194,8 @@ class SectionScreen(OmegaScreen):
             )
 
         self.run_blocking(
-            _execute, _on_done,
+            _execute,
+            _on_done,
             # Libelle traduit a l'affichage ; l'historique d'audit garde le texte source (N_).
             busy_message=f"{_(item.direct_action_title or item.label)}...",
             on_error=_on_error,

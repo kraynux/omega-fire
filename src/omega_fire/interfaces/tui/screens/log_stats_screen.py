@@ -9,6 +9,7 @@ travail de rafraichissement sans valeur ajoutee (voir conntrack_screen.py).
 KPI/graphique/tableaux portes ligne a ligne depuis kpi_cards.py/
 ascii_charts.py/stat_tables.py (memes donnees, palette d'extension
 omega-fire a la place de theme_registry.get_style())."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -66,13 +67,20 @@ class LogStatsScreen(OmegaScreen):
                 yield DataTable(id="top-ips-table")
                 yield DataTable(id="top-jails-table")
 
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#top-ips-table", DataTable).add_columns("#", _("Adresse IP"), _("Bans"), _("Dernier Ban"))
-        self.query_one("#top-jails-table", DataTable).add_columns(_("Jail / Service"), _("Statut"), _("Bans"), _("Part"))
+        self.query_one("#top-ips-table", DataTable).add_columns(
+            "#", _("Adresse IP"), _("Bans"), _("Dernier Ban")
+        )
+        self.query_one("#top-jails-table", DataTable).add_columns(
+            _("Jail / Service"), _("Statut"), _("Bans"), _("Part")
+        )
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -102,35 +110,74 @@ class LogStatsScreen(OmegaScreen):
         summary = self._aggregator.get_summary(period_code=self._period)
 
         self.query_one("#stats-hint", Static).update(
-            _("Période : {value}  │  Source : {data_source}").format(value=_PERIODS[self._period], data_source=summary.data_source)
+            _("Période : {value}  │  Source : {data_source}").format(
+                value=_PERIODS[self._period], data_source=summary.data_source
+            )
         )
 
         self.query_one("#kpi-events", Static).update(
-            Text(_("Événements\n\n{total_events}\n").format(total_events=summary.total_events), style=colors["heading"])
-            + Text(_("Logs scannes ({data_source})").format(data_source=summary.data_source), style="dim")
+            Text(
+                _("Événements\n\n{total_events}\n").format(
+                    total_events=summary.total_events
+                ),
+                style=colors["heading"],
+            )
+            + Text(
+                _("Logs scannes ({data_source})").format(
+                    data_source=summary.data_source
+                ),
+                style="dim",
+            )
         )
         self.query_one("#kpi-bans", Static).update(
-            Text(_("Total Bans\n\n{total_bans}").format(total_bans=summary.total_bans), style=colors["heading"])
+            Text(
+                _("Total Bans\n\n{total_bans}").format(total_bans=summary.total_bans),
+                style=colors["heading"],
+            )
         )
         self.query_one("#kpi-top-jail", Static).update(
-            Text(_("Top Jail\n\n{top_jail_name}").format(top_jail_name=summary.top_jail_name), style=colors["heading"])
+            Text(
+                _("Top Jail\n\n{top_jail_name}").format(
+                    top_jail_name=summary.top_jail_name
+                ),
+                style=colors["heading"],
+            )
         )
         self.query_one("#kpi-peak", Static).update(
-            Text(_("Heure de Pointe\n\n{peak_hour}\n").format(peak_hour=summary.peak_hour), style=colors["heading"])
-            + Text(_("Pic ({peak_count} evts)").format(peak_count=summary.peak_count), style="dim")
+            Text(
+                _("Heure de Pointe\n\n{peak_hour}\n").format(
+                    peak_hour=summary.peak_hour
+                ),
+                style=colors["heading"],
+            )
+            + Text(
+                _("Pic ({peak_count} evts)").format(peak_count=summary.peak_count),
+                style="dim",
+            )
         )
 
-        self.query_one("#box-chart", Static).update(self._render_chart(colors, summary.hourly_series))
+        self.query_one("#box-chart", Static).update(
+            self._render_chart(colors, summary.hourly_series)
+        )
 
         ips_table = self.query_one("#top-ips-table", DataTable)
         ips_table.clear()
         for i, ip_stat in enumerate(summary.top_ips[:8], 1):
-            ips_table.add_row(str(i), ip_stat.ip, str(ip_stat.total_bans), ip_stat.last_ban.strftime("%H:%M:%S"))
+            ips_table.add_row(
+                str(i),
+                ip_stat.ip,
+                str(ip_stat.total_bans),
+                ip_stat.last_ban.strftime("%H:%M:%S"),
+            )
 
         jails_table = self.query_one("#top-jails-table", DataTable)
         jails_table.clear()
         for jail in summary.top_jails[:8]:
-            status = Text(_("● Actif"), style=colors["main"]) if jail.is_active else Text(_("○ Archive"), style="dim")
+            status = (
+                Text(_("● Actif"), style=colors["main"])
+                if jail.is_active
+                else Text(_("○ Archive"), style="dim")
+            )
             bar_filled = int(jail.percentage / 10)
             part = f"{'█' * bar_filled}{'░' * (10 - bar_filled)} {jail.percentage}%"
             jails_table.add_row(jail.name, status, str(jail.total_bans), part)
@@ -149,7 +196,11 @@ class LogStatsScreen(OmegaScreen):
             for idx, val in enumerate(data):
                 scaled = (val / max_val) * _CHART_HEIGHT
                 if scaled >= level:
-                    style = colors["danger"] if (val == max_val and val > 0) else colors["main"]
+                    style = (
+                        colors["danger"]
+                        if (val == max_val and val > 0)
+                        else colors["main"]
+                    )
                     line_text.append("█", style=style)
                 elif scaled > level - 1:
                     b_idx = int((scaled - (level - 1)) * (len(_CHART_BLOCKS) - 1))
@@ -160,12 +211,21 @@ class LogStatsScreen(OmegaScreen):
                     line_text.append(gap)
             lines.append(line_text)
 
-        hours_top = gap.join(f"{h:02d}"[0] + (" " if spacing_factor > 1 else "") for h in range(24))
-        hours_bottom = gap.join(f"{h:02d}"[1] + (" " if spacing_factor > 1 else "") for h in range(24))
+        hours_top = gap.join(
+            f"{h:02d}"[0] + (" " if spacing_factor > 1 else "") for h in range(24)
+        )
+        hours_bottom = gap.join(
+            f"{h:02d}"[1] + (" " if spacing_factor > 1 else "") for h in range(24)
+        )
         chart_width = len(lines[0].plain) if lines else available_width
 
         content = Text()
-        content.append(_("Distribution Horaire (24h) — Max: {max_val} bans/h\n\n").format(max_val=max_val), style=colors["heading"])
+        content.append(
+            _("Distribution Horaire (24h) — Max: {max_val} bans/h\n\n").format(
+                max_val=max_val
+            ),
+            style=colors["heading"],
+        )
         for line in lines:
             content.append_text(line)
             content.append("\n")

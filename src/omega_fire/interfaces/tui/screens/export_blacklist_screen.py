@@ -7,6 +7,7 @@ Simplification assumee : en cas de conflit de nom de fichier, le CLI
 propose un sous-menu (renommer automatiquement / ecraser) — ici,
 toujours renommer automatiquement avec horodatage (comportement par
 defaut du CLI sur Entree), sans sous-dialogue supplementaire."""
+
 from __future__ import annotations
 
 import json
@@ -18,7 +19,9 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Select, Static
 
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
 from omega_fire.infrastructure.config.paths import (
     BLOCKLIST_DIR,
     DEFAULT_BLOCKLIST_FILE,
@@ -60,7 +63,9 @@ class ExportBlacklistScreen(OmegaScreen):
         )
 
     def _source_options(self) -> list[tuple[str, str]]:
-        return [(p, p) for p in self._pinned_command.list_paths()] + [(_("Chemin manuel"), _SRC_MANUAL)]
+        return [(p, p) for p in self._pinned_command.list_paths()] + [
+            (_("Chemin manuel"), _SRC_MANUAL)
+        ]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -68,23 +73,38 @@ class ExportBlacklistScreen(OmegaScreen):
             yield Static(_("EXPORTER LA BLACKLIST COMPLÈTE"), classes="omega-title")
 
             yield Static(_("Fichier source"), classes="omega-subtitle")
-            yield Select(self._source_options(), id="source-select", prompt=_("Sélectionner"))
+            yield Select(
+                self._source_options(), id="source-select", prompt=_("Sélectionner")
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static(_("Chemin manuel"), id="manual-label", classes="omega-subtitle omega-hidden")
-            yield Input(value=str(DEFAULT_BLOCKLIST_FILE), id="manual-input", classes="omega-hidden")
+            yield Static(
+                _("Chemin manuel"),
+                id="manual-label",
+                classes="omega-subtitle omega-hidden",
+            )
+            yield Input(
+                value=str(DEFAULT_BLOCKLIST_FILE),
+                id="manual-input",
+                classes="omega-hidden",
+            )
 
             yield Static(_("Format"), classes="omega-subtitle")
             yield Select(
-                [(_("JSON (brut structure)"), "json"), (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
-                 (_("HTML (rapport visuel 3 colonnes)"), "html")],
+                [
+                    (_("JSON (brut structure)"), "json"),
+                    (_("TXT (1 IP par ligne, réinjectable)"), "txt"),
+                    (_("HTML (rapport visuel 3 colonnes)"), "html"),
+                ],
                 value="json",
                 id="format-select",
             )
 
-            yield Static(_("Thème HTML"), id="theme-label", classes="omega-subtitle omega-hidden")
+            yield Static(
+                _("Thème HTML"), id="theme-label", classes="omega-subtitle omega-hidden"
+            )
             yield Select(
                 [(label, name) for name, label in _HTML_THEMES.items()],
                 value="omega-base",
@@ -111,25 +131,38 @@ class ExportBlacklistScreen(OmegaScreen):
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "source-select":
             is_manual = str(event.value) == _SRC_MANUAL
-            self.query_one("#manual-label", Static).set_class(not is_manual, "omega-hidden")
-            self.query_one("#manual-input", Input).set_class(not is_manual, "omega-hidden")
+            self.query_one("#manual-label", Static).set_class(
+                not is_manual, "omega-hidden"
+            )
+            self.query_one("#manual-input", Input).set_class(
+                not is_manual, "omega-hidden"
+            )
         elif event.select.id == "format-select":
             fmt = str(event.value)
             is_html = fmt == "html"
-            self.query_one("#theme-label", Static).set_class(not is_html, "omega-hidden")
-            self.query_one("#theme-select", Select).set_class(not is_html, "omega-hidden")
+            self.query_one("#theme-label", Static).set_class(
+                not is_html, "omega-hidden"
+            )
+            self.query_one("#theme-select", Select).set_class(
+                not is_html, "omega-hidden"
+            )
             self._refresh_default_path(fmt)
 
     def _refresh_default_path(self, fmt: str) -> None:
         target_dir = self._container.exports_dir if fmt == "html" else BLOCKLIST_DIR
-        self.query_one("#path-input", Input).value = str(target_dir / f"export-blacklist.{fmt}")
+        self.query_one("#path-input", Input).value = str(
+            target_dir / f"export-blacklist.{fmt}"
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.dismiss()
             return
         if event.button.id == "manage-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._refresh_source_select)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container),
+                self._refresh_source_select,
+            )
             return
         if event.button.id != "launch":
             return
@@ -145,24 +178,47 @@ class ExportBlacklistScreen(OmegaScreen):
         else:
             selected_source = str(source)
         if not selected_source or not os.path.isfile(selected_source):
-            self.app.notify(_("Fichier introuvable : {selected_source}").format(selected_source=selected_source), severity="error")
+            self.app.notify(
+                _("Fichier introuvable : {selected_source}").format(
+                    selected_source=selected_source
+                ),
+                severity="error",
+            )
             return
 
         try:
             with open(selected_source, "r", encoding="utf-8") as f:
-                ips_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+                ips_list = [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.startswith("#")
+                ]
         except Exception as e:
-            self.app.notify(_("Impossible de lire le fichier source : {e}").format(e=e), severity="error")
+            self.app.notify(
+                _("Impossible de lire le fichier source : {e}").format(e=e),
+                severity="error",
+            )
             return
         if not ips_list:
-            self.app.notify(_("Le fichier '{selected_source}' ne contient aucune IP valide à exporter.").format(selected_source=selected_source), severity="warning")
+            self.app.notify(
+                _(
+                    "Le fichier '{selected_source}' ne contient aucune IP valide à exporter."
+                ).format(selected_source=selected_source),
+                severity="warning",
+            )
             return
 
         fmt = str(self.query_one("#format-select", Select).value)
-        theme_name = str(self.query_one("#theme-select", Select).value) if fmt == "html" else "omega-base"
+        theme_name = (
+            str(self.query_one("#theme-select", Select).value)
+            if fmt == "html"
+            else "omega-base"
+        )
         final_path = self.query_one("#path-input", Input).value.strip()
         if not final_path:
-            self.app.notify(_("Saisissez un chemin de destination."), severity="warning")
+            self.app.notify(
+                _("Saisissez un chemin de destination."), severity="warning"
+            )
             return
 
         if os.path.exists(final_path):
@@ -181,16 +237,23 @@ class ExportBlacklistScreen(OmegaScreen):
 
                 if fmt == "json":
                     export_data = {
-                        "source": "Omega-Fire", "type": "Blacklist Export", "source_file": selected_source,
-                        "exported_at": now_str, "total_ips": len(ips_list), "ips": ips_list,
+                        "source": "Omega-Fire",
+                        "type": "Blacklist Export",
+                        "source_file": selected_source,
+                        "exported_at": now_str,
+                        "total_ips": len(ips_list),
+                        "ips": ips_list,
                     }
                     with open(final_path, "w", encoding="utf-8") as f:
                         json.dump(export_data, f, indent=4, ensure_ascii=False)
 
                 elif fmt == "txt":
                     lines = [
-                        "# Omega-Fire Blacklist Export", f"# Source : {selected_source}",
-                        f"# Genere le : {now_str}", f"# Total IPs : {len(ips_list)}", "",
+                        "# Omega-Fire Blacklist Export",
+                        f"# Source : {selected_source}",
+                        f"# Genere le : {now_str}",
+                        f"# Total IPs : {len(ips_list)}",
+                        "",
                     ]
                     lines.extend(ips_list)
                     with open(final_path, "w", encoding="utf-8") as f:
@@ -198,10 +261,18 @@ class ExportBlacklistScreen(OmegaScreen):
 
                 elif fmt == "html":
                     col_size = (len(ips_list) + 2) // 3
-                    col1, col2, col3 = ips_list[0:col_size], ips_list[col_size:col_size * 2], ips_list[col_size * 2:]
+                    col1, col2, col3 = (
+                        ips_list[0:col_size],
+                        ips_list[col_size : col_size * 2],
+                        ips_list[col_size * 2 :],
+                    )
                     max_rows = max(len(col1), len(col2), len(col3))
                     ip_rows = [
-                        (col1[r] if r < len(col1) else "", col2[r] if r < len(col2) else "", col3[r] if r < len(col3) else "")
+                        (
+                            col1[r] if r < len(col1) else "",
+                            col2[r] if r < len(col2) else "",
+                            col3[r] if r < len(col3) else "",
+                        )
                         for r in range(max_rows)
                     ]
                     exporter = self._container.get_exporter_port("html")
@@ -209,18 +280,30 @@ class ExportBlacklistScreen(OmegaScreen):
                         {
                             "page_title": _("Exportation Blacklist - Omega-Fire"),
                             "heading": _("Rapport d'exportation Blacklist"),
-                            "source_label": _("Source"), "source_value": _("Blacklist Globale"),
-                            "generated_at": now_str, "total_ips": len(ips_list),
-                            "ip_rows": ip_rows, "theme_name": theme_name,
+                            "source_label": _("Source"),
+                            "source_value": _("Blacklist Globale"),
+                            "generated_at": now_str,
+                            "total_ips": len(ips_list),
+                            "ip_rows": ip_rows,
+                            "theme_name": theme_name,
                         },
                         final_path,
                         template_name="ip_export.html.j2",
                     )
         except Exception as e:
-            self.app.notify(_("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de l'écriture du fichier d'export : {e}").format(e=e),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("Export réussi : {count} IP(s) enregistrée(s) dans '{final_path}'.").format(count=len(ips_list), final_path=final_path))
+        self.app.notify(
+            _(
+                "Export réussi : {count} IP(s) enregistrée(s) dans '{final_path}'."
+            ).format(count=len(ips_list), final_path=final_path)
+        )
         log_action_result(self._container, _ACTION_TITLE, status="success")
         self.dismiss()

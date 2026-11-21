@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
@@ -11,6 +11,7 @@ from typing import Protocol
 
 class ServiceStatus(str, Enum):
     """Statut d'un service système."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     FAILED = "failed"
@@ -29,6 +30,7 @@ class ServiceInfo:
         pid: PID du processus (None si inactif).
         uptime: durée de fonctionnement en secondes (None si inactif).
     """
+
     name: str
     status: ServiceStatus
     enabled: bool
@@ -47,6 +49,7 @@ class CommandResult:
         stderr: sortie d'erreur.
         command: commande exécutée.
     """
+
     return_code: int
     stdout: str
     stderr: str
@@ -180,6 +183,7 @@ class SystemPort(Protocol):
         """
         ...
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Définit le contrat (Protocol) pour les interactions système.
@@ -213,4 +217,4 @@ class SystemPort(Protocol):
 # - infrastructure/backends/service_manager/ implémentera SystemPort
 # - infrastructure/probe/ utilisera SystemPort pour détecter les services
 # - interfaces/cli/actions.py appellera system_port.get_service_status() pour diagnostics
-#---------------------------------------------------------------------->       
+# ---------------------------------------------------------------------->

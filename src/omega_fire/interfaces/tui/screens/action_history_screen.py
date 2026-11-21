@@ -9,6 +9,7 @@ en dur, meme technique que logs_live.py::visible_rows() cote CLI. La
 gestion/purge (4 modes) est un sous-ecran dedie (purge_audit_history_screen.py,
 patron #3), pousse depuis le bouton 'Gerer/Purger' comme PinnedPathsScreen
 l'est ailleurs, avec rafraichissement au retour."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,7 +24,9 @@ from omega_fire.application.queries.read_audit_history import (
     ReadAuditHistoryRequest,
 )
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
-from omega_fire.interfaces.tui.screens.purge_audit_history_screen import PurgeAuditHistoryScreen
+from omega_fire.interfaces.tui.screens.purge_audit_history_screen import (
+    PurgeAuditHistoryScreen,
+)
 from omega_fire.shared.i18n import _, action_title
 
 if TYPE_CHECKING:
@@ -46,7 +49,10 @@ class ActionHistoryScreen(OmegaScreen):
         yield Header()
         with Vertical(classes="omega-panel"):
             yield Static(_("HISTORIQUE DES ACTIONS"), classes="omega-title")
-            yield Input(placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"), id="filter-input")
+            yield Input(
+                placeholder=_("Filtrer par mot-clé (vide = aucun filtre)"),
+                id="filter-input",
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Filtrer"), id="filter")
@@ -66,7 +72,9 @@ class ActionHistoryScreen(OmegaScreen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#history-table", DataTable).add_columns(_("Heure"), _("Action"), _("Acteur"), _("Résultat"), _("Détails"))
+        self.query_one("#history-table", DataTable).add_columns(
+            _("Heure"), _("Action"), _("Acteur"), _("Résultat"), _("Détails")
+        )
         # call_after_refresh (pas un appel direct) : tant que la mise en
         # page initiale n'a pas eu lieu, `#history-table`.size.height
         # renvoie une valeur provisoire trop petite (avant que le CSS
@@ -85,7 +93,10 @@ class ActionHistoryScreen(OmegaScreen):
             self._refresh()
             return
         if button_id == "manage":
-            self.app.push_screen(PurgeAuditHistoryScreen(container=self._container), self._on_purge_closed)
+            self.app.push_screen(
+                PurgeAuditHistoryScreen(container=self._container),
+                self._on_purge_closed,
+            )
             return
         if button_id == "prev":
             if self._page > 0:
@@ -102,7 +113,10 @@ class ActionHistoryScreen(OmegaScreen):
 
     def _colors(self) -> dict[str, str]:
         v = self.app.get_css_variables()
-        return {"available": v.get("status-available", ""), "danger": v.get("error", "")}
+        return {
+            "available": v.get("status-available", ""),
+            "danger": v.get("error", ""),
+        }
 
     def _page_size(self) -> int:
         table = self.query_one("#history-table", DataTable)
@@ -119,7 +133,9 @@ class ActionHistoryScreen(OmegaScreen):
             # Text(...) : voir restore_state_screen.py::_refresh (meme
             # correctif, meme raison - MarkupError si {e} contient des
             # crochets).
-            self.query_one("#page-hint", Static).update(Text(_("Registre d'audit indisponible : {e}").format(e=e)))
+            self.query_one("#page-hint", Static).update(
+                Text(_("Registre d'audit indisponible : {e}").format(e=e))
+            )
             return
 
         result = ReadAuditHistoryQuery(audit_port).execute(
@@ -134,8 +150,16 @@ class ActionHistoryScreen(OmegaScreen):
 
         entries = result.entries
         if not entries:
-            filter_suffix = _(" (filtre : '{keyword}')").format(keyword=self._keyword) if self._keyword else ""
-            self.query_one("#page-hint", Static).update(_("Aucune entrée d'audit trouvée.{filter_suffix}").format(filter_suffix=filter_suffix))
+            filter_suffix = (
+                _(" (filtre : '{keyword}')").format(keyword=self._keyword)
+                if self._keyword
+                else ""
+            )
+            self.query_one("#page-hint", Static).update(
+                _("Aucune entrée d'audit trouvée.{filter_suffix}").format(
+                    filter_suffix=filter_suffix
+                )
+            )
             self._update_nav_buttons(page=0, total_pages=0)
             return
 
@@ -143,15 +167,23 @@ class ActionHistoryScreen(OmegaScreen):
         total_pages = (len(entries) + page_size - 1) // page_size
         self._page = max(0, min(self._page, total_pages - 1))
         start_idx = self._page * page_size
-        page_entries = entries[start_idx:start_idx + page_size]
+        page_entries = entries[start_idx : start_idx + page_size]
 
         for entry in page_entries:
-            badge = Text("OK", style=colors["available"]) if entry.success else Text(_("ÉCHEC"), style=colors["danger"])
+            badge = (
+                Text("OK", style=colors["available"])
+                if entry.success
+                else Text(_("ÉCHEC"), style=colors["danger"])
+            )
             parts = []
             if entry.target and entry.target != "N/A":
                 parts.append(_("cible: {target}").format(target=entry.target))
             if entry.error_message:
-                parts.append(_("erreur: {error_message}").format(error_message=entry.error_message))
+                parts.append(
+                    _("erreur: {error_message}").format(
+                        error_message=entry.error_message
+                    )
+                )
             details = " | ".join(parts) if parts else "-"
             table.add_row(
                 entry.timestamp.strftime("%d/%m %H:%M:%S"),
@@ -161,9 +193,20 @@ class ActionHistoryScreen(OmegaScreen):
                 details,
             )
 
-        filter_label = _(" — Filtre : '{keyword}'").format(keyword=self._keyword) if self._keyword else ""
+        filter_label = (
+            _(" — Filtre : '{keyword}'").format(keyword=self._keyword)
+            if self._keyword
+            else ""
+        )
         self.query_one("#page-hint", Static).update(
-            _("Page {value}/{total_pages}{filter_label}  │  {count} entrée(s) au total (limite de lecture : 500).").format(value=self._page + 1, total_pages=total_pages, filter_label=filter_label, count=len(entries))
+            _(
+                "Page {value}/{total_pages}{filter_label}  │  {count} entrée(s) au total (limite de lecture : 500)."
+            ).format(
+                value=self._page + 1,
+                total_pages=total_pages,
+                filter_label=filter_label,
+                count=len(entries),
+            )
         )
         self._update_nav_buttons(page=self._page, total_pages=total_pages)
 

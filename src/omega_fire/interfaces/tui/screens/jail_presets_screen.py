@@ -4,12 +4,13 @@ CreateJailScreen (4.4, mode "Modele/Preset"). Meme patron liste + CRUD
 que PinnedPathsScreen (Phase 2), avec un formulaire d'ajout a 8 champs
 au lieu d'un seul. Logique identique au sous-menu presets de
 interfaces/cli/actions.py::action_4_4_create_jail."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from omega_fire.application.commands.manage_jail_presets import ManageJailPresetsCommand
@@ -66,7 +67,10 @@ class JailPresetsScreen(OmegaScreen):
         with VerticalScroll(classes="omega-panel"):
             yield Static(_("MODÈLES DE JAIL"), classes="omega-title")
             yield DataTable(id="presets-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retirer la sélection"), id="remove", variant="error")
 
             yield Static(_("Ajouter un modèle"), classes="omega-subtitle")
@@ -74,9 +78,15 @@ class JailPresetsScreen(OmegaScreen):
                 yield Static(label, classes="omega-hint")
                 yield Input(placeholder=placeholder, id=f"field-{key}")
 
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Ajouter"), id="add", variant="primary")
-        with Horizontal(classes="omega-actions", id="presets-actions"), Container(classes="omega-btn-frame"):
+        with (
+            Horizontal(classes="omega-actions", id="presets-actions"),
+            Container(classes="omega-btn-frame"),
+        ):
             yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -113,7 +123,9 @@ class JailPresetsScreen(OmegaScreen):
         for key, label, _ignored in _FIELDS:
             value = self.query_one(f"#field-{key}", Input).value.strip()
             if not value:
-                self.app.notify(_("Champ requis : {label}.").format(label=label), severity="warning")
+                self.app.notify(
+                    _("Champ requis : {label}.").format(label=label), severity="warning"
+                )
                 return
             new_preset[key] = value
 

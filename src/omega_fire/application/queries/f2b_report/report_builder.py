@@ -6,20 +6,21 @@ Pure query orchestration — never writes anything. Writing the file and
 any audit trail entry is the responsibility of the caller
 (application/commands/export_f2b_report.py).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
 
-from omega_fire.application.queries.f2b_report.models import F2bReportData
-from omega_fire.application.queries.f2b_report.system_section import (
-    collect_system_status,
+from omega_fire.application.queries.f2b_report.duplicates_section import (
+    collect_duplicate_ips,
 )
 from omega_fire.application.queries.f2b_report.jails_section import (
     collect_jails_detail,
 )
-from omega_fire.application.queries.f2b_report.duplicates_section import (
-    collect_duplicate_ips,
+from omega_fire.application.queries.f2b_report.models import F2bReportData
+from omega_fire.application.queries.f2b_report.system_section import (
+    collect_system_status,
 )
 
 
@@ -46,7 +47,9 @@ def build_f2b_report(
     # boucle get_jail_status()/get_jail_config() par jail (2026-08-16,
     # cf. notes perf de jails_section.py/duplicates_section.py).
     try:
-        jails_info = fail2ban_adapter.list_jails_info() if fail2ban_adapter is not None else []
+        jails_info = (
+            fail2ban_adapter.list_jails_info() if fail2ban_adapter is not None else []
+        )
     except Exception:
         jails_info = []
 
@@ -74,4 +77,4 @@ def build_f2b_report(
 # Comment il sera utilisé :
 # - application/commands/export_f2b_report.py appelle
 #   build_f2b_report(), passe le résultat aux exporters TXT/HTML.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

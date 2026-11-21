@@ -6,28 +6,29 @@ This service coordinates the domain modules (builders, serializers)
 to construct logical report content. It does NOT write files —
 that is the responsibility of infrastructure/exporters/.
 """
+
 from datetime import datetime
-from typing import Optional
-from omega_fire.domain.ip_blacklist.models import BanEntry
-from omega_fire.domain.rules.models import FirewallRule
+
 from omega_fire.domain.fail2ban.models import Jail
-from omega_fire.domain.logs.models import LogEntry, TopIP
+from omega_fire.domain.ip_blacklist.models import BanEntry
+from omega_fire.domain.logs.models import TopIP
 from omega_fire.domain.reports.builders import (
+    Report,
     ReportBuilder,
     ReportSection,
-    Report,
 )
+from omega_fire.domain.rules.models import FirewallRule
 from omega_fire.shared.i18n import _
 
 
 class ReportsService:
     """Domain service for report generation.
-    
+
     This service orchestrates business logic for building reports.
     It constructs logical report content (sections, data) without
     performing any file I/O.
     """
-    
+
     def build_blacklist_report(
         self,
         banned_ips: list[BanEntry],
@@ -35,161 +36,177 @@ class ReportsService:
         title: str = _("Blacklist Report"),
     ) -> Report:
         """Build a report of banned IPs.
-        
+
         Args:
             banned_ips: List of banned IP entries
             include_stats: Whether to include summary statistics
             title: Report title
-        
+
         Returns:
             Report object with blacklist content
         """
         builder = ReportBuilder(title=title)
-        
+
         # Summary section
         if include_stats:
-            builder.add_section_object(ReportSection(
-                name="Summary",
-                content={
-                    "total_bans": len(banned_ips),
-                    "active_bans": len([b for b in banned_ips if b.is_active()]),
-                    "generated_at": datetime.now().isoformat(),
-                }
-            ))
-        
+            builder.add_section_object(
+                ReportSection(
+                    name="Summary",
+                    content={
+                        "total_bans": len(banned_ips),
+                        "active_bans": len([b for b in banned_ips if b.is_active()]),
+                        "generated_at": datetime.now().isoformat(),
+                    },
+                )
+            )
+
         # Bans by backend
         by_backend: dict[str, list[BanEntry]] = {}
         for ban in banned_ips:
             by_backend.setdefault(ban.backend, []).append(ban)
-        
+
         for backend, bans in by_backend.items():
-            builder.add_section_object(ReportSection(
-                name=f"Bans on {backend}",
-                content={
-                    "count": len(bans),
-                    "ips": [b.ip for b in bans],
-                }
-            ))
-        
+            builder.add_section_object(
+                ReportSection(
+                    name=f"Bans on {backend}",
+                    content={
+                        "count": len(bans),
+                        "ips": [b.ip for b in bans],
+                    },
+                )
+            )
+
         # Detailed list
-        builder.add_section_object(ReportSection(
-            name="Detailed List",
-            content={
-                "entries": [
-                    {
-                        "ip": b.ip,
-                        "backend": b.backend,
-                        "status": b.status.value,
-                        "comment": b.comment,
-                        "banned_at": b.banned_at.isoformat() if b.banned_at else None,
-                    }
-                    for b in banned_ips
-                ]
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Detailed List",
+                content={
+                    "entries": [
+                        {
+                            "ip": b.ip,
+                            "backend": b.backend,
+                            "status": b.status.value,
+                            "comment": b.comment,
+                            "banned_at": b.banned_at.isoformat()
+                            if b.banned_at
+                            else None,
+                        }
+                        for b in banned_ips
+                    ]
+                },
+            )
+        )
+
         return builder.build()
-    
+
     def build_ruleset_report(
         self,
         rules: list[FirewallRule],
         title: str = _("Firewall Ruleset Report"),
     ) -> Report:
         """Build a report of firewall rules.
-        
+
         Args:
             rules: List of firewall rules
             title: Report title
-        
+
         Returns:
             Report object with ruleset content
         """
         builder = ReportBuilder(title=title)
-        
+
         # Summary
-        builder.add_section_object(ReportSection(
-            name="Summary",
-            content={
-                "total_rules": len(rules),
-                "generated_at": datetime.now().isoformat(),
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Summary",
+                content={
+                    "total_rules": len(rules),
+                    "generated_at": datetime.now().isoformat(),
+                },
+            )
+        )
+
         # Rules by backend
         by_backend: dict[str, list[FirewallRule]] = {}
         for rule in rules:
             by_backend.setdefault(rule.backend, []).append(rule)
-        
+
         for backend, backend_rules in by_backend.items():
-            builder.add_section_object(ReportSection(
-                name=f"Rules on {backend}",
-                content={
-                    "count": len(backend_rules),
-                    "rules": [
-                        {
-                            "chain": r.chain.value,
-                            "protocol": r.protocol.value if r.protocol else None,
-                            "port": r.get_port_display(),
-                            "action": r.action.value,
-                            "comment": r.comment,
-                        }
-                        for r in backend_rules
-                    ]
-                }
-            ))
-        
+            builder.add_section_object(
+                ReportSection(
+                    name=f"Rules on {backend}",
+                    content={
+                        "count": len(backend_rules),
+                        "rules": [
+                            {
+                                "chain": r.chain.value,
+                                "protocol": r.protocol.value if r.protocol else None,
+                                "port": r.get_port_display(),
+                                "action": r.action.value,
+                                "comment": r.comment,
+                            }
+                            for r in backend_rules
+                        ],
+                    },
+                )
+            )
+
         return builder.build()
-    
+
     def build_fail2ban_report(
         self,
         jails: list[Jail],
         title: str = _("Fail2ban Report"),
     ) -> Report:
         """Build a report of fail2ban jails.
-        
+
         Args:
             jails: List of fail2ban jails
             title: Report title
-        
+
         Returns:
             Report object with fail2ban content
         """
         builder = ReportBuilder(title=title)
-        
+
         # Summary
         active_jails = [j for j in jails if j.is_active()]
-        builder.add_section_object(ReportSection(
-            name="Summary",
-            content={
-                "total_jails": len(jails),
-                "active_jails": len(active_jails),
-                "total_banned": sum(j.total_banned for j in jails),
-                "currently_banned": sum(j.currently_banned for j in jails),
-                "generated_at": datetime.now().isoformat(),
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Summary",
+                content={
+                    "total_jails": len(jails),
+                    "active_jails": len(active_jails),
+                    "total_banned": sum(j.total_banned for j in jails),
+                    "currently_banned": sum(j.currently_banned for j in jails),
+                    "generated_at": datetime.now().isoformat(),
+                },
+            )
+        )
+
         # Jail details
-        builder.add_section_object(ReportSection(
-            name="Jail Details",
-            content={
-                "jails": [
-                    {
-                        "name": j.name,
-                        "status": j.status.value,
-                        "backend": j.config.backend,
-                        "maxretry": j.config.maxretry,
-                        "bantime": j.config.bantime,
-                        "currently_banned": j.currently_banned,
-                        "total_banned": j.total_banned,
-                    }
-                    for j in jails
-                ]
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Jail Details",
+                content={
+                    "jails": [
+                        {
+                            "name": j.name,
+                            "status": j.status.value,
+                            "backend": j.config.backend,
+                            "maxretry": j.config.maxretry,
+                            "bantime": j.config.bantime,
+                            "currently_banned": j.currently_banned,
+                            "total_banned": j.total_banned,
+                        }
+                        for j in jails
+                    ]
+                },
+            )
+        )
+
         return builder.build()
-    
+
     def build_audit_report(
         self,
         banned_ips: list[BanEntry],
@@ -200,7 +217,7 @@ class ReportsService:
         title: str = _("Complete Audit Report"),
     ) -> Report:
         """Build a comprehensive audit report.
-        
+
         Args:
             banned_ips: List of banned IPs
             rules: List of firewall rules
@@ -208,83 +225,88 @@ class ReportsService:
             top_ips: Top IPs from log analysis
             recent_actions: Recent system actions
             title: Report title
-        
+
         Returns:
             Report object with complete audit content
         """
         builder = ReportBuilder(title=title)
-        
+
         # Executive summary
-        builder.add_section_object(ReportSection(
-            name="Executive Summary",
-            content={
-                "total_bans": len(banned_ips),
-                "total_rules": len(rules),
-                "total_jails": len(jails),
-                "generated_at": datetime.now().isoformat(),
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Executive Summary",
+                content={
+                    "total_bans": len(banned_ips),
+                    "total_rules": len(rules),
+                    "total_jails": len(jails),
+                    "generated_at": datetime.now().isoformat(),
+                },
+            )
+        )
+
         # Backend status
-        builder.add_section_object(ReportSection(
-            name="Backend Status",
-            content={
-                "nftables": {
-                    "bans": len([b for b in banned_ips if b.backend == "nftables"]),
-                    "rules": len([r for r in rules if r.backend == "nftables"]),
+        builder.add_section_object(
+            ReportSection(
+                name="Backend Status",
+                content={
+                    "nftables": {
+                        "bans": len([b for b in banned_ips if b.backend == "nftables"]),
+                        "rules": len([r for r in rules if r.backend == "nftables"]),
+                    },
+                    "iptables": {
+                        "bans": len([b for b in banned_ips if b.backend == "iptables"]),
+                        "rules": len([r for r in rules if r.backend == "iptables"]),
+                    },
+                    "ip6tables": {
+                        "bans": len(
+                            [b for b in banned_ips if b.backend == "ip6tables"]
+                        ),
+                        "rules": len([r for r in rules if r.backend == "ip6tables"]),
+                    },
+                    "fail2ban": {
+                        "jails": len(jails),
+                        "banned": sum(j.currently_banned for j in jails),
+                    },
                 },
-                "iptables": {
-                    "bans": len([b for b in banned_ips if b.backend == "iptables"]),
-                    "rules": len([r for r in rules if r.backend == "iptables"]),
-                },
-                "ip6tables": {
-                    "bans": len([b for b in banned_ips if b.backend == "ip6tables"]),
-                    "rules": len([r for r in rules if r.backend == "ip6tables"]),
-                },
-                "fail2ban": {
-                    "jails": len(jails),
-                    "banned": sum(j.currently_banned for j in jails),
-                },
-            }
-        ))
-        
+            )
+        )
+
         # Top IPs from logs
-        builder.add_section_object(ReportSection(
-            name="Top IPs (Logs)",
-            content={
-                "top_ips": [
-                    {"ip": t.ip, "count": t.count}
-                    for t in top_ips[:20]
-                ]
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Top IPs (Logs)",
+                content={
+                    "top_ips": [{"ip": t.ip, "count": t.count} for t in top_ips[:20]]
+                },
+            )
+        )
+
         # Top banned IPs
         ip_counts: dict[str, int] = {}
         for ban in banned_ips:
             ip_counts[ban.ip] = ip_counts.get(ban.ip, 0) + 1
-        
+
         top_banned = sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[:20]
-        builder.add_section_object(ReportSection(
-            name="Top Banned IPs",
-            content={
-                "top_banned": [
-                    {"ip": ip, "count": count}
-                    for ip, count in top_banned
-                ]
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Top Banned IPs",
+                content={
+                    "top_banned": [
+                        {"ip": ip, "count": count} for ip, count in top_banned
+                    ]
+                },
+            )
+        )
+
         # Recent actions
-        builder.add_section_object(ReportSection(
-            name="Recent Actions",
-            content={
-                "actions": recent_actions[:20]
-            }
-        ))
-        
+        builder.add_section_object(
+            ReportSection(
+                name="Recent Actions", content={"actions": recent_actions[:20]}
+            )
+        )
+
         return builder.build()
-    
+
     def build_stats_report(
         self,
         period_label: str,
@@ -336,58 +358,56 @@ class ReportsService:
         """
         builder = ReportBuilder(title=title)
 
-        builder.add_section_object(ReportSection(
-            name="KPI",
-            content={
-                "period_label": period_label,
-                "total_events": kpi.get("total_events", 0),
-                "total_bans": kpi.get("total_bans", 0),
-                "top_jail_name": kpi.get("top_jail_name", "Aucun"),
-                "peak_hour": kpi.get("peak_hour", "--:--"),
-                "peak_count": kpi.get("peak_count", 0),
-                "data_source": kpi.get("data_source", "Inconnue"),
-                "generated_at": datetime.now().isoformat(),
-            }
-        ))
+        builder.add_section_object(
+            ReportSection(
+                name="KPI",
+                content={
+                    "period_label": period_label,
+                    "total_events": kpi.get("total_events", 0),
+                    "total_bans": kpi.get("total_bans", 0),
+                    "top_jail_name": kpi.get("top_jail_name", "Aucun"),
+                    "peak_hour": kpi.get("peak_hour", "--:--"),
+                    "peak_count": kpi.get("peak_count", 0),
+                    "data_source": kpi.get("data_source", "Inconnue"),
+                    "generated_at": datetime.now().isoformat(),
+                },
+            )
+        )
 
-        builder.add_section_object(ReportSection(
-            name="Distribution Horaire",
-            content={"hourly_series": hourly_series}
-        ))
+        builder.add_section_object(
+            ReportSection(
+                name="Distribution Horaire", content={"hourly_series": hourly_series}
+            )
+        )
 
-        builder.add_section_object(ReportSection(
-            name="Tendance Journalière",
-            content={"trend": daily_trend}
-        ))
+        builder.add_section_object(
+            ReportSection(name="Tendance Journalière", content={"trend": daily_trend})
+        )
 
-        builder.add_section_object(ReportSection(
-            name="Top IPs",
-            content={"ips": top_ips}
-        ))
+        builder.add_section_object(
+            ReportSection(name="Top IPs", content={"ips": top_ips})
+        )
 
-        builder.add_section_object(ReportSection(
-            name="Top Jails",
-            content={"jails": top_jails}
-        ))
+        builder.add_section_object(
+            ReportSection(name="Top Jails", content={"jails": top_jails})
+        )
 
-        builder.add_section_object(ReportSection(
-            name="Gestion",
-            content=management
-        ))
+        builder.add_section_object(ReportSection(name="Gestion", content=management))
 
-        builder.add_section_object(ReportSection(
-            name="Évolution des Règles",
-            content={"points": rules_evolution}
-        ))
+        builder.add_section_object(
+            ReportSection(
+                name="Évolution des Règles", content={"points": rules_evolution}
+            )
+        )
 
         return builder.build()
-    
+
     def get_report_metadata(self, report: Report) -> dict:
         """Extract metadata from a report.
-        
+
         Args:
             report: Report object
-        
+
         Returns:
             Dictionary with report metadata
         """
@@ -397,6 +417,7 @@ class ReportsService:
             "generated_at": report.generated_at.isoformat(),
             "section_names": [s.name for s in report.sections],
         }
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -442,4 +463,4 @@ class ReportsService:
 # - infrastructure/exporters/json_exporter.py sérialisera le Report en JSON
 # - infrastructure/exporters/html_exporter.py utilisera Jinja2 pour rendre le rapport en HTML
 # - interfaces/cli/actions.py proposera le choix du type de rapport à l'utilisateur
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

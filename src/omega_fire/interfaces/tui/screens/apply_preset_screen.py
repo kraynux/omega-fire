@@ -4,6 +4,7 @@ champ) + confirmation destructive (patron #1). Logique identique a
 interfaces/cli/actions.py::action_3_4_apply_preset : le profil choisi
 remplace les regles actives sur TOUS les backends detectes, une
 sauvegarde automatique est tentee avant application."""
+
 from __future__ import annotations
 
 import json
@@ -65,10 +66,19 @@ class ApplyPresetScreen(OmegaScreen):
             yield Static(_("APPLIQUER UNE POLITIQUE PRÉDÉFINIE"), classes="omega-title")
 
             if self._active_keys:
-                names = [get_preset(k).name if get_preset(k) else k for k in self._active_keys]
-                yield Static(_("Profil(s) actif(s) : {value}").format(value=', '.join(names)), classes="omega-hint")
+                names = [
+                    get_preset(k).name if get_preset(k) else k
+                    for k in self._active_keys
+                ]
+                yield Static(
+                    _("Profil(s) actif(s) : {value}").format(value=", ".join(names)),
+                    classes="omega-hint",
+                )
             else:
-                yield Static(_("Aucun profil actuellement actif (règles personnalisées)."), classes="omega-hint")
+                yield Static(
+                    _("Aucun profil actuellement actif (règles personnalisées)."),
+                    classes="omega-hint",
+                )
 
             yield Static(_("Profil"), classes="omega-subtitle")
             presets = list_presets()
@@ -77,7 +87,9 @@ class ApplyPresetScreen(OmegaScreen):
                 value=presets[0].key,
                 id="preset-select",
             )
-            yield Static(presets[0].description, id="preset-detail", classes="omega-hint")
+            yield Static(
+                presets[0].description, id="preset-detail", classes="omega-hint"
+            )
 
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
@@ -90,7 +102,9 @@ class ApplyPresetScreen(OmegaScreen):
         if event.select.id != "preset-select":
             return
         preset = get_preset(str(event.value))
-        self.query_one("#preset-detail", Static).update(preset.description if preset else "")
+        self.query_one("#preset-detail", Static).update(
+            preset.description if preset else ""
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -113,7 +127,12 @@ class ApplyPresetScreen(OmegaScreen):
             if registry.is_available("iptables"):
                 available_backends.append("iptables")
         if not available_backends:
-            self.app.notify(_("Aucun backend firewall disponible (nftables/iptables non détectés)."), severity="error")
+            self.app.notify(
+                _(
+                    "Aucun backend firewall disponible (nftables/iptables non détectés)."
+                ),
+                severity="error",
+            )
             return
 
         adapters = self._firewall_adapters()
@@ -126,7 +145,9 @@ class ApplyPresetScreen(OmegaScreen):
         if foreign:
             choices = [(_("Tous les backends — efface ces règles"), "all", "error")]
             if adapters.get("nftables") is not None:
-                choices.append((_("Seulement nftables — garde ces règles"), "nftables", "warning"))
+                choices.append(
+                    (_("Seulement nftables — garde ces règles"), "nftables", "warning")
+                )
             self.app.push_screen(
                 ChoiceScreen(
                     title=_("RÈGLES D'AUTRES OUTILS DÉTECTÉES"),
@@ -140,7 +161,11 @@ class ApplyPresetScreen(OmegaScreen):
                         "• Seulement nftables : les règles des autres outils restent en place ; les deux "
                         "pare-feu s'appliquent ensemble, un paquet doit être accepté par les deux.\n\n"
                         "Une sauvegarde automatique est tentée avant application. Détails : touche « a »."
-                    ).format(name=preset.name, targets=", ".join(targets), detail=describe_foreign_rules(foreign)),
+                    ).format(
+                        name=preset.name,
+                        targets=", ".join(targets),
+                        detail=describe_foreign_rules(foreign),
+                    ),
                     choices=choices,
                     help_node="3.4",
                 ),
@@ -152,10 +177,14 @@ class ApplyPresetScreen(OmegaScreen):
             ConfirmScreen(
                 title=_("CONFIRMER LE BASCULEMENT"),
                 message=(
-                    _("Le profil '{name}' va REMPLACER toutes les règles actives sur : {value}.\nUne sauvegarde automatique sera tentée avant application.").format(name=preset.name, value=', '.join(targets))
+                    _(
+                        "Le profil '{name}' va REMPLACER toutes les règles actives sur : {value}.\nUne sauvegarde automatique sera tentée avant application."
+                    ).format(name=preset.name, value=", ".join(targets))
                 ),
             ),
-            lambda confirmed: self._apply_choice("all" if confirmed else None, preset, adapters),
+            lambda confirmed: self._apply_choice(
+                "all" if confirmed else None, preset, adapters
+            ),
         )
 
     def _firewall_adapters(self) -> dict[str, object]:
@@ -167,7 +196,9 @@ class ApplyPresetScreen(OmegaScreen):
                 adapters[name] = None
         return adapters
 
-    def _apply_choice(self, choice: str | None, preset, firewall_adapters: dict[str, object]) -> None:
+    def _apply_choice(
+        self, choice: str | None, preset, firewall_adapters: dict[str, object]
+    ) -> None:
         if choice not in ("all", "nftables"):
             return
 
@@ -187,7 +218,9 @@ class ApplyPresetScreen(OmegaScreen):
 
         def _execute():
             return ApplyPresetToAllBackendsCommand(
-                adapters=adapters, persistence_port=persistence_port, rule_repository=rule_repository,
+                adapters=adapters,
+                persistence_port=persistence_port,
+                rule_repository=rule_repository,
             ).execute(ApplyPresetAllBackendsRequest(preset=preset))
 
         def _on_done(result) -> None:
@@ -198,15 +231,33 @@ class ApplyPresetScreen(OmegaScreen):
             for outcome in result.outcomes:
                 if outcome.success:
                     any_success = True
-                    self.app.notify(outcome.message, title=outcome.backend, severity="information")
+                    self.app.notify(
+                        outcome.message, title=outcome.backend, severity="information"
+                    )
                 else:
-                    self.app.notify(outcome.message, title=outcome.backend, severity="error")
+                    self.app.notify(
+                        outcome.message, title=outcome.backend, severity="error"
+                    )
 
-            log_action_result(self._container, _ACTION_TITLE, status="success" if any_success else "failure")
+            log_action_result(
+                self._container,
+                _ACTION_TITLE,
+                status="success" if any_success else "failure",
+            )
             self.dismiss()
 
         def _on_error(error: Exception) -> None:
-            self.app.notify(_("Échec de l'application du profil : {error}").format(error=error), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(error))
+            self.app.notify(
+                _("Échec de l'application du profil : {error}").format(error=error),
+                severity="error",
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(error)
+            )
 
-        self.run_blocking(_execute, _on_done, busy_message=_("Application du profil en cours..."), on_error=_on_error)
+        self.run_blocking(
+            _execute,
+            _on_done,
+            busy_message=_("Application du profil en cours..."),
+            on_error=_on_error,
+        )

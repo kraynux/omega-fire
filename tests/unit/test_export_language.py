@@ -2,6 +2,7 @@
 """Langue des exports (OMEGA-FIRE_PLAN-DETAILLE_I18N.md, lot N, Q3) : reglage dans Reglages,
 traduction le temps d'un export seulement (sans toucher l'interface ni les autres fils),
 modeles .j2 traduits au rendu, lang/dir du document."""
+
 from __future__ import annotations
 
 import asyncio
@@ -23,7 +24,10 @@ from omega_fire.application.commands.select_language import (
 from omega_fire.application.exceptions import UnknownLanguageError
 from omega_fire.infrastructure.config.paths import TEMPLATES_DIR
 from omega_fire.infrastructure.exporters.html_exporter import HtmlExporter
-from omega_fire.infrastructure.i18n.gettext_language_catalog import DEFAULT_LOCALE_DIR, GettextLanguageCatalog
+from omega_fire.infrastructure.i18n.gettext_language_catalog import (
+    DEFAULT_LOCALE_DIR,
+    GettextLanguageCatalog,
+)
 from omega_fire.interfaces.tui.export_language import export_translation
 from omega_fire.interfaces.tui.screens.settings_screen import SettingsScreen
 from omega_fire.ports.language_catalog import LanguageCatalogError
@@ -32,15 +36,24 @@ from omega_fire.shared.i18n import STATE, _, html_dir, html_lang, translating_as
 from .i18n_helpers import FakeContainer, HostApp, MemorySettings, write_mo
 
 _J2_CALL = re.compile(r'_\(\s*"((?:[^"\\]|\\.)*)"\s*\)')
-_RULESET = {"generated_at": "2026-10-28 10:00:00", "filter_label": "f", "total_rules": 0,
-            "total_groups": 0, "groups": []}
+_RULESET = {
+    "generated_at": "2026-10-28 10:00:00",
+    "filter_label": "f",
+    "total_rules": 0,
+    "total_groups": 0,
+    "groups": [],
+}
 
 
 class TranslatingAsTest(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.locale = Path(self._tmp.name)
-        write_mo(self.locale / "de" / "LC_MESSAGES" / "omega-fire.mo", {"Bonjour": "Hallo"}, "validated")
+        write_mo(
+            self.locale / "de" / "LC_MESSAGES" / "omega-fire.mo",
+            {"Bonjour": "Hallo"},
+            "validated",
+        )
         self.catalog = GettextLanguageCatalog(self.locale)
         STATE.reset()
 
@@ -82,7 +95,9 @@ class TranslatingAsTest(unittest.TestCase):
 
     def test_missing_or_broken_catalog_refused(self) -> None:
         (self.locale / "it" / "LC_MESSAGES").mkdir(parents=True)
-        (self.locale / "it" / "LC_MESSAGES" / "omega-fire.mo").write_bytes(b"pas un catalogue")
+        (self.locale / "it" / "LC_MESSAGES" / "omega-fire.mo").write_bytes(
+            b"pas un catalogue"
+        )
         for code in ("es", "it"):
             with self.subTest(code=code), self.assertRaises(LanguageCatalogError):
                 load_export_language(self.catalog, code)
@@ -92,7 +107,11 @@ class ExportLanguageSettingTest(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
-        write_mo(self.root / "locale" / "de" / "LC_MESSAGES" / "omega-fire.mo", {"Bonjour": "Hallo"}, "validated")
+        write_mo(
+            self.root / "locale" / "de" / "LC_MESSAGES" / "omega-fire.mo",
+            {"Bonjour": "Hallo"},
+            "validated",
+        )
         self.settings = MemorySettings()
         self.container = FakeContainer(self.settings, self.root)
 
@@ -107,20 +126,28 @@ class ExportLanguageSettingTest(unittest.TestCase):
 
     def test_select_saves_code_like_interface_saved_empty_unknown_refused(self) -> None:
         catalog = self.container.language_catalog
-        select_export_language(settings_store=self.settings, catalog=catalog, language_code="de")
+        select_export_language(
+            settings_store=self.settings, catalog=catalog, language_code="de"
+        )
         self.assertEqual(self.settings.values[EXPORT_LANGUAGE_KEY], "de")
-        select_export_language(settings_store=self.settings, catalog=catalog, language_code="")
+        select_export_language(
+            settings_store=self.settings, catalog=catalog, language_code=""
+        )
         self.assertEqual(self.settings.values[EXPORT_LANGUAGE_KEY], "")
         with self.assertRaises(UnknownLanguageError):
-            select_export_language(settings_store=self.settings, catalog=catalog, language_code="es")
+            select_export_language(
+                settings_store=self.settings, catalog=catalog, language_code="es"
+            )
 
     def test_broken_catalog_exports_in_interface_language_and_says_so(self) -> None:
         self.settings.values[EXPORT_LANGUAGE_KEY] = "de"
-        (self.root / "locale" / "de" / "LC_MESSAGES" / "omega-fire.mo").write_bytes(b"abime")
+        (self.root / "locale" / "de" / "LC_MESSAGES" / "omega-fire.mo").write_bytes(
+            b"abime"
+        )
         notes: list[str] = []
 
         class Screen:
-            class app:  # noqa: N801 - imite screen.app.notify
+            class app:
                 @staticmethod
                 def notify(message, **_kwargs):
                     notes.append(str(message))
@@ -140,13 +167,16 @@ class ExportLanguageSettingTest(unittest.TestCase):
         asyncio.run(scenario())
         return app
 
-    def test_settings_screen_offers_like_interface_then_languages_and_apply_saves(self) -> None:
+    def test_settings_screen_offers_like_interface_then_languages_and_apply_saves(
+        self,
+    ) -> None:
         async def steps(app, pilot):
             select = app.screen.query_one("#export-language-select", Select)
             self.assertEqual(select.value, "__interface__")
             select.value = "de"
             app.screen.query_one("#apply", Button).press()
             await pilot.pause()
+
         self._run(steps)
         self.assertEqual(self.settings.values[EXPORT_LANGUAGE_KEY], "de")
 
@@ -159,6 +189,7 @@ class ExportLanguageSettingTest(unittest.TestCase):
             select.value = "__interface__"
             app.screen.query_one("#apply", Button).press()
             await pilot.pause()
+
         self._run(steps)
         self.assertEqual(self.settings.values[EXPORT_LANGUAGE_KEY], "")
 
@@ -178,7 +209,9 @@ class ShippedTemplatesTest(unittest.TestCase):
 
     def _render(self, state) -> str:
         with translating_as(state):
-            HtmlExporter(TEMPLATES_DIR).export_data(_RULESET, self.out, template_name="ruleset.html.j2")
+            HtmlExporter(TEMPLATES_DIR).export_data(
+                _RULESET, self.out, template_name="ruleset.html.j2"
+            )
         return self.out.read_text(encoding="utf-8")
 
     def test_french_by_default(self) -> None:
@@ -190,14 +223,26 @@ class ShippedTemplatesTest(unittest.TestCase):
         page = self._render(load_export_language(self.catalog, "ar"))
         self.assertIn('<html lang="ar" dir="rtl">', page)
         self.assertNotIn("Synthèse des règles firewall", page)
-        self.assertIn(load_export_language(self.catalog, "ar").gettext("Synthèse des règles firewall"), page)
+        self.assertIn(
+            load_export_language(self.catalog, "ar").gettext(
+                "Synthèse des règles firewall"
+            ),
+            page,
+        )
 
     def test_every_template_phrase_translated_in_every_catalog(self) -> None:
-        msgids = sorted({m.group(1) for path in TEMPLATES_DIR.glob("*.j2")
-                         for m in _J2_CALL.finditer(path.read_text(encoding="utf-8"))})
+        msgids = sorted(
+            {
+                m.group(1)
+                for path in TEMPLATES_DIR.glob("*.j2")
+                for m in _J2_CALL.finditer(path.read_text(encoding="utf-8"))
+            }
+        )
         self.assertGreater(len(msgids), 100)
         for code in self.catalog.available():
-            with (DEFAULT_LOCALE_DIR / code / "LC_MESSAGES" / "omega-fire.mo").open("rb") as handle:
+            with (DEFAULT_LOCALE_DIR / code / "LC_MESSAGES" / "omega-fire.mo").open(
+                "rb"
+            ) as handle:
                 known = gettext.GNUTranslations(handle)._catalog  # type: ignore[attr-defined]
             missing = [m for m in msgids if not known.get(m)]
             with self.subTest(code=code):

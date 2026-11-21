@@ -3,6 +3,7 @@
 vider un backend qui porte aussi les regles d'un autre outil, l'utilisateur choisit —
 tout appliquer, seulement nftables, ou annuler). Meme style que ConfirmScreen ; les
 options sont empilees (libelles longs, traduits), le message defile si besoin."""
+
 from __future__ import annotations
 
 from typing import ClassVar
@@ -19,10 +20,18 @@ from omega_fire.shared.i18n import _
 class ChoiceScreen(ModalScreen[str | None]):
     """Retourne l'identifiant de l'option choisie, ou None (Annuler / echap)."""
 
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "back", _("Annuler"), show=True)]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "back", _("Annuler"), show=True)
+    ]
 
-    def __init__(self, *, title: str, message: str, choices: list[tuple[str, str, str]],
-                 help_node: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        title: str,
+        message: str,
+        choices: list[tuple[str, str, str]],
+        help_node: str | None = None,
+    ) -> None:
         """choices : (libelle, identifiant, variante du bouton : error / warning / primary).
         help_node : action dont l'aide s'ouvre avec la touche `a`."""
         super().__init__()
@@ -42,7 +51,9 @@ class ChoiceScreen(ModalScreen[str | None]):
         entry = get_help_entry(self._help_node)
         if entry is None:
             return None
-        return _("Action {node_id}").format(node_id=self._help_node), format_help_entry(entry)
+        return _("Action {node_id}").format(node_id=self._help_node), format_help_entry(
+            entry
+        )
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="omega-confirm-box omega-choice-box"):
@@ -58,7 +69,11 @@ class ChoiceScreen(ModalScreen[str | None]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id or ""
-        self.dismiss(button_id.removeprefix("choice-") if button_id.startswith("choice-") else None)
+        self.dismiss(
+            button_id.removeprefix("choice-")
+            if button_id.startswith("choice-")
+            else None
+        )
 
     def action_back(self) -> None:
         self.dismiss(None)

@@ -8,14 +8,16 @@ and compliance.
 This module performs file I/O to write audit logs and is therefore
 in infrastructure/.
 """
+
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, List
+from typing import Any
 
-from omega_fire.ports.audit import AuditPort, AuditEntry, AuditLevel
 from omega_fire.infrastructure.config.paths import AUDIT_LOG_PATH, LOGS_DIR
+from omega_fire.ports.audit import AuditEntry, AuditLevel, AuditPort
+
 
 class AuditLogger(AuditPort):
     """Specialized logger for audit events.
@@ -25,7 +27,7 @@ class AuditLogger(AuditPort):
     and result.
     """
 
-    def __init__(self, name: str = "omega_fire.audit", log_dir: Optional[Path] = None):
+    def __init__(self, name: str = "omega_fire.audit", log_dir: Path | None = None):
         """Initialize the audit logger.
 
         Args:
@@ -45,7 +47,9 @@ class AuditLogger(AuditPort):
         # Empêche les événements d'audit de remonter dans app.log
         self._logger.propagate = False
         # Vérifie si le FileHandler est déjà présent pour éviter les doublons d'écriture
-        has_file_handler = any(isinstance(h, logging.FileHandler) for h in self._logger.handlers)
+        has_file_handler = any(
+            isinstance(h, logging.FileHandler) for h in self._logger.handlers
+        )
 
         if not has_file_handler:
             try:
@@ -54,7 +58,7 @@ class AuditLogger(AuditPort):
 
                 # 2. Création du handler d'écriture sur le fichier audit.log
                 file_handler = logging.FileHandler(self.log_file, encoding="utf-8")
-                
+
                 # Format brut : on écrit uniquement le JSON sur chaque ligne
                 formatter = logging.Formatter("%(message)s")
                 file_handler.setFormatter(formatter)
@@ -75,9 +79,9 @@ class AuditLogger(AuditPort):
         target: str,
         *,
         level: AuditLevel = AuditLevel.INFO,
-        details: Optional[dict] = None,
+        details: dict | None = None,
         success: bool = True,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """Enregistre un événement d'audit conforme au contrat AuditPort."""
         result = "success" if success else "failure"
@@ -94,9 +98,9 @@ class AuditLogger(AuditPort):
             details=evt_details,
         )
 
-    def get_recent(self, limit: int = 50) -> List[AuditEntry]:
+    def get_recent(self, limit: int = 50) -> list[AuditEntry]:
         """Récupère les N plus récentes entrées d'audit pour l'affichage UI."""
-        entries: List[AuditEntry] = []
+        entries: list[AuditEntry] = []
 
         # Si aucun handler fichier n'est configuré ou que le fichier n'existe pas
         if not self.log_file.exists():
@@ -112,7 +116,9 @@ class AuditLogger(AuditPort):
                     continue
                 try:
                     data = json.loads(line)
-                    dt = datetime.fromisoformat(data.get("timestamp", datetime.now().isoformat()))
+                    dt = datetime.fromisoformat(
+                        data.get("timestamp", datetime.now().isoformat())
+                    )
                     level = AuditLevel.INFO
                     success = data.get("result") == "success"
 
@@ -135,7 +141,7 @@ class AuditLogger(AuditPort):
 
         return entries
 
-    def get_all_since(self, since: Optional[datetime] = None) -> List[AuditEntry]:
+    def get_all_since(self, since: datetime | None = None) -> list[AuditEntry]:
         """Récupère toutes les entrées d'audit depuis une date donnée.
 
         Contrairement à get_recent()/search(), ne s'arrête pas à une
@@ -152,7 +158,7 @@ class AuditLogger(AuditPort):
             ancien en premier), contrairement à get_recent() qui
             retourne du plus récent au plus ancien.
         """
-        entries: List[AuditEntry] = []
+        entries: list[AuditEntry] = []
 
         if not self.log_file.exists():
             return entries
@@ -196,13 +202,13 @@ class AuditLogger(AuditPort):
     def search(
         self,
         *,
-        action: Optional[str] = None,
-        actor: Optional[str] = None,
-        target: Optional[str] = None,
-        level: Optional[AuditLevel] = None,
-        since: Optional[datetime] = None,
+        action: str | None = None,
+        actor: str | None = None,
+        target: str | None = None,
+        level: AuditLevel | None = None,
+        since: datetime | None = None,
         limit: int = 100,
-    ) -> List[AuditEntry]:
+    ) -> list[AuditEntry]:
         """Recherche des entrées d'audit."""
         recent = self.get_recent(limit=limit)
         filtered = []
@@ -216,7 +222,7 @@ class AuditLogger(AuditPort):
             filtered.append(e)
         return filtered
 
-    def clear(self, older_than: Optional[datetime] = None) -> int:
+    def clear(self, older_than: datetime | None = None) -> int:
         """Purge les entrées d'audit.
 
         If older_than is provided, only entries strictly BEFORE that
@@ -253,7 +259,9 @@ class AuditLogger(AuditPort):
                 continue
             try:
                 data = json.loads(stripped)
-                dt = datetime.fromisoformat(data.get("timestamp", datetime.now().isoformat()))
+                dt = datetime.fromisoformat(
+                    data.get("timestamp", datetime.now().isoformat())
+                )
             except (json.JSONDecodeError, ValueError):
                 # Ligne corrompue/illisible : conservée par précaution
                 # plutôt que supprimée silencieusement sans certitude
@@ -303,7 +311,9 @@ class AuditLogger(AuditPort):
                 continue
             try:
                 data = json.loads(stripped)
-                dt = datetime.fromisoformat(data.get("timestamp", datetime.now().isoformat()))
+                dt = datetime.fromisoformat(
+                    data.get("timestamp", datetime.now().isoformat())
+                )
                 parsed.append((dt, line))
             except (json.JSONDecodeError, ValueError):
                 # Conservée par précaution, jamais comptée parmi les
@@ -337,7 +347,7 @@ class AuditLogger(AuditPort):
         actor: str,
         action: str,
         result: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Log an audit event."""
         event = {
@@ -352,7 +362,7 @@ class AuditLogger(AuditPort):
         self._logger.info(json.dumps(event, ensure_ascii=False))
         for handler in self._logger.handlers:
             handler.flush()
-            
+
     def log_ban(
         self,
         ip: str,
@@ -390,7 +400,7 @@ class AuditLogger(AuditPort):
         backend: str,
         actor: str = "user",
         result: str = "success",
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         self.log_event(
             event_type="rule_change",
@@ -507,4 +517,4 @@ def get_audit_logger() -> AuditLogger:
 # - application/pipeline/hooks/audit_hook.py l'utilisera pour logger les événements
 # - Tous les cas d'usage importants loggeront leurs actions via AuditLogger
 # - Les tests mockeront AuditLogger pour vérifier les appels
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

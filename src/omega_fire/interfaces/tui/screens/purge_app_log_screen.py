@@ -5,6 +5,7 @@ Purger' de l'ecran 1.5). Memes 4 modes qu'action_1_5_app_log::_do_manage_log
 memes methodes AppLogger.clear()/delete_oldest() que AuditLogger, donc
 copie quasi verbatim de purge_audit_history_screen.py (7.3), en ciblant
 app_logger au lieu de audit_port."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -38,7 +39,9 @@ class PurgeAppLogScreen(OmegaScreen):
         with Vertical(classes="omega-form-panel"):
             yield Static(_("GESTION DU JOURNAL APPLICATIF"), classes="omega-title")
             yield Static(
-                _("Choisissez un mode de purge. Opération irréversible, confirmation demandée."),
+                _(
+                    "Choisissez un mode de purge. Opération irréversible, confirmation demandée."
+                ),
                 classes="omega-hint",
             )
             yield Select(
@@ -51,8 +54,16 @@ class PurgeAppLogScreen(OmegaScreen):
                 value="30d",
                 id="mode-select",
             )
-            yield Input(placeholder=_("Date limite (JJ/MM/AAAA)"), id="date-input", classes="omega-hidden")
-            yield Input(placeholder=_("Nombre d'entrées les plus anciennes à supprimer"), id="count-input", classes="omega-hidden")
+            yield Input(
+                placeholder=_("Date limite (JJ/MM/AAAA)"),
+                id="date-input",
+                classes="omega-hidden",
+            )
+            yield Input(
+                placeholder=_("Nombre d'entrées les plus anciennes à supprimer"),
+                id="count-input",
+                classes="omega-hidden",
+            )
             with Horizontal(classes="omega-actions"):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Supprimer"), id="launch", variant="error")
@@ -100,20 +111,32 @@ class PurgeAppLogScreen(OmegaScreen):
             try:
                 older_than = datetime.strptime(raw_date, "%d/%m/%Y")
             except ValueError:
-                self.app.notify(_("Format de date invalide (attendu : JJ/MM/AAAA)."), severity="error")
+                self.app.notify(
+                    _("Format de date invalide (attendu : JJ/MM/AAAA)."),
+                    severity="error",
+                )
                 return
-            removal_label = _("les entrées antérieures au {raw_date}").format(raw_date=raw_date)
+            removal_label = _("les entrées antérieures au {raw_date}").format(
+                raw_date=raw_date
+            )
         elif mode == "count":
             raw_count = self.query_one("#count-input", Input).value.strip()
             if not raw_count.isdigit() or int(raw_count) <= 0:
                 self.app.notify(_("Nombre invalide."), severity="warning")
                 return
             count = int(raw_count)
-            removal_label = _("les {count} entrées les plus anciennes").format(count=count)
+            removal_label = _("les {count} entrées les plus anciennes").format(
+                count=count
+            )
 
         self._pending = {"mode": mode, "older_than": older_than, "count": count}
         self.app.push_screen(
-            ConfirmScreen(title=_("CONFIRMER LA SUPPRESSION"), message=_("Vous allez supprimer {removal_label}.").format(removal_label=removal_label)),
+            ConfirmScreen(
+                title=_("CONFIRMER LA SUPPRESSION"),
+                message=_("Vous allez supprimer {removal_label}.").format(
+                    removal_label=removal_label
+                ),
+            ),
             self._delete_if_confirmed,
         )
 
@@ -125,7 +148,9 @@ class PurgeAppLogScreen(OmegaScreen):
         try:
             app_logger = self._container.app_logger
         except Exception as e:
-            self.app.notify(_("Logger applicatif indisponible : {e}").format(e=e), severity="error")
+            self.app.notify(
+                _("Logger applicatif indisponible : {e}").format(e=e), severity="error"
+            )
             self._pending = None
             return
         if app_logger is None:
@@ -139,8 +164,12 @@ class PurgeAppLogScreen(OmegaScreen):
             else:
                 removed = app_logger.clear(older_than=self._pending["older_than"])
         except Exception as e:
-            self.app.notify(_("Erreur lors de la suppression : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Erreur lors de la suppression : {e}").format(e=e), severity="error"
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             self._pending = None
             return
 

@@ -6,46 +6,55 @@ These express business rule violations, not technical failures.
 They are caught by application/ and translated into Results
 or user-facing messages.
 """
+
 from omega_fire.shared.i18n import _
 
 
 class RulesError(Exception):
     """Base exception for rules domain.
-    
+
     All domain-specific exceptions for firewall rules inherit from this.
     """
-    pass
 
 
 class InvalidRuleError(RulesError):
     """Raised when a firewall rule is structurally invalid.
-    
+
     Examples: invalid protocol, invalid port range, invalid CIDR,
     missing required field, action incompatible with chain.
     """
+
     def __init__(self, rule_description: str, reason: str):
         self.rule_description = rule_description
         self.reason = reason
-        super().__init__(_("Règle invalide ({rule_description}) : {reason}").format(rule_description=rule_description, reason=reason))
+        super().__init__(
+            _("Règle invalide ({rule_description}) : {reason}").format(
+                rule_description=rule_description, reason=reason
+            )
+        )
 
 
 class ConflictingRuleError(RulesError):
     """Raised when a new rule conflicts with an existing one.
-    
+
     Examples: duplicate rule, overlapping port ranges with same
     priority, contradictory actions on the same traffic.
     """
+
     def __init__(self, new_rule: str, existing_rule: str, reason: str):
         self.new_rule = new_rule
         self.existing_rule = existing_rule
         self.reason = reason
         super().__init__(
-            _("Conflit de règles : {new_rule} entre en conflit avec {existing_rule} — {reason}").format(new_rule=new_rule, existing_rule=existing_rule, reason=reason)
+            _(
+                "Conflit de règles : {new_rule} entre en conflit avec {existing_rule} — {reason}"
+            ).format(new_rule=new_rule, existing_rule=existing_rule, reason=reason)
         )
 
 
 class RuleNotFoundError(RulesError):
     """Raised when attempting to delete or modify a non-existent rule."""
+
     def __init__(self, rule_id: int):
         self.rule_id = rule_id
         super().__init__(_("Règle d'ID {rule_id} introuvable").format(rule_id=rule_id))
@@ -57,10 +66,15 @@ class InvalidPolicyError(RulesError):
     Examples: policy requires a backend that is missing,
     policy parameters are incompatible with current state.
     """
+
     def __init__(self, policy_name: str, reason: str):
         self.policy_name = policy_name
         self.reason = reason
-        super().__init__(_("Politique « {policy_name} » invalide : {reason}").format(policy_name=policy_name, reason=reason))
+        super().__init__(
+            _("Politique « {policy_name} » invalide : {reason}").format(
+                policy_name=policy_name, reason=reason
+            )
+        )
 
 
 class PolicyNotFoundError(RulesError):
@@ -69,22 +83,33 @@ class PolicyNotFoundError(RulesError):
     Distinct from InvalidPolicyError: this is "no policy by that name
     exists", not "the policy exists but can't be applied right now".
     """
+
     def __init__(self, policy_name: str, reason: str):
         self.policy_name = policy_name
         self.reason = reason
-        super().__init__(_("Politique « {policy_name} » introuvable : {reason}").format(policy_name=policy_name, reason=reason))
+        super().__init__(
+            _("Politique « {policy_name} » introuvable : {reason}").format(
+                policy_name=policy_name, reason=reason
+            )
+        )
 
 
 class ChainError(RulesError):
     """Raised when a chain operation is invalid.
-    
+
     Examples: creating a rule in a non-existent chain,
     invalid chain name, chain type mismatch.
     """
+
     def __init__(self, chain_name: str, reason: str):
         self.chain_name = chain_name
         self.reason = reason
-        super().__init__(_("Erreur sur la chaîne « {chain_name} » : {reason}").format(chain_name=chain_name, reason=reason))
+        super().__init__(
+            _("Erreur sur la chaîne « {chain_name} » : {reason}").format(
+                chain_name=chain_name, reason=reason
+            )
+        )
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -113,4 +138,4 @@ class ChainError(RulesError):
 # domain/rules/service.py les lèvera quand une règle métier est violée
 # application/commands/create_rule.py les capturera et les traduira en Result.fail()
 # interfaces/cli/actions.py affichera le message à l'utilisateur
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

@@ -14,8 +14,9 @@ Conforms to Omega-Fire architecture charter:
   already resolved by the caller)
 - No subprocess calls
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from omega_fire.infrastructure.storage.files.json_store import JsonStore, JsonStoreError
 from omega_fire.shared.i18n import N_, _
@@ -26,17 +27,116 @@ from omega_fire.shared.i18n import N_, _
 PRESET_FIELDS = ("name", "desc", "log", "port", "filter", "retry", "find", "ban")
 
 DEFAULT_JAIL_PRESETS: list[dict[str, str]] = [
-    {"name": "sshd-custom", "desc": N_("SSH — Protection Authentification système (Auth log)"), "log": "/var/log/auth.log", "port": "ssh", "filter": "sshd", "retry": "3", "find": "15m", "ban": "24h"},
-    {"name": "syslog-custom", "desc": N_("Syslog — Surveillance des événements système généraux"), "log": "/var/log/syslog", "port": "all", "filter": "syslog-errors", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "caddy-access", "desc": N_("Caddy — Access Log (Scanners, 404/403, Brute-force)"), "log": "/var/log/caddy/access.log", "port": "http,https", "filter": "caddy-custom", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "caddy-error", "desc": N_("Caddy — Error Log (Échecs d'authentification & erreurs)"), "log": "/var/log/caddy/error.log", "port": "http,https", "filter": "caddy-custom", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "lighttpd-access", "desc": N_("Lighttpd — Access Log (Scanners, requêtes abusives)"), "log": "/var/log/lighttpd/access.log", "port": "http,https", "filter": "lighttpd-auth", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "lighttpd-error", "desc": N_("Lighttpd — Error Log (Échecs d'authentification HTTP)"), "log": "/var/log/lighttpd/error.log", "port": "http,https", "filter": "lighttpd-auth", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "nginx-access", "desc": N_("Nginx — Access Log (Scanners de failles, bots, 404/403)"), "log": "/var/log/nginx/access.log", "port": "http,https", "filter": "nginx-botsearch", "retry": "5", "find": "10m", "ban": "2h"},
-    {"name": "nginx-error", "desc": N_("Nginx — Error Log (Échecs Auth HTTP 401/403 & erreurs)"), "log": "/var/log/nginx/error.log", "port": "http,https", "filter": "nginx-http-auth", "retry": "5", "find": "10m", "ban": "2h"},
-    {"name": "apache-access", "desc": N_("Apache — Access Log (Scanners de scripts & bots)"), "log": "/var/log/apache2/access.log", "port": "http,https", "filter": "apache-noscript", "retry": "5", "find": "10m", "ban": "1h"},
-    {"name": "apache-error", "desc": N_("Apache — Error Log (Échecs Auth HTTP 401 & refus)"), "log": "/var/log/apache2/error.log", "port": "http,https", "filter": "apache-auth", "retry": "4", "find": "10m", "ban": "1h"},
-    {"name": "wordpress-auth", "desc": N_("WordPress — Attaques wp-login / xmlrpc (Access)"), "log": "/var/log/nginx/access.log", "port": "http,https", "filter": "wordpress", "retry": "3", "find": "20m", "ban": "24h"},
+    {
+        "name": "sshd-custom",
+        "desc": N_("SSH — Protection Authentification système (Auth log)"),
+        "log": "/var/log/auth.log",
+        "port": "ssh",
+        "filter": "sshd",
+        "retry": "3",
+        "find": "15m",
+        "ban": "24h",
+    },
+    {
+        "name": "syslog-custom",
+        "desc": N_("Syslog — Surveillance des événements système généraux"),
+        "log": "/var/log/syslog",
+        "port": "all",
+        "filter": "syslog-errors",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "caddy-access",
+        "desc": N_("Caddy — Access Log (Scanners, 404/403, Brute-force)"),
+        "log": "/var/log/caddy/access.log",
+        "port": "http,https",
+        "filter": "caddy-custom",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "caddy-error",
+        "desc": N_("Caddy — Error Log (Échecs d'authentification & erreurs)"),
+        "log": "/var/log/caddy/error.log",
+        "port": "http,https",
+        "filter": "caddy-custom",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "lighttpd-access",
+        "desc": N_("Lighttpd — Access Log (Scanners, requêtes abusives)"),
+        "log": "/var/log/lighttpd/access.log",
+        "port": "http,https",
+        "filter": "lighttpd-auth",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "lighttpd-error",
+        "desc": N_("Lighttpd — Error Log (Échecs d'authentification HTTP)"),
+        "log": "/var/log/lighttpd/error.log",
+        "port": "http,https",
+        "filter": "lighttpd-auth",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "nginx-access",
+        "desc": N_("Nginx — Access Log (Scanners de failles, bots, 404/403)"),
+        "log": "/var/log/nginx/access.log",
+        "port": "http,https",
+        "filter": "nginx-botsearch",
+        "retry": "5",
+        "find": "10m",
+        "ban": "2h",
+    },
+    {
+        "name": "nginx-error",
+        "desc": N_("Nginx — Error Log (Échecs Auth HTTP 401/403 & erreurs)"),
+        "log": "/var/log/nginx/error.log",
+        "port": "http,https",
+        "filter": "nginx-http-auth",
+        "retry": "5",
+        "find": "10m",
+        "ban": "2h",
+    },
+    {
+        "name": "apache-access",
+        "desc": N_("Apache — Access Log (Scanners de scripts & bots)"),
+        "log": "/var/log/apache2/access.log",
+        "port": "http,https",
+        "filter": "apache-noscript",
+        "retry": "5",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "apache-error",
+        "desc": N_("Apache — Error Log (Échecs Auth HTTP 401 & refus)"),
+        "log": "/var/log/apache2/error.log",
+        "port": "http,https",
+        "filter": "apache-auth",
+        "retry": "4",
+        "find": "10m",
+        "ban": "1h",
+    },
+    {
+        "name": "wordpress-auth",
+        "desc": N_("WordPress — Attaques wp-login / xmlrpc (Access)"),
+        "log": "/var/log/nginx/access.log",
+        "port": "http,https",
+        "filter": "wordpress",
+        "retry": "3",
+        "find": "20m",
+        "ban": "24h",
+    },
 ]
 
 RELATIVE_STORE_PATH = "jail_presets.json"
@@ -45,6 +145,7 @@ RELATIVE_STORE_PATH = "jail_presets.json"
 @dataclass
 class JailPresetsResult:
     """Output of an add/remove operation on the jail presets list."""
+
     success: bool
     presets: list[dict[str, str]] = field(default_factory=list)
     message: str = ""
@@ -64,11 +165,14 @@ class ManageJailPresetsCommand:
         self,
         json_store: JsonStore,
         relative_path: str = RELATIVE_STORE_PATH,
-        defaults: Optional[list[dict[str, str]]] = None,
+        defaults: list[dict[str, str]] | None = None,
     ):
         self._store = json_store
         self._relative_path = relative_path
-        self._defaults = [dict(p) for p in (defaults if defaults is not None else DEFAULT_JAIL_PRESETS)]
+        self._defaults = [
+            dict(p)
+            for p in (defaults if defaults is not None else DEFAULT_JAIL_PRESETS)
+        ]
 
     def list_presets(self) -> list[dict[str, str]]:
         """Return the current presets, seeding the store on first use.
@@ -93,7 +197,9 @@ class ManageJailPresetsCommand:
 
         presets: list[dict[str, str]] = []
         for entry in data:
-            if not isinstance(entry, dict) or not all(f in entry for f in PRESET_FIELDS):
+            if not isinstance(entry, dict) or not all(
+                f in entry for f in PRESET_FIELDS
+            ):
                 return [dict(p) for p in self._defaults]
             presets.append({f: str(entry[f]) for f in PRESET_FIELDS})
         return presets
@@ -112,23 +218,34 @@ class ManageJailPresetsCommand:
         missing = [f for f in PRESET_FIELDS if f not in preset]
         if missing:
             return JailPresetsResult(
-                success=False, presets=presets,
-                message=_("Champ(s) manquant(s) : {value}.").format(value=', '.join(missing)),
+                success=False,
+                presets=presets,
+                message=_("Champ(s) manquant(s) : {value}.").format(
+                    value=", ".join(missing)
+                ),
             )
 
         name = str(preset["name"]).strip()
         if not name:
-            return JailPresetsResult(success=False, presets=presets, message=_("Nom de preset vide."))
+            return JailPresetsResult(
+                success=False, presets=presets, message=_("Nom de preset vide.")
+            )
         if any(p["name"] == name for p in presets):
             return JailPresetsResult(
-                success=False, presets=presets, message=_("Un preset nommé '{name}' existe déjà.").format(name=name)
+                success=False,
+                presets=presets,
+                message=_("Un preset nommé '{name}' existe déjà.").format(name=name),
             )
 
         new_preset = {f: str(preset[f]).strip() for f in PRESET_FIELDS}
         new_preset["name"] = name
         presets.append(new_preset)
         self._store.save(self._relative_path, presets)
-        return JailPresetsResult(success=True, presets=presets, message=_("Preset '{name}' ajouté à la liste.").format(name=name))
+        return JailPresetsResult(
+            success=True,
+            presets=presets,
+            message=_("Preset '{name}' ajouté à la liste.").format(name=name),
+        )
 
     def remove_preset(self, name: str) -> JailPresetsResult:
         """Remove a preset by name — any entry, default or user-added,
@@ -144,12 +261,18 @@ class ManageJailPresetsCommand:
         match = next((p for p in presets if p["name"] == name), None)
         if match is None:
             return JailPresetsResult(
-                success=False, presets=presets, message=_("'{name}' n'est pas dans la liste.").format(name=name)
+                success=False,
+                presets=presets,
+                message=_("'{name}' n'est pas dans la liste.").format(name=name),
             )
 
         presets.remove(match)
         self._store.save(self._relative_path, presets)
-        return JailPresetsResult(success=True, presets=presets, message=_("Preset '{name}' retiré de la liste.").format(name=name))
+        return JailPresetsResult(
+            success=True,
+            presets=presets,
+            message=_("Preset '{name}' retiré de la liste.").format(name=name),
+        )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -188,4 +311,4 @@ class ManageJailPresetsCommand:
 # interfaces/cli/actions.py : action_4_4_create_jail(ctx)
 # application/commands/manage_jail_presets.py : ManageJailPresetsCommand
 #   ↓ JsonStore (infrastructure/storage/files/json_store.py), base_dir=var/runtime/
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

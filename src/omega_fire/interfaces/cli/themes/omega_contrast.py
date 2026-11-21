@@ -4,72 +4,75 @@
 A high-accessibility theme designed for colorblind users and projection environments.
 Features high contrast, thick borders, and colors distinguishable by all vision types.
 """
+
 from rich.style import Style
 from rich.theme import Theme
+
 from omega_fire.interfaces.cli.themes.base import Theme as ThemeBase
 
 
 class OmegaContrastTheme(ThemeBase):
     """High-contrast accessibility theme for Omega-Fire."""
-    
+
     @property
     def name(self) -> str:
         return "omega-contrast"
-    
+
     @property
     def display_name(self) -> str:
         return "Omega Contrast (High Accessibility)"
-    
+
     @property
     def prefers_emojis(self) -> bool:
         return True
-    
+
     @property
     def supports_live_rendering(self) -> bool:
         return True
-    
-    def get_rich_theme(self) -> Theme:
-        return Theme({
-            "bg.deep": "#1a1a2e",
-            "bg.card": "#16213e",
-            "bg.header": "#0f3460",
-            "text.main": "#f0f0f0",
-            "text.muted": "#a0a0a0",
-            "text.heading": "#ffffff",
-            "text.link": "#004ff9",
-            "border.default": "#ffffff",
-            "border.accent": "#ff6b35",
-            "status.available": "bold #06ffa5",
-            "status.degraded": "bold #ff9f1c",
-            "status.missing": "bold #ff3535",
-            "status.disqualified": "dim #ff3535",
-            "backend.nftables": "bold #004ff9",
-            "backend.iptables": "bold #ff6b35",
-            "backend.fail2ban": "bold #ffd23f",
-            "backend.conntrack": "bold #06ffa5",
-            "menu.title": "bold #ffffff",
-            "menu.enabled": "#004ff9",
-            "menu.disabled": "dim #a0a0a0",
-            "menu.selected": "reverse bold #ff6b35",
-            "table.header": "bold #ffffff",
-            "table.border": "#ffffff",
-            "table.row.hover": "#16213e",
-            "action.success": "#06ffa5",
-            "action.warning": "#ff9f1c",
-            "action.error": "#ff3535",
-            "action.info": "#004ff9",
 
-            "text.info": "#004ff9",
-            "text.danger": "#ff3535",
-            "text.warning": "#ff9f1c",
-            "border.primary": "#ff6b35",
-            "menu.item": "#f0f0f0",  # = text.main (texte normal, pas d'accent)
-            "footer.key": "bold #ffffff",
-            "footer.label": "white",
-            "footer.separator": "#ff6b35",
-            "footer.context": "bold yellow",
-        })
-    
+    def get_rich_theme(self) -> Theme:
+        return Theme(
+            {
+                "bg.deep": "#1a1a2e",
+                "bg.card": "#16213e",
+                "bg.header": "#0f3460",
+                "text.main": "#f0f0f0",
+                "text.muted": "#a0a0a0",
+                "text.heading": "#ffffff",
+                "text.link": "#004ff9",
+                "border.default": "#ffffff",
+                "border.accent": "#ff6b35",
+                "status.available": "bold #06ffa5",
+                "status.degraded": "bold #ff9f1c",
+                "status.missing": "bold #ff3535",
+                "status.disqualified": "dim #ff3535",
+                "backend.nftables": "bold #004ff9",
+                "backend.iptables": "bold #ff6b35",
+                "backend.fail2ban": "bold #ffd23f",
+                "backend.conntrack": "bold #06ffa5",
+                "menu.title": "bold #ffffff",
+                "menu.enabled": "#004ff9",
+                "menu.disabled": "dim #a0a0a0",
+                "menu.selected": "reverse bold #ff6b35",
+                "table.header": "bold #ffffff",
+                "table.border": "#ffffff",
+                "table.row.hover": "#16213e",
+                "action.success": "#06ffa5",
+                "action.warning": "#ff9f1c",
+                "action.error": "#ff3535",
+                "action.info": "#004ff9",
+                "text.info": "#004ff9",
+                "text.danger": "#ff3535",
+                "text.warning": "#ff9f1c",
+                "border.primary": "#ff6b35",
+                "menu.item": "#f0f0f0",  # = text.main (texte normal, pas d'accent)
+                "footer.key": "bold #ffffff",
+                "footer.label": "white",
+                "footer.separator": "#ff6b35",
+                "footer.context": "bold yellow",
+            }
+        )
+
     def get_style(self, style_name: str) -> Style:
         return self.get_rich_theme().styles.get(style_name, Style(color="#f0f0f0"))
 
@@ -77,7 +80,7 @@ class OmegaContrastTheme(ThemeBase):
         """Check if terminal supports 24-bit colors."""
         colors = terminal_info.get("colors", "")
         return colors in ("24-bit", "truecolor")
-    
+
     def get_fallback_theme(self) -> str:
         """Return omega-mono as fallback."""
         return "omega-mono"
@@ -110,6 +113,7 @@ class OmegaContrastTheme(ThemeBase):
     def footer_context_style(self) -> str:
         return "bold yellow"
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Thème haute accessibilité pour daltoniens et projection
@@ -127,6 +131,4 @@ class OmegaContrastTheme(ThemeBase):
 # - Supporte les emojis et le rendu Live
 # - Bordures blanches (#ffffff) pour contraste maximal
 # - get_style() fournit un fallback sécurisé (#f0f0f0) si un style est manquant
-#---------------------------------------------------------------------->
-
-    
+# ---------------------------------------------------------------------->

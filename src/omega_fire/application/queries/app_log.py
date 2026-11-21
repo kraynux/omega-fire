@@ -10,13 +10,13 @@ Conforms to Omega-Fire architecture charter:
 - Returns formatted string for UI display
 - No dependency on interfaces/ or infrastructure/ directly
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any, Optional
-from omega_fire.shared.i18n import _
+from typing import Any
 
+from omega_fire.shared.i18n import _
 
 # ----------------------------------------------------------------------
 # Default log paths (fallback if port not available)
@@ -27,8 +27,9 @@ DEFAULT_LOG_PATHS = [
     Path("/var/log/omega-fire.log"),
 ]
 
+
 def read_app_log(
-    audit_port: Optional[Any] = None,
+    audit_port: Any | None = None,
     max_lines: int = 100,
     keyword: str = "",
 ) -> str:
@@ -37,15 +38,17 @@ def read_app_log(
     if audit_port is not None:
         try:
             entries = []
-            if hasattr(audit_port, 'get_recent'):
+            if hasattr(audit_port, "get_recent"):
                 entries = audit_port.get_recent(limit=max_lines)
-            elif hasattr(audit_port, 'read_log'):
+            elif hasattr(audit_port, "read_log"):
                 entries = audit_port.read_log(max_lines=max_lines, keyword=keyword)
-            
+
             if entries:
                 return _format_log_entries(entries, keyword)
         except Exception as e:
-            return _("⚠️ Erreur lors de la lecture via le port : {e}\n\n").format(e=e) + _fallback_read(max_lines, keyword)
+            return _("⚠️ Erreur lors de la lecture via le port : {e}\n\n").format(
+                e=e
+            ) + _fallback_read(max_lines, keyword)
 
     # Fallback: direct file reading (temporary until port is fully wired)
     return _fallback_read(max_lines, keyword)
@@ -62,72 +65,90 @@ def _format_log_entries(entries: list, keyword: str) -> str:
         kw = keyword.lower()
         filtered = []
         for e in entries:
-            act = getattr(e, 'action', str(e)).lower()
-            actor = getattr(e, 'actor', '').lower()
-            target = getattr(e, 'target', '').lower()
+            act = getattr(e, "action", str(e)).lower()
+            actor = getattr(e, "actor", "").lower()
+            target = getattr(e, "target", "").lower()
             if kw in act or kw in actor or kw in target:
                 filtered.append(e)
         entries = filtered
 
     content = []
     for entry in entries:
-        ts = getattr(entry, 'timestamp', '')
-        if hasattr(ts, 'strftime'):
+        ts = getattr(entry, "timestamp", "")
+        if hasattr(ts, "strftime"):
             ts = ts.strftime("%Y-%m-%d %H:%M:%S")
 
-        action = getattr(entry, 'action', str(entry))
-        actor = getattr(entry, 'actor', 'system')
-        target = getattr(entry, 'target', 'N/A')
-        success = getattr(entry, 'success', True)
+        action = getattr(entry, "action", str(entry))
+        actor = getattr(entry, "actor", "system")
+        target = getattr(entry, "target", "N/A")
+        success = getattr(entry, "success", True)
         status_text = "OK" if success else _("ÉCHEC")
 
-        content.append(_("[{ts}] [{status_text}] {action} (acteur: {actor}, cible: {target})").format(ts=ts, status_text=status_text, action=action, actor=actor, target=target))
+        content.append(
+            _(
+                "[{ts}] [{status_text}] {action} (acteur: {actor}, cible: {target})"
+            ).format(
+                ts=ts,
+                status_text=status_text,
+                action=action,
+                actor=actor,
+                target=target,
+            )
+        )
 
     if not content:
         return header + _("Aucune entrée d'audit trouvée.")
 
-    return header + "\n".join(content) + _("\n\n({count} entrée(s))").format(count=len(content))
+    return (
+        header
+        + "\n".join(content)
+        + _("\n\n({count} entrée(s))").format(count=len(content))
+    )
 
 
 def _fallback_read(max_lines: int, keyword: str) -> str:
     """Fallback: read log file directly if no audit port data is available."""
     log_path = _find_log_file()
-    
+
     if log_path is None or not log_path.exists():
-        return (
-            _("📋 Journal applicatif\n"
+        return _(
+            "📋 Journal applicatif\n"
             "═══════════════════════\n\n"
             "ℹ️ Aucun journal d'audit ou fichier de log enregistré pour le moment.\n"
             "Les événements s'afficheront ici au fur et à mesure des actions exécutées (ex: ban, sync, rescan).\n\n"
-            "Chemins vérifiés :\n")
-            + "\n".join(f"  • {p}" for p in DEFAULT_LOG_PATHS)
-        )
-    
+            "Chemins vérifiés :\n"
+        ) + "\n".join(f"  • {p}" for p in DEFAULT_LOG_PATHS)
+
     try:
-        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
-        
+
         if keyword:
             keyword_lower = keyword.lower()
             lines = [l for l in lines if keyword_lower in l.lower()]
-        
+
         lines = lines[-max_lines:]
-        
+
         if not lines:
             if keyword:
-                return _("🔍 Aucune entrée trouvée pour '{keyword}' dans {name}.").format(keyword=keyword, name=log_path.name)
+                return _(
+                    "🔍 Aucune entrée trouvée pour '{keyword}' dans {name}."
+                ).format(keyword=keyword, name=log_path.name)
             return _("📋 Le journal {name} est vide.").format(name=log_path.name)
-        
+
         return _format_raw_lines(lines, log_path.name, keyword)
-    
+
     except PermissionError:
-        return _("❌ Permission refusée pour lire {log_path}.\nEssayez avec sudo ou vérifiez les permissions.").format(log_path=log_path)
+        return _(
+            "❌ Permission refusée pour lire {log_path}.\nEssayez avec sudo ou vérifiez les permissions."
+        ).format(log_path=log_path)
     except Exception as e:
-        return _("❌ Erreur lors de la lecture de {log_path} : {e}").format(log_path=log_path, e=e)
+        return _("❌ Erreur lors de la lecture de {log_path} : {e}").format(
+            log_path=log_path, e=e
+        )
 
 
-
-def _find_log_file() -> Optional[Path]:
+def _find_log_file() -> Path | None:
     """Find the first existing log file from default paths."""
     for path in DEFAULT_LOG_PATHS:
         if path.exists():
@@ -140,33 +161,37 @@ def _format_log_entries(entries: list, keyword: str) -> str:
     header = _("📋 Journal applicatif\n═══════════════════════\n\n")
     if keyword:
         header += _("Filtre : '{keyword}'\n\n").format(keyword=keyword)
-    
+
     content = []
     for entry in entries:
-        if hasattr(entry, 'timestamp'):
+        if hasattr(entry, "timestamp"):
             ts = entry.timestamp
         elif isinstance(entry, dict):
-            ts = entry.get('timestamp', '')
+            ts = entry.get("timestamp", "")
         else:
-            ts = ''
-        
-        if hasattr(entry, 'message'):
+            ts = ""
+
+        if hasattr(entry, "message"):
             msg = entry.message
         elif isinstance(entry, dict):
-            msg = entry.get('message', str(entry))
+            msg = entry.get("message", str(entry))
         else:
             msg = str(entry)
-        
-        if hasattr(entry, 'level'):
+
+        if hasattr(entry, "level"):
             level = entry.level
         elif isinstance(entry, dict):
-            level = entry.get('level', 'INFO')
+            level = entry.get("level", "INFO")
         else:
-            level = _('INFO')
-        
+            level = _("INFO")
+
         content.append(f"[{ts}] [{level}] {msg}")
-    
-    return header + "\n".join(content) + _("\n\n({count} entrée(s))").format(count=len(content))
+
+    return (
+        header
+        + "\n".join(content)
+        + _("\n\n({count} entrée(s))").format(count=len(content))
+    )
 
 
 def _format_raw_lines(lines: list, filename: str, keyword: str) -> str:
@@ -175,14 +200,18 @@ def _format_raw_lines(lines: list, filename: str, keyword: str) -> str:
     header += "═" * 40 + "\n\n"
     if keyword:
         header += _("Filtre : '{keyword}'\n\n").format(keyword=keyword)
-    
+
     content = []
     for line in lines:
-        line = line.rstrip('\n')
+        line = line.rstrip("\n")
         if line:
             content.append(line)
-    
-    return header + "\n".join(content) + _("\n\n({count} ligne(s))").format(count=len(content))
+
+    return (
+        header
+        + "\n".join(content)
+        + _("\n\n({count} ligne(s))").format(count=len(content))
+    )
 
 
 # <-- INFO DEV ---------------------------------------------------------
@@ -217,4 +246,4 @@ def _format_raw_lines(lines: list, filename: str, keyword: str) -> str:
 # - Remplacer le fallback par l'implémentation complète de AuditPort.
 # - Ajouter la pagination pour les gros fichiers de log.
 # - Ajouter le support de la recherche avancée (regex, date).
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

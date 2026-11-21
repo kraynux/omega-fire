@@ -4,7 +4,6 @@ import subprocess
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from omega_fire.core.stats.models import IpStat, JailStat, LogEntry, LogStatsSummary
 from omega_fire.infrastructure.logging.stats.file_collector import FileLogCollector
@@ -23,23 +22,23 @@ class LogAggregator:
 
     def __init__(
         self,
-        sqlite_collector: Optional[SqliteLogCollector] = None,
-        file_collector: Optional[FileLogCollector] = None,
+        sqlite_collector: SqliteLogCollector | None = None,
+        file_collector: FileLogCollector | None = None,
     ):
         self.sqlite_collector = sqlite_collector or SqliteLogCollector()
         self.file_collector = file_collector or FileLogCollector()
 
-    def _parse_kernel_firewall_logs(self, since: datetime) -> List[LogEntry]:
+    def _parse_kernel_firewall_logs(self, since: datetime) -> list[LogEntry]:
         """Lit et parse les événements iptables et nftables depuis journalctl ou les fichiers du noyau."""
-        entries: List[LogEntry] = []
+        entries: list[LogEntry] = []
 
         fw_regex = re.compile(
-            r'(?P<fw_type>IPT|NFT|BLOCK|DROP|REJECT|FW-BAN)'
-            r'.*?SRC=(?P<src>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-            r'(?:.*?DPT=(?P<dpt>\d+))?'
+            r"(?P<fw_type>IPT|NFT|BLOCK|DROP|REJECT|FW-BAN)"
+            r".*?SRC=(?P<src>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            r"(?:.*?DPT=(?P<dpt>\d+))?"
         )
 
-        lines: List[str] = []
+        lines: list[str] = []
 
         # 1. Extraction via journalctl
         try:
@@ -63,7 +62,9 @@ class LogAggregator:
             ]:
                 if log_path.exists():
                     try:
-                        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                        with open(
+                            log_path, "r", encoding="utf-8", errors="ignore"
+                        ) as f:
                             lines.extend(f.readlines()[-2000:])
                     except Exception:
                         pass
@@ -81,9 +82,17 @@ class LogAggregator:
                     continue
 
                 if "NFT" in fw_type or "nft" in line.lower():
-                    jail_name = _("nftables (port {dpt})").format(dpt=dpt) if dpt else "nftables-drop"
+                    jail_name = (
+                        _("nftables (port {dpt})").format(dpt=dpt)
+                        if dpt
+                        else "nftables-drop"
+                    )
                 else:
-                    jail_name = _("iptables (port {dpt})").format(dpt=dpt) if dpt else "iptables-drop"
+                    jail_name = (
+                        _("iptables (port {dpt})").format(dpt=dpt)
+                        if dpt
+                        else "iptables-drop"
+                    )
 
                 entries.append(
                     LogEntry(
@@ -96,7 +105,7 @@ class LogAggregator:
 
         return entries
 
-    def _collect_entries(self, start_date: datetime) -> Tuple[List[LogEntry], str]:
+    def _collect_entries(self, start_date: datetime) -> tuple[list[LogEntry], str]:
         """Collecte les entrées de log depuis toutes les sources
         disponibles (SQLite en priorité, fallback fichiers, complément
         logs noyau), avec identification de la source effectivement
@@ -105,7 +114,7 @@ class LogAggregator:
         Extrait de get_summary() pour être réutilisé par
         get_daily_trend() sans dupliquer la logique de collecte.
         """
-        entries: List[LogEntry] = []
+        entries: list[LogEntry] = []
         data_source = "Inconnue"
 
         # 1. Tentative d'extraction via SQLite
@@ -151,7 +160,7 @@ class LogAggregator:
         # Agrégation par Jail
         jail_counts = Counter(e.jail for e in bans_only)
         active_jails_set = set(self.sqlite_collector.get_active_jails())
-        top_jails: List[JailStat] = []
+        top_jails: list[JailStat] = []
 
         for jail_name, count in jail_counts.most_common(10):
             pct = (count / total_bans * 100.0) if total_bans > 0 else 0.0
@@ -169,18 +178,19 @@ class LogAggregator:
         top_jail_name = top_jails[0].name if top_jails else _("Aucun")
 
         # Agrégation par IP
-        ip_data: Dict[str, Dict] = {}
+        ip_data: dict[str, dict] = {}
         for entry in bans_only:
             if entry.ip not in ip_data:
                 ip_data[entry.ip] = {"count": 0, "last_ban": entry.timestamp}
             ip_data[entry.ip]["count"] += 1
-            if entry.timestamp > ip_data[entry.ip]["last_ban"]:
-                ip_data[entry.ip]["last_ban"] = entry.timestamp
+            ip_data[entry.ip]["last_ban"] = max(
+                ip_data[entry.ip]["last_ban"], entry.timestamp
+            )
 
-        sorted_ips = sorted(
-            ip_data.items(), key=lambda x: x[1]["count"], reverse=True
-        )[:10]
-        top_ips: List[IpStat] = [
+        sorted_ips = sorted(ip_data.items(), key=lambda x: x[1]["count"], reverse=True)[
+            :10
+        ]
+        top_ips: list[IpStat] = [
             IpStat(
                 ip=ip,
                 total_bans=info["count"],
@@ -215,9 +225,17 @@ class LogAggregator:
         )
 
     # N_ : traduits a l'usage, pour suivre la langue des exports (lot N).
-    _DAY_LABELS_FR = [N_("Lun"), N_("Mar"), N_("Mer"), N_("Jeu"), N_("Ven"), N_("Sam"), N_("Dim")]
+    _DAY_LABELS_FR = [
+        N_("Lun"),
+        N_("Mar"),
+        N_("Mer"),
+        N_("Jeu"),
+        N_("Ven"),
+        N_("Sam"),
+        N_("Dim"),
+    ]
 
-    def get_daily_trend(self, period_code: str = "7d") -> List[Tuple[str, int]]:
+    def get_daily_trend(self, period_code: str = "7d") -> list[tuple[str, int]]:
         """Agrège les bans par jour (période '7d') ou par bloc de 7 jours
         glissants (période '30d'), pour le graphique de tendance des
         rapports 8.3/8.4 (interfaces/cli/renderers/stats/daily_trend_chart.py).
@@ -245,21 +263,23 @@ class LogAggregator:
 
         bucket_days = 7 if period_code == "30d" else 1
 
-        buckets: List[Tuple[datetime, datetime]] = []
+        buckets: list[tuple[datetime, datetime]] = []
         cursor = start_date
         while cursor < end_date:
             bucket_end = min(cursor + timedelta(days=bucket_days), end_date)
             buckets.append((cursor, bucket_end))
             cursor = bucket_end
 
-        result: List[Tuple[str, int]] = []
+        result: list[tuple[str, int]] = []
         for bucket_start, bucket_end in buckets:
             count = sum(
-                1 for e in bans_only
-                if bucket_start <= e.timestamp < bucket_end
+                1 for e in bans_only if bucket_start <= e.timestamp < bucket_end
             )
             if bucket_days == 1:
-                label = _("{value} {day:02d}").format(value=_(self._DAY_LABELS_FR[bucket_start.weekday()]), day=bucket_start.day)
+                label = _("{value} {day:02d}").format(
+                    value=_(self._DAY_LABELS_FR[bucket_start.weekday()]),
+                    day=bucket_start.day,
+                )
             else:
                 last_day = bucket_end - timedelta(seconds=1)
                 label = f"{bucket_start.strftime('%d/%m')}-{last_day.strftime('%d/%m')}"
@@ -267,7 +287,7 @@ class LogAggregator:
 
         return result
 
-       
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
 # - Orchestrateur qui combine plusieurs collecteurs de logs (SQLite
@@ -338,4 +358,4 @@ class LogAggregator:
 #   rapport statique multi-sections, combiné à AuditLogger (gestion) et
 #   PersistencePort.list_snapshots() (évolution des règles) — sources
 #   que ce fichier ne connaît pas et ne doit jamais connaître.
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

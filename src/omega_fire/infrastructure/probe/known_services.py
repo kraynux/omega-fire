@@ -14,31 +14,78 @@ between what is scanned and what is displayed.
 
 KNOWN_SERVICES: dict[str, list[str]] = {
     "system_services": [
-        "sshd", "tailscaled", "smbd", "nmbd", "docker", "dockerd",
-        "containerd", "cupsd", "cronie", "ntpd", "chronyd",
+        "sshd",
+        "tailscaled",
+        "smbd",
+        "nmbd",
+        "docker",
+        "dockerd",
+        "containerd",
+        "cupsd",
+        "cronie",
+        "ntpd",
+        "chronyd",
     ],
     "servers": [
         # Web / reverse proxy
-        "lighttpd", "nginx", "apache2", "httpd", "caddy", "haproxy",
-        "traefik", "openresty", "php-fpm",
+        "lighttpd",
+        "nginx",
+        "apache2",
+        "httpd",
+        "caddy",
+        "haproxy",
+        "traefik",
+        "openresty",
+        "php-fpm",
         # Base de données
-        "mysqld", "mariadbd", "postgres", "redis-server", "mongod",
+        "mysqld",
+        "mariadbd",
+        "postgres",
+        "redis-server",
+        "mongod",
         # Mail
-        "postfix", "exim", "dovecot", "sendmail",
+        "postfix",
+        "exim",
+        "dovecot",
+        "sendmail",
         # DNS
-        "bind9", "named", "unbound", "dnsmasq", "pdns_server",
+        "bind9",
+        "named",
+        "unbound",
+        "dnsmasq",
+        "pdns_server",
         # Fichiers / partage
-        "nfsd", "vsftpd", "proftpd", "pure-ftpd", "sftpgo",
+        "nfsd",
+        "vsftpd",
+        "proftpd",
+        "pure-ftpd",
+        "sftpgo",
         # VPN
-        "openvpn", "wireguard", "strongswan",
+        "openvpn",
+        "wireguard",
+        "strongswan",
         # Monitoring
-        "grafana-server", "prometheus", "netdata",
+        "grafana-server",
+        "prometheus",
+        "netdata",
     ],
     "bureau_distant": [
-        "x0vncserver", "vncserver", "tigervncserver", "tightvncserver",
-        "x11vnc", "vino-server", "krfb", "wayvnc", "turbovnc",
-        "rustdesk", "teamviewerd", "anydesk", "nxserver",
-        "x2goserver", "xrdp", "remmina",
+        "x0vncserver",
+        "vncserver",
+        "tigervncserver",
+        "tightvncserver",
+        "x11vnc",
+        "vino-server",
+        "krfb",
+        "wayvnc",
+        "turbovnc",
+        "rustdesk",
+        "teamviewerd",
+        "anydesk",
+        "nxserver",
+        "x2goserver",
+        "xrdp",
+        "remmina",
     ],
     "security_network": [
         # Note : ufw et firewalld n'ont généralement pas de process
@@ -48,11 +95,16 @@ KNOWN_SERVICES: dict[str, list[str]] = {
         # de façon similaire selon la configuration. Détection process
         # conservée ici par cohérence de structure, mais peut ne rien
         # trouver même si l'outil est actif — limitation connue.
-        "opensnitch", "firewalld", "ufw", "crowdsec", "webmin",
-        "csf", "shorewall", "bunkerweb",
+        "opensnitch",
+        "firewalld",
+        "ufw",
+        "crowdsec",
+        "webmin",
+        "csf",
+        "shorewall",
+        "bunkerweb",
     ],
 }
-
 
 
 # Suite omega (point 7, version 3.5) : capacites detectees par scanner._scan_omega_suite
@@ -80,4 +132,4 @@ OMEGA_SUITE_CAPABILITIES: dict[str, list[str]] = {
 #   dessus pour peupler le registre de capacités.
 # - interfaces/cli/renderers/dashboard.py importe KNOWN_SERVICES au
 #   lieu de définir sa propre REFERENCE_CAPABILITIES locale.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

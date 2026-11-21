@@ -4,16 +4,22 @@
 Maps parsed nft data (from parser.py) to domain models (from domain/).
 This is the bridge between infrastructure parsing and domain objects.
 """
-from typing import Optional
-from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.domain.rules.models import (
+    FirewallRule,
+    RuleAction,
+    RuleChain,
+    RuleFamily,
+    RuleProtocol,
+)
 from omega_fire.infrastructure.backends.rule_fidelity import nft_rule_restorable
 
 
 class NftMapper:
     """Maps parsed nft data to domain models."""
 
-    def map_rule(self, parsed: dict) -> Optional[FirewallRule]:
+    def map_rule(self, parsed: dict) -> FirewallRule | None:
         """Map a parsed nft rule to a FirewallRule domain model.
 
         Args:
@@ -43,7 +49,7 @@ class NftMapper:
                 chain = RuleChain(chain_str)
             except ValueError:
                 chain = RuleChain.INPUT
-    
+
             # Map protocol
             proto_str = parsed.get("protocol")
             protocol = None
@@ -88,7 +94,10 @@ class NftMapper:
                 external_ref=str(handle) if handle is not None else None,
                 chain_name=parsed.get("chain"),
                 restorable=nft_rule_restorable(
-                    family_str, parsed.get("table", ""), parsed.get("chain", ""), parsed.get("raw", ""),
+                    family_str,
+                    parsed.get("table", ""),
+                    parsed.get("chain", ""),
+                    parsed.get("raw", ""),
                 ),
             )
 
@@ -181,4 +190,4 @@ def map_nft_bans(ips: list[str]) -> list[BanEntry]:
 # - infrastructure/backends/nftables/adapter.py l'appellera après parsing
 # - Le résultat sera retourné via les ports à l'application/
 # - Les tests vérifieront que les mappings sont corrects pour différents formats
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

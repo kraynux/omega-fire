@@ -3,6 +3,7 @@
 2) — meme patron #2, sans champ commentaire (le CLI n'en a pas non plus
 pour le debannissement). Logique identique a
 interfaces/cli/actions.py::action_2_3_unban_ip."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -58,7 +59,8 @@ class UnbanIpScreen(OmegaScreen):
             yield Static(_("Backend(s) cible(s)"), classes="omega-subtitle")
             if self._supported_backends:
                 options = [(_("Tous les backends (recommandé)"), _ALL_BACKENDS)] + [
-                    (_("Uniquement {name} (diagnostic)").format(name=name), name) for name in self._supported_backends
+                    (_("Uniquement {name} (diagnostic)").format(name=name), name)
+                    for name in self._supported_backends
                 ]
                 yield Select(options, value=_ALL_BACKENDS, id="backend-select")
             else:
@@ -79,7 +81,9 @@ class UnbanIpScreen(OmegaScreen):
             return
 
         if not self._supported_backends:
-            self.app.notify(_("Aucun backend disponible pour le débannissement."), severity="error")
+            self.app.notify(
+                _("Aucun backend disponible pour le débannissement."), severity="error"
+            )
             return
 
         raw_ip = self.query_one("#ip-input", Input).value.strip()
@@ -89,23 +93,32 @@ class UnbanIpScreen(OmegaScreen):
         try:
             ip = str(ipaddress.ip_address(raw_ip))
         except ValueError:
-            self.app.notify(_("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip), severity="warning")
+            self.app.notify(
+                _("Format d'adresse IP invalide : '{raw_ip}'.").format(raw_ip=raw_ip),
+                severity="warning",
+            )
             return
 
         backend_choice = str(self.query_one("#backend-select", Select).value)
         target_backends = (
-            list(self._supported_backends) if backend_choice == _ALL_BACKENDS else [backend_choice]
+            list(self._supported_backends)
+            if backend_choice == _ALL_BACKENDS
+            else [backend_choice]
         )
 
         self.app.push_screen(
             ConfirmScreen(
                 title=_("CONFIRMER LE DÉBANNISSEMENT"),
-                message=_("IP : {ip}\nBackend(s) : {value}").format(ip=ip, value=', '.join(target_backends)),
+                message=_("IP : {ip}\nBackend(s) : {value}").format(
+                    ip=ip, value=", ".join(target_backends)
+                ),
             ),
             lambda confirmed: self._unban_if_confirmed(confirmed, ip, target_backends),
         )
 
-    def _unban_if_confirmed(self, confirmed: bool | None, ip: str, target_backends: list[str]) -> None:
+    def _unban_if_confirmed(
+        self, confirmed: bool | None, ip: str, target_backends: list[str]
+    ) -> None:
         if not confirmed:
             return
 
@@ -123,11 +136,29 @@ class UnbanIpScreen(OmegaScreen):
 
         for backend, outcome in result.outcomes.items():
             if outcome.unbanned:
-                self.app.notify(_("IP {ip} débannie avec succès.").format(ip=ip), title=backend, severity="information")
+                self.app.notify(
+                    _("IP {ip} débannie avec succès.").format(ip=ip),
+                    title=backend,
+                    severity="information",
+                )
             elif outcome.already_free:
-                self.app.notify(_("IP {ip} n'était pas bannie (déjà libre).").format(ip=ip), title=backend, severity="warning")
+                self.app.notify(
+                    _("IP {ip} n'était pas bannie (déjà libre).").format(ip=ip),
+                    title=backend,
+                    severity="warning",
+                )
             for failed_ip, reason in outcome.errors:
-                self.app.notify(_("Échec pour {failed_ip} : {reason}").format(failed_ip=failed_ip, reason=reason), title=backend, severity="error")
+                self.app.notify(
+                    _("Échec pour {failed_ip} : {reason}").format(
+                        failed_ip=failed_ip, reason=reason
+                    ),
+                    title=backend,
+                    severity="error",
+                )
 
-        log_action_result(self._container, _ACTION_TITLE, status="success" if result.success else "failure")
+        log_action_result(
+            self._container,
+            _ACTION_TITLE,
+            status="success" if result.success else "failure",
+        )
         self.dismiss()

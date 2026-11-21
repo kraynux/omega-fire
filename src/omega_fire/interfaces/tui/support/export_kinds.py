@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Libelles traduits des types d'export (infrastructure/exporters/export_catalog.py) et
 mise en forme commune a 5.5 (charger une liste d'IPs) et 6.6 (voir tous les exports)."""
+
 from __future__ import annotations
 
 from datetime import datetime

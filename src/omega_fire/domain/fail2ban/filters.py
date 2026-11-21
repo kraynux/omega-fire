@@ -38,9 +38,9 @@ def generate_default_http_filter(jail_name: str) -> str:
     return (
         f"# Filtre généré automatiquement par Omega-Fire pour {jail_name}\n"
         "[Definition]\n"
-        "failregex = ^<HOST> - - \\[[^\\]]+\\] \"(?:GET|POST|HEAD|CONNECT|PUT|DELETE) .* HTTP/.*\" (?:400|401|403|404|500)\n"
-        "            ^<HOST> - - \\[[^\\]]+\\] \".*\" (?:400|401|403|404|500)\n"
-        "            ^\\s*<HOST> \\S+ \\S+ \\[[^\\]]+\\] \".*\" (?:400|401|403|404|500)\n"
+        'failregex = ^<HOST> - - \\[[^\\]]+\\] "(?:GET|POST|HEAD|CONNECT|PUT|DELETE) .* HTTP/.*" (?:400|401|403|404|500)\n'
+        '            ^<HOST> - - \\[[^\\]]+\\] ".*" (?:400|401|403|404|500)\n'
+        '            ^\\s*<HOST> \\S+ \\S+ \\[[^\\]]+\\] ".*" (?:400|401|403|404|500)\n'
         "ignoreregex =\n"
     )
 
@@ -69,4 +69,4 @@ def generate_default_http_filter(jail_name: str) -> str:
 # - interfaces/cli/actions.py::action_4_4_create_jail appelle cette
 #   fonction puis passe le résultat à
 #   infrastructure/backends/fail2ban/adapter.py::Fail2banAdapter.write_filter()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

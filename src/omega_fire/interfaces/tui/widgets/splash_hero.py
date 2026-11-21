@@ -21,6 +21,7 @@ _render_omega_fire_logo()) :
 - tagline finale : "|" vifs ($accent), mots normaux ($foreground) —
   MEME sens que la version Rich actuelle d'omega-fire (pas celui de
   CHECK, qui l'a delibarement inverse pour lui-meme)."""
+
 from __future__ import annotations
 
 from textual.widgets import Static
@@ -129,9 +130,7 @@ def _build_markup() -> str:
         centered = _centered(raw)
         if _LFS_BOX[0] <= i <= _LFS_BOX[1]:
             lines.append(_lfs_line(centered))
-        elif i == _VERSION_BAR:
-            lines.append(f"[$foreground]{centered}[/]")
-        elif i in _OMEGA_BOX:
+        elif i == _VERSION_BAR or i in _OMEGA_BOX:
             lines.append(f"[$foreground]{centered}[/]")
         elif _OMEGA_LOGO_ROWS[0] <= i <= _OMEGA_LOGO_ROWS[1]:
             row_color = "$accent" if i != _OMEGA_LOGO_ROWS[0] + 1 else "$foreground"

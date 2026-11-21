@@ -18,6 +18,7 @@ Langue des exports (lot N, Q3) : un export se produit dans ce meme processus. Pe
 generation, `translating_as(etat)` fait repondre `_()` dans la langue des exports, pour le
 seul fil d'execution (ou la seule tache asyncio) qui produit l'export : l'interface,
 qui continue de s'afficher a cote, reste dans sa langue."""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
@@ -34,7 +35,9 @@ STATE = TranslationState()
 
 N_ = mark
 
-_EXPORT_STATE: ContextVar[TranslationState | None] = ContextVar("omega_fire_export_language", default=None)
+_EXPORT_STATE: ContextVar[TranslationState | None] = ContextVar(
+    "omega_fire_export_language", default=None
+)
 
 
 def active_state() -> TranslationState:
@@ -65,7 +68,7 @@ class LazyText(str):
     msgid: str
     params: dict
 
-    def __new__(cls, msgid: str, **params: object) -> "LazyText":
+    def __new__(cls, msgid: str, **params: object) -> LazyText:
         text = _(msgid)
         obj = super().__new__(cls, text.format(**params) if params else text)
         obj.msgid = msgid
@@ -117,4 +120,6 @@ def set_action_title_translator(translator: Callable[[str], str] | None) -> None
 def action_title(stored: str) -> str:
     """Titre d'action lu dans l'historique d'audit, affiche dans la langue active (celle de
     l'export pendant un export). L'historique garde, lui, le titre tel qu'il a ete ecrit."""
-    return stored if _action_title_translator is None else _action_title_translator(stored)
+    return (
+        stored if _action_title_translator is None else _action_title_translator(stored)
+    )

@@ -8,9 +8,11 @@ pas seulement l'ecran courant — contrairement au CLI Rich (boucle bloquante
 mono-ecran, un gel y etait juste une attente). `run_blocking()` deplace le
 travail dans un thread (`Screen.run_worker(thread=True)`) et notifie
 l'utilisateur pendant l'attente plutot que de laisser l'app paraitre figee."""
+
 from __future__ import annotations
 
-from typing import Callable, ClassVar, TypeVar
+from collections.abc import Callable
+from typing import ClassVar, TypeVar
 
 from textual.binding import Binding, BindingType
 from textual.screen import Screen
@@ -30,15 +32,25 @@ def format_help_entry(entry: HelpEntry) -> str:
     # Les fiches sont des textes sources marques (help_text.py, N_) : traduites ici.
     parts = [_(entry.summary)]
     if entry.usage:
-        parts.append(_("[b]Comment l'utiliser :[/b]\n") + "\n".join(f"  - {_(u)}" for u in entry.usage))
+        parts.append(
+            _("[b]Comment l'utiliser :[/b]\n")
+            + "\n".join(f"  - {_(u)}" for u in entry.usage)
+        )
     if entry.consequences:
-        parts.append(_("[b]Conséquences :[/b]\n") + "\n".join(f"  - {_(c)}" for c in entry.consequences))
+        parts.append(
+            _("[b]Conséquences :[/b]\n")
+            + "\n".join(f"  - {_(c)}" for c in entry.consequences)
+        )
     if entry.warnings:
-        parts.append(_("[b]À savoir :[/b]\n") + "\n".join(f"  - {_(w)}" for w in entry.warnings))
+        parts.append(
+            _("[b]À savoir :[/b]\n") + "\n".join(f"  - {_(w)}" for w in entry.warnings)
+        )
     if entry.mechanism:
         parts.append(f"[dim]{_(entry.mechanism)}[/dim]")
     if entry.see_also:
-        parts.append(_("[dim]Voir aussi : {value}[/dim]").format(value=', '.join(entry.see_also)))
+        parts.append(
+            _("[dim]Voir aussi : {value}[/dim]").format(value=", ".join(entry.see_also))
+        )
     return "\n\n".join(parts)
 
 
@@ -87,7 +99,9 @@ class OmegaScreen(Screen[None]):
         if self.node_id:
             entry = get_help_entry(self.node_id)
             if entry is not None:
-                return _("Action {node_id}").format(node_id=self.node_id), format_help_entry(entry)
+                return _("Action {node_id}").format(
+                    node_id=self.node_id
+                ), format_help_entry(entry)
         return None
 
     def run_blocking(
@@ -120,7 +134,9 @@ class OmegaScreen(Screen[None]):
 
         self.run_worker(_work, thread=True)
 
-    def _run_blocking_error(self, error: Exception, on_error: Callable[[Exception], None] | None) -> None:
+    def _run_blocking_error(
+        self, error: Exception, on_error: Callable[[Exception], None] | None
+    ) -> None:
         if on_error is not None:
             on_error(error)
         else:

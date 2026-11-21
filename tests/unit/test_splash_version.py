@@ -1,6 +1,7 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Splash : la barre de version affiche la version de l'application (2026-11-11 : « version 3.5 » etait
 ecrit en dur alors que l'application etait en 3.6.1)."""
+
 from __future__ import annotations
 
 import unittest
@@ -19,7 +20,9 @@ class SplashVersionTest(unittest.TestCase):
 
     def test_meme_dessin_qu_avant_pour_3_5(self) -> None:
         with mock.patch.object(splash_hero, "OMEGA_FIRE_VERSION", "3.5"):
-            self.assertEqual(splash_hero._version_bar(), "█░▒▓████▓▒░version 3.5░▒▓█████▓▒░█")
+            self.assertEqual(
+                splash_hero._version_bar(), "█░▒▓████▓▒░version 3.5░▒▓█████▓▒░█"
+            )
 
 
 if __name__ == "__main__":

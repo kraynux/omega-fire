@@ -8,6 +8,7 @@ Deux protections par-dessus `App.suspend()` (jamais un correctif dans Textual) :
   terminal de lancement (retour utilisateur 2026-10-28, lnav 8.6 / 5.2 / 5.3) ;
 - le thread clavier de Textual est reellement arrete avant l'appel (bug reel rencontre
   dans omega-serv : il lisait le meme terminal en meme temps que le programme lance)."""
+
 from __future__ import annotations
 
 import termios

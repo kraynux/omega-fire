@@ -2,6 +2,7 @@
 """Ecran 5.3 — Voir les logs (version 3.5) : voir un log de la Bibliotheque sans
 configuration, lecteur au choix — Simple (tableau de bord temps reel), Classique (lecture +
 suivi) ou lnav. Pour combiner plusieurs logs : 5.2 Favoris."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -28,7 +29,11 @@ if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
 _ACTION_TITLE = "5.3 Voir les logs"
-_BUTTONS = (("view-simple", ViewerType.SIMPLE), ("view-classic", ViewerType.CLASSIC), ("view-lnav", ViewerType.LNAV))
+_BUTTONS = (
+    ("view-simple", ViewerType.SIMPLE),
+    ("view-classic", ViewerType.CLASSIC),
+    ("view-lnav", ViewerType.LNAV),
+)
 
 
 class LogViewScreen(OmegaScreen):
@@ -56,8 +61,10 @@ class LogViewScreen(OmegaScreen):
         with Vertical(classes="omega-panel"):
             yield Static(_("VOIR LES LOGS"), classes="omega-title")
             yield Static(
-                _("Choisissez un log de la Bibliothèque (5.1), puis le lecteur. Pour combiner plusieurs "
-                  "logs : 5.2 Favoris."),
+                _(
+                    "Choisissez un log de la Bibliothèque (5.1), puis le lecteur. Pour combiner plusieurs "
+                    "logs : 5.2 Favoris."
+                ),
                 classes="omega-hint",
             )
             yield Static("", id="view-status", classes="omega-hint")
@@ -89,11 +96,19 @@ class LogViewScreen(OmegaScreen):
         cursor = table.cursor_row
         table.clear()
         for index, entry in enumerate(self._entries, start=1):
-            table.add_row(str(index), origin_label(entry), state_label(entry), short_path(entry.path))
+            table.add_row(
+                str(index),
+                origin_label(entry),
+                state_label(entry),
+                short_path(entry.path),
+            )
         if self._entries and cursor is not None and 0 < cursor < len(self._entries):
             table.move_cursor(row=cursor)
         self.query_one("#view-status", Static).update(
-            "" if self._entries else _("Bibliothèque vide : importez ou épinglez des logs en 5.1."))
+            ""
+            if self._entries
+            else _("Bibliothèque vide : importez ou épinglez des logs en 5.1.")
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
@@ -103,12 +118,19 @@ class LogViewScreen(OmegaScreen):
         if viewer is None:
             return
         table = self.query_one("#library-table", DataTable)
-        if not self._entries or table.cursor_row is None or not 0 <= table.cursor_row < len(self._entries):
+        if (
+            not self._entries
+            or table.cursor_row is None
+            or not 0 <= table.cursor_row < len(self._entries)
+        ):
             self.app.notify(_("Sélectionnez un log."), severity="warning")
             return
         entry = self._entries[table.cursor_row]
         if not entry.exists:
-            self.app.notify(_("Fichier introuvable : {path}").format(path=entry.path), severity="warning")
+            self.app.notify(
+                _("Fichier introuvable : {path}").format(path=entry.path),
+                severity="warning",
+            )
             return
         if open_viewer(self.app, self._container, viewer, [entry.path]):
             log_action_result(self._container, _ACTION_TITLE, status="success")

@@ -8,77 +8,81 @@ runs a simple test command to verify it works.
 This module performs real system I/O (binary checks, subprocess calls)
 and is therefore in infrastructure/.
 """
+
 import shutil
 import subprocess
-from typing import Optional
-from omega_fire.infrastructure.probe.exceptions import (
-    ProbeExecutionError,
-    ProbeTimeoutError,
-)
+
 from omega_fire.shared.i18n import N_, lazy
 
 
 class CommandProbe:
     """Probes the presence and functionality of system commands.
-    
+
     Checks if a binary is available in PATH and optionally runs
     a test command to verify it works correctly.
     """
-    
+
     def __init__(self, timeout_seconds: float = 5.0):
         """Initialize the command probe.
-        
+
         Args:
             timeout_seconds: Maximum time to wait for test commands (default: 5s)
         """
         self._timeout = timeout_seconds
-    
+
     def check_presence(self, binary_name: str) -> bool:
         """Check if a binary is present in PATH.
-        
+
         Args:
             binary_name: Name of the binary to check (e.g., "nft", "iptables")
-        
+
         Returns:
             True if the binary is found in PATH, False otherwise
         """
         return shutil.which(binary_name) is not None
-    
-    def get_binary_path(self, binary_name: str) -> Optional[str]:
+
+    def get_binary_path(self, binary_name: str) -> str | None:
         """Get the full path to a binary.
-        
+
         Args:
             binary_name: Name of the binary to locate
-        
+
         Returns:
             Full path to the binary if found, None otherwise
         """
         return shutil.which(binary_name)
-    
+
     def check_functionality(
         self,
         binary_name: str,
-        test_command: Optional[list[str]] = None,
+        test_command: list[str] | None = None,
     ) -> tuple[bool, str]:
         """Check if a binary is present and functional.
-        
+
         Args:
             binary_name: Name of the binary to check
             test_command: Optional test command to run (e.g., ["nft", "--version"])
                          If None, only checks presence
-        
+
         Returns:
             Tuple of (success: bool, message: str)
         """
         # Check presence
         binary_path = self.get_binary_path(binary_name)
         if binary_path is None:
-            return False, lazy(N_("Exécutable « {binary_name} » introuvable dans le PATH"), binary_name=binary_name)
-        
+            return False, lazy(
+                N_("Exécutable « {binary_name} » introuvable dans le PATH"),
+                binary_name=binary_name,
+            )
+
         # If no test command, just check presence
         if test_command is None:
-            return True, lazy(N_("Exécutable « {binary_name} » trouvé : {binary_path}"), binary_name=binary_name, binary_path=binary_path)
-        
+            return True, lazy(
+                N_("Exécutable « {binary_name} » trouvé : {binary_path}"),
+                binary_name=binary_name,
+                binary_path=binary_path,
+            )
+
         # Run test command
         try:
             result = subprocess.run(
@@ -88,31 +92,53 @@ class CommandProbe:
                 timeout=self._timeout,
                 check=False,
             )
-            
+
             if result.returncode == 0:
-                return True, lazy(N_("Exécutable « {binary_name} » fonctionnel"), binary_name=binary_name)
+                return True, lazy(
+                    N_("Exécutable « {binary_name} » fonctionnel"),
+                    binary_name=binary_name,
+                )
             else:
-                error_msg = result.stderr.strip() or lazy(N_("Exit code {returncode}"), returncode=result.returncode)
-                return False, lazy(N_("Échec du test de l'exécutable « {binary_name} » : {error_msg}"), binary_name=binary_name, error_msg=error_msg)
-        
+                error_msg = result.stderr.strip() or lazy(
+                    N_("Exit code {returncode}"), returncode=result.returncode
+                )
+                return False, lazy(
+                    N_("Échec du test de l'exécutable « {binary_name} » : {error_msg}"),
+                    binary_name=binary_name,
+                    error_msg=error_msg,
+                )
+
         except subprocess.TimeoutExpired:
-            return False, lazy(N_("Test de l'exécutable « {binary_name} » interrompu après {timeout} s"), binary_name=binary_name, timeout=self._timeout)
+            return False, lazy(
+                N_(
+                    "Test de l'exécutable « {binary_name} » interrompu après {timeout} s"
+                ),
+                binary_name=binary_name,
+                timeout=self._timeout,
+            )
         except FileNotFoundError:
-            return False, lazy(N_("L'exécutable « {binary_name} » a disparu pendant le test"), binary_name=binary_name)
+            return False, lazy(
+                N_("L'exécutable « {binary_name} » a disparu pendant le test"),
+                binary_name=binary_name,
+            )
         except Exception as e:
-            return False, lazy(N_("Erreur pendant le test de l'exécutable « {binary_name} » : {e}"), binary_name=binary_name, e=e)
-    
+            return False, lazy(
+                N_("Erreur pendant le test de l'exécutable « {binary_name} » : {e}"),
+                binary_name=binary_name,
+                e=e,
+            )
+
     def probe_command(
         self,
         binary_name: str,
-        test_command: Optional[list[str]] = None,
+        test_command: list[str] | None = None,
     ) -> dict:
         """Probe a command and return detailed results.
-        
+
         Args:
             binary_name: Name of the binary to probe
             test_command: Optional test command to run
-        
+
         Returns:
             Dictionary with probe results:
             - present: bool
@@ -122,17 +148,20 @@ class CommandProbe:
         """
         present = self.check_presence(binary_name)
         path = self.get_binary_path(binary_name)
-        
+
         if not present:
             return {
                 "present": False,
                 "functional": False,
                 "path": None,
-                "message": lazy(N_("Exécutable « {binary_name} » introuvable dans le PATH"), binary_name=binary_name),
+                "message": lazy(
+                    N_("Exécutable « {binary_name} » introuvable dans le PATH"),
+                    binary_name=binary_name,
+                ),
             }
-        
+
         functional, message = self.check_functionality(binary_name, test_command)
-        
+
         return {
             "present": True,
             "functional": functional,
@@ -143,16 +172,16 @@ class CommandProbe:
 
 def probe_command(
     binary_name: str,
-    test_command: Optional[list[str]] = None,
+    test_command: list[str] | None = None,
     timeout_seconds: float = 5.0,
 ) -> dict:
     """Convenience function to probe a command.
-    
+
     Args:
         binary_name: Name of the binary to probe
         test_command: Optional test command to run
         timeout_seconds: Maximum time to wait for test commands
-    
+
     Returns:
         Dictionary with probe results
     """
@@ -162,10 +191,10 @@ def probe_command(
 
 def is_command_available(binary_name: str) -> bool:
     """Check if a command is available in PATH.
-    
+
     Args:
         binary_name: Name of the binary to check
-    
+
     Returns:
         True if the binary is found
     """
@@ -206,4 +235,4 @@ def is_command_available(binary_name: str) -> bool:
 # - infrastructure/probe/scanner.py l'utilisera pour tester nft, iptables, fail2ban-client
 # - infrastructure/probe/capability_mapper.py transformera les résultats en Capability
 # - Les tests mockeront shutil.which et subprocess pour simuler différents états
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

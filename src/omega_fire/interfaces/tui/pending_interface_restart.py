@@ -7,6 +7,7 @@ Deposee sur `OmegaFireApp.pending_restart` par l'ecran Reglages, lue par
 app/bootstrap.py::bootstrap_tui() APRES `App.run()` : os.execv() relance le MEME Python sur la
 MEME installation, nouveau processus = nouvelle langue chargee depuis le disque. Les regles
 du pare-feu, fail2ban et les services ne sont jamais touches."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

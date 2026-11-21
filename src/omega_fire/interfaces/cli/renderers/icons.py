@@ -8,10 +8,9 @@ Detects automatically if the terminal supports emojis:
 Problematic emojis (📡, 🔁, 📁, 💾) are ALWAYS replaced by geometric icons,
 even on modern terminals, because they are known to render badly on many systems.
 """
+
 import os
 import sys
-from typing import Optional
-
 
 # ----------------------------------------------------------------------
 # Emojis known to render badly on many terminals
@@ -23,9 +22,9 @@ PROBLEMATIC_EMOJIS = {
     "📁",  # File folder - often renders as garbage
     "💾",  # Floppy disk - often renders as garbage
     "🛡️",  # Shield+VS16 - Rich counts 2 cells, several terminals only
-            # render 1 (variation-selector width is terminal-dependent),
-            # causing a 1-character border misalignment in bordered menus
-    "⚙️",   # Gear+VS16 - same variation-selector width mismatch as above
+    # render 1 (variation-selector width is terminal-dependent),
+    # causing a 1-character border misalignment in bordered menus
+    "⚙️",  # Gear+VS16 - same variation-selector width mismatch as above
 }
 
 
@@ -66,49 +65,49 @@ SECTION_GEOMETRIC = {
 # ----------------------------------------------------------------------
 def _detect_emoji_support() -> bool:
     """Detect if the current terminal supports emoji rendering.
-    
+
     Detection strategy:
     1. Check LANG/LC_ALL for UTF-8 support
     2. Check TERM for known problematic terminals
     3. Check if stdout is a TTY
-    
+
     Returns:
         True if emojis are likely to render correctly
     """
     # Not a TTY → no emoji support
     if not sys.stdout.isatty():
         return False
-    
+
     # Check LANG/LC_ALL for UTF-8
     lang = os.environ.get("LANG", "") or os.environ.get("LC_ALL", "")
     if "UTF-8" not in lang.upper() and "UTF8" not in lang.upper():
         return False
-    
+
     # Check TERM for known problematic terminals
     term = os.environ.get("TERM", "").lower()
     problematic_terms = {
-        "linux",      # Linux console (TTY) - no emoji support
-        "vt100",      # Old VT100
-        "vt220",      # Old VT220
-        "dumb",       # Dumb terminal
+        "linux",  # Linux console (TTY) - no emoji support
+        "vt100",  # Old VT100
+        "vt220",  # Old VT220
+        "dumb",  # Dumb terminal
     }
     if term in problematic_terms:
         return False
-    
+
     # Check NO_COLOR environment variable (convention)
     if "NO_COLOR" in os.environ:
         return False
-    
+
     return True
 
 
 # Cache the detection result (expensive to recompute)
-_EMOJI_SUPPORT_CACHE: Optional[bool] = None
+_EMOJI_SUPPORT_CACHE: bool | None = None
 
 
 def terminal_supports_emojis() -> bool:
     """Check if the terminal supports emojis (cached result).
-    
+
     Returns:
         True if emojis are supported
     """
@@ -129,17 +128,17 @@ def reset_emoji_detection_cache() -> None:
 # ----------------------------------------------------------------------
 def menu_icon(section_number: str) -> str:
     """Return the appropriate icon for a menu section.
-    
+
     Automatic detection:
     - If terminal supports emojis AND the emoji is not problematic → emoji
     - Otherwise → geometric icon (universal fallback)
-    
+
     Args:
         section_number: The menu section number (1-8, 0)
-        
+
     Returns:
         The icon for that section (emoji or geometric)
-        
+
     Example:
         >>> menu_icon("1")  # Returns "◉" (📡 is problematic)
         >>> menu_icon("2")  # Returns "🛡️" on modern terminals, "◆" on old ones
@@ -148,31 +147,31 @@ def menu_icon(section_number: str) -> str:
     emoji = SECTION_EMOJIS.get(section_number)
     if emoji is None:
         return "[?]"
-    
+
     # If emoji is problematic → always use geometric
     if emoji in PROBLEMATIC_EMOJIS:
         return SECTION_GEOMETRIC.get(section_number, "[?]")
-    
+
     # If terminal doesn't support emojis → use geometric
     if not terminal_supports_emojis():
         return SECTION_GEOMETRIC.get(section_number, "[?]")
-    
+
     # Otherwise → use emoji
     return emoji
 
 
 def get_all_section_icons() -> dict[str, str]:
     """Get all section icons with automatic detection applied.
-    
+
     Returns:
         Dictionary mapping section numbers to their icons
     """
-    return {key: menu_icon(key) for key in SECTION_EMOJIS.keys()}
+    return {key: menu_icon(key) for key in SECTION_EMOJIS}
 
 
 def get_all_emoji_icons() -> dict[str, str]:
     """Get all emoji icons (without detection).
-    
+
     Returns:
         Dictionary mapping section numbers to their emoji icons
     """
@@ -181,7 +180,7 @@ def get_all_emoji_icons() -> dict[str, str]:
 
 def get_all_geometric_icons() -> dict[str, str]:
     """Get all geometric icons (universal fallback).
-    
+
     Returns:
         Dictionary mapping section numbers to their geometric icons
     """
@@ -190,7 +189,7 @@ def get_all_geometric_icons() -> dict[str, str]:
 
 def get_terminal_info() -> dict:
     """Get information about terminal capabilities (for debugging).
-    
+
     Returns:
         Dictionary with terminal info
     """
@@ -260,4 +259,4 @@ def get_terminal_info() -> dict:
 # - La detection est automatique, pas de configuration necessaire
 # - Sur un terminal moderne avec UTF-8 : emojis (sauf problematiques)
 # - Sur un terminal basique ou sans UTF-8 : icones geometriques
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

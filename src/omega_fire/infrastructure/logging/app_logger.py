@@ -7,21 +7,24 @@ and contexts.
 
 This module performs file I/O to write logs and is therefore in infrastructure/.
 """
+
 import logging
 from pathlib import Path
 from typing import Any, Optional
+
 from omega_fire.infrastructure.config.paths import APP_LOG_PATH, LOGS_DIR
+
 
 class AppLogger:
     """High-level application logger.
-    
+
     Provides convenience methods for logging at different levels
     with optional context information.
     """
-    
-    def __init__(self, name: str = "omega_fire", log_dir: Optional[Path] = None):
+
+    def __init__(self, name: str = "omega_fire", log_dir: Path | None = None):
         """Initialize the application logger.
-        
+
         Args:
             name: Logger name (default: omega_fire)
             log_dir: Optional directory path for log files
@@ -38,7 +41,9 @@ class AppLogger:
         self._logger.setLevel(logging.INFO)
 
         # Vérifie si le FileHandler est déjà présent pour éviter les doublons d'écriture
-        has_file_handler = any(isinstance(h, logging.FileHandler) for h in self._logger.handlers)
+        has_file_handler = any(
+            isinstance(h, logging.FileHandler) for h in self._logger.handlers
+        )
 
         if not has_file_handler:
             try:
@@ -47,11 +52,11 @@ class AppLogger:
 
                 # 2. Création du handler d'écriture sur le fichier app.log
                 file_handler = logging.FileHandler(self.log_file, encoding="utf-8")
-                
+
                 # Format d'entrée technique lisible
                 formatter = logging.Formatter(
                     "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S"
+                    datefmt="%Y-%m-%d %H:%M:%S",
                 )
                 file_handler.setFormatter(formatter)
 
@@ -72,6 +77,7 @@ class AppLogger:
         doesn't match the expected format.
         """
         from datetime import datetime
+
         if not line.startswith("["):
             return None
         end = line.find("]")
@@ -82,7 +88,7 @@ class AppLogger:
         except ValueError:
             return None
 
-    def clear(self, older_than: Optional[Any] = None) -> int:
+    def clear(self, older_than: Any | None = None) -> int:
         """Purge les entrées du journal applicatif.
 
         If older_than is provided (a datetime), only entries strictly
@@ -161,7 +167,7 @@ class AppLogger:
 
         # Regroupe chaque ligne horodatée avec ses éventuelles lignes
         # de continuation (tracebacks) en une seule "entrée".
-        entries: list[tuple[Optional[Any], list[str]]] = []
+        entries: list[tuple[Any | None, list[str]]] = []
         for line in lines:
             ts = self._parse_line_timestamp(line)
             if ts is not None or not entries:
@@ -172,7 +178,7 @@ class AppLogger:
         timestamped = [e for e in entries if e[0] is not None]
         timestamped.sort(key=lambda e: e[0])
 
-        to_remove_ts = {id(e) for e in timestamped[:min(count, len(timestamped))]}
+        to_remove_ts = {id(e) for e in timestamped[: min(count, len(timestamped))]}
         removed_count = len(to_remove_ts)
 
         kept_lines: list[str] = []
@@ -192,79 +198,79 @@ class AppLogger:
 
     def debug(self, message: str, **context: Any) -> None:
         """Log a debug message.
-        
+
         Args:
             message: Log message
             context: Optional context information
         """
         self._logger.debug(self._format_message(message, context))
-    
+
     def info(self, message: str, **context: Any) -> None:
         """Log an info message.
-        
+
         Args:
             message: Log message
             context: Optional context information
         """
         self._logger.info(self._format_message(message, context))
-    
+
     def warning(self, message: str, **context: Any) -> None:
         """Log a warning message.
-        
+
         Args:
             message: Log message
             context: Optional context information
         """
         self._logger.warning(self._format_message(message, context))
-    
+
     def error(self, message: str, exc_info: bool = False, **context: Any) -> None:
         """Log an error message.
-        
+
         Args:
             message: Log message
             exc_info: If True, include exception information
             context: Optional context information
         """
         self._logger.error(self._format_message(message, context), exc_info=exc_info)
-    
+
     def critical(self, message: str, exc_info: bool = False, **context: Any) -> None:
         """Log a critical message.
-        
+
         Args:
             message: Log message
             exc_info: If True, include exception information
             context: Optional context information
         """
         self._logger.critical(self._format_message(message, context), exc_info=exc_info)
-    
+
     def exception(self, message: str, **context: Any) -> None:
         """Log an exception with traceback.
-        
+
         Args:
             message: Log message
             context: Optional context information
         """
         self._logger.exception(self._format_message(message, context))
-    
+
     def _format_message(self, message: str, context: dict[str, Any]) -> str:
         """Format a log message with context.
-        
+
         Args:
             message: Base message
             context: Context information
-        
+
         Returns:
             Formatted message string
         """
         if not context:
             return message
-        
+
         context_str = ", ".join(f"{k}={v}" for k, v in context.items())
         return f"{message} [{context_str}]"
-    
+
     def get_logger(self) -> logging.Logger:
         """Get the underlying Python logger.
-        
+
         Returns:
             Logger instance
         """
@@ -273,10 +279,10 @@ class AppLogger:
 
 def get_app_logger(name: str = "omega_fire") -> AppLogger:
     """Convenience function to get an application logger.
-    
+
     Args:
         name: Logger name
-    
+
     Returns:
         AppLogger instance
     """
@@ -284,6 +290,7 @@ def get_app_logger(name: str = "omega_fire") -> AppLogger:
 
 
 # --- Alias de compatibilité pour l'initialisation au démarrage ---
+
 
 def init_logging() -> AppLogger:
     """Initialise et retourne le logger principal applicatif."""
@@ -323,4 +330,4 @@ def setup_logging() -> AppLogger:
 # - Tous les composants recevront AppLogger via injection
 # - Les tests mockeront AppLogger pour vérifier les appels
 # - infrastructure/logging/audit_logger.py utilisera un logger séparé pour l'audit
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

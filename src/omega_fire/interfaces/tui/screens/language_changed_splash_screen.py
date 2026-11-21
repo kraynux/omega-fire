@@ -3,6 +3,7 @@
 appliquer une langue (OMEGA-FIRE_PLAN-DETAILLE_I18N.md §5, repris d'omega-serv) : le nom de
 la langue et la phrase d'invite DEJA traduite sont la preuve visible que le changement est
 applique. Meme interaction que le splash normal (touche ou clic, aucune temporisation)."""
+
 from __future__ import annotations
 
 from textual import events
@@ -28,10 +29,17 @@ class LanguageChangedSplashScreen(Screen[None]):
             with Center():
                 yield SplashHero()
             with Center():
-                yield Static(f"{LANGUAGE_LABEL} : {self._native_name}", classes="omega-title", id="language-name")
+                yield Static(
+                    f"{LANGUAGE_LABEL} : {self._native_name}",
+                    classes="omega-title",
+                    id="language-name",
+                )
             with Center():
-                yield Static(_("Cliquez ou appuyez sur une touche pour continuer..."),
-                             classes="omega-splash-prompt", id="language-prompt")
+                yield Static(
+                    _("Cliquez ou appuyez sur une touche pour continuer..."),
+                    classes="omega-splash-prompt",
+                    id="language-prompt",
+                )
 
     def on_key(self, event: events.Key) -> None:
         event.stop()

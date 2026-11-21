@@ -11,6 +11,7 @@ _build_kpi_table/_build_top_tables_columns/_build_management_evolution_columns
 (actions.py) et ascii_charts.py/daily_trend_chart.py/management_panel.py/
 rules_evolution_panel.py, avec la palette d'extension omega-fire a la place
 de theme_registry.get_style()."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -49,7 +50,15 @@ _HTML_THEMES: dict[str, str] = {
 class StatsReportScreen(OmegaScreen):
     """8.3/8.4 — rapport statistique complet sur 7 ou 30 jours."""
 
-    def __init__(self, *, container: DependencyContainer, period_code: str, period_label: str, title: str, period_suffix: str) -> None:
+    def __init__(
+        self,
+        *,
+        container: DependencyContainer,
+        period_code: str,
+        period_label: str,
+        title: str,
+        period_suffix: str,
+    ) -> None:
         super().__init__()
         self._container = container
         self._period_code = period_code
@@ -98,8 +107,12 @@ class StatsReportScreen(OmegaScreen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#top-ips-table", DataTable).add_columns("#", _("Adresse IP"), _("Bans"), _("Dernier Ban"))
-        self.query_one("#top-jails-table", DataTable).add_columns(_("Jail / Service"), _("Statut"), _("Bans"), _("Part"))
+        self.query_one("#top-ips-table", DataTable).add_columns(
+            "#", _("Adresse IP"), _("Bans"), _("Dernier Ban")
+        )
+        self.query_one("#top-jails-table", DataTable).add_columns(
+            _("Jail / Service"), _("Statut"), _("Bans"), _("Part")
+        )
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -128,10 +141,17 @@ class StatsReportScreen(OmegaScreen):
         """Rapport de la periode, textes dans la langue active (interface, ou langue des
         exports quand il est reconstruit pour un export)."""
         audit_port = self._safe(getattr(self._container, "get_audit_port", None))
-        persistence_port = self._safe(getattr(self._container, "get_persistence_port", None))
+        persistence_port = self._safe(
+            getattr(self._container, "get_persistence_port", None)
+        )
         return BuildStatsReportQuery(
-            audit_port=audit_port, persistence_port=persistence_port,
-        ).execute(BuildStatsReportRequest(period_code=self._period_code, period_label=_(self._period_label)))
+            audit_port=audit_port,
+            persistence_port=persistence_port,
+        ).execute(
+            BuildStatsReportRequest(
+                period_code=self._period_code, period_label=_(self._period_label)
+            )
+        )
 
     def _refresh(self) -> None:
         colors = self._colors()
@@ -142,25 +162,59 @@ class StatsReportScreen(OmegaScreen):
         hint = self.query_one("#report-hint", Static)
         if not result.success:
             hint.update(result.message)
-            log_action_result(self._container, self._title, status="failure", error=result.message)
+            log_action_result(
+                self._container, self._title, status="failure", error=result.message
+            )
             return
-        hint.update(_("Source : {value}").format(value=result.kpi.get('data_source', 'Inconnue')))
+        hint.update(
+            _("Source : {value}").format(
+                value=result.kpi.get("data_source", "Inconnue")
+            )
+        )
 
         self.query_one("#kpi-events", Static).update(
-            Text(_("Événements\n\n{value}\n").format(value=result.kpi.get('total_events', 0)), style=colors["info"])
-            + Text(_("Logs scannes ({value})").format(value=result.kpi.get('data_source', 'Inconnue')), style="dim")
+            Text(
+                _("Événements\n\n{value}\n").format(
+                    value=result.kpi.get("total_events", 0)
+                ),
+                style=colors["info"],
+            )
+            + Text(
+                _("Logs scannes ({value})").format(
+                    value=result.kpi.get("data_source", "Inconnue")
+                ),
+                style="dim",
+            )
         )
         self.query_one("#kpi-bans", Static).update(
-            Text(_("Total Bans\n\n{value}\n").format(value=result.kpi.get('total_bans', 0)), style=colors["danger"])
+            Text(
+                _("Total Bans\n\n{value}\n").format(
+                    value=result.kpi.get("total_bans", 0)
+                ),
+                style=colors["danger"],
+            )
             + Text(_("Adresses IP bloquées"), style="dim")
         )
         self.query_one("#kpi-top-jail", Static).update(
-            Text(_("Top Jail\n\n{value}\n").format(value=result.kpi.get('top_jail_name', 'Aucun')), style=colors["warning"])
+            Text(
+                _("Top Jail\n\n{value}\n").format(
+                    value=result.kpi.get("top_jail_name", "Aucun")
+                ),
+                style=colors["warning"],
+            )
             + Text(_("Service le plus cible"), style="dim")
         )
         self.query_one("#kpi-peak", Static).update(
-            Text(_("Heure de Pointe\n\n{value}\n").format(value=result.kpi.get('peak_hour', '--:--')), style=colors["main"])
-            + Text(_("Pic ({value} evts)").format(value=result.kpi.get('peak_count', 0)), style="dim")
+            Text(
+                _("Heure de Pointe\n\n{value}\n").format(
+                    value=result.kpi.get("peak_hour", "--:--")
+                ),
+                style=colors["main"],
+            )
+            + Text(
+                _("Pic ({value} evts)").format(value=result.kpi.get("peak_count", 0)),
+                style="dim",
+            )
         )
 
         self.query_one("#box-hourly-chart", Static).update(
@@ -176,7 +230,12 @@ class StatsReportScreen(OmegaScreen):
             ips_table.add_row("-", _("Aucune donnée"), "0", "--:--")
         else:
             for idx, ip_stat in enumerate(result.top_ips[:8], 1):
-                ips_table.add_row(str(idx), ip_stat["ip"], str(ip_stat["total_bans"]), ip_stat["last_ban"][11:19])
+                ips_table.add_row(
+                    str(idx),
+                    ip_stat["ip"],
+                    str(ip_stat["total_bans"]),
+                    ip_stat["last_ban"][11:19],
+                )
 
         jails_table = self.query_one("#top-jails-table", DataTable)
         jails_table.clear()
@@ -184,13 +243,21 @@ class StatsReportScreen(OmegaScreen):
             jails_table.add_row(_("Aucune donnée"), "-", "0", "")
         else:
             for jail in result.top_jails[:8]:
-                status = Text(_("● Actif"), style=colors["available"]) if jail["is_active"] else Text(_("○ Archive"), style="dim")
+                status = (
+                    Text(_("● Actif"), style=colors["available"])
+                    if jail["is_active"]
+                    else Text(_("○ Archive"), style="dim")
+                )
                 bar_len = int(jail["percentage"] / 10)
                 part = f"{'█' * bar_len}{'░' * (10 - bar_len)} {jail['percentage']}%"
                 jails_table.add_row(jail["name"], status, str(jail["total_bans"]), part)
 
-        self.query_one("#box-management", Static).update(self._render_management(colors, result.management))
-        self.query_one("#box-evolution", Static).update(self._render_evolution(colors, result.rules_evolution))
+        self.query_one("#box-management", Static).update(
+            self._render_management(colors, result.management)
+        )
+        self.query_one("#box-evolution", Static).update(
+            self._render_evolution(colors, result.rules_evolution)
+        )
 
         log_action_result(self._container, self._title, status="success")
 
@@ -203,7 +270,9 @@ class StatsReportScreen(OmegaScreen):
         except Exception:
             return None
 
-    def _render_hourly_chart(self, colors: dict, data: list[int], widget_id: str) -> Text:
+    def _render_hourly_chart(
+        self, colors: dict, data: list[int], widget_id: str
+    ) -> Text:
         max_val = max(data) if data and max(data) > 0 else 1
         box = self.query_one(f"#{widget_id}", Static)
         available_width = max(48, (box.size.width - 4) or 70)
@@ -216,7 +285,11 @@ class StatsReportScreen(OmegaScreen):
             for idx, val in enumerate(data):
                 scaled = (val / max_val) * _CHART_HEIGHT
                 if scaled >= level:
-                    style = colors["danger"] if (val == max_val and val > 0) else colors["main"]
+                    style = (
+                        colors["danger"]
+                        if (val == max_val and val > 0)
+                        else colors["main"]
+                    )
                     line_text.append("█", style=style)
                 elif scaled > level - 1:
                     b_idx = int((scaled - (level - 1)) * (len(_CHART_BLOCKS) - 1))
@@ -227,12 +300,21 @@ class StatsReportScreen(OmegaScreen):
                     line_text.append(gap)
             lines.append(line_text)
 
-        hours_top = gap.join(f"{h:02d}"[0] + (" " if spacing_factor > 1 else "") for h in range(24))
-        hours_bottom = gap.join(f"{h:02d}"[1] + (" " if spacing_factor > 1 else "") for h in range(24))
+        hours_top = gap.join(
+            f"{h:02d}"[0] + (" " if spacing_factor > 1 else "") for h in range(24)
+        )
+        hours_bottom = gap.join(
+            f"{h:02d}"[1] + (" " if spacing_factor > 1 else "") for h in range(24)
+        )
         chart_width = len(lines[0].plain) if lines else available_width
 
         content = Text()
-        content.append(_("Distribution Horaire (24h) — Max: {max_val} bans/h\n\n").format(max_val=max_val), style=colors["heading"])
+        content.append(
+            _("Distribution Horaire (24h) — Max: {max_val} bans/h\n\n").format(
+                max_val=max_val
+            ),
+            style=colors["heading"],
+        )
         for line in lines:
             content.append_text(line)
             content.append("\n")
@@ -245,7 +327,9 @@ class StatsReportScreen(OmegaScreen):
         content = Text()
         if not data:
             content.append(_("Tendance Journalière\n\n"), style=colors["heading"])
-            content.append(_("Aucune donnée disponible pour cette période."), style="dim")
+            content.append(
+                _("Aucune donnée disponible pour cette période."), style="dim"
+            )
             return content
 
         values = [count for _ignored, count in data]
@@ -253,12 +337,21 @@ class StatsReportScreen(OmegaScreen):
         label_width = max(len(label) for label, _ignored in data)
 
         first_val, last_val = data[0][1], data[-1][1]
-        trend_suffix = " ▲" if last_val > first_val else (" ▼" if last_val < first_val else " =")
-        content.append(_("Tendance Journalière{trend_suffix}\n\n").format(trend_suffix=trend_suffix), style=colors["heading"])
+        trend_suffix = (
+            " ▲" if last_val > first_val else (" ▼" if last_val < first_val else " =")
+        )
+        content.append(
+            _("Tendance Journalière{trend_suffix}\n\n").format(
+                trend_suffix=trend_suffix
+            ),
+            style=colors["heading"],
+        )
 
         for label, count in data:
             bar_len = int((count / max_val) * _TREND_BAR_WIDTH) if max_val > 0 else 0
-            bar_style = colors["danger"] if count == max_val and count > 0 else colors["main"]
+            bar_style = (
+                colors["danger"] if count == max_val and count > 0 else colors["main"]
+            )
             content.append(f"  {label:<{label_width}} ", style="dim")
             content.append("█" * bar_len, style=bar_style)
             content.append("░" * (_TREND_BAR_WIDTH - bar_len), style="dim")
@@ -268,21 +361,47 @@ class StatsReportScreen(OmegaScreen):
     def _render_management(self, colors: dict, management: dict) -> Text:
         content = Text()
         content.append(_("── ACTIVITÉ ─────────────────\n"), style=colors["heading"])
-        content.append(_("  Changements de profil / règles : {value}\n").format(value=management.get('rule_changes', 0)), style=colors["main"])
-        content.append(_("  Sauvegardes effectuées         : {value}\n").format(value=management.get('backups', 0)), style=colors["main"])
-        content.append(_("  Restaurations effectuées       : {value}\n").format(value=management.get('restores', 0)), style=colors["main"])
+        content.append(
+            _("  Changements de profil / règles : {value}\n").format(
+                value=management.get("rule_changes", 0)
+            ),
+            style=colors["main"],
+        )
+        content.append(
+            _("  Sauvegardes effectuées         : {value}\n").format(
+                value=management.get("backups", 0)
+            ),
+            style=colors["main"],
+        )
+        content.append(
+            _("  Restaurations effectuées       : {value}\n").format(
+                value=management.get("restores", 0)
+            ),
+            style=colors["main"],
+        )
 
         success_rate = management.get("success_rate", 0.0)
         total_actions = management.get("total_actions", 0)
         content.append(_("\n── FIABILITÉ ────────────────\n"), style=colors["heading"])
-        rate_style = colors["available"] if success_rate >= 95 else (colors["warning"] if success_rate >= 80 else colors["danger"])
+        rate_style = (
+            colors["available"]
+            if success_rate >= 95
+            else (colors["warning"] if success_rate >= 80 else colors["danger"])
+        )
         content.append(_("  Taux de succès : "), style=colors["main"])
         content.append(f"{success_rate:.1f}%", style=rate_style)
-        content.append(_("  ({total_actions} action(s) au total)\n").format(total_actions=total_actions), style="dim")
+        content.append(
+            _("  ({total_actions} action(s) au total)\n").format(
+                total_actions=total_actions
+            ),
+            style="dim",
+        )
 
         recent_entries = management.get("recent_entries", [])
         if recent_entries:
-            content.append(_("\n── DERNIÈRES ACTIONS ────────\n"), style=colors["heading"])
+            content.append(
+                _("\n── DERNIÈRES ACTIONS ────────\n"), style=colors["heading"]
+            )
             for time_label, description, success in recent_entries:
                 symbol = "✔" if success else "✗"
                 style = colors["available"] if success else colors["danger"]
@@ -290,16 +409,24 @@ class StatsReportScreen(OmegaScreen):
                 content.append(f"{symbol} ", style=style)
                 content.append(f"{description}\n", style=colors["main"])
         else:
-            content.append(_("\n  Aucune action enregistrée sur cette période.\n"), style="dim")
+            content.append(
+                _("\n  Aucune action enregistrée sur cette période.\n"), style="dim"
+            )
         return content
 
-    def _render_evolution(self, colors: dict, points: list[tuple[str, int, int]]) -> Text:
+    def _render_evolution(
+        self, colors: dict, points: list[tuple[str, int, int]]
+    ) -> Text:
         content = Text()
-        content.append(_("── ÉVOLUTION DES RÈGLES & IPs BANNIES ──\n\n"), style=colors["heading"])
+        content.append(
+            _("── ÉVOLUTION DES RÈGLES & IPs BANNIES ──\n\n"), style=colors["heading"]
+        )
         if not points:
             content.append(
-                _("Aucun snapshot disponible sur cette période — impossible de "
-                "mesurer l'évolution des règles/IPs bannies. Voir menu 7.1.\n"),
+                _(
+                    "Aucun snapshot disponible sur cette période — impossible de "
+                    "mesurer l'évolution des règles/IPs bannies. Voir menu 7.1.\n"
+                ),
                 style="dim",
             )
             return content
@@ -311,12 +438,19 @@ class StatsReportScreen(OmegaScreen):
         def sparkline(values: list[int]) -> str:
             max_val = max(values) if max(values) > 0 else 1
             return "".join(
-                spark_chars[min(int((v / max_val) * (len(spark_chars) - 1)), len(spark_chars) - 1)]
+                spark_chars[
+                    min(
+                        int((v / max_val) * (len(spark_chars) - 1)),
+                        len(spark_chars) - 1,
+                    )
+                ]
                 for v in values
             )
 
         content.append(
-            _("{count} point(s) de mesure sur la période.\nReflète les sauvegardes disponibles, pas un suivi continu.\n\n").format(count=len(points)),
+            _(
+                "{count} point(s) de mesure sur la période.\nReflète les sauvegardes disponibles, pas un suivi continu.\n\n"
+            ).format(count=len(points)),
             style="dim",
         )
         content.append(_("  Règles actives : "), style=colors["main"])
@@ -329,8 +463,14 @@ class StatsReportScreen(OmegaScreen):
         content.append(_("── DÉTAIL DES POINTS ────────\n"), style=colors["heading"])
         for date_label, rules_count, ips_count in points:
             content.append(f"  {date_label:<14} ", style="dim")
-            content.append(_("Règles: {rules_count:<4} ").format(rules_count=rules_count), style=colors["info"])
-            content.append(_("IPs: {ips_count}\n").format(ips_count=ips_count), style=colors["danger"])
+            content.append(
+                _("Règles: {rules_count:<4} ").format(rules_count=rules_count),
+                style=colors["info"],
+            )
+            content.append(
+                _("IPs: {ips_count}\n").format(ips_count=ips_count),
+                style=colors["danger"],
+            )
         return content
 
     def _export(self) -> None:
@@ -346,22 +486,34 @@ class StatsReportScreen(OmegaScreen):
             exports_dir = self._container.exports_dir
             exports_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_path = exports_dir / f"stats_report_{self._period_suffix}_{timestamp}.html"
+            output_path = (
+                exports_dir / f"stats_report_{self._period_suffix}_{timestamp}.html"
+            )
 
             state = export_translation(self, self._container)
             with translating_as(state):
                 # Autre langue que l'interface : rapport reconstruit, ses titres et libelles
                 # calcules en Python sortent alors dans la langue des exports.
-                report = self._result.report if state is None else self._build_report().report
+                report = (
+                    self._result.report
+                    if state is None
+                    else self._build_report().report
+                )
                 data = report_to_serializable(report)
                 data["theme_name"] = theme_name
 
                 exporter = HtmlExporter(templates_dir=TEMPLATES_DIR)
-                exporter.export_data(data, output_path, template_name="stats_report.html.j2")
+                exporter.export_data(
+                    data, output_path, template_name="stats_report.html.j2"
+                )
         except Exception as e:
             self.app.notify(_("Échec de l'export : {e}").format(e=e), severity="error")
-            log_action_result(self._container, self._title, status="failure", error=str(e))
+            log_action_result(
+                self._container, self._title, status="failure", error=str(e)
+            )
             return
 
-        self.app.notify(_("Rapport exporté : {output_path}").format(output_path=output_path))
+        self.app.notify(
+            _("Rapport exporté : {output_path}").format(output_path=output_path)
+        )
         log_action_result(self._container, self._title, status="success")

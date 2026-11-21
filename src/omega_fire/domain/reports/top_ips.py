@@ -2,6 +2,7 @@
 """Resultat d'une analyse Top N des IPs (5.4, version 3.5), exportable en JSON / TXT /
 HTML puis rechargeable en 5.5 (retirer ces IPs des logs) : plus besoin de noter les IPs
 d'un ecran a l'autre."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,7 +16,7 @@ class TopIpRow:
     rank: int
     ip: str
     count: int
-    percent: float | None = None      # None pour un fichier brut d'IPs (blocklist)
+    percent: float | None = None  # None pour un fichier brut d'IPs (blocklist)
     volume_bytes: int | None = None
 
 

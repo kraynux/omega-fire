@@ -7,10 +7,12 @@ is stored in var/db/omega.db (not in the source tree).
 
 This module performs real file I/O and is therefore in infrastructure/.
 """
+
 import sqlite3
-from pathlib import Path
-from typing import Optional, Generator
+from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
+
 from omega_fire.infrastructure.storage.sqlite.exceptions import (
     DatabaseConnectionError,
 )
@@ -19,37 +21,37 @@ from omega_fire.shared.i18n import _
 
 class DatabaseConnection:
     """Manages SQLite database connections.
-    
+
     Provides connection lifecycle management, transaction control,
     and context managers for safe database access.
     """
-    
+
     def __init__(self, db_path: Path):
         """Initialize the database connection manager.
-        
+
         Args:
             db_path: Path to the SQLite database file
         """
         self._db_path = db_path
-        self._connection: Optional[sqlite3.Connection] = None
-    
+        self._connection: sqlite3.Connection | None = None
+
     @property
     def db_path(self) -> Path:
         """Get the database file path."""
         return self._db_path
-    
+
     def connect(self) -> None:
         """Open the database connection.
-        
+
         Creates the parent directory if it doesn't exist.
-        
+
         Raises:
             DatabaseConnectionError: If connection fails
         """
         try:
             # Ensure parent directory exists
             self._db_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             self._connection = sqlite3.connect(
                 str(self._db_path),
                 timeout=10.0,
@@ -58,13 +60,13 @@ class DatabaseConnection:
             self._connection.row_factory = sqlite3.Row
             self._connection.execute("PRAGMA foreign_keys = ON")
             self._connection.execute("PRAGMA journal_mode = WAL")
-        
+
         except sqlite3.Error as e:
             raise DatabaseConnectionError(
                 db_path=str(self._db_path),
                 reason=str(e),
             ) from e
-    
+
     # ⏬Initailisation de la BD⏬
     def initialize_tables(self) -> None:
         """Initialise le schéma de la base de données si les tables manquent."""
@@ -98,21 +100,21 @@ class DatabaseConnection:
         if self._connection is not None:
             self._connection.close()
             self._connection = None
-    
+
     def is_connected(self) -> bool:
         """Check if the connection is open.
-        
+
         Returns:
             True if connected
         """
         return self._connection is not None
-    
+
     def get_connection(self) -> sqlite3.Connection:
         """Get the underlying SQLite connection.
-        
+
         Returns:
             sqlite3.Connection instance
-        
+
         Raises:
             DatabaseConnectionError: If not connected
         """
@@ -122,16 +124,16 @@ class DatabaseConnection:
                 reason=_("Connexion non établie : appeler connect() d'abord."),
             )
         return self._connection
-    
+
     @contextmanager
     def transaction(self) -> Generator[sqlite3.Connection, None, None]:
         """Context manager for database transactions.
-        
+
         Commits on success, rolls back on exception.
-        
+
         Yields:
             sqlite3.Connection for executing queries
-        
+
         Raises:
             DatabaseConnectionError: If not connected
         """
@@ -142,16 +144,16 @@ class DatabaseConnection:
         except Exception:
             conn.rollback()
             raise
-    
+
     @contextmanager
     def cursor(self) -> Generator[sqlite3.Cursor, None, None]:
         """Context manager for database cursors.
-        
+
         Automatically closes the cursor on exit.
-        
+
         Yields:
             sqlite3.Cursor for executing queries
-        
+
         Raises:
             DatabaseConnectionError: If not connected
         """
@@ -161,44 +163,44 @@ class DatabaseConnection:
             yield cursor
         finally:
             cursor.close()
-    
+
     def execute(self, query: str, params: tuple = ()) -> sqlite3.Cursor:
         """Execute a single query.
-        
+
         Args:
             query: SQL query string
             params: Query parameters
-        
+
         Returns:
             sqlite3.Cursor with results
-        
+
         Raises:
             DatabaseConnectionError: If not connected
         """
         conn = self.get_connection()
         return conn.execute(query, params)
-    
+
     def execute_many(self, query: str, params_list: list[tuple]) -> sqlite3.Cursor:
         """Execute a query multiple times with different parameters.
-        
+
         Args:
             query: SQL query string
             params_list: List of parameter tuples
-        
+
         Returns:
             sqlite3.Cursor with results
-        
+
         Raises:
             DatabaseConnectionError: If not connected
         """
         conn = self.get_connection()
         return conn.executemany(query, params_list)
-    
+
     def __enter__(self):
         """Enter context manager: open connection."""
         self.connect()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context manager: close connection."""
         self.close()
@@ -232,4 +234,4 @@ class DatabaseConnection:
 # - infrastructure/storage/sqlite/repositories.py l'utilisera pour exécuter les requêtes
 # - app/bootstrap.py instanciera cette classe et l'injectera dans les repositories
 # - Les tests utiliseront un fichier DB temporaire dans /tmp
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

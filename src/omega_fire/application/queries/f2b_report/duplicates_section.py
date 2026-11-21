@@ -5,6 +5,7 @@ An IP present in multiple jails at once isn't necessarily an anomaly
 (e.g. the same attacker triggering both sshd and sshd-custom), but
 it's useful information — surfacing the top 20 most-shared IPs.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -72,4 +73,4 @@ def collect_duplicate_ips(jails_info: list[Any]) -> list[DuplicateIp]:
 # Comment il sera utilisé :
 # - report_builder.py appelle collect_duplicate_ips() pour peupler
 #   F2bReportData.duplicate_ips.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------

@@ -20,6 +20,7 @@ des 9 tokens generiques d'omega_lib.theme.
 Les noms de theme correspondent exactement aux 10 entrees de
 omega_lib.theme.policies.TUI_THEMES (meme catalogue, meme lignee).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

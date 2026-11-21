@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Builtin plugin for iptables backend."""
+
 from omega_fire.shared.i18n import _
 
 PLUGIN_NAME = "iptables"
@@ -34,7 +35,8 @@ def before_unban(ip: str, **kwargs) -> None:
 def after_unban(ip: str, **kwargs) -> None:
     pass
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle : Plugin builtin pour le backend iptables.
 # Même structure que nftables.py, avec capacités spécifiques à iptables.
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

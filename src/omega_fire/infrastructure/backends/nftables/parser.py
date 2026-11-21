@@ -8,8 +8,8 @@ and converts it into dictionaries that can be mapped to domain models.
 This module performs no I/O — it only parses strings. The actual command
 execution is done by the adapter.
 """
+
 import re
-from typing import Optional
 
 
 class NftParser:
@@ -49,13 +49,17 @@ class NftParser:
                 and not stripped.startswith("type ")
                 and stripped not in ("{", "}")
             ):
-                rule = self._parse_rule_line(stripped, current_family, current_table, current_chain)
+                rule = self._parse_rule_line(
+                    stripped, current_family, current_table, current_chain
+                )
                 if rule:
                     rules.append(rule)
 
         return rules
 
-    def _parse_rule_line(self, line: str, family: str, table: str, chain: str) -> Optional[dict]:
+    def _parse_rule_line(
+        self, line: str, family: str, table: str, chain: str
+    ) -> dict | None:
         """Parse a single nft rule line.
 
         Args:
@@ -143,10 +147,12 @@ class NftParser:
             if stripped.startswith("table "):
                 parts = stripped.split()
                 if len(parts) >= 3:
-                    tables.append({
-                        "family": parts[1],
-                        "name": parts[2],
-                    })
+                    tables.append(
+                        {
+                            "family": parts[1],
+                            "name": parts[2],
+                        }
+                    )
         return tables
 
     def parse_chains(self, output: str) -> list[dict]:
@@ -164,10 +170,12 @@ class NftParser:
             if stripped.startswith("chain "):
                 parts = stripped.split()
                 if len(parts) >= 2:
-                    chains.append({
-                        "name": parts[1].rstrip(" {"),
-                        "raw": stripped,
-                    })
+                    chains.append(
+                        {
+                            "name": parts[1].rstrip(" {"),
+                            "raw": stripped,
+                        }
+                    )
         return chains
 
     def parse_ban_set(self, output: str, set_name: str = "blackhole") -> list[str]:
@@ -239,4 +247,4 @@ def parse_nft_ban_set(output: str, set_name: str = "blackhole") -> list[str]:
 # - infrastructure/backends/nftables/adapter.py l'appellera après chaque commande nft
 # - infrastructure/backends/nftables/mapper.py transformera les dicts en objets métier
 # - Les tests utiliseront des fixtures de sortie nft pour vérifier le parsing
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

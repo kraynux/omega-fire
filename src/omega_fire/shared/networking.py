@@ -4,30 +4,35 @@
 Value objects for IP addresses and CIDR notation.
 These are generic, non-business utilities used across multiple domains.
 """
+
 import ipaddress
 from dataclasses import dataclass
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass(frozen=True)
 class IPAddress:
     """Validated IP address (IPv4 or IPv6).
-    
+
     This is a value object that validates the IP format on construction.
     It does not contain any business logic — just format validation.
     """
+
     value: str
-    
+
     def __post_init__(self):
         """Validate the IP address format."""
         try:
             ipaddress.ip_address(self.value)
         except ValueError as e:
-            raise ValueError(_("Adresse IP invalide : {value}").format(value=self.value)) from e
-    
+            raise ValueError(
+                _("Adresse IP invalide : {value}").format(value=self.value)
+            ) from e
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def version(self) -> int:
         """Return IP version (4 or 6)."""
@@ -37,38 +42,42 @@ class IPAddress:
 @dataclass(frozen=True)
 class CIDR:
     """Validated CIDR notation (e.g., '192.168.1.0/24').
-    
+
     This is a value object that validates the CIDR format on construction.
     It does not contain any business logic — just format validation.
     """
+
     value: str
-    
+
     def __post_init__(self):
         """Validate the CIDR notation format."""
         try:
             ipaddress.ip_network(self.value, strict=False)
         except ValueError as e:
-            raise ValueError(_("Notation CIDR invalide : {value}").format(value=self.value)) from e
-    
+            raise ValueError(
+                _("Notation CIDR invalide : {value}").format(value=self.value)
+            ) from e
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def version(self) -> int:
         """Return IP version (4 or 6)."""
         return ipaddress.ip_network(self.value, strict=False).version
-    
+
     @property
     def network_address(self) -> str:
         """Return the network address."""
         return str(ipaddress.ip_network(self.value, strict=False).network_address)
-    
+
     @property
     def broadcast_address(self) -> str:
         """Return the broadcast address."""
         return str(ipaddress.ip_network(self.value, strict=False).broadcast_address)
 
-#--- INFO DEV ----------------------------------------------------------
+
+# --- INFO DEV ----------------------------------------------------------
 # Rôle :
 # - Fournir des value objects pour la validation d'adresses IP et de notations CIDR. Ce sont des utilitaires transverses non métier (wrapper autour de ipaddress de la stdlib).
 # Pourquoi dans shared/ (charte projet) :
@@ -90,4 +99,4 @@ class CIDR:
 # - domain/ip_blacklist/service.py l'importe pour valider les IPs avant de les bannir
 # - domain/rules/service.py l'utilisera pour valider les CIDR dans les règles firewall
 # - domain/fail2ban/service.py l'utilisera pour valider les IPs dans les jails
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

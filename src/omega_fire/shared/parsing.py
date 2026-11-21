@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, Iterator
+from collections.abc import Iterator
 
 from omega_fire.shared.exceptions import ParsingError
 from omega_fire.shared.i18n import _
@@ -114,7 +114,9 @@ def iter_lines(text: str) -> Iterator[str]:
             yield stripped
 
 
-def require_match(pattern: re.Pattern[str], text: str, context: str = "") -> re.Match[str]:
+def require_match(
+    pattern: re.Pattern[str], text: str, context: str = ""
+) -> re.Match[str]:
     """Applique un regex et lève ParsingError si pas de match.
 
     Args:
@@ -135,6 +137,7 @@ def require_match(pattern: re.Pattern[str], text: str, context: str = "") -> re.
             msg += _(" (contexte: {context})").format(context=context)
         raise ParsingError(msg)
     return match
+
 
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle :
@@ -172,4 +175,4 @@ def require_match(pattern: re.Pattern[str], text: str, context: str = "") -> re.
 # - infrastructure/backends/nftables/parser.py utilisera split_fields()
 # - infrastructure/backends/fail2ban/parser.py utilisera extract_key_value()
 # - infrastructure/probe/scanner.py utilisera require_match() pour valider sorties
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

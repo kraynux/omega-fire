@@ -6,10 +6,10 @@ to create or recreate the schema. The schema is versioned via migrations.
 
 This module performs real file I/O and is therefore in infrastructure/.
 """
+
 from omega_fire.infrastructure.storage.sqlite.connection import DatabaseConnection
 from omega_fire.infrastructure.storage.sqlite.exceptions import DatabaseSchemaError
 from omega_fire.shared.i18n import _
-
 
 # Initial schema SQL
 INITIAL_SCHEMA = """
@@ -97,10 +97,10 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_status ON snapshots(status);
 
 def create_schema(db: DatabaseConnection) -> None:
     """Create the initial database schema.
-    
+
     Args:
         db: Database connection
-    
+
     Raises:
         DatabaseSchemaError: If schema creation fails
     """
@@ -115,12 +115,12 @@ def create_schema(db: DatabaseConnection) -> None:
 
 def drop_schema(db: DatabaseConnection) -> None:
     """Drop all tables from the database.
-    
+
     WARNING: This is destructive and cannot be undone.
-    
+
     Args:
         db: Database connection
-    
+
     Raises:
         DatabaseSchemaError: If schema drop fails
     """
@@ -138,10 +138,10 @@ def drop_schema(db: DatabaseConnection) -> None:
 
 def get_schema_version(db: DatabaseConnection) -> str:
     """Get the current schema version.
-    
+
     Args:
         db: Database connection
-    
+
     Returns:
         Schema version string (e.g., "1.0.0")
     """
@@ -151,8 +151,10 @@ def get_schema_version(db: DatabaseConnection) -> str:
         )
         if cursor.fetchone() is None:
             return "0.0.0"
-        
-        cursor = db.execute("SELECT version FROM schema_version ORDER BY applied_at DESC LIMIT 1")
+
+        cursor = db.execute(
+            "SELECT version FROM schema_version ORDER BY applied_at DESC LIMIT 1"
+        )
         row = cursor.fetchone()
         return row["version"] if row else "0.0.0"
     except Exception:
@@ -184,4 +186,4 @@ def get_schema_version(db: DatabaseConnection) -> str:
 # - app/bootstrap.py appellera create_schema() au premier démarrage
 # - infrastructure/storage/sqlite/migrations.py gérera les évolutions du schéma
 # - Les tests utiliseront un fichier DB temporaire
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

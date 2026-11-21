@@ -2,6 +2,7 @@
 """Controller : resout theme et profil de rendu au demarrage du TUI.
 Porte depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,7 +38,9 @@ def resolve_startup_state(
     terminal = detect_terminal(terminal_detector=terminal_detector)
     render_profile = _effective_render_profile(terminal, settings_store)
 
-    requested_theme = settings_store.get(_THEME_KEY, DEFAULT_TUI_THEME) or DEFAULT_TUI_THEME
+    requested_theme = (
+        settings_store.get(_THEME_KEY, DEFAULT_TUI_THEME) or DEFAULT_TUI_THEME
+    )
     theme = resolve_applied_theme(requested_theme, render_profile)
     if theme.fell_back_from is not None:
         settings_store.set(_THEME_KEY, theme.theme_name)
@@ -45,7 +48,9 @@ def resolve_startup_state(
     return StartupState(terminal=terminal, theme=theme)
 
 
-def _effective_render_profile(terminal: TerminalProfile, settings_store: SettingsStore) -> RenderProfile:
+def _effective_render_profile(
+    terminal: TerminalProfile, settings_store: SettingsStore
+) -> RenderProfile:
     override = settings_store.get(_RENDER_PROFILE_OVERRIDE_KEY, "")
     if override:
         return RenderProfile(override)

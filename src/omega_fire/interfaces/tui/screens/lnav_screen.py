@@ -42,6 +42,7 @@ action_8_6_lnav_analysis) :
 - Epingler/Retirer n'operent JAMAIS sur la fusion multiple : toujours
   UN SEUL chemin (celui de la ligne en surbrillance, ou le 1er token du
   champ de fusion s'il s'agit d'un chemin manuel), avec un nom separe."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -51,15 +52,17 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
-from omega_fire.application.commands.manage_live_tail_pins import ManageLiveTailPinsCommand
+from omega_fire.application.commands.manage_live_tail_pins import (
+    ManageLiveTailPinsCommand,
+)
 from omega_fire.infrastructure.config.paths import LOGS_DIR, RUNTIME_DIR
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.interfaces.cli.renderers.lnav_live import render_lnav_live
 from omega_fire.interfaces.cli.themes import initialize_theme, theme_registry
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens._log_sources import library_paths
 from omega_fire.interfaces.tui.support.action_audit import log_action_result
 from omega_fire.interfaces.tui.support.terminal_handoff import suspended_terminal
-from omega_fire.interfaces.tui.screens._log_sources import library_paths
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
@@ -90,18 +93,34 @@ class LnavScreen(OmegaScreen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(classes="omega-panel"):
-            yield Static(_("VISUALISER LES LOGS SERVEURS AVEC LNAV"), classes="omega-title")
             yield Static(
-                _("Cliquez une ligne pour ajouter son numéro au champ de fusion "
-                "ci-dessous (lnav fusionne automatiquement plusieurs fichiers)."),
+                _("VISUALISER LES LOGS SERVEURS AVEC LNAV"), classes="omega-title"
+            )
+            yield Static(
+                _(
+                    "Cliquez une ligne pour ajouter son numéro au champ de fusion "
+                    "ci-dessous (lnav fusionne automatiquement plusieurs fichiers)."
+                ),
                 classes="omega-hint",
             )
             yield DataTable(id="sources-table")
 
-            yield Static(_("Sources à fusionner (numéros ci-dessus et/ou chemins manuels, séparés par des virgules)"), classes="omega-subtitle")
-            yield Input(placeholder=_("ex: 1,3 ou /chemin/manuel.log"), id="merge-input")
+            yield Static(
+                _(
+                    "Sources à fusionner (numéros ci-dessus et/ou chemins manuels, séparés par des virgules)"
+                ),
+                classes="omega-subtitle",
+            )
+            yield Input(
+                placeholder=_("ex: 1,3 ou /chemin/manuel.log"), id="merge-input"
+            )
 
-            yield Static(_("Épingler (toujours UNE seule source : la ligne en surbrillance, ou le 1er élément ci-dessus)"), classes="omega-subtitle")
+            yield Static(
+                _(
+                    "Épingler (toujours UNE seule source : la ligne en surbrillance, ou le 1er élément ci-dessus)"
+                ),
+                classes="omega-subtitle",
+            )
             yield Input(placeholder=_("Nom de l'épingle"), id="pin-name-input")
 
             with Horizontal(classes="omega-actions"):
@@ -110,7 +129,11 @@ class LnavScreen(OmegaScreen):
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Épingler"), id="pin")
                 with Container(classes="omega-btn-frame"):
-                    yield Button(_("Retirer (ligne en surbrillance)"), id="unpin", variant="error")
+                    yield Button(
+                        _("Retirer (ligne en surbrillance)"),
+                        id="unpin",
+                        variant="error",
+                    )
                 with Container(classes="omega-btn-frame"):
                     yield Button(_("Purger tout"), id="purge", variant="error")
                 with Container(classes="omega-btn-frame"):
@@ -141,21 +164,37 @@ class LnavScreen(OmegaScreen):
             if lib_path in pinned_paths:
                 continue
             key = str(idx)
-            self._display_items[key] = {"type": "library", "name": _("Bibliothèque"), "path": lib_path}
-            table.add_row(key, _("Bibliothèque"), Path(lib_path).name, lib_path, key=key)
+            self._display_items[key] = {
+                "type": "library",
+                "name": _("Bibliothèque"),
+                "path": lib_path,
+            }
+            table.add_row(
+                key, _("Bibliothèque"), Path(lib_path).name, lib_path, key=key
+            )
             idx += 1
 
         for name, path in self._command.list_active_pinned().items():
             key = str(idx)
             self._display_items[key] = {"type": "pinned", "name": name, "path": path}
             sub_paths = [p.strip() for p in path.split(",") if p.strip()]
-            display_name = name if len(sub_paths) <= 1 else _("{name} ({count} fichiers)").format(name=name, count=len(sub_paths))
+            display_name = (
+                name
+                if len(sub_paths) <= 1
+                else _("{name} ({count} fichiers)").format(
+                    name=name, count=len(sub_paths)
+                )
+            )
             table.add_row(key, _("Épingle"), display_name, path, key=key)
             idx += 1
 
         for h_path in self._command.list_history()[:5]:
             key = str(idx)
-            self._display_items[key] = {"type": "history", "name": _("Historique récent"), "path": h_path}
+            self._display_items[key] = {
+                "type": "history",
+                "name": _("Historique récent"),
+                "path": h_path,
+            }
             table.add_row(key, _("Historique"), _("Historique récent"), h_path, key=key)
             idx += 1
 
@@ -165,7 +204,10 @@ class LnavScreen(OmegaScreen):
         # Synchronise le champ de fusion et la cible Epingler/Retirer avec
         # cette 1ere ligne des l'ouverture, pour rester coherent avec ce
         # que la surbrillance affiche deja.
-        if self._display_items and not self.query_one("#merge-input", Input).value.strip():
+        if (
+            self._display_items
+            and not self.query_one("#merge-input", Input).value.strip()
+        ):
             first_key = next(iter(self._display_items))
             self._highlighted_key = first_key
             self.query_one("#merge-input", Input).value = first_key
@@ -240,12 +282,21 @@ class LnavScreen(OmegaScreen):
         # contenu), re-eclatee par _resolve_token() a la relecture.
         paths = self._current_merge_paths()
         if not paths:
-            self.app.notify(_("Aucune source à épingler (sélectionnez une ligne ou saisissez un chemin)."), severity="warning")
+            self.app.notify(
+                _(
+                    "Aucune source à épingler (sélectionnez une ligne ou saisissez un chemin)."
+                ),
+                severity="warning",
+            )
             return
 
         result = self._command.add_pinned(name, ", ".join(paths))
         if result.success:
-            self.app.notify(_("{message} ({count} fichier(s))").format(message=result.message, count=len(paths)))
+            self.app.notify(
+                _("{message} ({count} fichier(s))").format(
+                    message=result.message, count=len(paths)
+                )
+            )
             self.query_one("#pin-name-input", Input).value = ""
             self._refresh_sources_table()
         else:
@@ -260,7 +311,12 @@ class LnavScreen(OmegaScreen):
             self.app.notify(_("Aucune ligne en surbrillance."), severity="warning")
             return
         if item["type"] == "library":
-            self.app.notify(_("Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."), severity="warning")
+            self.app.notify(
+                _(
+                    "Ce log vient de la Bibliothèque : retirez-le depuis 5.1 Bibliothèque."
+                ),
+                severity="warning",
+            )
             return
         if item["type"] == "pinned":
             result = self._command.remove_pinned(item["name"])
@@ -299,10 +355,18 @@ class LnavScreen(OmegaScreen):
                 missing_paths.append(p)
 
         if missing_paths:
-            self.app.notify(_("Fichier(s) introuvable(s), ignore(s) : {value}").format(value=', '.join(missing_paths)), severity="warning")
+            self.app.notify(
+                _("Fichier(s) introuvable(s), ignore(s) : {value}").format(
+                    value=", ".join(missing_paths)
+                ),
+                severity="warning",
+            )
 
         if not valid_paths:
-            self.app.notify(_("Aucun fichier valide au final. Opération annulée."), severity="warning")
+            self.app.notify(
+                _("Aucun fichier valide au final. Opération annulée."),
+                severity="warning",
+            )
             return
 
         known_paths = self._command.list_all_known_paths()
@@ -314,15 +378,26 @@ class LnavScreen(OmegaScreen):
             self._run_lnav(valid_paths)
         except FileNotFoundError:
             self.app.notify(
-                _("L'exécutable 'lnav' est introuvable (non installé ou absent du PATH). "
-                "Sur Arch/EndeavourOS : sudo pacman -S lnav"),
+                _(
+                    "L'exécutable 'lnav' est introuvable (non installé ou absent du PATH). "
+                    "Sur Arch/EndeavourOS : sudo pacman -S lnav"
+                ),
                 severity="error",
             )
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error="lnav introuvable")
+            log_action_result(
+                self._container,
+                _ACTION_TITLE,
+                status="failure",
+                error="lnav introuvable",
+            )
             return
         except Exception as e:
-            self.app.notify(_("Échec du lancement de lnav : {e}").format(e=e), severity="error")
-            log_action_result(self._container, _ACTION_TITLE, status="failure", error=str(e))
+            self.app.notify(
+                _("Échec du lancement de lnav : {e}").format(e=e), severity="error"
+            )
+            log_action_result(
+                self._container, _ACTION_TITLE, status="failure", error=str(e)
+            )
             return
 
         log_action_result(self._container, _ACTION_TITLE, status="success")

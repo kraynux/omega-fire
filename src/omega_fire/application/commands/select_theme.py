@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Use case : choisir et persister le theme actif (migration TUI Textual)."""
+
 from __future__ import annotations
 
 from omega_lib.theme.policies import TUI_THEMES

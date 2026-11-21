@@ -25,14 +25,17 @@ ExecutionPlan/PipelineStep pattern, whose steps were never implemented
 (placeholders only) and which was never wired into the real
 application flow — same rationale as ban_ip.py.
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
 from omega_fire.shared.i18n import _
 
 
 @dataclass
 class UnbanIpRequest:
     """Input for the unban IP use case."""
+
     backend: str
     ips: list[str]
 
@@ -40,6 +43,7 @@ class UnbanIpRequest:
 @dataclass
 class UnbanIpResult:
     """Output of the unban IP use case."""
+
     backend: str
     unbanned: list[str] = field(default_factory=list)
     already_free: list[str] = field(default_factory=list)
@@ -48,14 +52,18 @@ class UnbanIpResult:
     @property
     def success(self) -> bool:
         """True unless every attempted IP hit a real error."""
-        return len(self.errors) == 0 or len(self.unbanned) > 0 or len(self.already_free) > 0
+        return (
+            len(self.errors) == 0
+            or len(self.unbanned) > 0
+            or len(self.already_free) > 0
+        )
 
 
 class UnbanIpCommand:
     """Use case: unban a set of IPs on one backend, skipping IPs
     already free."""
 
-    def __init__(self, firewall_adapter: Optional[Any], ban_repository: Optional[Any] = None):
+    def __init__(self, firewall_adapter: Any | None, ban_repository: Any | None = None):
         """Initialize the command.
 
         Args:
@@ -78,7 +86,14 @@ class UnbanIpCommand:
 
         if self._adapter is None:
             for ip in request.ips:
-                result.errors.append((ip, _("Backend '{backend}' indisponible.").format(backend=request.backend)))
+                result.errors.append(
+                    (
+                        ip,
+                        _("Backend '{backend}' indisponible.").format(
+                            backend=request.backend
+                        ),
+                    )
+                )
             return result
 
         current_ips = self._list_current_ips()
@@ -95,11 +110,17 @@ class UnbanIpCommand:
                     current_ips.discard(ip)
                     self._persist_unban(ip, request.backend)
                 else:
-                    result.errors.append((ip, _("Le backend a refusé le débannissement.")))
+                    result.errors.append(
+                        (ip, _("Le backend a refusé le débannissement."))
+                    )
             except Exception as e:
                 error_text = str(e)
                 lowered = error_text.lower()
-                if "no such file or directory" in lowered or "does not exist" in lowered or "bad rule" in lowered:
+                if (
+                    "no such file or directory" in lowered
+                    or "does not exist" in lowered
+                    or "bad rule" in lowered
+                ):
                     # Déjà absente du noyau : l'objectif (IP non bloquée)
                     # est déjà atteint, ce n'est pas une vraie erreur.
                     result.already_free.append(ip)
@@ -120,7 +141,11 @@ class UnbanIpCommand:
                 raw_bans = self._adapter.list_banned_ips()
 
             for item in raw_bans:
-                ip = item.get("ip") if isinstance(item, dict) else getattr(item, "ip", None)
+                ip = (
+                    item.get("ip")
+                    if isinstance(item, dict)
+                    else getattr(item, "ip", None)
+                )
                 if ip:
                     current.add(str(ip).split("/")[0].strip())
         except Exception:
@@ -179,4 +204,4 @@ class UnbanIpCommand:
 # interfaces/cli/actions.py : action_2_3_unban_ip / action_2_4_unban_list / action_2_9_flush_backends
 # application/commands/unban_ip_all_backends.py : UnbanIpToAllBackendsCommand
 #   ↓ pour chaque backend ciblé : UnbanIpCommand(...).execute()
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

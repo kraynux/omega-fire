@@ -2,12 +2,14 @@
 """Ecran d'avertissement : terminal trop petit ou profil de rendu degrade.
 Porte depuis omega-check (D-008), meme mecanisme que le reste de la
 suite omega-*."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Center, Container, Horizontal, Middle
 from textual.screen import Screen
 from textual.widgets import Button, Static
+
 from omega_fire.shared.i18n import _
 
 
@@ -24,8 +26,13 @@ class TerminalWarningScreen(Screen[None]):
         with Middle(), Center():
             yield Static(_("TERMINAL LIMITE"), classes="omega-title")
             yield Static(self._message, classes="omega-subtitle")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
-                yield Button(_("Continuer quand même"), id="continue", variant="primary")
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
+                yield Button(
+                    _("Continuer quand même"), id="continue", variant="primary"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "continue":

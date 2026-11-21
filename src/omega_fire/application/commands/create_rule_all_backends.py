@@ -21,10 +21,14 @@ Conforms to Omega-Fire architecture charter:
 - Auditing is handled by the caller (interfaces/cli/_execute_action_flow),
   not duplicated here
 """
-from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from omega_fire.application.commands.create_rule import CreateRuleCommand, CreateRuleRequest
+from dataclasses import dataclass, field
+from typing import Any
+
+from omega_fire.application.commands.create_rule import (
+    CreateRuleCommand,
+    CreateRuleRequest,
+)
 
 
 @dataclass
@@ -37,31 +41,34 @@ class CreateRuleAllBackendsRequest:
     detected by default, or a single one if the user explicitly chose
     the diagnostic targeting option).
     """
+
     name: str
     action: str
     chain: str
     protocol: str
-    source_cidr: Optional[str] = None
-    dest_cidr: Optional[str] = None
-    dst_port: Optional[int] = None
-    interface: Optional[str] = None
-    description: Optional[str] = None
+    source_cidr: str | None = None
+    dest_cidr: str | None = None
+    dst_port: int | None = None
+    interface: str | None = None
+    description: str | None = None
     target_backends: list[str] = field(default_factory=list)
 
 
 @dataclass
 class BackendCreateOutcome:
     """Result of creating the rule on a single backend."""
+
     backend: str
     success: bool
     applied: bool
-    rule_id: Optional[int]
+    rule_id: int | None
     message: str
 
 
 @dataclass
 class CreateRuleAllBackendsResult:
     """Output of the create-rule-on-multiple-backends use case."""
+
     success: bool  # True if AT LEAST one backend succeeded
     outcomes: list[BackendCreateOutcome] = field(default_factory=list)
 
@@ -86,7 +93,9 @@ class CreateRuleToAllBackendsCommand:
         self._repository = rule_repository
         self._adapters = adapters
 
-    def execute(self, request: CreateRuleAllBackendsRequest) -> CreateRuleAllBackendsResult:
+    def execute(
+        self, request: CreateRuleAllBackendsRequest
+    ) -> CreateRuleAllBackendsResult:
         outcomes: list[BackendCreateOutcome] = []
 
         for backend in request.target_backends:
@@ -108,13 +117,15 @@ class CreateRuleToAllBackendsCommand:
                 self._adapters.get(backend),
             ).execute(single_request)
 
-            outcomes.append(BackendCreateOutcome(
-                backend=backend,
-                success=single_result.success,
-                applied=single_result.applied,
-                rule_id=single_result.rule_id,
-                message=single_result.message,
-            ))
+            outcomes.append(
+                BackendCreateOutcome(
+                    backend=backend,
+                    success=single_result.success,
+                    applied=single_result.applied,
+                    rule_id=single_result.rule_id,
+                    message=single_result.message,
+                )
+            )
 
         overall_success = any(o.success for o in outcomes)
 
@@ -160,4 +171,4 @@ class CreateRuleToAllBackendsCommand:
 # application/commands/create_rule_all_backends.py :
 #   CreateRuleToAllBackendsCommand.execute()
 #   ↓ pour chaque backend ciblé : CreateRuleCommand(...).execute() (inchangée)
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

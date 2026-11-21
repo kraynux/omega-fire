@@ -6,9 +6,10 @@ confirmations, list selections. Uses rich.prompt for a consistent interface.
 
 This module performs no business logic — only user interaction.
 """
+
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from rich.console import Console
 from rich.prompt import Prompt
@@ -16,7 +17,6 @@ from rich.text import Text
 
 from omega_fire.interfaces.cli.themes.registry import theme_registry
 from omega_fire.interfaces.exceptions import UserInputError
-
 
 # ----------------------------------------------------------------------
 # Universal cancellation semantics
@@ -95,7 +95,7 @@ class PromptManager:
     and user-friendly interface.
     """
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Console | None = None):
         """Initialize the prompt manager.
 
         Args:
@@ -106,8 +106,8 @@ class PromptManager:
     def ask_text(
         self,
         message: str,
-        default: Optional[str] = None,
-        validator: Optional[Callable[[str], bool]] = None,
+        default: str | None = None,
+        validator: Callable[[str], bool] | None = None,
         error_message: str = "Invalid input",
         allow_cancel: bool = False,
     ) -> str:
@@ -149,7 +149,9 @@ class PromptManager:
 # ----------------------------------------------------------------------
 # Universal pause helper
 # ----------------------------------------------------------------------
-def pause_prompt(console: Console, message: str = "\n[Entrée] pour continuer...") -> None:
+def pause_prompt(
+    console: Console, message: str = "\n[Entrée] pour continuer..."
+) -> None:
     """Attend un [Entrée] de l'utilisateur, sans rien en faire.
 
     Même texte que les 3 copies locales _pause() de interfaces/cli/actions.py
@@ -201,4 +203,4 @@ def pause_prompt(console: Console, message: str = "\n[Entrée] pour continuer...
 # plan de sélection de log jamais réalisé — 5.1/5.2 utilisent en réalité
 # un mécanisme entièrement différent et séparé (ManageLiveTailPinsCommand,
 # référentiel §20).
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

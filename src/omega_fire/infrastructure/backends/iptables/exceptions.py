@@ -6,22 +6,34 @@ These express failures in iptables command execution, parsing,
 or configuration. They are caught by the application layer
 and translated into stable error messages.
 """
+
 from omega_fire.core.exceptions import CoreError
 from omega_fire.shared.i18n import _
 
 
 class IptablesError(CoreError):
     """Base exception for iptables operations."""
+
     def __init__(self, message: str, context: dict = None):
         super().__init__(message, context)
 
 
 class IptCommandError(IptablesError):
     """Raised when an iptables command fails."""
-    def __init__(self, command: str, returncode: int, stderr: str, context: dict = None):
+
+    def __init__(
+        self, command: str, returncode: int, stderr: str, context: dict = None
+    ):
         super().__init__(
-            _("Échec de la commande iptables (code {returncode}) : {command}").format(returncode=returncode, command=command),
-            {**(context or {}), "command": command, "returncode": returncode, "stderr": stderr},
+            _("Échec de la commande iptables (code {returncode}) : {command}").format(
+                returncode=returncode, command=command
+            ),
+            {
+                **(context or {}),
+                "command": command,
+                "returncode": returncode,
+                "stderr": stderr,
+            },
         )
         self.command = command
         self.returncode = returncode
@@ -30,6 +42,7 @@ class IptCommandError(IptablesError):
 
 class IptParseError(IptablesError):
     """Raised when iptables output cannot be parsed."""
+
     def __init__(self, reason: str, raw_output: str = "", context: dict = None):
         super().__init__(
             _("Sortie d'iptables illisible : {reason}").format(reason=reason),
@@ -41,9 +54,12 @@ class IptParseError(IptablesError):
 
 class IptChainNotFoundError(IptablesError):
     """Raised when a referenced iptables chain does not exist."""
+
     def __init__(self, chain_name: str, table: str = "filter", context: dict = None):
         super().__init__(
-            _("Chaîne iptables « {chain_name} » introuvable dans la table « {table} »").format(chain_name=chain_name, table=table),
+            _(
+                "Chaîne iptables « {chain_name} » introuvable dans la table « {table} »"
+            ).format(chain_name=chain_name, table=table),
             {**(context or {}), "chain_name": chain_name, "table": table},
         )
         self.chain_name = chain_name
@@ -52,9 +68,12 @@ class IptChainNotFoundError(IptablesError):
 
 class IptRuleNotFoundError(IptablesError):
     """Raised when a referenced iptables rule does not exist."""
+
     def __init__(self, rule_num: int, chain_name: str = "", context: dict = None):
         super().__init__(
-            _("Règle iptables n° {rule_num} introuvable dans la chaîne « {chain_name} »").format(rule_num=rule_num, chain_name=chain_name),
+            _(
+                "Règle iptables n° {rule_num} introuvable dans la chaîne « {chain_name} »"
+            ).format(rule_num=rule_num, chain_name=chain_name),
             {**(context or {}), "rule_num": rule_num, "chain_name": chain_name},
         )
         self.rule_num = rule_num
@@ -63,9 +82,12 @@ class IptRuleNotFoundError(IptablesError):
 
 class IptPermissionError(IptablesError):
     """Raised when iptables operations require elevated privileges."""
+
     def __init__(self, operation: str, context: dict = None):
         super().__init__(
-            _("Permission refusée pour l'opération iptables : {operation}. Lancez omega-fire en root.").format(operation=operation),
+            _(
+                "Permission refusée pour l'opération iptables : {operation}. Lancez omega-fire en root."
+            ).format(operation=operation),
             {**(context or {}), "operation": operation},
         )
         self.operation = operation
@@ -90,4 +112,4 @@ class IptPermissionError(IptablesError):
 # Comment elles seront utilisées (aperçu) :
 # - infrastructure/backends/iptables/adapter.py les lèvera lors des opérations
 # - application/pipeline/ les capturera via les ports
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

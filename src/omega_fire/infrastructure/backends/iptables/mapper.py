@@ -3,16 +3,22 @@
 
 Maps parsed iptables data (from parser.py) to domain models (from domain/).
 """
-from typing import Optional
-from omega_fire.domain.rules.models import FirewallRule, RuleAction, RuleChain, RuleProtocol, RuleFamily
-from omega_fire.domain.ip_blacklist.models import BanEntry, BanStatus, BanSource
+
+from omega_fire.domain.ip_blacklist.models import BanEntry, BanSource, BanStatus
+from omega_fire.domain.rules.models import (
+    FirewallRule,
+    RuleAction,
+    RuleChain,
+    RuleFamily,
+    RuleProtocol,
+)
 from omega_fire.infrastructure.backends.rule_fidelity import iptables_rule_restorable
 
 
 class IptMapper:
     """Maps parsed iptables data to domain models."""
 
-    def map_rule(self, parsed: dict) -> Optional[FirewallRule]:
+    def map_rule(self, parsed: dict) -> FirewallRule | None:
         """Map a parsed iptables rule to a FirewallRule domain model."""
         try:
             # Map action
@@ -130,4 +136,4 @@ class IptMapper:
 #   - Mapping d'action : ACCEPT/DROP/REJECT/LOG
 # Comment il est utilisé :
 # - infrastructure/backends/iptables/adapter.py l'appelle après parsing
-#---------------------------------------------------------------------->
+# ---------------------------------------------------------------------->

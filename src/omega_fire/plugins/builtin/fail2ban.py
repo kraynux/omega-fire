@@ -1,5 +1,6 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """Builtin plugin for fail2ban backend."""
+
 from omega_fire.shared.i18n import _
 
 PLUGIN_NAME = "fail2ban"
@@ -8,7 +9,12 @@ PLUGIN_AUTHOR = _("Omega-Fire Team")
 PLUGIN_DESCRIPTION = _("Backend fail2ban pour la gestion des jails")
 PLUGIN_CAPABILITIES = ["fail2ban_backend", "fail2ban_jails", "fail2ban_bans"]
 PLUGIN_DEPENDENCIES = []
-PLUGIN_HOOKS = ["before_jail_ban", "after_jail_ban", "before_jail_unban", "after_jail_unban"]
+PLUGIN_HOOKS = [
+    "before_jail_ban",
+    "after_jail_ban",
+    "before_jail_unban",
+    "after_jail_unban",
+]
 
 
 def activate() -> None:
@@ -34,7 +40,8 @@ def before_jail_unban(jail: str, ip: str, **kwargs) -> None:
 def after_jail_unban(jail: str, ip: str, **kwargs) -> None:
     pass
 
+
 # <-- INFO DEV ---------------------------------------------------------
 # Rôle : Plugin builtin pour le backend fail2ban.
 # Même structure que nftables.py, avec capacités spécifiques à fail2ban.
-#---------------------------------------------------------------------->    
+# ---------------------------------------------------------------------->

@@ -14,6 +14,7 @@ ailleurs dans l'appli. Gestion des epingles ajoutee (meme mecanisme que
 2.2/2.4/2.8/4.3/5.2/5.3/5.4 — blocklist_analysis_pinned_paths.json),
 absente de cet ecran jusqu'ici bien que le CLI proposait deja une source
 epinglee pour l'import."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,13 +24,23 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
-from omega_fire.application.commands.manage_blocklist_file import ManageBlocklistFileCommand
-from omega_fire.application.commands.manage_pinned_log_paths import ManagePinnedLogPathsCommand
-from omega_fire.infrastructure.config.paths import BLOCKLIST_DIR, DEFAULT_PINNED_FILES, RUNTIME_DIR
+from omega_fire.application.commands.manage_blocklist_file import (
+    ManageBlocklistFileCommand,
+)
+from omega_fire.application.commands.manage_pinned_log_paths import (
+    ManagePinnedLogPathsCommand,
+)
+from omega_fire.infrastructure.config.paths import (
+    BLOCKLIST_DIR,
+    DEFAULT_PINNED_FILES,
+    RUNTIME_DIR,
+)
 from omega_fire.infrastructure.storage.files.json_store import JsonStore
 from omega_fire.infrastructure.storage.files.text_store import TextStore
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
-from omega_fire.interfaces.tui.screens.blocklist_file_detail_screen import BlocklistFileDetailScreen
+from omega_fire.interfaces.tui.screens.blocklist_file_detail_screen import (
+    BlocklistFileDetailScreen,
+)
 from omega_fire.interfaces.tui.screens.log_library_screen import scroll_panel_home
 from omega_fire.interfaces.tui.screens.pinned_paths_screen import PinnedPathsScreen
 from omega_fire.interfaces.tui.widgets.pinned_paths_table import PinnedPathsTable
@@ -58,23 +69,46 @@ class BlocklistFilesScreen(OmegaScreen):
             yield Static(_("GESTION DES FICHIERS BLOCKLIST"), classes="omega-title")
             yield DataTable(id="files-table")
 
-            yield Static(_("Fichiers épinglés (sélectionnez pour prefiller le chemin source)"), classes="omega-subtitle")
+            yield Static(
+                _("Fichiers épinglés (sélectionnez pour prefiller le chemin source)"),
+                classes="omega-subtitle",
+            )
             yield PinnedPathsTable(id="pinned-table")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Gérer les épingles"), id="manage-pins")
 
-            yield Static(_("Importer un fichier existant (épinglé ou chemin manuel)"), classes="omega-subtitle")
-            yield Input(placeholder=_("Chemin complet du fichier source"), id="import-path-input")
-            yield Input(placeholder=_("Nom de destination (optionnel)"), id="import-name-input")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            yield Static(
+                _("Importer un fichier existant (épinglé ou chemin manuel)"),
+                classes="omega-subtitle",
+            )
+            yield Input(
+                placeholder=_("Chemin complet du fichier source"),
+                id="import-path-input",
+            )
+            yield Input(
+                placeholder=_("Nom de destination (optionnel)"), id="import-name-input"
+            )
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Importer"), id="import")
 
             yield Static(_("Créer un nouveau fichier vide"), classes="omega-subtitle")
             yield Input(placeholder=_("ex. custom.txt"), id="create-name-input")
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Créer"), id="create")
 
-            with Horizontal(classes="omega-actions"), Container(classes="omega-btn-frame"):
+            with (
+                Horizontal(classes="omega-actions"),
+                Container(classes="omega-btn-frame"),
+            ):
                 yield Button(_("Retour"), id="back")
         yield Footer()
 
@@ -105,13 +139,19 @@ class BlocklistFilesScreen(OmegaScreen):
             table.add_row(
                 f.name,
                 str(len(content.valid_ips)) if content.success else "-",
-                str(len(content.rejected_lines)) if content.success and content.rejected_lines else "-",
+                str(len(content.rejected_lines))
+                if content.success and content.rejected_lines
+                else "-",
                 key=f.name,
             )
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         self.app.push_screen(
-            BlocklistFileDetailScreen(container=self._container, manager=self._manager, file_name=str(event.row_key.value)),
+            BlocklistFileDetailScreen(
+                container=self._container,
+                manager=self._manager,
+                file_name=str(event.row_key.value),
+            ),
             lambda _result: self._refresh(),
         )
 
@@ -121,20 +161,34 @@ class BlocklistFilesScreen(OmegaScreen):
             return
 
         if event.button.id == "manage-pins":
-            self.app.push_screen(PinnedPathsScreen(container=self._container), self._on_pins_closed)
+            self.app.push_screen(
+                PinnedPathsScreen(container=self._container), self._on_pins_closed
+            )
             return
 
         if event.button.id == "import":
             source_path = self.query_one("#import-path-input", Input).value.strip()
             if not source_path:
-                self.app.notify(_("Saisissez le chemin du fichier source."), severity="warning")
+                self.app.notify(
+                    _("Saisissez le chemin du fichier source."), severity="warning"
+                )
                 return
-            dest_name = self.query_one("#import-name-input", Input).value.strip() or Path(source_path).name
+            dest_name = (
+                self.query_one("#import-name-input", Input).value.strip()
+                or Path(source_path).name
+            )
             result = self._manager.import_from_path(source_path, dest_name)
-            self.app.notify(result.message, severity="information" if result.success else "error")
+            self.app.notify(
+                result.message, severity="information" if result.success else "error"
+            )
             if result.success:
                 if result.rejected_lines:
-                    self.app.notify(_("{count} ligne(s) invalide(s) ignorée(s) à l'import.").format(count=len(result.rejected_lines)), severity="warning")
+                    self.app.notify(
+                        _("{count} ligne(s) invalide(s) ignorée(s) à l'import.").format(
+                            count=len(result.rejected_lines)
+                        ),
+                        severity="warning",
+                    )
                 self.query_one("#import-path-input", Input).value = ""
                 self.query_one("#import-name-input", Input).value = ""
                 self._refresh()
@@ -146,7 +200,9 @@ class BlocklistFilesScreen(OmegaScreen):
                 self.app.notify(_("Saisissez un nom de fichier."), severity="warning")
                 return
             result = self._manager.create_file(new_name)
-            self.app.notify(result.message, severity="information" if result.success else "error")
+            self.app.notify(
+                result.message, severity="information" if result.success else "error"
+            )
             if result.success:
                 self.query_one("#create-name-input", Input).value = ""
                 self._refresh()
