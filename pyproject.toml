@@ -1,0 +1,6 @@
+# omega-fire s'installe par requirements.txt (install.sh), pas par pip install . : ce fichier ne sert
+# qu'a porter la version, SEULE source (decision de l'auteur, 2026-11-22). Interface, contact et
+# support, jeton, build-release.sh et omega-connect la lisent ici.
+[project]
+name = "omega-fire"
+version = "3.6.3"

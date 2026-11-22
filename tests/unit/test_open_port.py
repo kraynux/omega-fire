@@ -30,7 +30,8 @@ def test_arguments_are_checked_and_loopback_dropped():
         bad = list(ARGS)
         bad[index] = value
         assert port_runner.parse(bad) is None, value
-    assert port_runner.parse(["fermer", *ARGS[1:]]) is None
+    assert port_runner.parse(["fermer", *ARGS[1:]]) == port_runner.parse(ARGS)
+    assert port_runner.parse(["supprimer", *ARGS[1:]]) is None
     assert port_runner.parse(ARGS[:5]) is None
 
 
@@ -128,3 +129,59 @@ def test_bootstrap_dispatches_port_without_interface():
         assert bootstrap.main() == 0
     run.assert_called_once_with(ARGS)
     tui.assert_not_called()
+
+
+def test_fermer_retire_exactement_ce_que_ouvrir_a_pose():
+    """`port fermer` (omega-stress, 2026-11-21) : seules les règles « <outil> <port>/tcp » de ce réseau et de ce
+    port sont retirées (noyau puis base), puis l'autorisation ufw ; une règle à la main pour ce port reste."""
+    from omega_fire.application.commands.open_port import (
+        ClosePortCommand,
+        ClosePortRequest,
+    )
+    from omega_fire.ports.host_firewall import ABSENT, REMOVED
+
+    def rule(rule_id, comment, source, port=9650):
+        return SimpleNamespace(rule_id=rule_id, comment=comment, source_cidr=source, port_start=port)
+
+    rules = {"nftables": [rule(1, "omega-stress 9650/tcp", "192.168.1.0/24"),
+                          rule(2, "à la main", "192.168.1.0/24"),
+                          rule(3, "omega-stress 9650/tcp", "10.0.0.0/8")],
+             "iptables": []}
+    repository = SimpleNamespace(find_all=lambda backend: rules[backend])
+    deleted = []
+
+    class _Delete:
+        def __init__(self, repo, adapter):
+            pass
+
+        def execute(self, request):
+            deleted.append(request.rule_id)
+            return SimpleNamespace(success=True, message="")
+
+    class _HostRemove(_Host):
+        def remove(self, port, source):
+            self.calls.append(("remove", port, source))
+            return REMOVED, ""
+
+    host = _HostRemove("ufw")
+    result = ClosePortCommand(repository, {"nftables": object(), "iptables": object()}, host,
+                              delete=_Delete).execute(ClosePortRequest(9650, ("192.168.1.0/24",), "omega-stress"))
+    assert deleted == [1]
+    assert [(line.target, line.state) for line in result.lines] == [
+        ("nftables", REMOVED), ("iptables", ABSENT), ("ufw", REMOVED)]
+    assert result.ok and host.calls == [("remove", 9650, "192.168.1.0/24")]
+
+
+def test_ufw_et_firewalld_retrait():
+    calls = []
+
+    def run(command):
+        calls.append(command)
+        if command[:2] == ["ufw", "status"]:
+            return 0, "Status: active"
+        return 0, "Rule deleted"
+
+    host = SystemHostFirewall(run=run, which=lambda name: name == "ufw")
+    assert host.remove(9650, "192.168.1.0/24")[0] == "retiree"
+    assert calls[-1] == ["ufw", "delete", "allow", "proto", "tcp", "from", "192.168.1.0/24", "to", "any", "port",
+                         "9650"]

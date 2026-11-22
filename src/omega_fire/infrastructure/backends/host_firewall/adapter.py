@@ -11,7 +11,7 @@ import shutil
 import subprocess
 from collections.abc import Callable, Sequence
 
-from omega_fire.ports.host_firewall import ADDED, ALREADY, FAILED
+from omega_fire.ports.host_firewall import ABSENT, ADDED, ALREADY, FAILED, REMOVED
 
 Run = Callable[[Sequence[str]], tuple[int, str]]
 
@@ -67,4 +67,25 @@ class SystemHostFirewall:
                     return FAILED, output
                 states.append("ALREADY_ENABLED" in output)
             return (ALREADY if all(states) else ADDED), ""
+        return FAILED, "no active host firewall"
+
+    def remove(self, port: int, source: str) -> tuple[str, str]:
+        name = self.active_name()
+        if name == "ufw":
+            code, output = self._run(["ufw", "delete", "allow", "proto", "tcp", "from", source, "to", "any",
+                                      "port", str(port)])
+            if code != 0:
+                return (ABSENT, output) if "Could not delete non-existent rule" in output else (FAILED, output)
+            return (ABSENT if "non-existent" in output else REMOVED), output
+        if name == "firewalld":
+            family = "ipv6" if ipaddress.ip_network(source, strict=False).version == 6 else "ipv4"
+            rule = (f'rule family="{family}" source address="{source}" port port="{port}" protocol="tcp" '
+                    "accept")
+            states = []
+            for extra in ([], ["--permanent"]):
+                code, output = self._run(["firewall-cmd", *extra, f"--remove-rich-rule={rule}"])
+                if code != 0 and "NOT_ENABLED" not in output:
+                    return FAILED, output
+                states.append("NOT_ENABLED" in output)
+            return (ABSENT if all(states) else REMOVED), ""
         return FAILED, "no active host firewall"

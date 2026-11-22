@@ -1,10 +1,14 @@
 # Copyright (c) 2026 kraynux - kraynux@proton.me - Licence MIT (voir fichier LICENSE)
 """`omega-fire.sh port ouvrir --port N --sources CIDR[,CIDR...] --pour OUTIL[:INSTANCE] [--format json]` : ouvre
 N/tcp depuis ces réseaux (application/commands/open_port.py), sans interface. Appelé avec sudo par un outil relié
-par omega-connect (omega-serv, administration web). Root obligatoire (omega-fire.sh élève les privilèges).
+par omega-connect (omega-serv, administration web ; omega-stress, charge distribuée). Root obligatoire
+(omega-fire.sh élève les privilèges).
+
+`port fermer …` (mêmes arguments, 2026-11-21) retire exactement ce que `port ouvrir` a posé pour cet outil.
 
 Sortie JSON non traduite : {"ok": bool, "port": N, "lignes": [{"cible", "source", "etat", "detail"}]} ; etat :
-ajoutee, deja, ignoree, echec. Codes : 0 (port ouvert), 1 (échec), 2 (usage). Une ligne au journal d'audit."""
+ajoutee, deja, ignoree, echec (ouvrir) ; retiree, absente, echec (fermer). Codes : 0 (fait), 1 (échec),
+2 (usage). Une ligne au journal d'audit."""
 
 from __future__ import annotations
 
@@ -14,7 +18,8 @@ import os
 import re
 import sys
 
-USAGE = "usage: omega-fire.sh port ouvrir --port N --sources CIDR[,CIDR...] --pour OUTIL[:INSTANCE] [--format json]"
+USAGE = ("usage: omega-fire.sh port ouvrir|fermer --port N --sources CIDR[,CIDR...] --pour OUTIL[:INSTANCE] "
+         "[--format json]")
 _LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:._-]{0,63}$")
 MAX_SOURCES = 16
 
@@ -23,7 +28,7 @@ def parse(argv: list[str]) -> tuple[int, tuple[str, ...], str] | None:
     args = list(argv)
     if args[-2:] == ["--format", "json"]:
         args = args[:-2]
-    if len(args) != 7 or args[0] != "ouvrir" or args[1::2] != ["--port", "--sources", "--pour"]:
+    if len(args) != 7 or args[0] not in ("ouvrir", "fermer") or args[1::2] != ["--port", "--sources", "--pour"]:
         return None
     port_text, sources_text, label = args[2], args[4], args[6]
     if not port_text.isdigit() or not 1 <= int(port_text) <= 65535 or not _LABEL.match(label):
@@ -52,9 +57,12 @@ def run_port(argv: list[str]) -> int:
         print("error: root required (use omega-fire.sh, which asks for sudo)", file=sys.stderr)
         return 1
     port, sources, label = parsed
+    closing = argv[0] == "fermer"
 
     from omega_fire.app.dependency_container import DependencyContainer
     from omega_fire.application.commands.open_port import (
+        ClosePortCommand,
+        ClosePortRequest,
         OpenPortCommand,
         OpenPortRequest,
     )
@@ -82,13 +90,17 @@ def run_port(argv: list[str]) -> int:
     if not adapters:
         print(json.dumps({"ok": False, "port": port, "lignes": [], "erreur": "no firewall backend"}))
         return 1
-    result = OpenPortCommand(container.rule_repository, adapters, SystemHostFirewall()).execute(
-        OpenPortRequest(port, sources, label))
+    if closing:
+        result = ClosePortCommand(container.rule_repository, adapters, SystemHostFirewall()).execute(
+            ClosePortRequest(port, sources, label))
+    else:
+        result = OpenPortCommand(container.rule_repository, adapters, SystemHostFirewall()).execute(
+            OpenPortRequest(port, sources, label))
     lines = [{"cible": line.target, "source": line.source, "etat": line.state, "detail": line.detail}
              for line in result.lines]
     try:
         container.audit_logger.log_event(event_type="action_execution", actor=f"cli:{label}",
-                                         action=f"port ouvrir {port}/tcp", result="success" if result.ok else "failure",
+                                         action=f"port {'fermer' if closing else 'ouvrir'} {port}/tcp", result="success" if result.ok else "failure",
                                          details={"sources": list(sources), "lignes": lines})
     except Exception as error:  # noqa: BLE001 - l'audit ne bloque jamais l'ouverture
         print(f"warning: audit not written: {error}", file=sys.stderr)

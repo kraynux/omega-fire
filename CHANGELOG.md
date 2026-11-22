@@ -12,6 +12,26 @@ qui touchent aux **règles, aux bans ou aux services** sont toujours signalés e
 même mineurs. Les changements de textes affichés sont signalés aussi : ils doivent être
 reportés dans les 16 traductions (interface et README).
 
+## version 3.6.3 : construite le 2026-11-22 (archive omega-fire-3.6.3.tar.gz)
+
+### Ajouté
+
+- **Vérifier les mises à jour : trois sources** (procédure de l'auteur, 2026-11-22) : la Release GitHub ; si
+  absente ou injoignable, le site kraynux ; si absent ou injoignable, le site craftdark (omega-lib embarqué). Ouvrir
+  dans le navigateur : correctif F2 aussi dans omega-lib.
+
+- **`omega-fire.sh port fermer`** (demande d'omega-stress, charge distribuée, 2026-11-21) : mêmes arguments que
+  `port ouvrir` (`--port N --sources RÉSEAUX --pour OUTIL`). Retire exactement ce que `port ouvrir` a posé pour cet
+  outil : les règles nommées « <outil> <port>/tcp » de ces réseaux, du noyau puis de la base (comme le menu 3.2),
+  puis l'autorisation ufw ou firewalld. Une règle créée à la main pour le même port reste en place. **Règles** :
+  retrait seulement de règles posées par `port ouvrir`. Root obligatoire (sudo demandé), une ligne au journal
+  d'audit, sortie JSON non traduite (états `retiree`, `absente`, `echec`).
+
+- **Version dans `pyproject.toml`, seule source** (décision de l'auteur, 2026-11-22) : en-tête, splash, tableau
+  de bord, « Contact et support », jeton et `build-release.sh` la lisent là (avant : constante `OMEGA_FIRE_VERSION`
+  de `core/constants.py`, `pyproject.toml` vide). omega-connect 0.2.0 la lit là aussi (anciennes installations :
+  la constante).
+
 ## version 3.6.2 : construite le 2026-11-21 (archive omega-fire-3.6.2.tar.gz)
 
 ### Ajouté

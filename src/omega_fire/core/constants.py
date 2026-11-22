@@ -7,14 +7,19 @@ Conforms to Omega-Fire architecture charter:
 - Provides global constants for the entire application
 """
 
+from pathlib import Path
+
+from omega_lib.infrastructure.declaration.app_version import project_version
+
 from omega_fire.shared.i18n import _
 
 # Application metadata
 APP_NAME = "Omega-Fire"
 APP_VERSION = "1.0.0"
-# Version affichee (header, splash, tableau de bord). APP_VERSION reste la version des
-# metadonnees de snapshot (compatibilite), a ne pas confondre.
-OMEGA_FIRE_VERSION = "3.6.2"
+# Version affichee (header, splash, tableau de bord, contact et support, jeton) : lue dans
+# pyproject.toml, SEULE source (decision de l'auteur, 2026-11-22). APP_VERSION reste la version
+# des metadonnees de snapshot (compatibilite), a ne pas confondre.
+OMEGA_FIRE_VERSION = project_version(Path(__file__).resolve().parents[3], "omega-fire")
 APP_DESCRIPTION = _("Gestionnaire de pare-feu Linux")
 # Terminal requirements
 MIN_TERMINAL_WIDTH = 80

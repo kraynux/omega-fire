@@ -9,6 +9,8 @@ from typing import Protocol
 ADDED = "ajoutee"
 ALREADY = "deja"
 FAILED = "echec"
+REMOVED = "retiree"
+ABSENT = "absente"
 
 
 class HostFirewallPort(Protocol):
@@ -18,4 +20,9 @@ class HostFirewallPort(Protocol):
 
     def allow(self, port: int, source: str, comment: str) -> tuple[str, str]:
         """Autorise `port`/tcp depuis `source` (CIDR). Rend (ADDED | ALREADY | FAILED, détail)."""
+        ...
+
+    def remove(self, port: int, source: str) -> tuple[str, str]:
+        """Retire l'autorisation posée par `allow` (`port fermer`, 2026-11-21). Rend (REMOVED | ABSENT | FAILED,
+        détail)."""
         ...

@@ -64,12 +64,11 @@ if [ ! -d "$OMEGA_LIB_SRC" ]; then
     exit 1
 fi
 
-# pyproject.toml est vide (omega-fire n'utilise pas cet outillage, voir
-# DECISIONS_ARCHITECTURE.md) — la version vit dans OMEGA_FIRE_VERSION
-# (core/constants.py depuis la 3.5), seule source de verite pour ce numero.
-VERSION="$(grep -m1 '^OMEGA_FIRE_VERSION' "$PROJECT_ROOT/src/omega_fire/core/constants.py" | sed -E 's/OMEGA_FIRE_VERSION = "(.*)"/\1/')"
+# La version vit dans pyproject.toml (ligne version = "..."), seule source depuis le
+# 2026-11-22 (avant : OMEGA_FIRE_VERSION de core/constants.py, qui la lit maintenant la).
+VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$PROJECT_ROOT/pyproject.toml" | head -n1)"
 if [ -z "$VERSION" ]; then
-    err "OMEGA_FIRE_VERSION introuvable dans src/omega_fire/core/constants.py."
+    err "Version introuvable dans pyproject.toml."
     exit 1
 fi
 ARCHIVE_NAME="omega-fire-${VERSION}.tar.gz"
