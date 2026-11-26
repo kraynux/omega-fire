@@ -3,4 +3,4 @@
 # support, jeton, build-release.sh et omega-connect la lisent ici.
 [project]
 name = "omega-fire"
-version = "3.6.3"
+version = "3.7.0"

@@ -351,6 +351,11 @@ def main() -> int:
             from omega_fire.app.port_runner import run_port
 
             return run_port(sys.argv[2:])
+        if sys.argv[1:2] == ["bouclier-wg"]:
+            # Bouclier du port WireGuard (3.7.0, demande omega-tail) : JSON, sans interface.
+            from omega_fire.app.shield_runner import run_shield
+
+            return run_shield(sys.argv[2:])
         if sys.argv[1:3] == ["rotate", "run-automations"]:
             # Tache quotidienne des sauvegardes planifiees (5.6, 3.6) : jamais d'interface.
             from omega_fire.app.rotation_runner import run_rotation_automations

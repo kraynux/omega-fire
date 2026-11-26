@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omega-fire\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-21 14:02+0100\n"
+"POT-Creation-Date: 2026-11-26 00:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,19 +17,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/omega_fire/app/bootstrap.py:359
+#: src/omega_fire/app/bootstrap.py:369
 msgid ""
 "\n"
 "\n"
 "[+] Interruption système. Fermeture d'Omega-Fire.\n"
 msgstr ""
 
-#: src/omega_fire/app/dependency_container.py:417
+#: src/omega_fire/app/dependency_container.py:443
 #, python-brace-format
 msgid "Backend de pare-feu inconnu : {backend}"
 msgstr ""
 
-#: src/omega_fire/app/dependency_container.py:438
+#: src/omega_fire/app/dependency_container.py:464
 #, python-brace-format
 msgid "Format d'export inconnu : {format}"
 msgstr ""
@@ -1254,12 +1254,12 @@ msgstr ""
 msgid "Profil de rendu inconnu : {profile_value!r}"
 msgstr ""
 
-#: src/omega_fire/application/commands/sync_rules_from_backends.py:123
+#: src/omega_fire/application/commands/sync_rules_from_backends.py:136
 #, python-brace-format
 msgid "Erreur technique lors de la synchronisation : {e}"
 msgstr ""
 
-#: src/omega_fire/application/commands/sync_rules_from_backends.py:135
+#: src/omega_fire/application/commands/sync_rules_from_backends.py:148
 #, python-brace-format
 msgid "{added} règle(s) importée(s), {disabled} désactivée(s), {unchanged} déjà à jour."
 msgstr ""
@@ -2194,7 +2194,7 @@ msgstr ""
 msgid "La capacité « {id} » est déjà enregistrée"
 msgstr ""
 
-#: src/omega_fire/core/constants.py:18
+#: src/omega_fire/core/constants.py:23
 msgid "Gestionnaire de pare-feu Linux"
 msgstr ""
 
@@ -2904,18 +2904,18 @@ msgstr ""
 msgid "Permission refusée pour l'opération conntrack '{operation}' — nécessite root ou CAP_NET_ADMIN. Solutions : lancez omega-fire avec sudo, OU donnez la capacité une fois pour toutes au binaire conntrack (sudo setcap cap_net_admin+ep $(which conntrack))."
 msgstr ""
 
-#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:69
-#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:96
+#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:68
+#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:95
 #, python-brace-format
 msgid "Refusé : {path} est un lien symbolique"
 msgstr ""
 
-#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:117
+#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:116
 #, python-brace-format
 msgid "Refusé : {path} est un lien symbolique d'un compte autre que root"
 msgstr ""
 
-#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:1336
+#: src/omega_fire/infrastructure/backends/fail2ban/adapter.py:1335
 #, python-brace-format
 msgid "fail2ban-client -t a échoué sans détail (code de retour {returncode})"
 msgstr ""
@@ -2952,7 +2952,7 @@ msgstr ""
 
 #: src/omega_fire/infrastructure/backends/ip6tables/adapter.py:578
 #: src/omega_fire/infrastructure/backends/iptables/adapter.py:591
-#: src/omega_fire/infrastructure/backends/nftables/adapter.py:948
+#: src/omega_fire/infrastructure/backends/nftables/adapter.py:954
 msgid "aucun profil FirewallPreset ne correspond (domain/rules/presets.py)"
 msgstr ""
 
@@ -3715,13 +3715,13 @@ msgstr ""
 #: src/omega_fire/interfaces/cli/help_text.py:163
 #: src/omega_fire/interfaces/cli/help_text.py:216
 #: src/omega_fire/interfaces/cli/help_text.py:338
-#: src/omega_fire/interfaces/cli/help_text.py:867
-#: src/omega_fire/interfaces/cli/help_text.py:983
-#: src/omega_fire/interfaces/cli/help_text.py:1138
-#: src/omega_fire/interfaces/cli/help_text.py:1367
-#: src/omega_fire/interfaces/cli/help_text.py:1379
-#: src/omega_fire/interfaces/cli/help_text.py:1387
-#: src/omega_fire/interfaces/cli/help_text.py:1395
+#: src/omega_fire/interfaces/cli/help_text.py:909
+#: src/omega_fire/interfaces/cli/help_text.py:1025
+#: src/omega_fire/interfaces/cli/help_text.py:1180
+#: src/omega_fire/interfaces/cli/help_text.py:1409
+#: src/omega_fire/interfaces/cli/help_text.py:1421
+#: src/omega_fire/interfaces/cli/help_text.py:1429
+#: src/omega_fire/interfaces/cli/help_text.py:1437
 msgid "Lecture seule."
 msgstr ""
 
@@ -3746,9 +3746,9 @@ msgid "Affiche les erreurs et dégradations récentes détectées sur le systèm
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:162
-#: src/omega_fire/interfaces/cli/help_text.py:1135
-#: src/omega_fire/interfaces/cli/help_text.py:1386
-#: src/omega_fire/interfaces/cli/help_text.py:1394
+#: src/omega_fire/interfaces/cli/help_text.py:1177
+#: src/omega_fire/interfaces/cli/help_text.py:1428
+#: src/omega_fire/interfaces/cli/help_text.py:1436
 msgid "Aucune saisie requise."
 msgstr ""
 
@@ -3917,22 +3917,22 @@ msgid "Transfère des IPs entre jails fail2ban, vers/depuis les backends firewal
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:420
-#: src/omega_fire/interfaces/cli/help_text.py:715
+#: src/omega_fire/interfaces/cli/help_text.py:757
 msgid "Choisis d'abord une source (un jail, un backend, un fichier), puis une destination."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:424
-#: src/omega_fire/interfaces/cli/help_text.py:719
+#: src/omega_fire/interfaces/cli/help_text.py:761
 msgid "Un récapitulatif (IPs déjà présentes / nouvelles / échecs) s'affiche après l'opération — vérifie-le avant de continuer."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:430
-#: src/omega_fire/interfaces/cli/help_text.py:725
+#: src/omega_fire/interfaces/cli/help_text.py:767
 msgid "Les IPs transférées vers un jail ou un backend sont réellement bannies à la destination, pas juste copiées dans une liste."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:436
-#: src/omega_fire/interfaces/cli/help_text.py:731
+#: src/omega_fire/interfaces/cli/help_text.py:773
 msgid "Le transfert vers nftables crée automatiquement la chaîne de blocage si elle n'existe pas encore — normal, pas une erreur si tu la vois apparaître pour la première fois."
 msgstr ""
 
@@ -4104,667 +4104,711 @@ msgstr ""
 msgid "Les deux actions combinées (vider puis ACCEPT) laissent la machine sans aucun filtrage sur ce backend."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:631
-msgid "Gestion complète du démon fail2ban : consulter l'état des jails, bannir/débannir des IPs, transférer des IPs entre jails ou vers les backends firewall, créer/supprimer/vider des jails, exporter, vérifier la configuration, piloter le service."
+#: src/omega_fire/interfaces/cli/help_text.py:627
+msgid "Bouclier du port WireGuard : une table posée devant tailscaled (Tailscale) qui le protège des flots de paquets. Sans lui, tailscaled dépense environ un cœur de processeur pour 100 000 paquets par seconde, même invalides."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:638
-msgid "Nécessite fail2ban installé et fail2ban-client accessible."
+#: src/omega_fire/interfaces/cli/help_text.py:631
+msgid "Le bouclier est le même qu'il soit posé par omega-fire ou par omega-tail : l'écran montre son origine (l'outil qui l'a demandé) et son gestionnaire (l'outil qui le remet en place au démarrage)."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:634
+msgid "Commence en observation : rien n'est refusé, les compteurs disent ce qui l'aurait été. Passe en actif quand ils ne montrent que des attaques."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:637
+msgid "Posé par omega-tail avant l'installation d'omega-fire : « Reprendre la gestion » le confie à omega-fire sans toucher à la table, à ses compteurs ni aux pairs connus."
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/help_text.py:640
+msgid "Le bouclier apparaît aussi en une ligne dans la liste des règles (3.3)."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:645
+msgid "Poser : table nftables « netdev omega_bouclier_wg » sur les cartes réseau matérielles, fichiers dans /etc/omega-bouclier-wg et service omega-bouclier-wg (remise en place au démarrage, état chaque minute)."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:648
+msgid "Actif : les poignées de main en excès d'une même source, les sources inconnues en excès et les paquets qui ne sont pas du WireGuard sont refusés. Les pairs connus (ceux à qui tailscaled écrit) ne sont jamais limités."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:651
+msgid "Retirer : table, fichiers et service supprimés, même si le bouclier a été demandé par omega-tail ; omega-tail l'affichera retiré."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:656
+msgid "Si un autre outil efface la table (nft flush ruleset, redémarrage d'un service de pare-feu), le bouclier est signalé ABSENT : il n'est pas reposé de lui-même, « Reposer » le remet."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:659
+msgid "tailscaled avec un port tiré au hasard (--port 0) ne peut pas être protégé : fixe un port d'abord."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:663
+msgid "Pairs appris par le noyau (crochet egress, noyau 5.16 ou plus récent) : tout correspondant à qui tailscaled écrit est admis pendant 5 minutes. Les autres paquets sont triés par leur forme (poignée de main, réponse, cookie, données, disco, STUN) puis limités : 20 poignées de main par seconde et par source, 500 paquets par seconde et par source inconnue, 5 000 pour l'ensemble des sources inconnues."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:673
+msgid "Gestion complète du démon fail2ban : consulter l'état des jails, bannir/débannir des IPs, transférer des IPs entre jails ou vers les backends firewall, créer/supprimer/vider des jails, exporter, vérifier la configuration, piloter le service."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:680
+msgid "Nécessite fail2ban installé et fail2ban-client accessible."
+msgstr ""
+
+#: src/omega_fire/interfaces/cli/help_text.py:682
 msgid "Chaque sous-menu agit sur un jail précis ou sur l'ensemble des jails — vérifie bien le nom du jail affiché avant de valider une action large (Vider un jail, Vider tous les jails)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:650
+#: src/omega_fire/interfaces/cli/help_text.py:692
 msgid "Affiche un tableau récapitulatif de tous les jails configurés (nom, statut, nombre d'IPs bannies) puis propose un sous-menu d'analyse : lister les IPs d'un jail, de tous les jails, ou rechercher dans quel(s) jail(s) une IP précise est bannie."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:658
+#: src/omega_fire/interfaces/cli/help_text.py:700
 msgid "Le scan est lancé automatiquement à l'ouverture. Ensuite, choisis [1] pour un jail précis (par son numéro dans le tableau), [2] pour tout lister, ou [3] pour rechercher une IP spécifique."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:665
+#: src/omega_fire/interfaces/cli/help_text.py:707
 msgid "Lecture seule : ne modifie rien. La colonne Origine indique qui a défini le jail : Omega-Fire (4.4), omega-jail, la configuration principale de fail2ban (jail.local / jail.conf) ou un autre fichier."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:670
+#: src/omega_fire/interfaces/cli/help_text.py:712
 msgid "Lit directement la base de données de fail2ban et les fichiers de configuration pour rester rapide même avec beaucoup de jails, plutôt que d'interroger fail2ban-client un par un."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:679
+#: src/omega_fire/interfaces/cli/help_text.py:721
 msgid "Bannit ou débannit une ou plusieurs IPs dans un jail précis que tu choisis."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:683
+#: src/omega_fire/interfaces/cli/help_text.py:725
 msgid "Sélectionne d'abord le jail cible, puis l'action (bannir/débannir), puis saisis une IP unique ou une liste."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:689
+#: src/omega_fire/interfaces/cli/help_text.py:731
 msgid "Modifie l'état réel du jail immédiatement — l'IP est bloquée/débloquée dès validation, pas seulement enregistrée quelque part."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:695
+#: src/omega_fire/interfaces/cli/help_text.py:737
 msgid "Une IP déjà bannie ne peut pas être bannie une seconde fois (et inversement pour le débannissement) — l'action échoue proprement dans ce cas plutôt que de prétendre avoir réussi."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:700
+#: src/omega_fire/interfaces/cli/help_text.py:742
 msgid "Vérifie le nom du jail affiché avant de valider : une IP bannie dans le mauvais jail ne protège pas la bonne surface."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:709
+#: src/omega_fire/interfaces/cli/help_text.py:751
 msgid "Transfère des IPs entre jails fail2ban, vers/depuis les backends firewall (nftables/iptables), ou depuis/vers des fichiers."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:741
+#: src/omega_fire/interfaces/cli/help_text.py:783
 msgid "Assistant de création d'un nouveau jail : mode sur-mesure (tu choisis chaque paramètre) ou mode preset (modèles pré-configurés pour Nginx, Apache, Caddy, SSH...)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:748
+#: src/omega_fire/interfaces/cli/help_text.py:790
 msgid "Mode sur-mesure : nom du jail, chemin de log à surveiller (liste épinglée modifiable directement depuis cet écran), ports concernés, nom du filtre, règles de bannissement (maxretry / findtime / bantime)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:753
+#: src/omega_fire/interfaces/cli/help_text.py:795
 msgid "Mode preset : choisis directement un modèle déjà réglé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:757
+#: src/omega_fire/interfaces/cli/help_text.py:799
 msgid "Écrit un fichier de configuration réel et recharge fail2ban — le jail devient actif immédiatement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:761
+#: src/omega_fire/interfaces/cli/help_text.py:803
 msgid "Si le filtre demandé n'existe pas encore, un filtre générique (détection d'erreurs HTTP 400/401/403/404/500) est créé automatiquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:768
+#: src/omega_fire/interfaces/cli/help_text.py:810
 msgid "Le filtre générique automatique est pensé pour des logs HTTP (Nginx/Apache/Caddy/Lighttpd) — appliqué à un log qui n'a pas ce format (ex: syslog), il ne détectera jamais rien."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:773
+#: src/omega_fire/interfaces/cli/help_text.py:815
 msgid "Pour omega-serv et omega-waf, omega-jail installe en une commande des jails déjà réglés (WAF, Active Defense, scans, force brute) : l'écran le rappelle quand omega-serv est détecté sans omega-jail."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:780
+#: src/omega_fire/interfaces/cli/help_text.py:822
 msgid "Supprime un jail : arrête son suivi, retire sa configuration et recharge fail2ban."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:784
+#: src/omega_fire/interfaces/cli/help_text.py:826
 msgid "Choisis le jail à supprimer et confirme. Chaque jail est listé avec son origine et le fichier qui le définit, retrouvé par le nom de sa section, quel que soit le nom du fichier."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:789
+#: src/omega_fire/interfaces/cli/help_text.py:831
 msgid "Les IPs actuellement bannies dans ce jail sont libérées quand le jail est arrêté — consulte 4.1 avant si tu veux connaître son contenu."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:793
+#: src/omega_fire/interfaces/cli/help_text.py:835
 msgid "Son fichier de jail.d est supprimé, ainsi que son filtre s'il lui est propre (créé par Omega-Fire ou par omega-jail) ; un filtre standard de fail2ban (sshd…) n'est jamais supprimé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:797
+#: src/omega_fire/interfaces/cli/help_text.py:839
 msgid "Irréversible sans recréer le jail depuis zéro (4.4)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:799
+#: src/omega_fire/interfaces/cli/help_text.py:841
 msgid "Jail installé par omega-jail : la confirmation le signale ; omega-jail le recréera à sa prochaine installation (« omega-jail --apply »)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:802
+#: src/omega_fire/interfaces/cli/help_text.py:844
 msgid "Jail défini dans jail.local / jail.conf, ou dans un fichier de jail.d qui définit aussi d'autres jails : rien n'est supprimé, le message explique comment le désactiver ou retirer sa section à la main."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:809
+#: src/omega_fire/interfaces/cli/help_text.py:851
 msgid "Débannit toutes les IPs d'un seul jail (celui que tu choisis), sans toucher aux autres."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:811
+#: src/omega_fire/interfaces/cli/help_text.py:853
 msgid "Sélectionne le jail à vider et confirme."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:814
+#: src/omega_fire/interfaces/cli/help_text.py:856
 msgid "Toutes les IPs actuellement bannies dans ce jail précis sont débannies immédiatement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:819
+#: src/omega_fire/interfaces/cli/help_text.py:861
 msgid "Ne touche qu'au jail sélectionné — pour vider tous les jails d'un coup, utilise 4.7, pas cette option répétée plusieurs fois."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:827
+#: src/omega_fire/interfaces/cli/help_text.py:869
 msgid "PURGE GÉNÉRALE : débannit toutes les IPs de tous les jails configurés, en une seule opération."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:831
+#: src/omega_fire/interfaces/cli/help_text.py:873
 msgid "Une confirmation est demandée avant exécution — lis-la attentivement, l'opération touche l'ensemble des jails."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:836
+#: src/omega_fire/interfaces/cli/help_text.py:878
 msgid "Toutes les IPs actuellement bannies, dans tous les jails, sont débannies immédiatement. Non sélectif."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:841
+#: src/omega_fire/interfaces/cli/help_text.py:883
 msgid "Opération large et irréversible — pour ne vider qu'un seul jail, utilise 4.6."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:849
+#: src/omega_fire/interfaces/cli/help_text.py:891
 msgid "Exporte le contenu d'un jail (IPs bannies, configuration) dans un fichier : brut, JSON, TXT (réinjectable), ou HTML (rapport visuel)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:853
+#: src/omega_fire/interfaces/cli/help_text.py:895
 msgid "Choisis le jail, puis le format de sortie."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:855
+#: src/omega_fire/interfaces/cli/help_text.py:897
 msgid "Lecture seule côté fail2ban — l'export ne modifie aucun jail."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:862
+#: src/omega_fire/interfaces/cli/help_text.py:904
 msgid "Teste la validité de la configuration fail2ban actuelle (jails, filtres) sans rien modifier ni redémarrer le service."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:866
+#: src/omega_fire/interfaces/cli/help_text.py:908
 msgid "Aucune saisie — lance directement le test."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:870
+#: src/omega_fire/interfaces/cli/help_text.py:912
 msgid "Valide la configuration sur disque sans nécessiter que le démon soit déjà démarré."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:879
+#: src/omega_fire/interfaces/cli/help_text.py:921
 msgid "Contrôle du service fail2ban lui-même (pas d'un jail précis) : statut, démarrage, arrêt, redémarrage, activation/désactivation au démarrage du système."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:884
+#: src/omega_fire/interfaces/cli/help_text.py:926
 msgid "Choisis l'action à effectuer sur le service."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:887
+#: src/omega_fire/interfaces/cli/help_text.py:929
 msgid "Arrêter le service désactive toute la protection fail2ban le temps qu'il est arrêté, pas seulement un jail."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:893
+#: src/omega_fire/interfaces/cli/help_text.py:935
 msgid "À utiliser avec précaution sur une machine en production — un arrêt du service, même bref, laisse temporairement passer les tentatives que fail2ban aurait bloquées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:906
+#: src/omega_fire/interfaces/cli/help_text.py:948
 msgid "Analyse et maintenance des logs : Bibliothèque (import des logs), favoris, lecture avec trois lecteurs, analyse de fréquence par IP, purge ciblée, rotation/backup, restauration, statistiques."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:913
+#: src/omega_fire/interfaces/cli/help_text.py:955
 msgid "Les fichiers épinglés (« Gérer les épingles », avec ses presets) forment une seule liste, partagée par 5.4 à 5.6, 2.2, 2.4, 2.7, 2.8, 4.3 (et 2.10), 4.4 et 6.1. La Bibliothèque 5.1, qui alimente 5.2 et 5.3, est une liste distincte."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:923
+#: src/omega_fire/interfaces/cli/help_text.py:965
 msgid "Bibliothèque de logs : l'import des logs qui alimentent 5.2 Favoris et 5.3 Voir les logs. Rien ne se lance d'ici."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:927
+#: src/omega_fire/interfaces/cli/help_text.py:969
 msgid "Mode automatique : à chaque ouverture, les journaux des instances omega-serv détectées sur la machine (access.log, error.log, waf-alerts.log du WAF natif, active-defense…) sont ajoutés, ainsi que ceux d'omega-waf aux chemins de l'extra magnet, même hors de var/log/. Un journal retiré à la main n'est plus réimporté automatiquement ; « Importer omega-serv » les réimporte tous."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:930
+#: src/omega_fire/interfaces/cli/help_text.py:972
 msgid "Épingler un chemin : saisis le chemin absolu d'un log (ex. /var/log/nginx/access.log)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:933
+#: src/omega_fire/interfaces/cli/help_text.py:975
 msgid "Sources distantes (SSH) : enregistre une machine du réseau (hôte, chemin distant, utilisateur, port, clé), puis « Récupérer maintenant » copie le log par scp dans var/log/remote/ et l'ajoute à la Bibliothèque."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:938
+#: src/omega_fire/interfaces/cli/help_text.py:980
 msgid "La Bibliothèque ne contient que des références : retirer un log ne supprime pas le fichier. L'état (taille, absent, vide) est relu à chaque affichage."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:941
+#: src/omega_fire/interfaces/cli/help_text.py:983
 msgid "Une copie distante n'est pas suivie en direct : relance « Récupérer maintenant » pour la mettre à jour."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:946
+#: src/omega_fire/interfaces/cli/help_text.py:988
 msgid "SSH : aucune invite de mot de passe n'est possible depuis l'interface. Il faut une clé ou un agent SSH déjà configurés pour l'utilisateur qui lance omega-fire (root avec sudo)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:949
+#: src/omega_fire/interfaces/cli/help_text.py:991
 msgid "Les instances omega-serv sont détectées par leur service systemd (omega-serv*.service) et par leur registre d'instances ; une instance lancée à la main n'est pas vue : épingle ses journaux."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:956
+#: src/omega_fire/interfaces/cli/help_text.py:998
 msgid "Favoris : combiner des logs de la Bibliothèque, les enregistrer sous un nom avec un lecteur, et les lancer directement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:960
+#: src/omega_fire/interfaces/cli/help_text.py:1002
 msgid "Choisis les numéros des logs (ex. 1,3), un nom et un lecteur, puis « Enregistrer ». « Lancer » ouvre le favori en surbrillance."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:963
+#: src/omega_fire/interfaces/cli/help_text.py:1005
 msgid "Lecture seule sur les logs ouverts."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:966
+#: src/omega_fire/interfaces/cli/help_text.py:1008
 msgid "Plusieurs logs combinés : lnav seul, le seul lecteur qui sait les fusionner en une vue chronologique ; un autre lecteur est refusé à l'enregistrement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:969
+#: src/omega_fire/interfaces/cli/help_text.py:1011
 msgid "Un log retiré de la Bibliothèque reste dans le favori, mais ne s'ouvre plus s'il n'existe plus."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:976
+#: src/omega_fire/interfaces/cli/help_text.py:1018
 msgid "Voir un log de la Bibliothèque sans configuration, avec le lecteur de ton choix."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:980
+#: src/omega_fire/interfaces/cli/help_text.py:1022
 msgid "Choisis la ligne, puis le lecteur : Simple (tableau de bord temps réel : trafic, statistiques, dernières requêtes), Classique (dernières lignes puis suivi en direct à la demande), ou lnav (navigation, recherche, filtres)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:986
+#: src/omega_fire/interfaces/cli/help_text.py:1028
 msgid "lnav sur un gros fichier peut afficher un écran noir quelques secondes, le temps de l'indexation : ce n'est pas un blocage."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:993
+#: src/omega_fire/interfaces/cli/help_text.py:1035
 msgid "Analyse un fichier log ou une blocklist pour en extraire le classement des IPs les plus actives (Top N), sur une période choisie."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:997
+#: src/omega_fire/interfaces/cli/help_text.py:1039
 msgid "Choisis la source (épinglée, manuelle, ou ajout/retrait d'épingle), la période d'analyse (1h/1j/7j/personnalisée), puis le nombre N d'IPs à afficher."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1000
+#: src/omega_fire/interfaces/cli/help_text.py:1042
 msgid "Après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML) dans le dossier d'exports : 5.5 peut ensuite recharger ces IPs pour les retirer des logs, sans les recopier à la main, et 6.6 les affiche."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1003
+#: src/omega_fire/interfaces/cli/help_text.py:1045
 msgid "« Gérer les épingles » → « Presets » propose les chemins usuels (logs système, serveurs web, blocklists d'omega-fire, logs de la Bibliothèque 5.1) présents sur cette machine : coche ceux à épingler."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1006
-#: src/omega_fire/interfaces/cli/help_text.py:1031
-#: src/omega_fire/interfaces/cli/help_text.py:1055
-#: src/omega_fire/interfaces/cli/help_text.py:1413
-#: src/omega_fire/interfaces/cli/help_text.py:1466
+#: src/omega_fire/interfaces/cli/help_text.py:1048
+#: src/omega_fire/interfaces/cli/help_text.py:1073
+#: src/omega_fire/interfaces/cli/help_text.py:1097
+#: src/omega_fire/interfaces/cli/help_text.py:1455
+#: src/omega_fire/interfaces/cli/help_text.py:1508
 msgid "Les logs de la Bibliothèque (5.1) sont proposés en tête de liste, avant vos épingles."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1009
+#: src/omega_fire/interfaces/cli/help_text.py:1051
 msgid "« Rechercher cette IP » compte ses lignes dans le fichier entier ; « Retirer cette IP du log analysé » retire l'IP choisie (ligne du tableau ou recherche) après confirmation, comme 5.5. L'analyse tourne sans figer l'interface."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1014
+#: src/omega_fire/interfaces/cli/help_text.py:1056
 msgid "Lecture seule, sauf « Retirer cette IP du log analysé », qui modifie réellement le fichier. « Exporter » écrit un fichier top-ips_<date> dans le dossier d'exports."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1021
+#: src/omega_fire/interfaces/cli/help_text.py:1063
 msgid "Retire toutes les lignes contenant une IP précise dans un fichier source (log ou blocklist) — édition directe du fichier, pas un débannissement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1025
+#: src/omega_fire/interfaces/cli/help_text.py:1067
 msgid "Choisis le fichier source, saisis une ou plusieurs IPs (séparées par des virgules), vérifie le récapitulatif (lignes trouvées par IP) avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1028
+#: src/omega_fire/interfaces/cli/help_text.py:1070
 msgid "« Charger depuis un export » liste les exports contenant des IPs (Top N de 5.4 en premier, puis blacklist 6.1 et jails 4.8) : choisis le fichier, coche les IPs à retirer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1036
+#: src/omega_fire/interfaces/cli/help_text.py:1078
 msgid "Modifie réellement le fichier — les lignes contenant l'une des IPs sont supprimées, les autres conservées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1041
+#: src/omega_fire/interfaces/cli/help_text.py:1083
 msgid "N'agit que sur le fichier choisi, pas sur l'état réel du firewall/fail2ban — pour débannir une IP, utilise 2.3 ou 4.2."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1048
+#: src/omega_fire/interfaces/cli/help_text.py:1090
 msgid "Sauvegarde (backup) manuelle ou automatisée de fichiers logs/blocklists dans une archive."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1052
+#: src/omega_fire/interfaces/cli/help_text.py:1094
 msgid "Choisis la source à sauvegarder, puis le mode : sauvegarde immédiate, planification d'une automatisation récurrente, ou gestion des automatisations existantes."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1058
+#: src/omega_fire/interfaces/cli/help_text.py:1100
 msgid "Une automatisation choisit une fréquence et le nombre de sauvegardes conservées. « Lister et gérer » montre la dernière sauvegarde, la prochaine et le résultat, et permet de réinstaller ou désinstaller l'exécution."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1063
+#: src/omega_fire/interfaces/cli/help_text.py:1105
 msgid "Crée une archive réelle dans var/backups/. Les automatisations s'exécutent chaque nuit (timer systemd omega-fire-rotation, sinon une ligne de la crontab de root) : la première installe cette exécution, la dernière supprimée la retire."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1070
+#: src/omega_fire/interfaces/cli/help_text.py:1112
 msgid "La tâche tourne en root, comme omega-fire : les logs protégés sont aussi sauvegardés. Une sauvegarde en échec est retentée la nuit suivante."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1077
+#: src/omega_fire/interfaces/cli/help_text.py:1119
 msgid "Restaure une archive de logs précédemment sauvegardée (menu 5.6), immédiatement ou selon une automatisation planifiée."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1081
+#: src/omega_fire/interfaces/cli/help_text.py:1123
 msgid "Choisis le mode (restauration immédiate, planification, gestion des automatisations existantes), puis l'archive et la stratégie de restauration."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1086
+#: src/omega_fire/interfaces/cli/help_text.py:1128
 msgid "Écrit réellement les fichiers restaurés — une restauration peut écraser des fichiers actuels selon le mode choisi."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1089
+#: src/omega_fire/interfaces/cli/help_text.py:1131
 msgid "Vérifie la stratégie/mode proposés avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1094
+#: src/omega_fire/interfaces/cli/help_text.py:1136
 msgid "Purge et nettoie les archives de backup (var/backups/) selon différents critères : ancienneté, quota, type (sauvegardes automatiques de sécurité), ou sélection manuelle."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1098
+#: src/omega_fire/interfaces/cli/help_text.py:1140
 msgid "Consulte d'abord les statistiques de stockage affichées (nombre d'archives, volume, espace disque libre), puis choisis le critère de purge."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1103
+#: src/omega_fire/interfaces/cli/help_text.py:1145
 msgid "Suppression réelle et irréversible des archives ciblées — une confirmation avec aperçu des fichiers concernés est demandée avant exécution."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1110
+#: src/omega_fire/interfaces/cli/help_text.py:1152
 msgid "Nettoyage avancé de l'espace de stockage interne d'Omega-Fire (logs, cache, exports, backups, ou tout var/), filtré par âge ou taille."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1114
+#: src/omega_fire/interfaces/cli/help_text.py:1156
 msgid "Choisis le(s) dossier(s) cible(s), puis les critères de filtrage, et vérifie l'aperçu des fichiers concernés avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1118
+#: src/omega_fire/interfaces/cli/help_text.py:1160
 msgid "Suppression réelle et irréversible des fichiers correspondants."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1122
+#: src/omega_fire/interfaces/cli/help_text.py:1164
 msgid "app.log et audit.log sont toujours exclus de ce nettoyage, même si le dossier logs/ est ciblé — ce sont des fichiers actifs en écriture continue ; utilise 1.5 ou 7.3 pour les gérer spécifiquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1132
+#: src/omega_fire/interfaces/cli/help_text.py:1174
 msgid "Affiche un tableau de bord de statistiques sur les logs (volumes, tendances)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1136
+#: src/omega_fire/interfaces/cli/help_text.py:1178
 msgid "Vue rapide : le rapport complet et exportable des logs est en 6.5."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1146
+#: src/omega_fire/interfaces/cli/help_text.py:1188
 msgid "Centralise les exports et rapports : blacklist complète, règles de pare-feu, audit système complet, statistiques fail2ban, statistiques des logs (6.5) — et 6.6 pour les retrouver et les ouvrir."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1150
+#: src/omega_fire/interfaces/cli/help_text.py:1192
 msgid "Chaque export propose un format (JSON/TXT/HTML selon le rapport) et un chemin de destination modifiable."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1157
+#: src/omega_fire/interfaces/cli/help_text.py:1199
 msgid "Exporte la blacklist complète (IPs bannies) depuis un fichier source choisi, au format JSON, TXT ou HTML."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1161
+#: src/omega_fire/interfaces/cli/help_text.py:1203
 msgid "Choisis la source (épinglée, manuelle, ou gestion des épingles), puis le format de sortie."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1164
+#: src/omega_fire/interfaces/cli/help_text.py:1206
 msgid "Écrit un fichier réel — lecture seule côté bannissement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1169
+#: src/omega_fire/interfaces/cli/help_text.py:1211
 msgid "Exporte les règles de pare-feu nftables/iptables (fail2ban a son propre export, voir 4.8) — toutes, actives seulement, Omega-Fire uniquement, ou système importées uniquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1171
+#: src/omega_fire/interfaces/cli/help_text.py:1213
 msgid "Choisis le contenu à exporter, puis le format (JSON/HTML/TXT)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1172
+#: src/omega_fire/interfaces/cli/help_text.py:1214
 msgid "Écrit un fichier réel — lecture seule côté règles."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1177
+#: src/omega_fire/interfaces/cli/help_text.py:1219
 msgid "Génère un rapport d'audit complet : état système, historique, top IPs, en un seul document."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1181
+#: src/omega_fire/interfaces/cli/help_text.py:1223
 msgid "Choisis le format (TXT ou HTML), valide le chemin de destination proposé ou saisis-en un autre."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1184
+#: src/omega_fire/interfaces/cli/help_text.py:1226
 msgid "Écrit un fichier réel — lecture seule côté système."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1189
+#: src/omega_fire/interfaces/cli/help_text.py:1231
 msgid "Exporte un rapport détaillé sur fail2ban (jails et bans), au format TXT ou HTML."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1192
+#: src/omega_fire/interfaces/cli/help_text.py:1234
 msgid "Choisis le format, valide ou modifie le chemin de destination proposé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1194
+#: src/omega_fire/interfaces/cli/help_text.py:1236
 msgid "Écrit un fichier réel — lecture seule côté fail2ban."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1199
+#: src/omega_fire/interfaces/cli/help_text.py:1241
 msgid "Exporte les statistiques des logs choisis, avec le même rapport qu'omega-serv et omega-log : synthèse, statuts HTTP, top IP, chemins demandés, chemins en 404, répartition horaire et tendance par jour."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1203
+#: src/omega_fire/interfaces/cli/help_text.py:1245
 msgid "« Choisir les logs » : cochez un ou plusieurs logs, ceux de la Bibliothèque (5.1) en tête."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1206
+#: src/omega_fire/interfaces/cli/help_text.py:1248
 msgid "Choisissez une période (24h, 7j, 30j ou tout le fichier) : le rapport s'affiche, puis « Exporter JSON » ou « Exporter HTML » (thème au choix) l'écrit dans le dossier d'exports, visible en 6.6."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1210
+#: src/omega_fire/interfaces/cli/help_text.py:1252
 msgid "Lecture seule sur les logs. Écrit seulement le fichier d'export."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1214
+#: src/omega_fire/interfaces/cli/help_text.py:1256
 msgid "Logs seulement : les bans, les jails et l'état du pare-feu sont dans les rapports 8.3 et 8.4. 5.10 reste la vue rapide."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1221
+#: src/omega_fire/interfaces/cli/help_text.py:1263
 msgid "Liste tous les fichiers exportés (dossier d'exports, et exports de blacklist de 6.1) : type, date, taille — sans ouvrir de terminal ni de gestionnaire de fichiers."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1225
+#: src/omega_fire/interfaces/cli/help_text.py:1267
 msgid "« Ouvrir » : un rapport HTML s'ouvre dans votre navigateur ; un JSON ou TXT se lit dans omega-fire (lecteur Classique)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1228
+#: src/omega_fire/interfaces/cli/help_text.py:1270
 msgid "« Copier le chemin » copie le chemin complet du fichier ; « Supprimer » l'efface après confirmation."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1233
+#: src/omega_fire/interfaces/cli/help_text.py:1275
 msgid "Ouvrir et copier sont en lecture seule. Supprimer efface réellement le fichier."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1238
+#: src/omega_fire/interfaces/cli/help_text.py:1280
 msgid "omega-fire tourne en root : le navigateur est lancé au nom de l'utilisateur qui a fait sudo, dans sa session graphique. Si le fichier ne lui est pas lisible, une copie lui appartenant est ouverte depuis un dossier temporaire."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1241
+#: src/omega_fire/interfaces/cli/help_text.py:1283
 msgid "Sans session graphique (connexion SSH, serveur sans bureau), aucun navigateur ne peut s'ouvrir : le chemin du fichier est affiché pour l'ouvrir depuis un autre poste."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1252
+#: src/omega_fire/interfaces/cli/help_text.py:1294
 msgid "Gestion de l'état interne d'Omega-Fire : sauvegarde/restauration complète (règles + IPs bannies), historique d'audit, rechargement de la configuration."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1259
+#: src/omega_fire/interfaces/cli/help_text.py:1301
 msgid "Distinct du menu 5 (qui gère les fichiers de logs) — ici, c'est l'état du firewall/fail2ban lui-même qui est sauvegardé/restauré."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1266
+#: src/omega_fire/interfaces/cli/help_text.py:1308
 msgid "Capture un instantané (snapshot) complet de l'état actuel : règles firewall et IPs bannies (nftables/iptables/fail2ban)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1270
+#: src/omega_fire/interfaces/cli/help_text.py:1312
 msgid "Une description optionnelle peut être ajoutée pour identifier facilement le snapshot plus tard."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1275
+#: src/omega_fire/interfaces/cli/help_text.py:1317
 msgid "Crée une archive réelle — n'affecte aucun état actuel, uniquement une sauvegarde."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1281
+#: src/omega_fire/interfaces/cli/help_text.py:1323
 msgid "Restaure un snapshot précédemment sauvegardé (menu 7.1)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1284
+#: src/omega_fire/interfaces/cli/help_text.py:1326
 msgid "Sélectionne le snapshot à restaurer dans la liste paginée, puis confirme."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1289
+#: src/omega_fire/interfaces/cli/help_text.py:1331
 msgid "Les règles firewall actuellement gérées par Omega-Fire sont RETIRÉES puis REMPLACÉES par celles du snapshot."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1293
+#: src/omega_fire/interfaces/cli/help_text.py:1335
 msgid "Seules les règles que le snapshot peut recréer à l'identique sont réappliquées (chaîne de base, avec seulement protocole, port, adresses, commentaire et verdict). Les autres — règles d'autres outils ou avec des critères qu'Omega-Fire ne sait pas reproduire (état de connexion, interface, type ICMP, limite de débit) — restent telles quelles dans le pare-feu."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1296
+#: src/omega_fire/interfaces/cli/help_text.py:1338
 msgid "Un snapshot créé avant la version 3.5 ne porte pas cette information : sa restauration ne touche à aucune règle, seules les IPs bannies sont ajoutées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1299
+#: src/omega_fire/interfaces/cli/help_text.py:1341
 msgid "La politique par défaut des chaînes n'est remise à ACCEPT que sur un backend où un profil (3.4) était actif."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1302
+#: src/omega_fire/interfaces/cli/help_text.py:1344
 msgid "Les IPs bannies du snapshot sont AJOUTÉES — rien n'est retiré des bannissements actuels."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1306
+#: src/omega_fire/interfaces/cli/help_text.py:1348
 msgid "Les jails fail2ban ne sont PAS restaurées automatiquement (information seulement)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1310
+#: src/omega_fire/interfaces/cli/help_text.py:1352
 msgid "Les règles/IPs gérées par d'autres outils (UFW, etc.) ne sont jamais touchées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1316
+#: src/omega_fire/interfaces/cli/help_text.py:1358
 msgid "Opération significative sur les règles firewall — vérifie bien le snapshot choisi avant de confirmer."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1323
+#: src/omega_fire/interfaces/cli/help_text.py:1365
 msgid "Consulte ou purge l'historique d'audit (le journal des actions effectuées par Omega-Fire, avec succès/échec) — distinct du journal applicatif technique (1.5)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1327
+#: src/omega_fire/interfaces/cli/help_text.py:1369
 msgid "Recherche par mot-clé possible. Le sous-menu de gestion permet de purger les entrées anciennes."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1332
+#: src/omega_fire/interfaces/cli/help_text.py:1374
 msgid "La consultation est en lecture seule. La purge supprime réellement des entrées, irréversible."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1338
+#: src/omega_fire/interfaces/cli/help_text.py:1380
 msgid "Recharge la configuration système sans redémarrer l'application."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1339
+#: src/omega_fire/interfaces/cli/help_text.py:1381
 msgid "Aucune saisie — lance directement le rechargement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1342
+#: src/omega_fire/interfaces/cli/help_text.py:1384
 msgid "Même mécanisme que 1.3 (re-scan complet des sondes système et de la configuration), avec un affichage minimal plutôt que le détail diagnostic complet."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1354
+#: src/omega_fire/interfaces/cli/help_text.py:1396
 msgid "Vue d'ensemble de l'activité réseau en temps réel et sur la durée : tableau de bord live, connexions actives, tendances 7/30 jours."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1360
+#: src/omega_fire/interfaces/cli/help_text.py:1402
 msgid "Tableau de bord en temps réel combinant statistiques firewall, monitoring, audit et logs — rafraîchi automatiquement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1364
+#: src/omega_fire/interfaces/cli/help_text.py:1406
 msgid "Aucune saisie au lancement — consulte l'écran, quitte avec la touche indiquée à l'écran."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1372
+#: src/omega_fire/interfaces/cli/help_text.py:1414
 msgid "Affiche les connexions réseau actives (conntrack) : protocole, état, adresses, ports."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1376
+#: src/omega_fire/interfaces/cli/help_text.py:1418
 msgid "Filtre par protocole et/ou état une fois la liste initiale affichée, limite le nombre d'entrées affichées."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1384
+#: src/omega_fire/interfaces/cli/help_text.py:1426
 msgid "Rapport statistique sur les 7 derniers jours (tendances, graphiques)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1392
+#: src/omega_fire/interfaces/cli/help_text.py:1434
 msgid "Rapport statistique sur les 30 derniers jours — vue macro, même mécanisme que 8.3 avec une fenêtre plus large."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1401
+#: src/omega_fire/interfaces/cli/help_text.py:1443
 msgid "Visualise en direct les logs serveur (Nginx, Apache, Caddy, Lighttpd) ou le journal applicatif, avec analyse des requêtes HTTP en temps réel. C'est aussi le lecteur « Simple » de 5.2 Favoris et 5.3 Voir les logs."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1409
+#: src/omega_fire/interfaces/cli/help_text.py:1451
 msgid "Choisis une source épinglée, l'historique récent, ou saisis un chemin/URL manuellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1416
+#: src/omega_fire/interfaces/cli/help_text.py:1458
 msgid "Le cadre de gauche montre, comme omega-log : débit, bande passante, statuts HTTP (dont refus 403 et 429), Top 5 IP, chemins demandés, chemins en 404, santé du log."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1419
+#: src/omega_fire/interfaces/cli/help_text.py:1461
 msgid "Débits calculés sur la période couverte par les lignes (leurs horodatages), jamais sur le temps passé devant l'écran ; « - » pour une valeur que le log ne donne pas (taille, durée)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1421
+#: src/omega_fire/interfaces/cli/help_text.py:1463
 msgid "Colonne Message : la ligne entière (l'ascenseur horizontal va jusqu'à sa fin), colorée avec les couleurs du thème : date, adresse IP, méthode, code HTTP (succès, redirection, erreur client, erreur serveur), User-Agent en italique ; référent, taille et identifiant de requête atténués. Sur un syslog : date, service, adresses et mots d'erreur ou d'avertissement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1425
+#: src/omega_fire/interfaces/cli/help_text.py:1467
 msgid "Colonne Service : l'étiquette d'un syslog ou d'un journal système (sshd, nginx, kernel...). Un access log et les logs d'omega-serv n'en ont pas : « - »."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1427
+#: src/omega_fire/interfaces/cli/help_text.py:1469
 msgid "Colonne Durée : temps de traitement quand le format l'écrit en fin de ligne (directive Apache %D ou %T). L'access log d'omega-serv ne l'écrit pas : « - »."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1430
+#: src/omega_fire/interfaces/cli/help_text.py:1472
 msgid "Colonne Type : Bot (robot d'indexation), CLI (curl, wget, script) ou Web (navigateur), d'après le User-Agent de la ligne ; « - » quand le log n'en donne pas."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1433
+#: src/omega_fire/interfaces/cli/help_text.py:1475
 msgid "Utilise [G] pour gérer les épingles (ajouter/retirer) et l'historique — un [0] Annuler est disponible à chaque étape."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1439
+#: src/omega_fire/interfaces/cli/help_text.py:1481
 msgid "Lecture seule sur la source suivie — aucune modification du fichier ou du serveur observé."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1444
+#: src/omega_fire/interfaces/cli/help_text.py:1486
 msgid "Les épingles et l'historique sont persistés (survivent à un redémarrage). Ouvert depuis 5.2 ou 5.3, il démarre directement sur le log choisi, sans toucher à cet historique."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1454
+#: src/omega_fire/interfaces/cli/help_text.py:1496
 msgid "Sélectionne un ou plusieurs fichiers de logs serveur (Nginx, Apache, Lighttpd, Caddy) pour analyse via lnav — contrairement à 8.5, plusieurs fichiers peuvent être choisis à la fois : lnav les fusionne automatiquement en une seule vue chronologique."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1462
+#: src/omega_fire/interfaces/cli/help_text.py:1504
 msgid "Numéros séparés par des virgules pour choisir plusieurs sources épinglées/historique à la fois (ex: 1,3)."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1469
+#: src/omega_fire/interfaces/cli/help_text.py:1511
 msgid "[M] pour un ou plusieurs chemins saisis à la main (mêmes virgules), [G] pour gérer les épingles — un [0]/Entrée annule à chaque étape."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1475
+#: src/omega_fire/interfaces/cli/help_text.py:1517
 msgid "Lecture seule sur les fichiers sélectionnés — aucune modification."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1479
+#: src/omega_fire/interfaces/cli/help_text.py:1521
 msgid "Épingles et historique propres à 8.6 (séparés de ceux de 8.5, mêmes mécanismes de stockage). lnav s'ouvre ensuite en plein écran, encapsulé dans un header/footer Omega-Fire — Ctrl-Q pour quitter, Ctrl-C pour copier la ligne courante, la touche t pour changer de thème."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1493
+#: src/omega_fire/interfaces/cli/help_text.py:1535
 msgid "Ferme Omega-Fire, avec une confirmation avant de quitter réellement."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1497
+#: src/omega_fire/interfaces/cli/help_text.py:1539
 msgid "Réponds 'o' pour confirmer la fermeture, ou toute autre réponse pour rester dans l'application."
 msgstr ""
 
-#: src/omega_fire/interfaces/cli/help_text.py:1502
+#: src/omega_fire/interfaces/cli/help_text.py:1544
 msgid "Aucune sauvegarde automatique n'est déclenchée par cette confirmation — pense à utiliser 7.1 avant de quitter si tu veux capturer l'état actuel."
 msgstr ""
 
@@ -4841,7 +4885,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/jail_transfer_screen.py:249
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:78
 #: src/omega_fire/interfaces/tui/screens/list_banned_ips_screen.py:64
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:55
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:58
 #: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:187
 #: src/omega_fire/interfaces/tui/screens/lnav_screen.py:140
 #: src/omega_fire/interfaces/tui/screens/log_classic_viewer_screen.py:63
@@ -4870,6 +4914,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/top_ips_screen.py:236
 #: src/omega_fire/interfaces/tui/screens/unban_ip_list_screen.py:166
 #: src/omega_fire/interfaces/tui/screens/unban_ip_screen.py:73
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:134
 msgid "Retour"
 msgstr ""
 
@@ -5604,7 +5649,7 @@ msgid "Timestamp"
 msgstr ""
 
 #: src/omega_fire/interfaces/cli/renderers/logs_live.py:473
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:69
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:72
 msgid "IP Source"
 msgstr ""
 
@@ -5897,7 +5942,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/create_rule_screen.py:89
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:204
 #: src/omega_fire/interfaces/tui/screens/jail_ban_unban_screen.py:76
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:66
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:69
 #: src/omega_fire/interfaces/tui/screens/restore_backup_screen.py:95
 #: src/omega_fire/interfaces/tui/screens/rotate_logs_screen.py:114
 #: src/omega_fire/interfaces/tui/screens/table_management_screen.py:116
@@ -6587,6 +6632,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:183
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:131
 #: src/omega_fire/interfaces/tui/screens/pinned_paths_screen.py:61
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:127
 msgid "Retirer"
 msgstr ""
 
@@ -6986,7 +7032,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/conntrack_screen.py:102
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:206
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:71
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:74
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:114
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:157
 #: src/omega_fire/interfaces/tui/screens/log_view_screen.py:86
@@ -6994,6 +7040,7 @@ msgid "État"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/conntrack_screen.py:103
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:139
 msgid "Paquets"
 msgstr ""
 
@@ -7641,7 +7688,7 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:201
 #: src/omega_fire/interfaces/tui/screens/jails_status_screen.py:118
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:63
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:66
 #: src/omega_fire/interfaces/tui/screens/log_favorites_screen.py:114
 #: src/omega_fire/interfaces/tui/screens/log_library_screen.py:157
 #: src/omega_fire/interfaces/tui/screens/log_view_screen.py:86
@@ -7659,25 +7706,27 @@ msgid "Nom"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:203
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:65
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:68
 msgid "Chaîne"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:205
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:68
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:71
 msgid "Port"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:230
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:334
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:153
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:158
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:208
 #: src/omega_fire/interfaces/tui/support/direct_actions.py:75
 msgid "ACTIF"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:230
 #: src/omega_fire/interfaces/tui/screens/delete_rule_screen.py:334
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:155
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:160
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:208
 #: src/omega_fire/interfaces/tui/support/direct_actions.py:75
 msgid "INACTIF"
 msgstr ""
@@ -8262,7 +8311,7 @@ msgid "JSON (données brutes structurées)"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/export_rules_screen.py:134
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:77
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:80
 msgid "Le conteneur ou le dépôt de règles n'est pas disponible."
 msgstr ""
 
@@ -8821,7 +8870,7 @@ msgid "Contact et support"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/home.py:40
-#: src/omega_fire/interfaces/tui/section_registry.py:158
+#: src/omega_fire/interfaces/tui/section_registry.py:159
 msgid "CAPACITÉS & DIAGNOSTICS"
 msgstr ""
 
@@ -8850,7 +8899,7 @@ msgid "SYSTÈME & PERSISTANCE"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/home.py:47
-#: src/omega_fire/interfaces/tui/section_registry.py:540
+#: src/omega_fire/interfaces/tui/section_registry.py:547
 msgid "MONITORING & STATISTIQUES"
 msgstr ""
 
@@ -9328,7 +9377,7 @@ msgid "IPs BANNIES"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/list_banned_ips_screen.py:69
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:62
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:65
 #: src/omega_fire/interfaces/tui/screens/table_management_screen.py:173
 msgid "Backend"
 msgstr ""
@@ -9346,42 +9395,59 @@ msgstr ""
 msgid "{count} IP(s) bannie(s)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:48
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:51
 msgid "LISTE DES RÈGLES"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:61
-msgid "ID"
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:56
+msgid "Bouclier WireGuard"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:64
-msgid "Nom / Description"
+msgid "ID"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:67
-msgid "Proto"
+msgid "Nom / Description"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:70
+msgid "Proto"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:73
 msgid "IP Dest."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:95
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:98
 msgid "Aucun backend firewall disponible pour la synchronisation."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:104
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:109
 msgid "Aucune règle pare-feu enregistrée ou active sur le système."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:127
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:132
 #, python-brace-format
 msgid "Règle #{rule_id}"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:178
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:183
 #, python-brace-format
 msgid "{count} règle(s) d'autres outils ({tools}) : affichées pour information, Omega-Fire ne les modifie pas."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:207
+msgid "ABSENT"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:213
+#, python-brace-format
+msgid "Bouclier du port WireGuard (géré par {tool})"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/list_rules_screen.py:215
+msgid "OBSERVATION"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:165
@@ -9447,7 +9513,7 @@ msgstr ""
 #: src/omega_fire/interfaces/tui/screens/live_tail_screen.py:249
 #: src/omega_fire/interfaces/tui/screens/lnav_screen.py:169
 #: src/omega_fire/interfaces/tui/screens/lnav_screen.py:173
-#: src/omega_fire/interfaces/tui/section_registry.py:380
+#: src/omega_fire/interfaces/tui/section_registry.py:387
 msgid "Bibliothèque"
 msgstr ""
 
@@ -9907,13 +9973,13 @@ msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:29
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:54
-#: src/omega_fire/interfaces/tui/section_registry.py:573
+#: src/omega_fire/interfaces/tui/section_registry.py:580
 msgid "30 jours"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:29
 #: src/omega_fire/interfaces/tui/screens/log_stats_screen.py:52
-#: src/omega_fire/interfaces/tui/section_registry.py:561
+#: src/omega_fire/interfaces/tui/section_registry.py:568
 msgid "7 jours"
 msgstr ""
 
@@ -11656,589 +11722,815 @@ msgstr ""
 msgid "IP {ip} n'était pas bannie (déjà libre)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:102
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:33
+msgid "Pairs connus"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:33
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:36
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:154
+msgid "admis"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:34
+msgid "Poignées de main"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:34
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:154
+msgid "admises"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:35
+msgid "Poignées de main en excès (par source)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:35
+msgid "refusées"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:36
+msgid "Sources inconnues, paquets bien formés"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:37
+msgid "Sources inconnues en excès (par source)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:37
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:38
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:39
+msgid "refusés"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:38
+msgid "Excès de l'ensemble des sources inconnues"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:39
+msgid "Paquets qui ne sont pas du WireGuard"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:42
+msgid "Bouclier posé : omega-fire le remet en place à chaque démarrage."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:43
+msgid "Mode changé : compteurs et pairs connus gardés."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:44
+msgid "omega-fire gère maintenant le bouclier (rien d'autre n'a changé)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:45
+msgid "Bouclier remis en place (compteurs remis à zéro)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:46
+msgid "Bouclier retiré : table, fichiers et service supprimés."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:47
+msgid "Aucun bouclier enregistré sur cette machine."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:48
+msgid "tailscaled tire son port au hasard (--port 0) : aucun bouclier possible. Fixez un port (PORT= dans /etc/default/tailscaled)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:50
+msgid "Aucune carte réseau matérielle trouvée."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:51
+msgid "Réglages refusés (port ou carte réseau invalide)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:52
+msgid "Le noyau a été mis à jour sans redémarrage : ses modules ne peuvent plus être chargés et la table serait refusée. Redémarrez la machine, puis recommencez."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:62
+msgid "Aucun bouclier sur cette machine."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:63
+#, python-brace-format
+msgid "Port de tailscaled : {port} ; cartes réseau : {devices}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:64
+msgid "au hasard"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:66
+msgid "Noyau antérieur à 5.16 : sans liste des pairs, seuls le tri des paquets et la limite des poignées de main seront posés."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:70
+msgid "ABSENT : la table a été effacée par un autre outil (nft flush ruleset, redémarrage d'un service de pare-feu…). « Reposer » la remet."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:73
+msgid "État non mis à jour depuis plus de 3 minutes : le service omega-bouclier-wg est-il arrêté ?"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:76
+msgid "ACTIF : les paquets en excès et ceux qui ne sont pas du WireGuard sont refusés."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:79
+msgid "OBSERVATION : rien n'est refusé ; les compteurs disent ce qui l'aurait été."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:81
+#, python-brace-format
+msgid "Origine : {tool} (outil qui l'a demandé)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:82
+#, python-brace-format
+msgid "Géré par : {tool}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:85
+#, python-brace-format
+msgid "Port {port}/udp ; cartes réseau : {devices}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:88
+msgid "Sans liste des pairs (noyau antérieur à 5.16)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:90
+#, python-brace-format
+msgid "Pairs connus : {count}."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:115
+msgid "BOUCLIER DU PORT WIREGUARD"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:116
+msgid "Devant tailscaled (Tailscale) : poignées de main limitées par source, budget pour les sources qui ne sont pas des pairs connus, paquets qui ne sont pas du WireGuard refusés. Commencez en observation."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:123
+msgid "Poser (observation)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:124
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:165
+msgid "Passer en actif"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:125
+msgid "Reprendre la gestion"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:126
+msgid "Reposer"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:132
+msgid "Actualiser"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:139
+msgid "Compteur"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:139
+msgid "Effet"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:154
+msgid "auraient été refusés"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:165
+msgid "Passer en observation"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:173
+#, python-brace-format
+msgid "Échec : {error}"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:202
+msgid "Passer le bouclier en actif"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:203
+#, python-brace-format
+msgid "En observation, {count} paquet(s) auraient été refusés. En actif, ils le seront. Les pairs connus ne sont jamais limités."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:212
+#, python-brace-format
+msgid " Il a été demandé par {tool}, qui l'affichera « retiré depuis omega-fire »."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:214
+msgid "Retirer le bouclier"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/screens/wg_shield_screen.py:215
+msgid "La table, ses fichiers et son service seront supprimés ; tailscaled ne sera plus protégé contre les flots de paquets."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:103
 msgid "Vérifier le statut du service & persistance"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:105
+#: src/omega_fire/interfaces/tui/section_registry.py:106
 msgid "4.10 Statut du service Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:109
+#: src/omega_fire/interfaces/tui/section_registry.py:110
 msgid "Démarrer le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:112
+#: src/omega_fire/interfaces/tui/section_registry.py:113
 msgid "4.10 Démarrer Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:116
+#: src/omega_fire/interfaces/tui/section_registry.py:117
 msgid "Stopper le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:119
+#: src/omega_fire/interfaces/tui/section_registry.py:120
 msgid "4.10 Stopper Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:120
+#: src/omega_fire/interfaces/tui/section_registry.py:121
 msgid "CONFIRMER L'ARRÊT"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:121
+#: src/omega_fire/interfaces/tui/section_registry.py:122
 msgid "Arrêter le service Fail2ban ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:125
+#: src/omega_fire/interfaces/tui/section_registry.py:126
 msgid "Redémarrer le service"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:128
+#: src/omega_fire/interfaces/tui/section_registry.py:129
 msgid "4.10 Redémarrer Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:129
+#: src/omega_fire/interfaces/tui/section_registry.py:130
 msgid "CONFIRMER LE REDÉMARRAGE"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:130
+#: src/omega_fire/interfaces/tui/section_registry.py:131
 msgid "Redémarrer le service Fail2ban ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:134
+#: src/omega_fire/interfaces/tui/section_registry.py:135
 msgid "Activer le service au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:137
+#: src/omega_fire/interfaces/tui/section_registry.py:138
 msgid "4.10 Activer Fail2ban au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:141
+#: src/omega_fire/interfaces/tui/section_registry.py:142
 msgid "Désactiver le service au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:144
+#: src/omega_fire/interfaces/tui/section_registry.py:145
 msgid "4.10 Désactiver Fail2ban au démarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:153
+#: src/omega_fire/interfaces/tui/section_registry.py:154
 msgid "GÉRER LE SERVICE FAIL2BAN"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:162
+#: src/omega_fire/interfaces/tui/section_registry.py:163
 msgid "Afficher le registre des capacités"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:163
+#: src/omega_fire/interfaces/tui/section_registry.py:164
 msgid "Liste des composants et leur status"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:168
+#: src/omega_fire/interfaces/tui/section_registry.py:169
 msgid "Détail d'une capacité"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:169
+#: src/omega_fire/interfaces/tui/section_registry.py:170
 msgid "Sélection d'un composant"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:174
+#: src/omega_fire/interfaces/tui/section_registry.py:175
 msgid "Re-scanner le système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:175
+#: src/omega_fire/interfaces/tui/section_registry.py:176
 msgid "Relance des probes système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:177
+#: src/omega_fire/interfaces/tui/section_registry.py:178
 msgid "1.3 Re-scan du système"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:178
+#: src/omega_fire/interfaces/tui/section_registry.py:179
 msgid "RE-SCANNER LE SYSTÈME"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:180
+#: src/omega_fire/interfaces/tui/section_registry.py:181
 msgid "Relancer un scan complet du système (nftables, iptables, fail2ban, systemd) ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:185
+#: src/omega_fire/interfaces/tui/section_registry.py:186
 msgid "Voir les diagnostics récents"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:186
+#: src/omega_fire/interfaces/tui/section_registry.py:187
 msgid "Liste les erreurs et dégradations"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:191
+#: src/omega_fire/interfaces/tui/section_registry.py:192
 msgid "Voir le journal applicatif"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:192
+#: src/omega_fire/interfaces/tui/section_registry.py:193
 msgid "voir les logs d'événements applicatif"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:197
+#: src/omega_fire/interfaces/tui/section_registry.py:198
 msgid "Rechercher dans les diagnostics"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:198
+#: src/omega_fire/interfaces/tui/section_registry.py:199
 msgid "Recherche par mot-clé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:203
+#: src/omega_fire/interfaces/tui/section_registry.py:204
 msgid "Exporter l'état et les diagnostics"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:204
+#: src/omega_fire/interfaces/tui/section_registry.py:205
 msgid "Données JSON (brut), TXT (data) ou HTML (visuel)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:209
+#: src/omega_fire/interfaces/tui/section_registry.py:210
 msgid "GESTION DES IPs (Blacklist unifiée NFt-IPt)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:213
+#: src/omega_fire/interfaces/tui/section_registry.py:214
 msgid "Bannir une IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:214
+#: src/omega_fire/interfaces/tui/section_registry.py:215
 msgid "Bannir une IP unique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:219
+#: src/omega_fire/interfaces/tui/section_registry.py:220
 msgid "Bannir une liste d'IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:220
-#: src/omega_fire/interfaces/tui/section_registry.py:232
+#: src/omega_fire/interfaces/tui/section_registry.py:221
+#: src/omega_fire/interfaces/tui/section_registry.py:233
 msgid "Saisie multiple ou fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:225
+#: src/omega_fire/interfaces/tui/section_registry.py:226
 msgid "Débannir une IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:226
+#: src/omega_fire/interfaces/tui/section_registry.py:227
 msgid "Débannir une IP unique"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:231
+#: src/omega_fire/interfaces/tui/section_registry.py:232
 msgid "Débannir une liste d'IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:237
+#: src/omega_fire/interfaces/tui/section_registry.py:238
 msgid "Lister les IPs bannies"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:238
+#: src/omega_fire/interfaces/tui/section_registry.py:239
 msgid "Tableau avec filtres"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:243
+#: src/omega_fire/interfaces/tui/section_registry.py:244
 msgid "Synchroniser les backends NFt-IPt"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:244
+#: src/omega_fire/interfaces/tui/section_registry.py:245
 msgid "Nft <-> Ipt"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:249
+#: src/omega_fire/interfaces/tui/section_registry.py:250
 msgid "Importer depuis un fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:250
+#: src/omega_fire/interfaces/tui/section_registry.py:251
 msgid "Gestion, Édition des fichiers et IP blocklist"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:255
+#: src/omega_fire/interfaces/tui/section_registry.py:256
 msgid "Exporter vers un fichier"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:256
+#: src/omega_fire/interfaces/tui/section_registry.py:257
 msgid "Transfert des IPs vers fichiers, archives"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:261
+#: src/omega_fire/interfaces/tui/section_registry.py:262
 msgid "Nettoyer (Flush) complet"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:262
+#: src/omega_fire/interfaces/tui/section_registry.py:263
 msgid "Vider un ou tous les backends"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:267
-#: src/omega_fire/interfaces/tui/section_registry.py:325
+#: src/omega_fire/interfaces/tui/section_registry.py:268
+#: src/omega_fire/interfaces/tui/section_registry.py:332
 msgid "Interopérabilité des IPs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:268
+#: src/omega_fire/interfaces/tui/section_registry.py:269
 msgid "Transfert/Injection (Jails, Backends, Fichiers (idem que 4.3)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:273
+#: src/omega_fire/interfaces/tui/section_registry.py:274
 msgid "GESTION DES RÈGLES (Politiques / Filtres)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:277
+#: src/omega_fire/interfaces/tui/section_registry.py:278
 msgid "Créer une règle avancée"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:278
+#: src/omega_fire/interfaces/tui/section_registry.py:279
 msgid "Assistant pas-à-pas pour créer une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:283
+#: src/omega_fire/interfaces/tui/section_registry.py:284
 msgid "Supprimer une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:284
+#: src/omega_fire/interfaces/tui/section_registry.py:285
 msgid "Suppression simplifiée d'une règle"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:289
+#: src/omega_fire/interfaces/tui/section_registry.py:290
 msgid "Lister les règles"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:290
+#: src/omega_fire/interfaces/tui/section_registry.py:291
 msgid "Tableau avec détail & compteurs par backend"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:295
+#: src/omega_fire/interfaces/tui/section_registry.py:296
 msgid "Appliquer une politique pré-définie"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:296
+#: src/omega_fire/interfaces/tui/section_registry.py:297
 msgid "Profils activable (sauvegarde-auto de l'état)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:301
+#: src/omega_fire/interfaces/tui/section_registry.py:302
 msgid "Gestion des tables"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:303
+#: src/omega_fire/interfaces/tui/section_registry.py:304
 msgid "Diagnostic, initialisation, reset des politiques, flush cible ou synchronisé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:309
+#: src/omega_fire/interfaces/tui/section_registry.py:310
+msgid "Bouclier du port WireGuard"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:311
+msgid "Devant tailscaled : origine, mode, compteurs (demandé par omega-tail)"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/section_registry.py:316
 msgid "GESTION FAIL2BAN (Jails & Transferts)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:313
+#: src/omega_fire/interfaces/tui/section_registry.py:320
 msgid "Analyse et État des jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:314
+#: src/omega_fire/interfaces/tui/section_registry.py:321
 msgid "Tableau récapitulatif + recherche d'IP par jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:319
+#: src/omega_fire/interfaces/tui/section_registry.py:326
 msgid "Bannir / Débannir dans un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:320
+#: src/omega_fire/interfaces/tui/section_registry.py:327
 msgid "Ban et Unban, IP unique ou liste d'IP"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:326
+#: src/omega_fire/interfaces/tui/section_registry.py:333
 msgid "Transfert / Import / Export (Jails, Backends, Fichiers)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:331
+#: src/omega_fire/interfaces/tui/section_registry.py:338
 msgid "Créer un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:332
+#: src/omega_fire/interfaces/tui/section_registry.py:339
 msgid "Assistant de création"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:337
+#: src/omega_fire/interfaces/tui/section_registry.py:344
 msgid "Supprimer un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:338
+#: src/omega_fire/interfaces/tui/section_registry.py:345
 msgid "choisir le jail et confirmer sa suppression"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:343
+#: src/omega_fire/interfaces/tui/section_registry.py:350
 msgid "Vider un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:344
+#: src/omega_fire/interfaces/tui/section_registry.py:351
 msgid "Vider toutes les IPs d'un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:349
+#: src/omega_fire/interfaces/tui/section_registry.py:356
 msgid "Vider tous les jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:350
+#: src/omega_fire/interfaces/tui/section_registry.py:357
 msgid "PURGE GÉNÉRALE - Vider toutes les IPs de tous les jails"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:355
+#: src/omega_fire/interfaces/tui/section_registry.py:362
 msgid "Exporter un jail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:356
-#: src/omega_fire/interfaces/tui/section_registry.py:474
+#: src/omega_fire/interfaces/tui/section_registry.py:363
+#: src/omega_fire/interfaces/tui/section_registry.py:481
 msgid "FORMAT: Brut/JSON, Injection/TXT, visualisation/HTML"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:361
+#: src/omega_fire/interfaces/tui/section_registry.py:368
 msgid "Vérifier la configuration Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:362
+#: src/omega_fire/interfaces/tui/section_registry.py:369
 msgid "utilisation de fail2ban-client -d"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:367
+#: src/omega_fire/interfaces/tui/section_registry.py:374
 msgid "Gérer le service Fail2ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:368
+#: src/omega_fire/interfaces/tui/section_registry.py:375
 msgid "Contrôle du service Fail2ban (status, start, stop,...)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:373
+#: src/omega_fire/interfaces/tui/section_registry.py:380
 msgid "GESTION DES LOGS (Analyse & Maintenance)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:381
+#: src/omega_fire/interfaces/tui/section_registry.py:388
 msgid "Import des logs : omega-serv automatique, épinglage, SSH"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:386
+#: src/omega_fire/interfaces/tui/section_registry.py:393
 msgid "Favoris"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:387
+#: src/omega_fire/interfaces/tui/section_registry.py:394
 msgid "Logs combinés, enregistrés et lancés directement"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:392
+#: src/omega_fire/interfaces/tui/section_registry.py:399
 msgid "Voir les logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:393
+#: src/omega_fire/interfaces/tui/section_registry.py:400
 msgid "Un log, lecteur au choix : Simple, Classique, lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:398
-#: src/omega_fire/interfaces/tui/section_registry.py:445
-#: src/omega_fire/interfaces/tui/section_registry.py:462
+#: src/omega_fire/interfaces/tui/section_registry.py:405
+#: src/omega_fire/interfaces/tui/section_registry.py:452
+#: src/omega_fire/interfaces/tui/section_registry.py:469
 msgid "Analyser les IPs (Top N)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:399
+#: src/omega_fire/interfaces/tui/section_registry.py:406
 msgid "Classement des IPs actives"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:404
-#: src/omega_fire/interfaces/tui/section_registry.py:446
-#: src/omega_fire/interfaces/tui/section_registry.py:463
+#: src/omega_fire/interfaces/tui/section_registry.py:411
+#: src/omega_fire/interfaces/tui/section_registry.py:453
+#: src/omega_fire/interfaces/tui/section_registry.py:470
 msgid "Supprimer une IP des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:405
+#: src/omega_fire/interfaces/tui/section_registry.py:412
 msgid "Nettoyage cible"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:410
-#: src/omega_fire/interfaces/tui/section_registry.py:447
-#: src/omega_fire/interfaces/tui/section_registry.py:464
+#: src/omega_fire/interfaces/tui/section_registry.py:417
+#: src/omega_fire/interfaces/tui/section_registry.py:454
+#: src/omega_fire/interfaces/tui/section_registry.py:471
 msgid "Rotation / Backup des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:411
+#: src/omega_fire/interfaces/tui/section_registry.py:418
 msgid "Compression et archivage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:416
-#: src/omega_fire/interfaces/tui/section_registry.py:448
-#: src/omega_fire/interfaces/tui/section_registry.py:465
+#: src/omega_fire/interfaces/tui/section_registry.py:423
+#: src/omega_fire/interfaces/tui/section_registry.py:455
+#: src/omega_fire/interfaces/tui/section_registry.py:472
 msgid "Restaurer un backup"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:417
+#: src/omega_fire/interfaces/tui/section_registry.py:424
 msgid "Sélection et restauration"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:422
-#: src/omega_fire/interfaces/tui/section_registry.py:449
-#: src/omega_fire/interfaces/tui/section_registry.py:466
+#: src/omega_fire/interfaces/tui/section_registry.py:429
+#: src/omega_fire/interfaces/tui/section_registry.py:456
+#: src/omega_fire/interfaces/tui/section_registry.py:473
 msgid "Purge des backups"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:423
+#: src/omega_fire/interfaces/tui/section_registry.py:430
 msgid "Suppression massive"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:428
-#: src/omega_fire/interfaces/tui/section_registry.py:450
+#: src/omega_fire/interfaces/tui/section_registry.py:435
+#: src/omega_fire/interfaces/tui/section_registry.py:457
 msgid "Nettoyage avancé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:429
+#: src/omega_fire/interfaces/tui/section_registry.py:436
 msgid "Par âge ou taille"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:434
-#: src/omega_fire/interfaces/tui/section_registry.py:451
+#: src/omega_fire/interfaces/tui/section_registry.py:441
+#: src/omega_fire/interfaces/tui/section_registry.py:458
 msgid "Statistiques des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:435
+#: src/omega_fire/interfaces/tui/section_registry.py:442
 msgid "récapitulatifs des événements des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:444
-#: src/omega_fire/interfaces/tui/section_registry.py:461
+#: src/omega_fire/interfaces/tui/section_registry.py:451
+#: src/omega_fire/interfaces/tui/section_registry.py:468
 msgid "Visualiser les logs en direct (Live Tail)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:452
-#: src/omega_fire/interfaces/tui/section_registry.py:586
+#: src/omega_fire/interfaces/tui/section_registry.py:459
+#: src/omega_fire/interfaces/tui/section_registry.py:593
 msgid "Visualiser les logs serveurs avec lnav"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:457
-#: src/omega_fire/interfaces/tui/section_registry.py:505
+#: src/omega_fire/interfaces/tui/section_registry.py:464
+#: src/omega_fire/interfaces/tui/section_registry.py:512
 msgid "Voir tous les exports"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:469
+#: src/omega_fire/interfaces/tui/section_registry.py:476
 msgid "EXPORTS & RAPPORTS (Audit centralisé)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:473
+#: src/omega_fire/interfaces/tui/section_registry.py:480
 msgid "Exporter la Blacklist complète"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:479
+#: src/omega_fire/interfaces/tui/section_registry.py:486
 msgid "Exporter les Règles (ruleset)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:480
+#: src/omega_fire/interfaces/tui/section_registry.py:487
 msgid "Regleset structure"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:485
+#: src/omega_fire/interfaces/tui/section_registry.py:492
 msgid "Exporter un rapport d'audit complet"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:486
+#: src/omega_fire/interfaces/tui/section_registry.py:493
 msgid "État, historique, top IPs,..."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:491
+#: src/omega_fire/interfaces/tui/section_registry.py:498
 msgid "Exporter les statistiques Fail2Ban"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:492
+#: src/omega_fire/interfaces/tui/section_registry.py:499
 msgid "Jails et bans"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:499
+#: src/omega_fire/interfaces/tui/section_registry.py:506
 msgid "Exporter les statistiques des logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:500
+#: src/omega_fire/interfaces/tui/section_registry.py:507
 msgid "Rapport des logs : statuts, top IP, chemins, horaires"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:506
+#: src/omega_fire/interfaces/tui/section_registry.py:513
 msgid "Ouvrir, copier le chemin, supprimer"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:511
+#: src/omega_fire/interfaces/tui/section_registry.py:518
 msgid "SYSTÈME & PERSISTANCE (État & Sauvegarde)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:515
+#: src/omega_fire/interfaces/tui/section_registry.py:522
 msgid "Sauvegarder l'état complet"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:516
+#: src/omega_fire/interfaces/tui/section_registry.py:523
 msgid "Archive tar.gz horodatee"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:521
+#: src/omega_fire/interfaces/tui/section_registry.py:528
 msgid "Restaurer un état"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:522
+#: src/omega_fire/interfaces/tui/section_registry.py:529
 msgid "Sélection d'archive"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:527
+#: src/omega_fire/interfaces/tui/section_registry.py:534
 msgid "Voir l'historique des actions"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:528
+#: src/omega_fire/interfaces/tui/section_registry.py:535
 msgid "Log applicatif paginé"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:533
+#: src/omega_fire/interfaces/tui/section_registry.py:540
 msgid "Recharger la configuration"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:534
+#: src/omega_fire/interfaces/tui/section_registry.py:541
 msgid "Re-scan sans redémarrage"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:536
+#: src/omega_fire/interfaces/tui/section_registry.py:543
 msgid "7.4 Recharger config"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:544
+#: src/omega_fire/interfaces/tui/section_registry.py:551
 msgid "Tableau de bord en temps réel"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:545
+#: src/omega_fire/interfaces/tui/section_registry.py:552
 msgid "Dashboard Live complet (Refresh 2s)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:550
+#: src/omega_fire/interfaces/tui/section_registry.py:557
 msgid "État des connexions (Conntrack)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:551
+#: src/omega_fire/interfaces/tui/section_registry.py:558
 msgid "Sessions actives (snapshots)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:556
+#: src/omega_fire/interfaces/tui/section_registry.py:563
 msgid "Rapports statistiques (7 jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:557
+#: src/omega_fire/interfaces/tui/section_registry.py:564
 msgid "Graphiques sur 7 jours visu/export"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:562
+#: src/omega_fire/interfaces/tui/section_registry.py:569
 msgid "RAPPORT STATISTIQUE — 7 JOURS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:568
+#: src/omega_fire/interfaces/tui/section_registry.py:575
 msgid "Rapports statistiques (30 jours)"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:569
+#: src/omega_fire/interfaces/tui/section_registry.py:576
 msgid "Vue macro 30 jours visu/export"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:574
+#: src/omega_fire/interfaces/tui/section_registry.py:581
 msgid "RAPPORT STATISTIQUE — 30 JOURS"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:580
+#: src/omega_fire/interfaces/tui/section_registry.py:587
 msgid "Visualiser les logs serveurs avec Tail"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:581
+#: src/omega_fire/interfaces/tui/section_registry.py:588
 msgid "Tableau de bord temps réel : trafic + stats + logs"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/section_registry.py:587
+#: src/omega_fire/interfaces/tui/section_registry.py:594
 msgid "Sélection multi-fichiers, analyse via lnav (fusion automatique)"
 msgstr ""
 
@@ -12477,138 +12769,154 @@ msgid "Ce sont les tables d'iptables-nft : la commande iptables moderne écrit d
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:93
-msgid "La restauration d'un état (7.2) va-t-elle toucher aux règles des autres outils ?"
+msgid "Une ligne « Bouclier du port WireGuard » d'origine omega-tail apparaît dans 3.3. Qu'est-ce que c'est ?"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:96
-msgid "Non. Seules les règles créées par Omega-Fire et recréables à l'identique sont reposées ; seules les règles d'Omega-Fire sont retirées. Les politiques ne sont remises à ACCEPT que sur un backend où un profil (3.4) était actif. Un snapshot créé avant la version 3.5 ne contient pas cette information : sa restauration ne touche à aucune règle."
+msgid "Une table posée devant tailscaled (Tailscale) pour le protéger des flots de paquets, demandée par omega-tail. C'est le même bouclier qu'omega-fire pose lui-même : 3.6 l'affiche, change son mode (observation ou actif) et le retire. S'il a été posé par omega-tail avant l'installation d'omega-fire, « Reprendre la gestion » le confie à omega-fire sans toucher à la table ni à ses compteurs. Ses règles internes ne sont jamais importées dans la base."
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:106
-msgid "J'ai démarré Fail2ban, mais le tableau de bord l'affichait toujours inactif."
+msgid "Le bouclier du port WireGuard est signalé ABSENT. Que s'est-il passé ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:109
-msgid "Corrigé en 3.5 : après Démarrer, Stopper ou Redémarrer (4.10), Omega-Fire attend que le serveur Fail2ban réponde (15 s au plus) puis met à jour le registre des capacités, que lit le tableau de bord. Si Fail2ban met plus de temps à démarrer, le message propose de relancer 1.3 (Re-scanner le système)."
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:108
+msgid "Un autre outil a effacé la table (nft flush ruleset, redémarrage du service nftables, script de pare-feu). Le bouclier n'est pas reposé de lui-même, pour ne pas se battre avec cet outil : « Reposer » dans 3.6 le remet, avec des compteurs à zéro."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:117
-msgid "Puis-je supprimer les modèles de jail livrés avec Omega-Fire ?"
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:116
+msgid "La restauration d'un état (7.2) va-t-elle toucher aux règles des autres outils ?"
 msgstr ""
 
 #: src/omega_fire/interfaces/tui/support/guide_faq.py:119
+msgid "Non. Seules les règles créées par Omega-Fire et recréables à l'identique sont reposées ; seules les règles d'Omega-Fire sont retirées. Les politiques ne sont remises à ACCEPT que sur un backend où un profil (3.4) était actif. Un snapshot créé avant la version 3.5 ne contient pas cette information : sa restauration ne touche à aucune règle."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:129
+msgid "J'ai démarré Fail2ban, mais le tableau de bord l'affichait toujours inactif."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:132
+msgid "Corrigé en 3.5 : après Démarrer, Stopper ou Redémarrer (4.10), Omega-Fire attend que le serveur Fail2ban réponde (15 s au plus) puis met à jour le registre des capacités, que lit le tableau de bord. Si Fail2ban met plus de temps à démarrer, le message propose de relancer 1.3 (Re-scanner le système)."
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:140
+msgid "Puis-je supprimer les modèles de jail livrés avec Omega-Fire ?"
+msgstr ""
+
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:142
 msgid "Oui : 4.4 → « Gérer les modèles ». Les 11 modèles livrés sont un point de départ enregistré dans var/runtime/jail_presets.json : chacun peut être retiré, et vous pouvez ajouter les vôtres."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:127
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:150
 msgid "J'ai supprimé un jail en 4.5 et il est revenu, ou 4.5 refuse de le supprimer."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:130
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:153
 msgid "Depuis la 3.5, 4.5 retrouve le fichier d'un jail par le nom de sa section. Un jail installé par omega-jail est supprimé avec son filtre, après un avertissement : omega-jail le recréera à sa prochaine installation (« omega-jail --apply »). Un jail défini dans jail.local / jail.conf, ou dans un fichier qui définit aussi d'autres jails, n'est jamais supprimé : le message explique comment le désactiver ou retirer sa section à la main."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:141
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:164
 msgid "Les logs de mon instance omega-serv n'apparaissent pas dans la Bibliothèque (5.1)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:144
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:167
 msgid "Les instances sont détectées par leur service systemd (omega-serv*.service) et par le registre d'instances d'omega-serv. Une instance lancée à la main n'est pas vue : épinglez ses journaux avec « Épingler un chemin ». Un journal retiré à la main n'est plus réimporté automatiquement ; « Importer omega-serv » les réimporte tous."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:152
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:175
 msgid "Viewer Simple : pourquoi les colonnes Service et Durée affichent « - » ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:153
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:176
 msgid "Service est l'étiquette d'un syslog ou d'un journal système (sshd, nginx, kernel...) ; Durée est le temps de traitement quand le format l'écrit en fin de ligne (Apache %D ou %T). Un access log au format Combined, dont celui d'omega-serv, n'a ni l'un ni l'autre : « - » signifie « absent de la ligne », jamais une valeur inventée."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:160
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:183
 msgid "Pourquoi seul lnav accepte-t-il plusieurs logs à la fois ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:162
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:185
 msgid "Les lecteurs Simple et Classique suivent un seul fichier. lnav fusionne plusieurs journaux en une seule vue chronologique : c'est le lecteur des favoris qui combinent plusieurs logs (5.2). Un favori de plusieurs logs avec un autre lecteur est refusé."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:170
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:193
 msgid "Comment retirer des logs les IPs trouvées par le Top N, sans les recopier ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:173
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:196
 msgid "En 5.4, après l'analyse, « Exporter » enregistre le classement (JSON, TXT ou HTML). En 5.5, « Charger depuis un export » liste les exports d'IPs : choisissez le fichier, cochez les IPs, puis confirmez. Le récapitulatif donne le nombre de lignes retirées par IP. Plusieurs IPs peuvent aussi être saisies, séparées par des virgules."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:181
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:204
 msgid "L'import SSH (Sources distantes) échoue sans demander de mot de passe."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:183
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:206
 msgid "C'est voulu : la copie se fait par scp en mode non interactif, par clé ou agent SSH, pour ne jamais bloquer l'interface sur une invite. Indiquez le chemin de la clé privée dans la source, ou chargez-la dans votre agent. La copie n'est pas suivie en direct : relancez « Récupérer maintenant » pour la mettre à jour."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:191
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:214
 msgid "Où sont passés nginx, apache et auth.log dans les fichiers épinglés ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:193
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:216
 msgid "Depuis la version 3.5, plus aucun chemin système n'est épinglé d'office (ils n'existent pas sur toutes les machines). « Gérer les épingles » → « Presets » propose les chemins usuels réellement présents sur la machine, et les logs de la Bibliothèque : cochez ceux à épingler."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:201
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:224
 msgid "Où retrouver mes exports et comment les ouvrir ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:203
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:226
 msgid "6.6 « Voir tous les exports » les liste tous (type, date, taille). « Ouvrir » affiche un HTML dans votre navigateur, un JSON ou un TXT dans Omega-Fire. Le dossier se choisit dans les Réglages (var/exports/ par défaut)."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:210
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:233
 msgid "Le rapport s'ouvre dans un autre navigateur que le mien."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:212
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:235
 msgid "Omega-Fire ouvre le rapport avec votre navigateur web par défaut (celui déclaré pour votre session, par exemple avec `xdg-settings set default-web-browser`). Si aucun n'est déclaré, il utilise l'application associée aux fichiers .html, qui peut être différente : changez-la dans les applications préférées de votre bureau."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:221
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:244
 msgid "Le navigateur se referme tout seul quelques secondes après l'ouverture."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:224
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:247
 msgid "Vérifiez la mémoire : un service comme earlyoom ferme le programme le plus gourmand quand la mémoire et la swap sont presque pleines, et un navigateur qui démarre en est souvent la cible (`journalctl | grep earlyoom`). Libérez de la mémoire, ou utilisez un navigateur déjà ouvert : le rapport s'y ouvre dans un onglet."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:232
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:255
 msgid "Rien ne s'ouvre quand je travaille en SSH."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:234
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:257
 msgid "Sans session graphique, aucun navigateur ne peut s'ouvrir : Omega-Fire affiche le chemin du fichier pour l'ouvrir depuis un poste avec navigateur. « Copier le chemin » (6.6) le copie."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:241
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:264
 msgid "Dans quelle langue sont écrits les exports ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:243
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:266
 msgid "Les rapports, le guide d'aide et sa FAQ suivent le réglage « Langue des exports » (par défaut : comme l'interface). Le journal applicatif et l'historique d'audit restent en français."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:250
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:273
 msgid "L'historique d'audit (7.3) montre d'anciens numéros du menu 5."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:252
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:275
 msgid "Le menu 5 a été renuméroté en 3.5 (5.1 Bibliothèque, 5.2 Favoris, 5.3 Voir les logs ; les anciens 5.2 à 5.8 sont devenus 5.4 à 5.10). Une entrée enregistrée avant, ou par `--legacy-cli`, garde son numéro et son libellé d'origine. De même, l'ancien 6.5 « Voir tous les exports » est devenu 6.6 en 3.6."
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:260
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:283
 msgid "Quelles différences avec l'ancienne interface (--legacy-cli) ?"
 msgstr ""
 
-#: src/omega_fire/interfaces/tui/support/guide_faq.py:262
+#: src/omega_fire/interfaces/tui/support/guide_faq.py:285
 msgid "`--legacy-cli` reste l'interface de la version 3.0, en français : menu 5 d'origine (sans Bibliothèque, Favoris ni lecteur Classique), sans 6.5 ni 6.6, sans guide d'aide ni presets. L'interface Textual est la version 3.6 complète."
 msgstr ""
 

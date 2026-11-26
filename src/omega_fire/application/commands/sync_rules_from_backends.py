@@ -23,6 +23,7 @@ Conforms to Omega-Fire architecture charter:
 from dataclasses import dataclass, field
 from typing import Any
 
+from omega_fire.application.commands.reconcile_rules import rule_identity
 from omega_fire.infrastructure.storage.sqlite.exceptions import RepositoryError
 from omega_fire.infrastructure.storage.sqlite.repositories import RuleRepository
 from omega_fire.shared.i18n import _
@@ -81,21 +82,32 @@ class SyncRulesFromBackendsCommand:
                     # 2.8/2.9).
                     continue
 
-                live_refs: set[str] = set()
+                # Identite complete (3.7.0) : un handle nft n'est unique que dans
+                # sa table ; comparer le seul external_ref confondait la regle 5
+                # d'une table avec la regle 5 d'une autre (meme identite que le
+                # nettoyage 3.2, reconcile_rules.rule_identity).
+                known = {
+                    identity
+                    for identity in (
+                        rule_identity(db_rule)
+                        for db_rule in self._repository.find_all(backend=backend_name)
+                    )
+                    if identity is not None
+                }
+                live_ids: set[tuple] = set()
 
                 # Step 1: insert rules present live but not yet in DB
                 for rule in live_rules:
-                    if not rule.external_ref:
+                    identity = rule_identity(rule)
+                    if identity is None:
                         # No stable technical identifier: skip to avoid
                         # inserting unreconciliable duplicates on every sync.
                         continue
 
-                    live_refs.add(rule.external_ref)
+                    live_ids.add(identity)
 
-                    existing = self._repository.find_by_external_ref(
-                        backend_name, rule.external_ref
-                    )
-                    if existing is None:
+                    if identity not in known:
+                        known.add(identity)
                         rule.origin = "imported"
                         rule.enabled = True
                         self._repository.save(rule)
@@ -110,7 +122,8 @@ class SyncRulesFromBackendsCommand:
                         continue
                     if not db_rule.enabled:
                         continue
-                    if db_rule.external_ref and db_rule.external_ref not in live_refs:
+                    identity = rule_identity(db_rule)
+                    if identity is not None and identity not in live_ids:
                         self._repository.update_enabled(db_rule.rule_id, False)
                         disabled += 1
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from omega_lib.shield.models import ShieldMode
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -21,11 +22,13 @@ from omega_fire.application.commands.sync_rules_from_backends import (
 from omega_fire.application.queries.list_persisted_rules import ListPersistedRulesQuery
 from omega_fire.domain.rules.ownership import rule_owner
 from omega_fire.interfaces.tui.screens._base import OmegaScreen
+from omega_fire.interfaces.tui.screens.wg_shield_screen import WgShieldScreen
 from omega_fire.shared.i18n import _
 
 if TYPE_CHECKING:
     from omega_fire.app.dependency_container import DependencyContainer
 
+SHIELD_ROW = "bouclier-wg"
 _BACKEND_VARIABLE: dict[str, str] = {
     "nftables": "backend-nftables",
     "iptables": "backend-iptables",
@@ -48,11 +51,11 @@ class ListRulesScreen(OmegaScreen):
             yield Static(_("LISTE DES RÈGLES"), classes="omega-title")
             yield Static("", id="sync-hint", classes="omega-hint")
             yield DataTable(id="rules-table")
-            with (
-                Horizontal(classes="omega-actions"),
-                Container(classes="omega-btn-frame"),
-            ):
-                yield Button(_("Retour"), id="back")
+            with Horizontal(classes="omega-actions"):
+                with Container(classes="omega-btn-frame", id="frame-shield"):
+                    yield Button(_("Bouclier WireGuard"), id="shield")
+                with Container(classes="omega-btn-frame"):
+                    yield Button(_("Retour"), id="back")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -95,11 +98,13 @@ class ListRulesScreen(OmegaScreen):
             hint_text = _("Aucun backend firewall disponible pour la synchronisation.")
         hint.update(hint_text)
 
+        shield = self._shield_row(table)
+        self.query_one("#frame-shield").display = shield
         list_result = ListPersistedRulesQuery(rule_repository).execute()
         if not list_result.success:
             hint.update(list_result.message)
             return
-        if not list_result.rules:
+        if not list_result.rules and not shield:
             hint.update(
                 _("Aucune règle pare-feu enregistrée ou active sur le système.")
             )
@@ -185,6 +190,52 @@ class ListRulesScreen(OmegaScreen):
                 )
             )
 
+    def _shield_row(self, table: DataTable) -> bool:
+        """Bouclier du port WireGuard (3.7.0) : une ligne a part, avec son origine (outil qui l'a demande) ;
+        ses regles internes ne sont jamais importees en base. Rend vrai s'il existe."""
+        try:
+            view = self._container.wg_shield.view(refresh=False)
+        except Exception:  # noqa: BLE001 - etat illisible : pas de ligne
+            return False
+        if not view.installed and not view.present:
+            return False
+        variables = self.app.get_css_variables()
+        warning, success, error = (variables.get(name, "") for name in ("warning", "success", "error"))
+        status = view.status
+        active = status is not None and status.present and status.mode is ShieldMode.ACTIVE
+        spec = view.settings.spec if view.settings is not None else None
+        state = (Text(_("ABSENT"), style=f"bold {error}") if view.missing
+                 else Text(_("ACTIF"), style=success) if view.present else Text(_("INACTIF")))
+        table.add_row(
+            "WG",
+            Text("nftables", style="bold"),
+            Text(view.requested_by or "?", style=f"italic {warning}"),
+            _("Bouclier du port WireGuard (géré par {tool})").format(tool=view.manager or "?"),
+            "INGRESS",
+            Text("DROP" if active else _("OBSERVATION"), style=error if active else warning),
+            "UDP",
+            str(spec.port if spec else view.port),
+            "ANY",
+            "ANY",
+            state,
+            key=SHIELD_ROW,
+        )
+        return True
+
+    def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
+        if event.cell_key.row_key.value == SHIELD_ROW:
+            self._open_shield()
+
+    def _open_shield(self) -> None:
+        self.app.push_screen(WgShieldScreen(container=self._container), lambda _result: self.refresh_rules())
+
+    def refresh_rules(self) -> None:
+        table = self.query_one("#rules-table", DataTable)
+        table.clear(columns=True)
+        self.on_mount()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "back":
+        if event.button.id == "shield":
+            self._open_shield()
+        elif event.button.id == "back":
             self.dismiss()

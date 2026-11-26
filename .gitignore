@@ -17,22 +17,13 @@ vendor/
 omega-fire-*.tar.gz
 omega-fire.tar.gz
 
-# État runtime généré localement (recréé automatiquement au démarrage)
-var/db/
-var/logs/
-var/runtime/
-var/blocklist/*
-var/cache/*
-var/backups/*
-var/exports/*
-var/screenshots/*
-var/settings.json
-var/*.log
-var/*.jsonl
-!var/cache/.gitkeep
-!var/backups/.gitkeep
-!var/exports/.gitkeep
-!var/screenshots/.gitkeep
+# État runtime généré localement (recréé automatiquement au démarrage).
+# TOUT var/ est ignoré (jeton, bans, bouclier WireGuard, journaux, base, réglages…) ; seuls les .gitkeep gardent
+# les dossiers. Correctif du 2026-11-26 : var/bouclier-wg/ (3.7.0) n'était pas couvert par l'ancienne liste.
+var/**
+!var/
+!var/*/
+!var/*/.gitkeep
 
 # Configuration et secrets locaux
 config/omega-fire.conf
@@ -46,3 +37,16 @@ config/omega-fire.conf
 
 # Logs de test locaux
 *.log
+
+# Données personnelles et secrets : jamais publiés (correctif du 2026-11-22, après une fuite de var/ d'omega-stress)
+**/omega-jeton.json
+**/declaration.json
+var/distributed/
+var/**/*.key
+var/**/settings.json
+var/**/targets.json
+
+# Sauvegardes locales et rapports d'audit de sécurité : jamais publiés (2026-11-26)
+sauvegardes/
+CLAUDE-SECURITY-*/
+*.avant-*

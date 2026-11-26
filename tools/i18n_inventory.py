@@ -596,6 +596,16 @@ SYNCHRO_CONTRACT_FILES: tuple[str, ...] = (
     "ports/host_firewall.py",
     "infrastructure/backends/host_firewall/adapter.py",
 )
+# Bouclier du port WireGuard (omega-lib D-018, 3.7.0) : texte nftables, script root, unites de service,
+# reglages et JSON de `omega-fire.sh bouclier-wg`, lus par la machine ou par omega-tail, jamais traduits.
+SHIELD_CONTRACT_PREFIXES: tuple[str, ...] = ("shield/", "infrastructure/shield/")
+SHIELD_CONTRACT_FILES: tuple[str, ...] = (
+    "app/shield_runner.py",
+    # raisons (`reason`) : codes stables lus par omega-tail, traduits a l'affichage (ecran 3.6)
+    "application/commands/wg_shield.py",
+    "ports/wg_shield.py",
+    "infrastructure/backends/wg_shield/adapter.py",
+)
 # Plan i18n §5.3 : libelle bilingue du selecteur et noms de langues (chacune dans SA langue),
 # jamais traduits - c'est ce qui permet de revenir au francais depuis n'importe quelle langue.
 NEVER_TRANSLATED_TEXTS = frozenset(
@@ -1126,6 +1136,15 @@ class FileScanner:
                 context,
                 NE_PAS,
                 "contrat d'interconnexion (omega-lib D-017) : JSON et raisons techniques, jamais traduits",
+            )
+        if self.rel in SHIELD_CONTRACT_FILES or self.rel.startswith(
+            SHIELD_CONTRACT_PREFIXES
+        ):
+            return (
+                context,
+                NE_PAS,
+                "bouclier du port WireGuard (omega-lib D-018) : texte nftables, script, unites et JSON, "
+                "jamais traduits",
             )
         if self.rel in EXCHANGE_FORMAT_FILES:
             return (

@@ -11,6 +11,24 @@ execution is done by the adapter.
 
 import re
 
+_NON_CHAIN_BLOCKS = frozenset(
+    {"set", "map", "counter", "quota", "limit", "flowtable", "ct", "secmark", "synproxy", "tunnel"}
+)
+"""Objets nommes d'une table : leurs lignes ne sont jamais des regles."""
+
+
+def _brace_balance(line: str) -> int:
+    """Accolades ouvertes moins fermees, hors texte entre guillemets (commentaires nft)."""
+    balance, quoted = 0, False
+    for char in line:
+        if char == '"':
+            quoted = not quoted
+        elif not quoted and char == "{":
+            balance += 1
+        elif not quoted and char == "}":
+            balance -= 1
+    return balance
+
 
 class NftParser:
     """Parses nft command output into structured data."""
@@ -28,25 +46,48 @@ class NftParser:
         current_table = ""
         current_chain = ""
         current_family = ""
+        # Seules les lignes d'une chaine sont des regles (3.7.0, bouclier WireGuard) : avant, les
+        # declarations d'ensembles (`set blackhole { # handle 3`, `flags`, `elements = {...}`), de
+        # compteurs nommes, de quotas... devenaient de fausses regles (le `set` avec son handle etait
+        # meme importe en base). On suit donc les blocs : `skip_depth` > 0 tant qu'on est dans un bloc
+        # qui n'est pas une chaine.
+        in_chain = False
+        skip_depth = 0
 
         for line in output.split("\n"):
             stripped = line.strip()
+
+            if skip_depth:
+                skip_depth += _brace_balance(stripped)
+                continue
 
             if stripped.startswith("table "):
                 parts = stripped.split()
                 if len(parts) >= 3:
                     current_family = parts[1]
                     current_table = parts[2].rstrip(" {")
+                in_chain = False
 
             elif stripped.startswith("chain "):
                 parts = stripped.split()
                 if len(parts) >= 2:
                     current_chain = parts[1].rstrip(" {")
+                in_chain = True
+
+            elif not in_chain and stripped.split(" ", 1)[0] in _NON_CHAIN_BLOCKS:
+                skip_depth = max(_brace_balance(stripped), 0)
+
+            elif stripped == "}":
+                in_chain = False
 
             elif (
-                stripped
+                in_chain
+                and stripped
                 and not stripped.startswith("#")
                 and not stripped.startswith("type ")
+                and not stripped.startswith("comment ")
+                and not stripped.startswith("devices ")
+                and not stripped.startswith("policy ")
                 and stripped not in ("{", "}")
             ):
                 rule = self._parse_rule_line(

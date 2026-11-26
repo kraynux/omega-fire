@@ -45,7 +45,8 @@ fi
 # Ouverture d'un port pour un outil relié par omega-connect (omega-serv, administration web, 2026-11-17) :
 # `port ouvrir ...` sort du JSON, sans bannière ; root obligatoire (sudo demandé ici si besoin), umask 007 comme
 # l'interface (fichiers sous var/ modifiables par le groupe omega-fire).
-if [ "${1:-}" = "port" ]; then
+# Bouclier du port WireGuard (3.7.0, omega-tail) : `bouclier-wg ...` sort du JSON, meme chemin que `port`.
+if [ "${1:-}" = "port" ] || [ "${1:-}" = "bouclier-wg" ]; then
     if [ "$EUID" -ne 0 ]; then
         exec sudo --preserve-env=LANG,LC_ALL,OMEGA_FIRE_LANG "$0" "$@"
     fi

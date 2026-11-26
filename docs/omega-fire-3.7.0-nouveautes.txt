@@ -1,0 +1,43 @@
+OMEGA-FIRE 3.7.0 - Ce qui change pour vous
+==========================================
+
+Le bouclier du port WireGuard, partagé avec omega-tail, et plusieurs corrections de la liste
+des règles. Le détail technique complet reste dans le CHANGELOG.
+
+
+BOUCLIER DU PORT WIREGUARD (MENU 3.6)
+------------------------------------
+- Une table nftables posée devant tailscaled (Tailscale) : elle limite les poignées de main
+  par source, met un budget sur les sources inconnues et refuse ce qui n'est pas du
+  WireGuard. Les pairs connus, appris par le noyau, ne sont jamais limités.
+- Mesuré sur un Celeron J3455 : un flot qui prenait un cœur entier à tailscaled n'en prend
+  plus que 1 %.
+- Observation d'abord : rien n'est refusé, les compteurs disent ce qui l'aurait été. Puis
+  « actif » quand les compteurs ne montrent que des abus.
+- Remis en place au démarrage (systemd, OpenRC, runit) ; une table effacée par un autre
+  outil est signalée ABSENTE et n'est jamais reposée sans vous (« Reposer »).
+- Un bouclier posé par omega-tail est reconnu tel quel : « Reprendre la gestion » le confie
+  à omega-fire sans toucher à la table ni à ses compteurs.
+- La liste des règles (3.3) le montre en une ligne, avec l'outil qui l'a demandé.
+- Pour omega-tail : ./omega-fire.sh bouclier-wg etat|poser|mode|reprendre|reposer|retirer
+  (sortie JSON, sudo demandé, chaque action notée au journal d'audit).
+
+
+LISTE DES RÈGLES (3.3)
+---------------------
+- Les ensembles nftables (par exemple « set blackhole ») ne sont plus pris pour des
+  règles.
+- Une règle d'une autre table (nat…) qui avait le même numéro qu'une règle d'omega-fire
+  apparaît maintenant : une règle est reconnue à sa famille, sa table et son numéro.
+
+
+DIVERS
+------
+- Noyau mis à jour sans redémarrage : poser le bouclier est refusé d'avance, avec la consigne
+  de redémarrer, au lieu d'échouer à moitié.
+- Écran 3.6, aide et FAQ traduits dans les 17 langues ; README à jour.
+
+
+MISE À JOUR
+-----------
+Comme d'habitude (README, section « Mise à jour »), ou depuis l'Updater d'omega-connect.

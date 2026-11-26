@@ -140,6 +140,7 @@ Omega-Fire 是网络安全的**本地操作平台**。它会自动检测机器�
 - 在状态菜单和仪表盘中标识当前激活的策略。
 - 以 `Profil + CUSTOM`（配置文件 + 自定义）的形式标记被修改过的配置文件。
 - 表管理（菜单 3.5）：按后端进行只读诊断（表是否存在、input/output/forward 策略、规则数量），并解释各后端之间不同的策略（实际效果、原因和解决办法）。
+- WireGuard 端口护盾（菜单 3.6）：部署在 `tailscaled`（Tailscale）之前的一张 nftables 表，按来源限制握手，为未知来源设置预算，并拒绝非 WireGuard 的数据包；由内核学习的已知对等节点从不受限。它先从观察开始（不拒绝任何数据包，计数器显示本应拒绝的内容），然后切换为生效。在 Celeron J3455 上实测：一股曾占用 `tailscaled` 一个完整核心的流量，现在只占 1 %。由 omega-tail 部署的护盾会被原样识别，并可移交给 Omega-Fire（“收回管理”）；它也会以一行的形式出现在规则列表（3.3）中。
 - 首次使用时初始化 nftables 表，绝不覆盖已配置的链。
 - 将某个后端的链策略重置为 ACCEPT，修复旧策略遗留下来的孤立限制性策略。
 - 清空指定后端，或一次性同步清空所有检测到的后端。
@@ -500,7 +501,7 @@ fire
 
 ### 与其他 omega 工具的联动
 
-Omega-Fire 响应几条无界面命令，供套件中的其他工具调用。`./omega-fire.sh synchro jeton` 和 `./omega-fire.sh synchro fiche --format json` 描述安装及其能力（防火墙、Fail2Ban、日志库），无需 sudo。`./omega-fire.sh port ouvrir` 为 omega-serv 的网页管理向特定网络开放一个 TCP 端口：每个网络、每个检测到的防火墙各一条规则；若 ufw 或 firewalld 处于活动状态，也会添加到其中；规则像菜单 3.1 的规则一样记录，并写入审计日志。回环接口永远不会被开放，已存在的规则不会重复添加。只有当两个工具登记在同一个 omega-connect 区域时，omega-serv 才会调用它；sudo 的请求方式与界面相同。 当 omega-connect 区域存在时，omega-fire 自己在防火墙（nftables、iptables、ip6tables）中设置的每一次封禁或解封都会发布到该区域的封禁日志中，供其他 omega 工具读取；`./omega-fire.sh synchro bans` 会使其重新与防火墙一致（需要 sudo）。Fail2Ban jail 的封禁由 omega-jail 安装的动作写入。
+Omega-Fire 响应几条无界面命令，供套件中的其他工具调用。`./omega-fire.sh synchro jeton` 和 `./omega-fire.sh synchro fiche --format json` 描述安装及其能力（防火墙、Fail2Ban、日志库），无需 sudo。`./omega-fire.sh port ouvrir` 为 omega-serv 的网页管理向特定网络开放一个 TCP 端口：每个网络、每个检测到的防火墙各一条规则；若 ufw 或 firewalld 处于活动状态，也会添加到其中；规则像菜单 3.1 的规则一样记录，并写入审计日志。回环接口永远不会被开放，已存在的规则不会重复添加。只有当两个工具登记在同一个 omega-connect 区域时，omega-serv 才会调用它；sudo 的请求方式与界面相同。 当 omega-connect 区域存在时，omega-fire 自己在防火墙（nftables、iptables、ip6tables）中设置的每一次封禁或解封都会发布到该区域的封禁日志中，供其他 omega 工具读取；`./omega-fire.sh synchro bans` 会使其重新与防火墙一致（需要 sudo）。Fail2Ban jail 的封禁由 omega-jail 安装的动作写入。`./omega-fire.sh bouclier-wg etat|poser|mode|reprendre|reposer|retirer` 应 omega-tail 的请求部署并管理 WireGuard 端口护盾（JSON 输出，需要 sudo，每个操作都写入审计日志）。
 
 ### 总体流程
 

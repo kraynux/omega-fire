@@ -84,6 +84,7 @@ from omega_fire.interfaces.tui.screens.table_management_screen import (
 from omega_fire.interfaces.tui.screens.top_ips_screen import TopIpsScreen
 from omega_fire.interfaces.tui.screens.unban_ip_list_screen import UnbanIpListScreen
 from omega_fire.interfaces.tui.screens.unban_ip_screen import UnbanIpScreen
+from omega_fire.interfaces.tui.screens.wg_shield_screen import WgShieldScreen
 from omega_fire.interfaces.tui.support.direct_actions import (
     fail2ban_service_disable,
     fail2ban_service_enable,
@@ -303,6 +304,12 @@ SECTION_3_ITEMS: tuple[SectionItem, ...] = (
             "Diagnostic, initialisation, reset des politiques, flush cible ou synchronisé"
         ),
         screen_factory=lambda c: TableManagementScreen(container=c),
+    ),
+    SectionItem(
+        "3.6",
+        N_("Bouclier du port WireGuard"),
+        _("Devant tailscaled : origine, mode, compteurs (demandé par omega-tail)"),
+        screen_factory=lambda c: WgShieldScreen(container=c),
     ),
 )
 

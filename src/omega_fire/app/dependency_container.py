@@ -155,6 +155,17 @@ class DependencyContainer:
 
         return ConntrackAdapter()
 
+    @property
+    def wg_shield(self) -> Any:
+        """Bouclier du port WireGuard (3.7.0, omega-lib D-018) : service applicatif pret a l'emploi."""
+        return self._get_or_create("wg_shield", self._create_wg_shield)
+
+    def _create_wg_shield(self) -> Any:
+        from omega_fire.application.commands.wg_shield import WgShieldService
+        from omega_fire.infrastructure.backends.wg_shield.adapter import SystemWgShield
+
+        return WgShieldService(SystemWgShield())
+
     # ------------------------------------------------------------------
     # Infrastructure - Storage
     # ------------------------------------------------------------------

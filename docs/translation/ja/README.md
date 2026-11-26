@@ -139,6 +139,7 @@ Omega-Fire はネットワークセキュリティのための **ローカルな
 - ステータスメニューとダッシュボードでアクティブなポリシーを表示。
 - 変更されたプロファイルを `プロファイル + CUSTOM` の形で表示。
 - テーブル管理（メニュー 3.5）：バックエンドごとの読み取り専用診断（テーブルの有無、input/output/forward ポリシー、ルール数）と、バックエンド間で異なるポリシーの説明（実際の効果、原因、対処法）。
+- WireGuard ポートのシールド（メニュー 3.6）：`tailscaled`（Tailscale）の前に置く nftables テーブルで、ハンドシェイクを送信元ごとに制限し、未知の送信元には上限を設け、WireGuard でないものを拒否します。カーネルが学習する既知のピアが制限されることはありません。まず観察で始まり（何も拒否されず、カウンターが拒否されていたはずのものを示します）、その後で有効に切り替えます。Celeron J3455 での測定：`tailscaled` のコアを丸ごと 1 つ使っていたパケットの洪水が、わずか 1 % になりました。omega-tail が設置したシールドはそのまま認識され、Omega-Fire に委任できます（「管理を取り戻す」）。ルール一覧（3.3）にも 1 行で表示されます。
 - 初回利用時に nftables テーブルを初期化し、設定済みの chain を上書きすることはありません。
 - 以前のプロファイルが残した孤立した制限的ポリシーを修正するため、バックエンドの chain ポリシーを ACCEPT にリセット。
 - 1 つのバックエンドを対象に空にする、または検出されたすべてのバックエンドを 1 回の操作で同期して空にする。
@@ -499,7 +500,7 @@ fire
 
 ### ほかの omega ツールとの連携
 
-Omega-Fire は、スイートのほかのツールから呼び出される、画面を持たないいくつかのコマンドに応答します。`./omega-fire.sh synchro jeton` と `./omega-fire.sh synchro fiche --format json` は、インストールとその機能（ファイアウォール、Fail2Ban、ログライブラリ）を sudo なしで説明します。`./omega-fire.sh port ouvrir` は、omega-serv の Web 管理のために特定のネットワークから TCP ポートを開きます。ネットワークごと、検出したファイアウォールごとに 1 つのルールを作り、ufw や firewalld が有効ならそちらにも追加し、メニュー 3.1 のルールと同じように記録して監査ログに書き込みます。ループバックは決して開かず、既にあるルールを二重に追加することもありません。omega-serv がこのコマンドを呼ぶのは、両方のツールが同じ omega-connect ゾーンに登録されている場合だけです。sudo は画面と同じように求められます。 omega-connect のゾーンが存在する場合、omega-fire 自身がファイアウォール（nftables、iptables、ip6tables）に設定した BAN と解除はすべて、ゾーンの BAN ジャーナルに公開され、他の omega ツールが読み取ります。`./omega-fire.sh synchro bans` はジャーナルをファイアウォールの状態に合わせ直します（sudo を求められます）。Fail2Ban の jail による BAN は、omega-jail がインストールするアクションが書き込みます。
+Omega-Fire は、スイートのほかのツールから呼び出される、画面を持たないいくつかのコマンドに応答します。`./omega-fire.sh synchro jeton` と `./omega-fire.sh synchro fiche --format json` は、インストールとその機能（ファイアウォール、Fail2Ban、ログライブラリ）を sudo なしで説明します。`./omega-fire.sh port ouvrir` は、omega-serv の Web 管理のために特定のネットワークから TCP ポートを開きます。ネットワークごと、検出したファイアウォールごとに 1 つのルールを作り、ufw や firewalld が有効ならそちらにも追加し、メニュー 3.1 のルールと同じように記録して監査ログに書き込みます。ループバックは決して開かず、既にあるルールを二重に追加することもありません。omega-serv がこのコマンドを呼ぶのは、両方のツールが同じ omega-connect ゾーンに登録されている場合だけです。sudo は画面と同じように求められます。 omega-connect のゾーンが存在する場合、omega-fire 自身がファイアウォール（nftables、iptables、ip6tables）に設定した BAN と解除はすべて、ゾーンの BAN ジャーナルに公開され、他の omega ツールが読み取ります。`./omega-fire.sh synchro bans` はジャーナルをファイアウォールの状態に合わせ直します（sudo を求められます）。Fail2Ban の jail による BAN は、omega-jail がインストールするアクションが書き込みます。 `./omega-fire.sh bouclier-wg etat|poser|mode|reprendre|reposer|retirer` は、omega-tail の依頼で WireGuard ポートのシールドを設置・管理します（JSON 出力、sudo を求められます、各操作は監査ログに記録されます）。
 
 ### 全体の流れ
 

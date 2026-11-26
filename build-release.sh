@@ -14,6 +14,8 @@
 # a une installation reelle. Le reste de docs/ (architecture, exceptions
 # inter-couches, format IPv6...) reste inclus.
 #
+# var/ : seuls ses dossiers de premier niveau, VIDES (2026-11-26 : var/bouclier-wg/ et tout fichier d'etat
+# local exclus d'office, au lieu d'une liste qui oubliait les nouveaux dossiers).
 # DIST_DIR (par defaut PROJECT_ROOT/../dist, comme le reste de la suite) :
 # destination de l'archive - PROJECT_ROOT lui-meme reste le repli si
 # DIST_DIR ne peut pas etre cree, jamais un echec silencieux.
@@ -87,10 +89,8 @@ rsync -a \
     --exclude='.git/' --exclude='.claude/' \
     --exclude='/CLAUDE-SECURITY-*/' \
     --exclude='docs/assets/' \
-    --exclude='var/blocklist/*' --exclude='var/cache/*' --exclude='var/backups/*' \
-    --exclude='var/runtime/*' --exclude='var/exports/*' --exclude='var/db/*' \
-    --exclude='var/logs/*' --exclude='var/screenshots/*' --exclude='var/settings.json' \
-    --exclude='var/*.log' --exclude='var/*.jsonl' --exclude='var/omega-jeton.json' \
+    --exclude='/var/bouclier-wg/' --include='/var/' --include='/var/*/' --exclude='/var/**' \
+    --exclude='/sauvegardes/' --exclude='*.avant-*' \
     --exclude='config/omega-fire.conf' \
     --exclude='*~' --exclude='*.bak' --exclude='*.swp' \
     --exclude='.coverage' --exclude='htmlcov/' \

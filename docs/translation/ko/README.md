@@ -139,6 +139,7 @@ Omega-Fire는 네트워크 보안을 위한 **로컬 조종석** 역할을 합�
 - 상태 메뉴와 대시보드에서 활성 정책 표시.
 - 수정된 프로필을 `프로필 + CUSTOM` 형태로 표시.
 - 테이블 관리(메뉴 3.5): 백엔드별 읽기 전용 진단(테이블 존재 여부, input/output/forward 정책, 규칙 수)과 백엔드마다 다른 정책에 대한 설명(실제 효과, 원인, 해결 방법).
+- WireGuard 포트 방패(메뉴 3.6): `tailscaled`(Tailscale) 앞에 놓는 nftables 테이블로, 출처별로 핸드셰이크를 제한하고, 알 수 없는 출처에 한도를 두며, WireGuard가 아닌 것은 거부합니다. 커널이 학습하는 알려진 피어는 결코 제한되지 않습니다. 관찰로 시작하며(아무것도 거부되지 않고, 카운터가 거부되었을 것을 보여 줌), 그다음 활성으로 전환합니다. Celeron J3455에서 측정: `tailscaled`의 코어 하나를 통째로 쓰던 패킷 폭주가 이제 1 %만 씁니다. omega-tail이 설치한 방패는 그대로 인식되며 Omega-Fire에 위임할 수 있습니다(«관리 되찾기»). 규칙 목록(3.3)에도 한 줄로 표시됩니다.
 - 처음 사용할 때 nftables 테이블을 초기화하며, 이미 설정된 chain은 결코 덮어쓰지 않음.
 - 이전 프로필이 남긴 고아 제한 정책을 바로잡기 위해 백엔드의 chain 정책을 ACCEPT로 재설정.
 - 특정 백엔드만 비우거나, 감지된 모든 백엔드를 한 번의 동작으로 동기화해 비우기.
@@ -499,7 +500,7 @@ fire
 
 ### 다른 omega 도구와의 연동
 
-Omega-Fire는 제품군의 다른 도구가 호출하는, 화면 없는 몇 가지 명령에 응답합니다. `./omega-fire.sh synchro jeton`과 `./omega-fire.sh synchro fiche --format json`은 설치와 그 기능(방화벽, Fail2Ban, 로그 라이브러리)을 sudo 없이 설명합니다. `./omega-fire.sh port ouvrir`는 omega-serv의 웹 관리를 위해 특정 네트워크에서 TCP 포트를 엽니다. 네트워크마다, 감지된 방화벽마다 규칙을 하나씩 만들고, ufw나 firewalld가 활성화되어 있으면 그곳에도 추가하며, 메뉴 3.1의 규칙처럼 기록하고 감사 로그에 남깁니다. 루프백은 절대 열지 않으며 이미 있는 규칙은 두 번 추가하지 않습니다. omega-serv는 두 도구가 같은 omega-connect 영역에 등록되어 있을 때만 이 명령을 호출하며, sudo는 화면과 마찬가지로 요청됩니다. omega-connect 존이 있으면 omega-fire가 직접 방화벽(nftables, iptables, ip6tables)에 적용한 모든 차단과 해제가 존의 차단 저널에 게시되며, 다른 omega 도구가 이를 읽습니다. `./omega-fire.sh synchro bans`는 저널을 방화벽 상태와 다시 맞춥니다(sudo 요청). Fail2Ban jail의 차단은 omega-jail이 설치하는 액션이 기록합니다.
+Omega-Fire는 제품군의 다른 도구가 호출하는, 화면 없는 몇 가지 명령에 응답합니다. `./omega-fire.sh synchro jeton`과 `./omega-fire.sh synchro fiche --format json`은 설치와 그 기능(방화벽, Fail2Ban, 로그 라이브러리)을 sudo 없이 설명합니다. `./omega-fire.sh port ouvrir`는 omega-serv의 웹 관리를 위해 특정 네트워크에서 TCP 포트를 엽니다. 네트워크마다, 감지된 방화벽마다 규칙을 하나씩 만들고, ufw나 firewalld가 활성화되어 있으면 그곳에도 추가하며, 메뉴 3.1의 규칙처럼 기록하고 감사 로그에 남깁니다. 루프백은 절대 열지 않으며 이미 있는 규칙은 두 번 추가하지 않습니다. omega-serv는 두 도구가 같은 omega-connect 영역에 등록되어 있을 때만 이 명령을 호출하며, sudo는 화면과 마찬가지로 요청됩니다. omega-connect 존이 있으면 omega-fire가 직접 방화벽(nftables, iptables, ip6tables)에 적용한 모든 차단과 해제가 존의 차단 저널에 게시되며, 다른 omega 도구가 이를 읽습니다. `./omega-fire.sh synchro bans`는 저널을 방화벽 상태와 다시 맞춥니다(sudo 요청). Fail2Ban jail의 차단은 omega-jail이 설치하는 액션이 기록합니다. `./omega-fire.sh bouclier-wg etat|poser|mode|reprendre|reposer|retirer`는 omega-tail의 요청에 따라 WireGuard 포트 방패를 설치·관리합니다(JSON 출력, sudo 요청, 모든 동작은 감사 로그에 기록).
 
 ### 전체 흐름
 

@@ -12,6 +12,9 @@ This is the only module that directly calls nft via subprocess.
 import re
 import subprocess
 
+from omega_lib.shield.models import FAMILY as SHIELD_FAMILY
+from omega_lib.shield.models import TABLE as SHIELD_TABLE
+
 from omega_fire.domain.ip_blacklist.exceptions import (
     IPAlreadyBannedError,
     IPNotFoundError,
@@ -415,8 +418,11 @@ class NftablesAdapter:
         )
         if not compat_tables:
             compat_tables = {("ip", "filter"), ("ip6", "filter")}
+        # Bouclier du port WireGuard (3.7.0) : une seule ligne dans la liste, avec son origine, lue
+        # par l'ecran du bouclier (omega_lib.shield) ; ses regles internes n'entrent jamais en base.
+        excluded = set(compat_tables) | {(SHIELD_FAMILY, SHIELD_TABLE)}
         parsed = [
-            p for p in parsed if (p.get("family"), p.get("table")) not in compat_tables
+            p for p in parsed if (p.get("family"), p.get("table")) not in excluded
         ]
 
         return self._mapper.map_rules(parsed)

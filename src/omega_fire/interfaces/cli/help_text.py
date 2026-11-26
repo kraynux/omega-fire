@@ -622,6 +622,48 @@ HELP_ENTRIES: dict[str, HelpEntry] = {
         ],
         see_also=["3.4", "3.3"],
     ),
+    "3.6": HelpEntry(
+        summary=N_(
+            "Bouclier du port WireGuard : une table posée devant tailscaled (Tailscale) qui le protège des flots de paquets. Sans lui, tailscaled dépense environ un cœur de processeur pour 100 000 paquets par seconde, même invalides."
+        ),
+        usage=[
+            N_(
+                "Le bouclier est le même qu'il soit posé par omega-fire ou par omega-tail : l'écran montre son origine (l'outil qui l'a demandé) et son gestionnaire (l'outil qui le remet en place au démarrage)."
+            ),
+            N_(
+                "Commence en observation : rien n'est refusé, les compteurs disent ce qui l'aurait été. Passe en actif quand ils ne montrent que des attaques."
+            ),
+            N_(
+                "Posé par omega-tail avant l'installation d'omega-fire : « Reprendre la gestion » le confie à omega-fire sans toucher à la table, à ses compteurs ni aux pairs connus."
+            ),
+            N_(
+                "Le bouclier apparaît aussi en une ligne dans la liste des règles (3.3)."
+            ),
+        ],
+        consequences=[
+            N_(
+                "Poser : table nftables « netdev omega_bouclier_wg » sur les cartes réseau matérielles, fichiers dans /etc/omega-bouclier-wg et service omega-bouclier-wg (remise en place au démarrage, état chaque minute)."
+            ),
+            N_(
+                "Actif : les poignées de main en excès d'une même source, les sources inconnues en excès et les paquets qui ne sont pas du WireGuard sont refusés. Les pairs connus (ceux à qui tailscaled écrit) ne sont jamais limités."
+            ),
+            N_(
+                "Retirer : table, fichiers et service supprimés, même si le bouclier a été demandé par omega-tail ; omega-tail l'affichera retiré."
+            ),
+        ],
+        warnings=[
+            N_(
+                "Si un autre outil efface la table (nft flush ruleset, redémarrage d'un service de pare-feu), le bouclier est signalé ABSENT : il n'est pas reposé de lui-même, « Reposer » le remet."
+            ),
+            N_(
+                "tailscaled avec un port tiré au hasard (--port 0) ne peut pas être protégé : fixe un port d'abord."
+            ),
+        ],
+        mechanism=N_(
+            "Pairs appris par le noyau (crochet egress, noyau 5.16 ou plus récent) : tout correspondant à qui tailscaled écrit est admis pendant 5 minutes. Les autres paquets sont triés par leur forme (poignée de main, réponse, cookie, données, disco, STUN) puis limités : 20 poignées de main par seconde et par source, 500 paquets par seconde et par source inconnue, 5 000 pour l'ensemble des sources inconnues."
+        ),
+        see_also=["3.3"],
+    ),
     # ------------------------------------------------------------------
     # Section 4 — Gestion Fail2ban
     # ------------------------------------------------------------------

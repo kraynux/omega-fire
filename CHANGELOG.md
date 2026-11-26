@@ -12,11 +12,64 @@ qui touchent aux **règles, aux bans ou aux services** sont toujours signalés e
 même mineurs. Les changements de textes affichés sont signalés aussi : ils doivent être
 reportés dans les 16 traductions (interface et README).
 
+## version 3.7.0 : construite le 2026-11-26 (archive omega-fire-3.7.0.tar.gz)
+
+### Ajouté
+
+- **Bouclier du port WireGuard (menu 3.6)**, demandé par omega-tail (lot 8, décisions du
+  2026-11-23). **Règles** : une table nftables `netdev omega_bouclier_wg` posée devant tailscaled, sur les
+  cartes réseau matérielles. Elle limite les poignées de main par source et met un budget sur les sources qui ne
+  sont pas des pairs connus. Elle refuse les paquets qui ne sont pas du WireGuard. Les pairs connus sont appris
+  par le noyau et ne sont jamais limités. Mesuré sur un Celeron J3455 : un flot qui prenait 99 à 112 % d'un
+  cœur à tailscaled n'en prend plus que 1 %.
+  - Observation d'abord : rien n'est refusé, les compteurs disent ce qui l'aurait été.
+  - Le texte de la table, le script root et le service `omega-bouclier-wg` (remise en place au démarrage
+    sous systemd, OpenRC et runit, état chaque minute) viennent d'omega-lib 0.4.0 (décision D-018). Le
+    bouclier posé par omega-tail sans omega-fire est donc reconnu tel quel.
+  - « Reprendre la gestion » confie à omega-fire un bouclier posé par omega-tail, sans toucher à la table, à ses
+    compteurs ni aux pairs connus.
+  - Retrait possible depuis omega-fire, après confirmation, même pour un bouclier demandé par omega-tail.
+  - Une table effacée par un autre outil est signalée ABSENTE et n'est jamais reposée seule (« Reposer »).
+
+- **Liste des règles (3.3)** : le bouclier y apparaît en une ligne, avec son origine (l'outil qui l'a demandé) et
+  son gestionnaire. Le bouton « Bouclier WireGuard » ou un clic sur la ligne ouvre 3.6.
+
+- **`omega-fire.sh bouclier-wg etat|poser|mode|reprendre|reposer|retirer … --pour OUTIL`**, pour omega-tail :
+  sortie JSON non traduite (`ok`, `raison`, `bouclier`, `lignes`). Root obligatoire (sudo demandé), une ligne au
+  journal d'audit pour chaque action.
+
+### Corrigé
+
+- **Bouclier WireGuard : noyau mis à jour sans redémarrage.** Constaté en production avant toute publication :
+  le dossier des modules du noyau en marche avait disparu, `nft_limit` ne pouvait plus être chargé et la pose
+  échouait sur chaque limite. Poser et Reposer refusent maintenant d'avance, avec la consigne de redémarrer.
+  Et si le noyau refuse la table à la première pose, quelle qu'en soit la cause, les fichiers écrits sont
+  retirés : plus de bouclier à moitié enregistré, qui passait pour une table effacée.
+- **Règles du bouclier WireGuard : rafales regroupées par le noyau.** Constaté pendant l'essai réel sur le J3455,
+  avant toute publication. Le noyau regroupe les rafales de paquets identiques avant la table (GRO). Un groupe
+  passait pour un seul paquet dans les limites, et une rafale de poignées de main était comptée comme « pas du
+  WireGuard ». Les limites se comptent maintenant en octets (réglages inchangés, en paquets par seconde), et les
+  longueurs fixes sont des minimums. Les compteurs comptent un groupe pour un paquet.
+- **Liste des règles : les ensembles nftables n'y entrent plus.** Le lecteur de `nft list ruleset` prenait chaque
+  ligne d'une table pour une règle, déclarations d'ensembles comprises. La ligne `set blackhole { # handle 3` de la
+  table d'omega-fire était ainsi importée en base comme une fausse règle d'entrée. Seules les lignes des chaînes
+  sont lues maintenant.
+- **Synchronisation de la liste (3.3) : une règle est reconnue à sa famille, sa table et son handle.** Un handle
+  nftables n'est unique que dans sa table. La règle 9 d'une table (nat, par exemple) était donc confondue avec la
+  règle 9 de la table d'omega-fire, et n'apparaissait jamais. C'est la même identité que celle du nettoyage (3.2).
+
+### Traductions
+
+- Écran 3.6 (titres, boutons, état, compteurs, messages), libellé et description du menu 3.6, aide « a » de 3.6,
+  deux questions de la FAQ, bouton « Bouclier WireGuard » de 3.3 et libellés de sa ligne : traduits dans les 16
+  langues (72 phrases), avec les mêmes mots que l'écran du bouclier d'omega-tail. README ×17 à jour (menu 3.6,
+  commande `bouclier-wg`).
+
 ## version 3.6.3 : construite le 2026-11-22 (archive omega-fire-3.6.3.tar.gz)
 
 ### Ajouté
 
-- **Vérifier les mises à jour : trois sources** (procédure de l'auteur, 2026-11-22) : la Release GitHub ; si
+- **Vérifier les mises à jour : trois sources** (procédure, 2026-11-22) : la Release GitHub ; si
   absente ou injoignable, le site kraynux ; si absent ou injoignable, le site craftdark (omega-lib embarqué). Ouvrir
   dans le navigateur : correctif F2 aussi dans omega-lib.
 
@@ -27,7 +80,7 @@ reportés dans les 16 traductions (interface et README).
   retrait seulement de règles posées par `port ouvrir`. Root obligatoire (sudo demandé), une ligne au journal
   d'audit, sortie JSON non traduite (états `retiree`, `absente`, `echec`).
 
-- **Version dans `pyproject.toml`, seule source** (décision de l'auteur, 2026-11-22) : en-tête, splash, tableau
+- **Version dans `pyproject.toml`, seule source** (décision, 2026-11-22) : en-tête, splash, tableau
   de bord, « Contact et support », jeton et `build-release.sh` la lisent là (avant : constante `OMEGA_FIRE_VERSION`
   de `core/constants.py`, `pyproject.toml` vide). omega-connect 0.2.0 la lit là aussi (anciennes installations :
   la constante).
@@ -386,7 +439,7 @@ Correctifs et contrats issus de l'étude de l'interconnecteur de la suite (`~/DE
 ### Corrigé
 
 - **Tableau de bord (8.1)** : alerte « omega-jail-… : configuré (jail.d) mais non chargé » alors
-  que les jails étaient actifs (constaté sur craftdark). L'alerte comparait les noms de
+  que les jails étaient actifs (constaté en production). L'alerte comparait les noms de
   fichiers de `jail.d` aux jails chargés : fausse pour chaque jail d'omega-jail, pour un fichier
   qui définit plusieurs jails et pour un jail volontairement désactivé. Elle compare maintenant
   les jails activés (`enabled = true`, dernier réglage gagnant) aux jails chargés.

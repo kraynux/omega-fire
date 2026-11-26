@@ -88,6 +88,29 @@ def faq_entries() -> tuple[FaqEntry, ...]:
             ),
         ),
         FaqEntry(
+            rules,
+            _(
+                "Une ligne « Bouclier du port WireGuard » d'origine omega-tail apparaît dans 3.3. Qu'est-ce que c'est ?"
+            ),
+            _(
+                "Une table posée devant tailscaled (Tailscale) pour le protéger des flots de paquets, "
+                "demandée par omega-tail. C'est le même bouclier qu'omega-fire pose lui-même : 3.6 "
+                "l'affiche, change son mode (observation ou actif) et le retire. S'il a été posé par "
+                "omega-tail avant l'installation d'omega-fire, « Reprendre la gestion » le confie à "
+                "omega-fire sans toucher à la table ni à ses compteurs. Ses règles internes ne sont "
+                "jamais importées dans la base."
+            ),
+        ),
+        FaqEntry(
+            rules,
+            _("Le bouclier du port WireGuard est signalé ABSENT. Que s'est-il passé ?"),
+            _(
+                "Un autre outil a effacé la table (nft flush ruleset, redémarrage du service nftables, "
+                "script de pare-feu). Le bouclier n'est pas reposé de lui-même, pour ne pas se battre "
+                "avec cet outil : « Reposer » dans 3.6 le remet, avec des compteurs à zéro."
+            ),
+        ),
+        FaqEntry(
             backup,
             _(
                 "La restauration d'un état (7.2) va-t-elle toucher aux règles des autres outils ?"
